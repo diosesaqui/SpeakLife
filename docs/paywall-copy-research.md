@@ -75,45 +75,89 @@ dropped the thread.
 Money+ministry: our generosity line + pay-what-you-can is the right category
 pattern (Hallow/Glorify both wrap commerce in stewardship). Keep it.
 
-## 4. The sharper copy (live — unconditional, no flags)
+## 4. The pain-led copy (live — unconditional, no flags)
 
-### Variants report as `high_conversion_storm_v1` / `_storm_clean_v1` / `_storm_clean_dark_v1`
+### Variants report as `high_conversion_pain_v1` / `_pain_clean_v1` / `_pain_clean_dark_v1`
 
-**Headline (default):**
-> **Pray like Jesus. Speak to your storm.**
-> He stilled a sea with three words. SpeakLife puts the exact Word for your storm in your mouth every morning.
+**Supersedes the storm arm** (`high_conversion_storm_*`), which led with the
+mechanism before the screen had named a problem. The storm line is not gone — it
+moved into beat 2, where a mechanism belongs. The screen now runs three beats:
 
-**Headline (goal word known — peace/healing/identity/…):** same headline, subhead
-> Your *peace* declarations, in your mouth every morning, until the storm obeys.
+1. **Name the problem** — the headline says the thing that is wrong
+2. **Turn it** — why what they've been doing hasn't moved it, and what does
+3. **Solve it, concretely** — four mechanics described against *that* problem
 
-**Headline (just spoke their personal declaration):**
+The problem comes from `PaywallPain`, resolved from `AppState.onboardingSegment`
+(stamped by every arm *before* the paywall renders). Deliberately not from
+`surveyGoalWord`: that is written after the paywall in every arm except quiz, so
+it is empty exactly when this screen needs it.
+
+**Headline (pain known):** the problem, named in the user's terms —
+
+| Pain | Headline |
+|------|----------|
+| peace | Your mind won't stop. |
+| health | Your body is still waiting on an answer. |
+| abundance | The money keeps running out before the month does. |
+| identity | You've lost sight of who you are. |
+| purpose | You're off the track you were built for. |
+| joy | Everything feels flat. |
+| more | You've prayed for years. It hasn't moved. |
+
+**Subhead:** the turn, aimed at that pain. E.g. for peace — *"Reading one more
+verse about peace hasn't quieted it. Jesus didn't ask the storm to settle. He
+spoke to it, and SpeakLife puts that same Word in your mouth every morning until
+your mind is what obeys."*
+
+**Headline (no segment — settings, feature gates, `unsegmented`):** still pain-led,
+naming the one problem every user on this screen shares —
+> **You've prayed about it. It hasn't moved.**
+> Jesus never begged the storm to leave. He spoke to it. SpeakLife puts the exact Word for what you're facing in your mouth every morning, until it obeys.
+
+**Headline (just spoke their personal declaration):** unchanged, and it keeps
+priority over the pain — naming a problem right after someone took authority over
+it steps on the warmest moment in the funnel.
 > **You just spoke to your storm.**
-> Jesus stilled a sea with three words. Keep speaking yours every morning until it obeys.
+> Jesus stilled a sea with three words. Keep speaking your *peace* every morning until it obeys.
 
-**Value props (classic layout):** The exact Word for your exact storm · Peace in
-under 60 seconds · Declarations over your health, home, and mind · God's Word in
-your ears morning and night · Ask the Bible anything · 100,000+ believers speaking
-life daily.
+**Solution rows (beat 3):** the same four capabilities every time — declarations,
+audio, the 30-day plan, Bible chat — each with a title and a detail line written
+against the named pain. For peace: *Speak peace, don't just read it* · *Audio for
+the loud hours* · *Caught before it spirals* · *An answer at 3am*. The clean layout
+carries a titles-only three-row version — naming a problem and then showing nothing
+but a price is a worse screen than the one it replaced.
+
+**Social proof is the 4.9 App Store rating only.** The "100,000+ believers" line
+is gone from this screen: the rating is verifiable on the listing and a subscriber
+count is not, and an unverifiable number sitting next to a price costs trust
+exactly where the screen can least afford it. The stars banner under the headline
+carries it; there is no second social-proof line competing with the mechanics.
 
 **CTA:** trial-eligible → **"Try 7 Days Free"** (real StoreKit day count);
 otherwise **"Continue"**. (Control keeps "Start Free Trial" / "Start Taking Ground →".)
 
-Why this shape: outcome-first + mechanism ("the exact Word, spoken") + continuity
-with the ad/onboarding storm language + the free-anchored CTA pattern. The headline
-is uniform in the storm arm so the reposition reads cleanly in analytics; the
-subhead carries the personalization (goal word / fresh declaration), which the
-evidence says is where the +15% lives.
+Why this shape: the storm arm's weakness was that it opened on the answer. A user
+who has not yet had their problem named has no reason to weigh a mechanism, and
+the value props read as a feature list rather than as relief. Problem → turn →
+mechanics is the order the same user already walked in onboarding, so the paywall
+now continues that argument instead of restarting it.
 
 ## 5. How to read it out
 
-The storm copy ships unconditionally — no Remote Config flags. The rollout reads
+The pain copy ships unconditionally — no Remote Config flags. The rollout reads
 as a **before/after** in PostHog: funnel `paywall_shown → paywall_cta_tapped →
-trial_started` broken down by `variant` — storm impressions carry the new
-`high_conversion_storm_*` names, so the release date is the comparison line
-against the 30-day baseline (11.6% dark / 19.6% clean shown→trial). Guardrails:
-`paywall_dismissed` seconds-on-paywall and the trial→paid rate (a change that
-boosts trials but tanks paid conversion is a loss). Reverting means reverting
-the commit.
+trial_started` broken down by `variant` — pain impressions carry the new
+`high_conversion_pain_*` names, so the release date is the comparison line against
+the storm baseline. Guardrails: `paywall_dismissed` seconds-on-paywall and the
+trial→paid rate (a change that boosts trials but tanks paid conversion is a loss).
+Reverting means reverting the commit.
+
+`paywall_shown` and `paywall_impression` also carry **`pain`** (`peace` / `health`
+/ `abundance` / `identity` / `purpose` / `joy` / `more` / `none`) — already
+resolved, so breaking conversion down by which problem was named needs no segment
+parsing, and works for the quiz arm whose segment names don't map by string. The
+cut worth making first: does a named pain convert better than `none`? If not, the
+personalization is decoration and only the generic pain-led headline is earning.
 
 ## 6. Recommendations not implemented here (next levers, in order)
 

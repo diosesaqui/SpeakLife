@@ -82,6 +82,18 @@ From finishing onboarding through to a paid conversion.
 
 **Funnel settings:** conversion window `7 days`, order `sequential`.
 
+> **Which arms enter this funnel.** Step 1, `onboarding_completed`, is fired by
+> the **`quiz`** arm (at the commitment hold) and the **`direct`** arm (leaving
+> the review wall) — both at the last pre-paywall milestone. The other arms
+> (`product` / `identity` / `outcomes` / `warfare` / `promises` / `closer`) do
+> not fire it, so they are invisible here; read those in funnel 3 instead.
+> Both arms that do fire it stamp `variant`, and every event carries the
+> `onboarding_variant` person property, so **break this funnel down by variant**
+> rather than reading it as one population. Firing `onboarding_completed` from
+> `HomeView.finishOnboarding` would put every arm in — at the cost of moving the
+> quiz arm's step from pre-paywall to post-paywall, which is why it hasn't been
+> done.
+
 ---
 
 ## 3. Onboarding A/B — Winner by Variant
@@ -89,8 +101,8 @@ From finishing onboarding through to a paid conversion.
 The cross-variant experiment funnel. Every onboarding flow now fires a unified
 `onboarding_started` → `onboarding_finished` pair from `HomeView`, tagged with
 the chosen arm, so the variants (`product` / `identity` / `quiz` / `outcomes` /
-`warfare` / `promises` / `closer`, selected by Remote Config `onboardingVariant`)
-compare head-to-head. `warfare` is the default arm from app **v4.28+**.
+`warfare` / `promises` / `closer` / `direct`, selected by Remote Config
+`onboardingVariant`) compare head-to-head. `warfare` is the default arm from app **v4.28+**.
 These route through `AnalyticsService`, so PostHog and Firebase both receive them.
 
 **PostHog insight:** [Onboarding A/B — Winner by Variant](https://us.posthog.com/project/455580/insights/QfVRKZ3H)
@@ -101,7 +113,7 @@ These route through `AnalyticsService`, so PostHog and Firebase both receive the
 | 2 | `onboarding_finished` | Completed onboarding |
 | 3 | `subscription_started` | Started a trial or paid sub |
 
-**Breakdown:** event property `variant` (`product` / `identity` / `quiz` / `outcomes` / `warfare` / `promises` / `closer`). Dynamic, so new arms appear automatically.
+**Breakdown:** event property `variant` (`product` / `identity` / `quiz` / `outcomes` / `warfare` / `promises` / `closer` / `direct`). Dynamic, so new arms appear automatically.
 **Funnel settings:** conversion window `14 days`, order `ordered`.
 
 `onboarding_finished` also carries `converted` (bool) and `conversion_type`
@@ -187,6 +199,59 @@ arms shifted by one. **`flow_schema` was bumped on all three** — `outcomes` 3�
 before comparing step numbers across builds. Pre-bump data is not comparable
 step-for-step.
 
+### 3d. The `direct` arm (pain-led, funnel-depth test)
+
+`direct` is the depth test. Every other arm pitches first and asks what is wrong
+five or six screens in; this one asks on the **first frame** and reaches the
+paywall in four screens instead of sixteen. Cut: the extended quiz, the product
+capability recap, the plan-building loader, the plan reveal, the pledge, the
+rating ask, and the personal-declaration capture. Its natural control is any arm
+running the full quiz — `warfare` (the default) for an arm-vs-default read, or
+`closer` if you want depth isolated from angle.
+
+Because the front half is four screens, **per-step drop-off is the whole story
+here**. Build the arm's internal funnel on `step_name`, not on the raw `step`
+integer:
+
+`direct_pain_shown` → `direct_pain_answered` → `direct_mechanism_shown` →
+`direct_declaration_shown` → `direct_declaration_spoken` →
+`testimonial_wall_shown` (`flow: direct`) → `paywall_impression` →
+`direct_onboarding_completed`
+
+| Event | Properties | Why it matters |
+|-------|-----------|----------------|
+| `direct_onboarding_started` | `flow_schema` | Arm entry; denominator for everything below |
+| `direct_pain_shown` | `flow_schema` | Screen-one reach |
+| `direct_pain_answered` | `burden` | **The arm's first and hardest ask — a one-tap answer on frame one.** Its drop is the whole bet |
+| `direct_mechanism_shown` | `burden` | "Jesus never begged the problem to leave" reach |
+| `direct_declaration_shown` | `burden` | Payoff reach |
+| `direct_declaration_spoken` | `burden` | **Say-it-out-loud take-rate — the arm's key micro-conversion** |
+| `direct_step_completed` | `step`, `step_name`, `flow_schema` | Per-step drop-off. **Build funnels on `step_name`** (`pain` / `mechanism` / `declaration` / `testimonials` / `paywall` / `notification_time`) |
+| `direct_onboarding_completed` | `goal_word`, `burden`, `notification_time`, `spoke_declaration`, `total_duration_seconds`, `flow_schema` | Completion, plus the two cuts worth making |
+
+Shared screens stamp `flow: "direct"` (`testimonial_wall_shown`,
+`survey_q8_shown`), and the paywall reads `appState.onboardingSegment`, so every
+paywall event on this arm carries `segment: direct_<burden>`.
+
+Two numbers to watch beyond conversion:
+
+- **`direct_pain_answered` / `direct_pain_shown`.** Asking on frame one, before
+  any pitch, is the risky part. If this holds above the other arms' first-screen
+  pass-through, the premise is sound even if conversion lands flat.
+- **`spoke_declaration` on `direct_onboarding_completed`.** Cut conversion by it.
+  If speakers convert far better than non-speakers, the micro-commitment is
+  doing the work and belongs in the other arms too.
+
+`total_duration_seconds` is the arm's headline claim — compare its median
+against the quiz arms to confirm the flow actually is faster in practice, not
+just shorter on paper.
+
+**Person property:** this arm sets `onboarding_burden` (`peace` / `health` /
+`joy` / `identity` / `purpose` / `abundance` / `more`) when the opening question
+is answered, so **every** later event — `trial_started`, `subscription_started`,
+retention — can be split by the pain the user walked in with. Only `direct` sets
+it today, so it reads null for other arms.
+
 ---
 
 ## Key event reference
@@ -199,7 +264,8 @@ These route through `AnalyticsService` and reach every provider:
 | `onboarding_finished` | `AnalyticsService.track` (HomeView) | `variant`, `converted`, `conversion_type` |
 | `subscription_started` | `track` (SubscriptionStore.purchase) | `product_id`, `value`, `is_trial`, `variant` |
 | `screen_viewed` | `trackScreenView` | `screen_name`, `previous_screen` |
-| `paywall_impression` | `trackPaywallImpression` | `paywall_id` |
+| `paywall_impression` | `trackPaywallImpression` | `paywall_id`, `variant`, `segment`, `pain` |
+| `paywall_shown` | `track` (HighConversionPaywallView) | `variant`, `segment`, `source`, `pain` |
 | `paywall_conversion` | `trackPaywallConversion` | `product_id`, `price` |
 | `trial_started` | `trackTrialStarted` / `track` (purchase) | `product_id`, `value`, `variant` |
 | `trial_activated` | `trackTrialActivated` | `product_id`, `price` |
