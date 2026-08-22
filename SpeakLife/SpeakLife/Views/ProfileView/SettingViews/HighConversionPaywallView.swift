@@ -163,30 +163,32 @@ enum UserPain: String, CaseIterable {
         }
     }
 
-    /// Subhead. Two short sentences: the dead end they're already in, then the
-    /// move that isn't. Nothing else fits — this renders at 14pt under a bold
-    /// headline on a screen whose next job is a price, and a paragraph there
-    /// gets skimmed past at exactly the moment it needed to be read.
+    /// Subhead. **Solution only.** The headline one line above already named the
+    /// problem — spending half of this line re-stating that it hasn't worked
+    /// tells the reader something they know better than we do, and buys
+    /// nothing. By the time the eye is here the only useful sentence is what
+    /// they get.
     ///
-    /// The product is deliberately not named. "Speak it" is the instruction and
-    /// the whole pitch; the rows underneath are where SpeakLife shows up.
-    var turn: String {
+    /// So each one is a description of the offer, aimed at that pain: the thing
+    /// God says about it, in their mouth, on a rhythm. Ten to fourteen words,
+    /// no product name — the four rows underneath are where SpeakLife shows up.
+    var solution: String {
         switch self {
-        case .peace:      return "Reading about peace hasn't quieted it. Speak it, the way Jesus spoke to the storm."
-        case .fear:       return "Talking yourself down lasts a night. Speak God's protection over tomorrow instead."
-        case .health:     return "Hoping isn't the same as standing on it. Speak the healing the cross already paid for."
-        case .abundance:  return "God isn't working off your math. Speak His promise to supply every need."
-        case .identity:   return "Feeling better about yourself never holds. Speak what God already said you are."
-        case .shame:      return "You can't apologize for what Jesus already paid for. Speak what He settled."
-        case .bondage:    return "Willpower has had its turn. Speak to it with His authority instead."
-        case .purpose:    return "Waiting for clarity keeps you still. Speak the steps God already ordered."
-        case .joy:        return "You can't talk yourself into joy. Speak what God says over your day."
-        case .grief:      return "Nobody's asking you to be over it. Speak God's comfort into the hard mornings."
-        case .loneliness: return "You don't have to carry this alone. Speak God's nearness over your life."
-        case .marriage:   return "You can't speak for them. You can speak God's peace over your home."
-        case .family:     return "Worry has never once helped them. Speak God's promises over them instead."
-        case .nearness:   return "God feeling far isn't God being far. Speak what He says about being near."
-        case .more:       return "Jesus never begged. He spoke. Learn to pray the same way, out loud."
+        case .peace:      return "God's own words for a racing mind, in your mouth every morning."
+        case .fear:       return "God's protection over tomorrow, spoken out loud before the dread starts."
+        case .health:     return "The healing the cross already paid for, spoken over your body daily."
+        case .abundance:  return "God's promise to supply every need, spoken over your finances every morning."
+        case .identity:   return "What God already said you are, spoken until it's what you believe."
+        case .shame:      return "What the cross already settled, spoken until you believe you're clean."
+        case .bondage:    return "His authority in your own mouth, spoken the way Jesus spoke to it."
+        case .purpose:    return "The steps God already ordered, spoken over your day every morning."
+        case .joy:        return "God's joy and strength, spoken over your day before the day starts."
+        case .grief:      return "God's own comfort, spoken over your heart on the mornings that come hard."
+        case .loneliness: return "God's nearness, spoken over your life on the quiet nights."
+        case .marriage:   return "God's peace, spoken over your home while He works on the rest."
+        case .family:     return "God's promises over the people you love, spoken out loud every morning."
+        case .nearness:   return "What God says about being near you, spoken back to Him daily."
+        case .more:       return "God's Word spoken with authority, out loud, the way Jesus prayed."
         }
     }
 
@@ -429,12 +431,12 @@ struct HighConversionPaywallView: View {
     private var resolvedSubheadline: String {
         if hasFreshPersonalDeclaration {
             if let burden = burdenStyleLabel {
-                return "Jesus stilled a sea with three words. Speak your \(burden) every morning until it obeys."
+                return "Your \(burden) declarations, in your mouth every morning until it obeys."
             }
-            return "Jesus stilled a sea with three words. Speak yours every morning until it obeys."
+            return "That declaration in your mouth every morning, until it obeys."
         }
-        if let pain { return pain.turn }
-        return "Jesus never begged the storm to leave. He spoke to it. Speak yours the same way."
+        if let pain { return pain.solution }
+        return "The exact Word for what you're facing, in your mouth every morning."
     }
     enum PlanType: String {
         case annual = "annual"

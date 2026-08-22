@@ -122,14 +122,21 @@ pain-led paywall cannot do. `UserPain.from(categoryRaw:)` is the exhaustive map;
 seven legacy segment values from the other arms all remain case names, so those
 arms round-trip unchanged.
 
-**Subhead:** the turn, aimed at that pain — **two short sentences, 12 to 16
-words**: the dead end they're already in, then the move that isn't. For peace,
-*"Reading about peace hasn't quieted it. Speak it, the way Jesus spoke to the
-storm."* The product is deliberately not named; "Speak it" is the instruction
-and the whole pitch, and the rows underneath are where SpeakLife shows up. The
-first draft ran 38 to 45 words and got skimmed past at exactly the moment it
-needed to be read — 14pt body copy under a bold headline on a screen whose next
-job is a price cannot carry a paragraph.
+**Subhead: solution only.** The headline one line above already named the
+problem. Spending half this line re-stating that it hasn't worked tells the
+reader something they know better than we do, so by the time the eye is here the
+only useful sentence is what they get. Ten to fourteen words, describing the
+offer aimed at that pain — the thing God says about it, in their mouth, on a
+rhythm. For peace: *"God's own words for a racing mind, in your mouth every
+morning."* The product is deliberately not named; the four rows underneath are
+where SpeakLife shows up.
+
+Two drafts died to get here, and both failures are worth keeping in mind for the
+next surface: the first ran 38 to 45 words, which is a paragraph in 14pt under a
+bold headline on a screen whose next job is a price — it got skimmed. The second
+halved that but still opened on the dead end ("Reading about peace hasn't
+quieted it"), which is the reader's own life narrated back at them at the moment
+they are deciding whether to pay.
 
 **Headline (no segment — settings, feature gates, `unsegmented`):** still pain-led,
 naming the one problem every user on this screen shares —
