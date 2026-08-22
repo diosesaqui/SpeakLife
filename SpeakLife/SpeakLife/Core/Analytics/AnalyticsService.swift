@@ -41,6 +41,98 @@ enum AnalyticsSemantic {
     case engagement(action: String, category: String?)
 }
 
+// MARK: - Property Sanitizer
+//
+// The destination SDKs serialize event properties to JSON. Anything that isn't
+// a JSON primitive is silently DROPPED on the way out — the event still lands,
+// just missing that key, so the loss is invisible until a breakdown in PostHog
+// comes back 100% null.
+//
+// That is exactly how `swipe_affirmation` shipped without a category for
+// months: the call site passed `declaration.category`, a `DeclarationCategory`
+// enum rather than its `.rawValue`, and the app's highest-volume engagement
+// event had no usable content dimension at all.
+//
+// Every call site now flows through here, so an enum, URL, UUID, Date, or `nil`
+// can no longer quietly delete a property. Enums are coerced to their case
+// name, `nil` is dropped explicitly rather than serialized as a null, and DEBUG
+// builds print the offending event/key so it gets fixed at the call site.
+
+enum AnalyticsPropertySanitizer {
+
+    static func sanitize(_ parameters: [String: Any], event: String) -> [String: Any] {
+        var result: [String: Any] = [:]
+        result.reserveCapacity(parameters.count)
+
+        for (key, value) in parameters {
+            guard let clean = sanitizeValue(value, event: event, key: key) else {
+                warn(event: event, key: key, reason: "value was nil and has been dropped")
+                continue
+            }
+            result[key] = clean
+        }
+
+        return result
+    }
+
+    /// Returns `nil` only when the value is genuinely absent, which is the one
+    /// case where dropping the key is correct.
+    ///
+    /// Order matters: the JSON primitives are matched *before* the `NSNumber`
+    /// bridge so a `Bool` stays a boolean instead of arriving as `1`, which
+    /// would silently retype every existing boolean property.
+    private static func sanitizeValue(_ value: Any, event: String, key: String) -> Any? {
+        switch value {
+        case let bool as Bool:      return bool
+        case let int as Int:        return int
+        case let double as Double:  return double
+        case let float as Float:    return Double(float)
+        case let string as String:  return string
+        case let number as NSNumber: return number
+        case let date as Date:      return date.analyticsISO8601String
+        case let url as URL:        return url.absoluteString
+        case let uuid as UUID:      return uuid.uuidString
+
+        case let array as [Any]:
+            return array.compactMap { sanitizeValue($0, event: event, key: key) }
+
+        case let dictionary as [String: Any]:
+            return sanitize(dictionary, event: event)
+
+        default:
+            return sanitizeUnrecognized(value, event: event, key: key)
+        }
+    }
+
+    private static func sanitizeUnrecognized(_ value: Any, event: String, key: String) -> Any? {
+        let mirror = Mirror(reflecting: value)
+
+        switch mirror.displayStyle {
+        case .optional:
+            // `Optional.none` has no children; `.some` has exactly one.
+            guard let wrapped = mirror.children.first?.value else { return nil }
+            return sanitizeValue(wrapped, event: event, key: key)
+
+        case .enum:
+            // Coerced rather than dropped, so the dimension survives even when
+            // the call site forgot `.rawValue`.
+            warn(event: event, key: key, reason: "enum was passed instead of its .rawValue")
+            return String(describing: value)
+
+        default:
+            warn(event: event, key: key,
+                 reason: "\(type(of: value)) is not JSON-serializable and was coerced to a string")
+            return String(describing: value)
+        }
+    }
+
+    private static func warn(event: String, key: String, reason: String) {
+        #if DEBUG
+        print("⚠️ Analytics[\(event)] property '\(key)': \(reason)")
+        #endif
+    }
+}
+
 // MARK: - Analytics Provider Interface
 //
 // Implement this protocol to add a new destination (Amplitude, Mixpanel,
@@ -87,10 +179,29 @@ final class AnalyticsService: AnalyticsTracking {
 
     private var sessionStartTime: Date?
     private var currentScreen: String?
+    private let screenLock = NSLock()
     private var userProperties: [String: Any] = [:]
 
     private var providers: [AnalyticsProvider] = []
     private let providersLock = NSLock()
+
+    /// The `screen` dimension stamped on every action/content/conversion event.
+    ///
+    /// Read under a lock because screen changes come off whichever thread drove
+    /// the transition while events are dispatched from anywhere.
+    private var activeScreen: String {
+        screenLock.lock()
+        defer { screenLock.unlock() }
+        return currentScreen ?? "unknown"
+    }
+
+    private func setCurrentScreen(_ screen: String) -> String? {
+        screenLock.lock()
+        defer { screenLock.unlock() }
+        let previous = currentScreen
+        currentScreen = screen
+        return previous
+    }
 
     private init() {
         registerDefaultProviders()
@@ -116,16 +227,28 @@ final class AnalyticsService: AnalyticsTracking {
     /// (or call `AnalyticsService.shared.register(...)` from app startup).
     private func registerDefaultProviders() {
         register(FirebaseAnalyticsProvider())
+
+        // Simulator runs are development and automated-test traffic, not usage.
+        // Left unguarded they land in the same projects as real users: a single
+        // favorites test suite produced 1,769 of the 2,007 `audio_favorite_tapped`
+        // events in a 90-day window — 88% of the metric — favoriting rows named
+        // "Test Audio", "Zebra" and "Retry Test" from 27 phantom "users".
+        //
+        // Firebase stays registered so the DebugView still works locally; the
+        // product-analytics and ad-attribution destinations do not.
+        #if targetEnvironment(simulator)
+        print("ℹ️ Analytics: simulator build — PostHog/TikTok/Meta reporting disabled.")
+        #else
         register(TikTokAnalyticsProvider())
         register(MetaAnalyticsProvider())
 
-        // Product analytics (funnels / retention / session replay). Add the
-        // PostHog Swift package, then uncomment with your project API key:
-         register(PostHogAnalyticsProvider(
-             apiKey: "phc_D4qLgjTSwfzKpbgCNTdUn7Hx9QoS7ur3BWwpwubVLdG7",
-             host: "https://us.i.posthog.com",
-             enableSessionReplay: true
-         ))
+        // Product analytics (funnels / retention / session replay).
+        register(PostHogAnalyticsProvider(
+            apiKey: "phc_D4qLgjTSwfzKpbgCNTdUn7Hx9QoS7ur3BWwpwubVLdG7",
+            host: "https://us.i.posthog.com",
+            enableSessionReplay: true
+        ))
+        #endif
     }
 
     /// Register a new analytics destination. Safe to call at any time; the
@@ -158,7 +281,11 @@ final class AnalyticsService: AnalyticsTracking {
         var enriched = AnalyticsContext.shared.properties()
         enriched.merge(parameters) { _, callSiteValue in callSiteValue }
 
-        let event = AnalyticsEvent(name: name, parameters: enriched, semantic: semantic)
+        let event = AnalyticsEvent(
+            name: name,
+            parameters: AnalyticsPropertySanitizer.sanitize(enriched, event: name),
+            semantic: semantic
+        )
         for provider in snapshotProviders() where provider.isEnabled {
             provider.log(event)
         }
@@ -185,15 +312,15 @@ final class AnalyticsService: AnalyticsTracking {
     }
 
     func trackScreenView(_ screenName: String, metadata: [String: Any] = [:]) {
+        let previous = setCurrentScreen(screenName)
+
         var params: [String: Any] = [
             "screen_name": screenName,
             "timestamp": Date().iso8601String,
-            "previous_screen": currentScreen ?? "none"
+            "previous_screen": previous ?? "none"
         ]
 
         params.merge(metadata) { (_, new) in new }
-
-        currentScreen = screenName
 
         dispatch("screen_viewed", parameters: params, semantic: .screenView(name: screenName))
     }
@@ -201,7 +328,7 @@ final class AnalyticsService: AnalyticsTracking {
     func trackUserAction(_ action: String, category: String? = nil, metadata: [String: Any] = [:]) {
         var params: [String: Any] = [
             "action": action,
-            "screen": currentScreen ?? "unknown",
+            "screen": activeScreen,
             "timestamp": Date().iso8601String
         ]
 
@@ -224,7 +351,7 @@ final class AnalyticsService: AnalyticsTracking {
             "content_type": contentType,
             "content_id": contentId,
             "action": action,
-            "screen": currentScreen ?? "unknown",
+            "screen": activeScreen,
             "timestamp": Date().iso8601String
         ]
 
@@ -244,7 +371,7 @@ final class AnalyticsService: AnalyticsTracking {
             "audio_id": audioId,
             "audio_title": audioTitle,
             "action": action.rawValue,
-            "screen": currentScreen ?? "unknown",
+            "screen": activeScreen,
             "timestamp": Date().iso8601String
         ]
 
@@ -252,10 +379,26 @@ final class AnalyticsService: AnalyticsTracking {
 
         dispatch("audio_playback", parameters: params)
 
-        ListenerMetricsService.shared.trackListen(contentId: audioId, contentType: .audio)
+        // A listen is one play, not one playback callback. This fired on every
+        // action, so a 30-day window counted 10,617 progress milestones, 1,055
+        // pauses and 752 seeks as listens against only 1,938 real starts —
+        // inflating `content_listened` roughly 5x.
+        guard action == .started else { return }
+
+        ListenerMetricsService.shared.trackListen(
+            contentId: audioId,
+            contentType: .audio,
+            title: audioTitle,
+            category: params["category"] as? String
+        )
     }
 
     func trackNavigation(from: String, to: String, method: NavigationMethod) {
+        // Navigating IS a screen change. Without this the `screen` dimension went
+        // stale (or stayed "unknown") on every action taken after a tab switch
+        // that didn't also call `trackScreenView`.
+        _ = setCurrentScreen(to)
+
         dispatch("navigation", parameters: [
             "from_screen": from,
             "to_screen": to,
@@ -272,7 +415,7 @@ final class AnalyticsService: AnalyticsTracking {
     ) {
         var params: [String: Any] = [
             "conversion_event": event,
-            "screen": currentScreen ?? "unknown",
+            "screen": activeScreen,
             "timestamp": Date().iso8601String
         ]
 
@@ -301,7 +444,7 @@ final class AnalyticsService: AnalyticsTracking {
             "content_type": contentType,
             "content_id": contentId,
             "share_method": shareMethod,
-            "screen": currentScreen ?? "unknown",
+            "screen": activeScreen,
             "timestamp": Date().iso8601String
         ]
 
@@ -313,7 +456,7 @@ final class AnalyticsService: AnalyticsTracking {
     func trackFeatureUsage(_ featureName: String, metadata: [String: Any] = [:]) {
         var params: [String: Any] = [
             "feature_name": featureName,
-            "screen": currentScreen ?? "unknown",
+            "screen": activeScreen,
             "timestamp": Date().iso8601String
         ]
 
@@ -326,7 +469,7 @@ final class AnalyticsService: AnalyticsTracking {
         var params: [String: Any] = [
             "error_type": errorType,
             "error_message": message,
-            "screen": currentScreen ?? "unknown",
+            "screen": activeScreen,
             "timestamp": Date().iso8601String
         ]
 
@@ -374,7 +517,7 @@ final class AnalyticsService: AnalyticsTracking {
         var params: [String: Any] = [
             "search_query": query.lowercased(),
             "result_count": resultCount,
-            "screen": currentScreen ?? "unknown",
+            "screen": activeScreen,
             "timestamp": Date().iso8601String
         ]
 
@@ -393,7 +536,7 @@ final class AnalyticsService: AnalyticsTracking {
         var params: [String: Any] = [
             "metric_type": metricType.rawValue,
             "metric_value": value,
-            "screen": currentScreen ?? "unknown",
+            "screen": activeScreen,
             "timestamp": Date().iso8601String
         ]
 
@@ -407,7 +550,7 @@ final class AnalyticsService: AnalyticsTracking {
     func trackTrialStarted(productId: String, price: Double? = nil, metadata: [String: Any] = [:]) {
         var params: [String: Any] = [
             "product_id": productId,
-            "screen": currentScreen ?? "unknown",
+            "screen": activeScreen,
             "timestamp": Date().iso8601String
         ]
 
@@ -425,7 +568,7 @@ final class AnalyticsService: AnalyticsTracking {
     func trackTrialActivated(productId: String, metadata: [String: Any] = [:]) {
         var params: [String: Any] = [
             "product_id": productId,
-            "screen": currentScreen ?? "unknown",
+            "screen": activeScreen,
             "timestamp": Date().iso8601String
         ]
 
@@ -440,7 +583,7 @@ final class AnalyticsService: AnalyticsTracking {
     func trackPaywallImpression(paywallId: String, metadata: [String: Any] = [:]) {
         var params: [String: Any] = [
             "paywall_id": paywallId,
-            "screen": currentScreen ?? "unknown",
+            "screen": activeScreen,
             "timestamp": Date().iso8601String
         ]
 
@@ -454,7 +597,7 @@ final class AnalyticsService: AnalyticsTracking {
         var params: [String: Any] = [
             "product_id": productId,
             "paywall_id": paywallId,
-            "screen": currentScreen ?? "unknown",
+            "screen": activeScreen,
             "timestamp": Date().iso8601String
         ]
 
@@ -473,7 +616,7 @@ final class AnalyticsService: AnalyticsTracking {
     func trackSubscriptionRenewal(productId: String, price: Double? = nil, metadata: [String: Any] = [:]) {
         var params: [String: Any] = [
             "product_id": productId,
-            "screen": currentScreen ?? "unknown",
+            "screen": activeScreen,
             "timestamp": Date().iso8601String
         ]
 
@@ -492,7 +635,7 @@ final class AnalyticsService: AnalyticsTracking {
     func trackSubscriptionCancelled(productId: String, metadata: [String: Any] = [:]) {
         var params: [String: Any] = [
             "product_id": productId,
-            "screen": currentScreen ?? "unknown",
+            "screen": activeScreen,
             "timestamp": Date().iso8601String
         ]
 

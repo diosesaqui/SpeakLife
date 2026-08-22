@@ -297,7 +297,9 @@ struct AudioFavoritesView: View {
             .onAppear {
                 AudioAnalytics.shared.trackFavoritesCategoryViewed(
                     favoritesCount: favoritesManager.favorites.count,
-                    sortOrder: AudioAnalytics.FavoritesSortOrder(rawValue: sortOrder.rawValue.lowercased().replacingOccurrences(of: " ", with: "_")) ?? .dateAdded
+                    sortOrder: AudioAnalytics.FavoritesSortOrder(rawValue: sortOrder.rawValue.lowercased().replacingOccurrences(of: " ", with: "_")) ?? .dateAdded,
+                    categories: favoritesManager.favorites.compactMap { $0.tag },
+                    source: "favorites_screen"
                 )
             }
         }

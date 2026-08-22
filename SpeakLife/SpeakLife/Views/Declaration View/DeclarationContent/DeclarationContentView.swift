@@ -212,7 +212,13 @@ struct DeclarationContentView: View {
                 AnalyticsService.shared.track("swipe_affirmation", parameters: [
                     "declaration_id": declaration.id,
                     "declaration_index": newIndex,
-                    "category": declaration.category
+                    // `.rawValue`, not the enum: the SDKs drop non-JSON values,
+                    // which left this event with no category at all.
+                    "category": declaration.category.rawValue,
+                    "content_type": declaration.contentType.rawValue,
+                    // Defaulted, not passed as `Bool?`: an unset optional would
+                    // drop the key and skew the ratio toward whatever remained.
+                    "is_favorite": declaration.isFavorite ?? false
                 ])
                 // Fix 3: Increment affirmations spoken counter for badge tracking
                 UserDefaults.standard.set(

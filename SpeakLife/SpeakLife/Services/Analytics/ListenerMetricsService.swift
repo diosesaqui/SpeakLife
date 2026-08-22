@@ -28,13 +28,27 @@ final class ListenerMetricsService: ObservableObject {
     }
     
     // MARK: - Track Listen Event
-    func trackListen(contentId: String, contentType: ContentMetricType) {
-        // Track in Firebase Analytics (free)
-        AnalyticsService.shared.track("content_listened", parameters: [
+    /// `title` and `category` are optional so existing callers keep compiling;
+    /// without them this event only carried an opaque `content_id`, so ranking
+    /// content meant hand-mapping filenames like `psalm9_11.mp3` to titles.
+    func trackListen(
+        contentId: String,
+        contentType: ContentMetricType,
+        title: String? = nil,
+        category: String? = nil
+    ) {
+        var params: [String: Any] = [
             "content_id": contentId,
             "content_type": contentType.rawValue,
             "timestamp": Date().timeIntervalSince1970
-        ])
+        ]
+
+        // Set only when known: a placeholder here would be indistinguishable
+        // from a real category in a breakdown.
+        if let title = title { params["content_title"] = title }
+        if let category = category { params["category"] = category }
+
+        AnalyticsService.shared.track("content_listened", parameters: params)
         
 //        // Debounce Firestore writes to reduce cost
 //        let now = Date()

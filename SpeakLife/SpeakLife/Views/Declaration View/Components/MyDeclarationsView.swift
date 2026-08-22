@@ -65,9 +65,16 @@ struct MyDeclarationsView: View {
                 addButton
             }
         }
-        .task { await reload() }
-        .onAppear {
-            AnalyticsService.shared.track("my_declarations_opened")
+        // Tracked after the load, not in `onAppear`: the lists are still empty
+        // at appear time, so any count read there would always be zero.
+        .task {
+            await reload()
+            AnalyticsService.shared.track("my_declarations_opened", parameters: [
+                "active_count": active.count,
+                "answered_count": answered.count,
+                "is_premium": subscriptionStore.isPremium,
+                "opened_via_deep_link": initialDeclarationId != nil
+            ])
         }
         // The full speak-it card for one declaration. Speaking it advances that
         // record's counters, so re-read the list on the way out.

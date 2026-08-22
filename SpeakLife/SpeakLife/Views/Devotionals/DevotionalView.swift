@@ -58,7 +58,13 @@ struct DevotionalView: View {
         if subscriptionStore.isPremium || !viewModel.devotionalLimitReached || subscriptionStore.isInDevotionalPremium {
             devotionalView
                 .onAppear {
-                    AnalyticsService.shared.track(Event.devotionalTapped)
+                    // Carried no properties, so there was no way to tell which
+                    // devotionals people actually open.
+                    AnalyticsService.shared.track(Event.devotionalTapped, parameters: [
+                        "devotional_id": viewModel.devotionalId,
+                        "devotional_title": viewModel.title,
+                        "devotional_date": viewModel.devotionalDate
+                    ])
                 }
                 .alert(isPresented: $viewModel.hasError) {
                     Alert(title: Text(viewModel.errorString))
