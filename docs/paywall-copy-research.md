@@ -136,6 +136,25 @@ carries it; there is no second social-proof line competing with the mechanics.
 **CTA:** trial-eligible → **"Try 7 Days Free"** (real StoreKit day count);
 otherwise **"Continue"**. (Control keeps "Start Free Trial" / "Start Taking Ground →".)
 
+**Closing line, under the CTA.** Two lines run here: the risk reversal ("No
+payment due now · Cancel anytime in Settings", trial-eligible only) and then the
+last doubt-killer — *is this the right answer for what I came in with?* It names
+what this is not, then what it is, aimed at the pain the headline named:
+
+> 📕 Not tips or affirmations. God's own Word over your mind, spoken the way Jesus did.
+
+The honest close is that the guarantee was never the app, it is Scripture, so the
+line points at Scripture rather than at features or at us.
+
+This slot previously carried the generosity / pay-what-you-can framing ("your
+subscription helps keep SpeakLife within reach for believers who can't afford
+full price"). That is a *meaning* frame, not a *decision* frame — it told a
+hesitating user what their money does for someone else at the exact moment they
+were still asking whether it does anything for them. It is not lost: the
+post-purchase mission screen carries it, which is where a "you did something
+good" message actually lands. The pay-what-you-can link itself is unchanged and
+still sits directly below, gated by `showPayWhatYouCanCTA`.
+
 Why this shape: the storm arm's weakness was that it opened on the answer. A user
 who has not yet had their problem named has no reason to weigh a mechanism, and
 the value props read as a feature list rather than as relief. Problem → turn →

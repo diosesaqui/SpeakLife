@@ -184,6 +184,28 @@ enum PaywallPain: String, CaseIterable {
         }
     }
 
+    /// The last line before the tap. Its job is to answer the final doubt —
+    /// "is this actually the right thing for what I've got?" — and the honest
+    /// answer is that the guarantee was never the app. It is Scripture. So the
+    /// line names what this is not, then what it is, aimed at their problem.
+    ///
+    /// Kept to one short sentence: it renders at 12pt under the CTA, and
+    /// anything longer stops being read at exactly the moment it matters.
+    var assurance: String {
+        switch self {
+        case .peace:     return "Not tips or affirmations. God's own Word over your mind, spoken the way Jesus did."
+        case .health:    return "Not wishful thinking. God's own Word over your body, spoken the way Jesus did."
+        case .abundance: return "Not money advice. God's own promise over your finances, spoken the way Jesus did."
+        case .identity:  return "Not self-help. God's own words about you, spoken until they're what you believe."
+        case .purpose:   return "Not a motivation app. God's own Word over your steps, spoken the way Jesus did."
+        case .joy:       return "Not positive thinking. God's own Word over your life, spoken the way Jesus did."
+        case .more:      return "Not another prayer method. God's own Word, spoken with the authority Jesus used."
+        }
+    }
+
+    /// Same line for users we have no segment for.
+    static let generalAssurance = "Not tips or affirmations. God's own Word, in your mouth, the way Jesus prayed."
+
     /// Generic rows for users we have no segment for (settings, feature gates,
     /// the quiz arm's `unsegmented` bucket). Same four capabilities, no
     /// assumption about what's wrong.
@@ -782,7 +804,7 @@ struct HighConversionPaywallView: View {
                // closingLine
                 ctaButton
                 trialReassuranceLine
-                generosityLine
+                closingAssuranceLine
                 payWhatYouCanCTA
                 bottomLinks
             }
@@ -914,18 +936,25 @@ struct HighConversionPaywallView: View {
         }
     }
 
-    // MARK: - Generosity Line (mission framing above the pay-what-you-can link)
-    // TRUTHFULNESS: defensible because the pay-what-you-can program exists —
-    // full-price subscribers effectively subsidize it. Never escalate this to
-    // a literal one-for-one donated subscription claim ("gives SpeakLife free
-    // to someone"); no such program exists.
-    private var generosityLine: some View {
+    // MARK: - Closing Assurance (last line before the tap)
+    // This slot used to carry the generosity/pay-what-you-can framing. That is
+    // a meaning frame, not a decision frame — it tells a hesitating user what
+    // their money does for someone else at the exact moment they are still
+    // asking whether it does anything for them. It has not been lost: the
+    // post-purchase mission screen carries it, which is where a "you did
+    // something good" message actually lands.
+    //
+    // What belongs here is the last doubt: is this the right answer for what I
+    // came in with? The honest close is that the guarantee was never the app —
+    // it is Scripture — so the line names what this is not, then what it is,
+    // aimed at the problem the headline already named.
+    private var closingAssuranceLine: some View {
         HStack(alignment: .top, spacing: 6) {
-            Image(systemName: "heart.fill")
+            Image(systemName: "book.closed.fill")
                 .font(.system(size: 11))
                 .foregroundColor(.white.opacity(0.6))
                 .padding(.top, 2)
-            Text("Your subscription helps keep SpeakLife within reach for believers who can't afford full price.")
+            Text(pain?.assurance ?? PaywallPain.generalAssurance)
                 .font(.system(size: 12))
                 .foregroundColor(.white.opacity(0.6))
                 .multilineTextAlignment(.center)
