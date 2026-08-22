@@ -451,9 +451,43 @@ struct BibleChatConversationView: View {
                         typingIndicator.id("typing")
                     }
                     if let err = viewModel.errorMessage {
-                        Text(err)
-                            .font(.system(size: 13))
-                            .foregroundColor(.red.opacity(0.9))
+                        // The question is still in the transcript above, so the
+                        // only thing missing was a way to send it again. Without
+                        // this the user has to retype what they can still see.
+                        VStack(spacing: 10) {
+                            Text(err)
+                                .font(.system(size: 13))
+                                .foregroundColor(.red.opacity(0.9))
+                                .multilineTextAlignment(.center)
+
+                            Button {
+                                viewModel.retryLastMessage(isPremium: subscriptionStore.isPremium)
+                            } label: {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "arrow.clockwise")
+                                        .font(.system(size: 13, weight: .semibold))
+                                    Text("Retry")
+                                        .font(.system(size: 14, weight: .semibold))
+                                }
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 18)
+                                .padding(.vertical, 9)
+                                .background(
+                                    Capsule().fill(Color.white.opacity(0.14))
+                                )
+                                .overlay(
+                                    Capsule().stroke(Color.white.opacity(0.22), lineWidth: 1)
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            // A retry while one is already in flight would be
+                            // dropped by the view model anyway; hide it so the
+                            // button never looks dead.
+                            .disabled(viewModel.isSending)
+                            .opacity(viewModel.isSending ? 0.4 : 1)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 4)
                     }
                 }
                 .padding(.horizontal, 16)

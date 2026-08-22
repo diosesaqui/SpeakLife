@@ -90,14 +90,37 @@ final class BibleChatConversationViewModel: ObservableObject {
         guard !isSending else { return }
         errorMessage = nil
         messages.append(ChatMessage(role: .user, text: text))
+        AnalyticsService.shared.trackUserAction("bible_chat_message_sent", category: "bible_chat")
+        GrowthMetrics.shared.trackActivation(action: "bible_chat_message_sent")
+        GrowthMetrics.shared.trackFeatureFirstUse("bible_chat")
+        dispatchSend(text, isPremium: isPremium)
+    }
+
+    /// Resend the question that just failed, without making the user retype it.
+    ///
+    /// The failure path deliberately leaves their message in the transcript, so
+    /// the text is already here — this resends it in place rather than
+    /// appending a duplicate, which is why it cannot go through `send`.
+    ///
+    /// Not counted as a new message: the activation and first-use metrics
+    /// already fired when the question was first asked, and counting a network
+    /// blip as a second question would overstate engagement.
+    func retryLastMessage(isPremium: Bool) {
+        guard !isSending else { return }
+        guard let last = messages.last, last.role == .user else { return }
+        errorMessage = nil
+        AnalyticsService.shared.trackUserAction("bible_chat_retry_tapped", category: "bible_chat")
+        dispatchSend(last.text, isPremium: isPremium)
+    }
+
+    /// The request itself. Assumes the user's message is already the last one in
+    /// the transcript, so both a first send and a retry can share it.
+    private func dispatchSend(_ text: String, isPremium: Bool) {
         isSending = true
 
         // Rolling window: only the last N messages are sent upstream.
         let window = Array(messages.suffix(windowSize))
         let gen = generation
-        AnalyticsService.shared.trackUserAction("bible_chat_message_sent", category: "bible_chat")
-        GrowthMetrics.shared.trackActivation(action: "bible_chat_message_sent")
-        GrowthMetrics.shared.trackFeatureFirstUse("bible_chat")
 
         Task {
             defer { isSending = false }
