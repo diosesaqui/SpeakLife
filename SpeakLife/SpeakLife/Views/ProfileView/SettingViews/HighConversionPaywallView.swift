@@ -163,40 +163,34 @@ enum UserPain: String, CaseIterable {
         }
     }
 
-    /// Subhead. **The offer, named — not an instruction.**
+    /// Subhead. **Declare it, then act on it.**
     ///
-    /// A paywall subhead answers "what is this?", because that is the question
-    /// standing between the headline and the price. An imperative answers "what
-    /// should I do?", which is a question the reader has not asked and cannot
-    /// act on yet: they do not have the app. "Speak what God already said you
-    /// are" reads as advice; "What God already said you are, spoken until it's
-    /// what you believe" reads as the thing they are buying.
+    /// The headline one line above already named the problem, so this line says
+    /// what to do about it — and it names the second half on purpose. Saying it
+    /// and then living unchanged is the thing James calls dead faith, and a
+    /// paywall that only promises a feeling ("expect instead of hope") is
+    /// selling one internal state in place of another. Both halves, every time:
+    /// the declaration, and the move that proves you believed it.
     ///
-    /// The "spoken the way Jesus did" reinforcement is deliberately NOT here.
-    /// It already closes every paywall in `assurance`, for all fifteen pains —
-    /// putting it in the subhead too would say the same thing twice on one
-    /// screen, and the close is the better place for it because that is where
-    /// the last doubt sits.
-    ///
-    /// Ten to thirteen words. No product name; the four rows underneath are
+    /// Ten to thirteen words. No product name — the four rows underneath are
     /// where SpeakLife shows up.
     var solution: String {
         switch self {
-        case .peace:      return "God's own words for a racing mind, in your mouth every morning."
-        case .fear:       return "God's protection over tomorrow, spoken before the dread has a chance."
-        case .health:     return "The healing the cross already paid for, spoken over your body daily."
-        case .abundance:  return "God's promise to supply every need, spoken over your finances daily."
-        case .identity:   return "What God already said you are, spoken until it's what you believe."
-        case .shame:      return "What the cross already settled, spoken until you believe you're clean."
-        case .bondage:    return "The authority Jesus used, in your own mouth, every single morning."
-        case .purpose:    return "The steps God already ordered, spoken over your day every morning."
-        case .joy:        return "God's joy and strength, spoken over your day before it starts."
-        case .grief:      return "God's own comfort, spoken over your heart on the hard mornings."
-        case .loneliness: return "God's nearness, spoken over your life on the quiet nights."
-        case .marriage:   return "God's peace, spoken over your home while He works on the rest."
-        case .family:     return "God's promises over the people you love, spoken out loud daily."
-        case .nearness:   return "What God says about being near you, spoken back to Him daily."
-        case .more:       return "God's Word over what you're facing, spoken with the authority Jesus used."
+        case .peace:      return "Declare God's peace over your mind, then move through the day settled."
+        case .fear:       return "Declare God's protection over tomorrow, then walk into it uncovered by dread."
+        case .health:     return "Declare the healing the cross paid for, then treat your body like it's yours."
+        case .abundance:  return "Declare God's supply over your finances, then decide like the provision is there."
+        case .identity:   return "Declare what God already said you are, then carry yourself like it's true."
+        case .shame:      return "Declare what the cross already settled, then stop picking it back up."
+        case .bondage:    return "Declare His authority over it, then walk out of the room it owned."
+        case .purpose:    return "Declare the steps God already ordered, then take the next one."
+        case .joy:        return "Declare God's joy over your day, then go live it out loud."
+        case .grief:      return "Declare God's comfort over your heart, then let Him carry what you can't."
+        case .loneliness: return "Declare God's nearness over your life, then stop facing it on your own."
+        case .marriage:   return "Declare God's peace over your home, then love it like peace lives there."
+        case .family:     return "Declare God's promises over them, then stand instead of lying awake."
+        case .nearness:   return "Declare what God says about being near you, then draw near back."
+        case .more:       return "Declare God's Word with the authority Jesus used, then act on it."
         }
     }
 
@@ -438,10 +432,18 @@ struct HighConversionPaywallView: View {
     }
     private var resolvedSubheadline: String {
         if hasFreshPersonalDeclaration {
-            if let burden = burdenStyleLabel {
-                return "Your \(burden) declarations, in your mouth every morning until it obeys."
+            // Falls through to the pain below when we have one. `burdenStyleLabel`
+            // reads `surveyGoalWord`, which is written at the END of onboarding
+            // — so at the paywall it is either empty or left over from an
+            // EARLIER run. That is how a provision paywall shipped with "your
+            // joy declarations" over provision rows and a provision closing
+            // line: three sources of truth, one of them a run behind.
+            if pain == nil, let burden = burdenStyleLabel {
+                return "Declare your \(burden) every morning and live like it's done."
             }
-            return "That declaration in your mouth every morning, until it obeys."
+            if pain == nil {
+                return "Declare it every morning and live like it's already done."
+            }
         }
         if let pain { return pain.solution }
         return "The exact Word for what you're facing, in your mouth every morning."
