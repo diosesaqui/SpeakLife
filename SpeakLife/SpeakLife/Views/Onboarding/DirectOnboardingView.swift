@@ -128,7 +128,8 @@ struct DirectOnboardingView: View {
                 // Hands back what they tapped on frame one, so the two asks read
                 // as one thread — acknowledge, then go deeper — instead of the
                 // flow appearing to ask the same question twice.
-                contextLine: DirectPain.echoLine(for: responses.heaviestBurden)
+                contextLine: DirectPain.echoLine(for: responses.heaviestBurden),
+                prompt: DirectPain.prompt(for: responses.heaviestBurden)
             ) { declaration in
                 savedDeclaration = declaration
                 advance()
@@ -420,6 +421,18 @@ private struct DirectPain: Identifiable {
     /// say.
     let echo: String
 
+    /// The follow-up question on the personal-declaration screen, written to
+    /// pick up directly from `echo` without repeating it — "your mind won't
+    /// stop racing" is answered by "what's it racing about?", not by asking
+    /// about their mind a second time.
+    ///
+    /// This replaces the shared screen's default ("What's one thing you're
+    /// trusting God for?"), which is aspirational and pulls answers too broad
+    /// to match well: someone types "peace" or "my family" and gets back the
+    /// same generic declaration they'd have got without typing anything. The
+    /// matcher wants the situation, so the question asks for the situation.
+    let prompt: String
+
     /// The receipt shown at the top of the personal-declaration screen. nil when
     /// the pain screen was somehow never answered, which leaves that screen with
     /// its own unmodified prompt rather than a dangling "You said" attached to
@@ -429,21 +442,34 @@ private struct DirectPain: Identifiable {
         return all.first(where: { $0.burden == burden })?.echo
     }
 
+    /// The matching follow-up question. nil falls back to the shared default.
+    static func prompt(for burden: HeaviestBurden?) -> String? {
+        guard let burden else { return nil }
+        return all.first(where: { $0.burden == burden })?.prompt
+    }
+
     static let all: [DirectPain] = [
         .init(burden: .peace,     icon: "🕊", line: "My mind won't stop racing",
-              echo: "You said your mind won't stop racing."),
+              echo: "You said your mind won't stop racing.",
+              prompt: "What's it racing about?"),
         .init(burden: .health,    icon: "🌿", line: "My body needs healing",
-              echo: "You said your body needs healing."),
+              echo: "You said your body needs healing.",
+              prompt: "What are you believing God to heal?"),
         .init(burden: .abundance, icon: "💰", line: "The money isn't there",
-              echo: "You said the money isn't there."),
+              echo: "You said the money isn't there.",
+              prompt: "What do you need God to cover?"),
         .init(burden: .identity,  icon: "👑", line: "I don't feel good enough",
-              echo: "You said you don't feel good enough."),
+              echo: "You said you don't feel good enough.",
+              prompt: "What's making you feel that way?"),
         .init(burden: .joy,       icon: "☀️", line: "I feel flat and empty",
-              echo: "You said you're feeling flat and empty."),
+              echo: "You said you're feeling flat and empty.",
+              prompt: "What's been draining you?"),
         .init(burden: .purpose,   icon: "🧭", line: "I'm off track from my calling",
-              echo: "You said you're off track from your calling."),
+              echo: "You said you're off track from your calling.",
+              prompt: "Where do you need God to open a door?"),
         .init(burden: .allOfIt,   icon: "⚡", line: "I just want more of God",
-              echo: "You said you want more of God."),
+              echo: "You said you want more of God.",
+              prompt: "What are you believing Him for?"),
     ]
 }
 

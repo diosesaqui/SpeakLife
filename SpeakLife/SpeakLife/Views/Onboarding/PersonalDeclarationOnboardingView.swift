@@ -70,6 +70,12 @@ struct PersonalDeclarationOnboardingView: View {
     /// asked something first (`direct` asks what brought them here on frame
     /// one); nil everywhere else leaves the screen exactly as it was.
     var contextLine: String? = nil
+    /// An optional replacement for the opening question. The default asks what
+    /// they are trusting God for, which is aspirational and invites an answer
+    /// too broad to match well ("peace", "my family"). An arm that already
+    /// knows the domain can ask for the specific situation inside it instead,
+    /// which is what the matcher actually needs. nil keeps the default.
+    var prompt: String? = nil
     /// How many active declarations the user may carry. Onboarding and the
     /// after-breakthrough flows only ever add to an empty or near-empty set, so
     /// they take the system cap; the declarations list passes the user's real
@@ -211,11 +217,12 @@ struct PersonalDeclarationOnboardingView: View {
                         .animation(.easeOut(duration: 0.6), value: titleAppeared)
                 }
 
-                // Two lines, always. At 30pt the first line overflows a 4.7"
-                // screen and wraps to three, which is exactly the device with
-                // no height to spare once the keyboard is up; the scale factor
-                // makes the height predictable instead of device-dependent.
-                Text("What's one thing you're\ntrusting God for?")
+                // Two lines, always. At 30pt the default's first line overflows
+                // a 4.7" screen and wraps to three, which is exactly the device
+                // with no height to spare once the keyboard is up; the line
+                // limit plus scale factor makes the height predictable instead
+                // of device-dependent, for an override as well as the default.
+                Text(prompt ?? "What's one thing you're\ntrusting God for?")
                     .font(.system(size: keyboardUp ? 26 : 30, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
@@ -455,7 +462,7 @@ struct PersonalDeclarationOnboardingView: View {
                     )
 
                 if viewModel.inputText.isEmpty {
-                    Text("Type what you're believing for...")
+                    Text("Type what's on your heart...")
                         .foregroundColor(.white.opacity(0.35))
                         .font(.system(size: 15))
                         .padding(14)
