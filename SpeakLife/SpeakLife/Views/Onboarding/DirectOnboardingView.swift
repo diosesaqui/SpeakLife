@@ -25,29 +25,47 @@
 //                     about what speaking does: it is the explanation of
 //                     something they just did. "That's authority. You spoke to
 //                     your mountain just like Jesus" beats promising they will.
-//    2. Victory     — "what changes the day this is settled?" One tap. The only
+//    2. Duration    — "how long have you been carrying this?" One tap.
+//    3. Long enough — their own answer read back, and answered: Jesus never
+//                     asked how long it had been. Eighteen years bent over,
+//                     thirty-eight years by the pool, both settled in a
+//                     sentence. The cost of carrying it, and the reason it is
+//                     not too late, in one screen.
+//    4. Victory     — "what changes the day this is settled?" One tap. The only
 //                     forward-looking question in the arm, and the user names
 //                     the outcome themselves rather than being sold one.
-//    3. Minutes     — "how much time can you give this daily?" One tap, and
+//    5. Minutes     — "how much time can you give this daily?" One tap, and
 //                     every answer is a yes. Shrinks the ask to a number the
 //                     user chose before the price is ever shown.
-//    4. Building    — the plan assembling, four lines.
-//    5. Plan        — their 30-day plan, holding their own declaration, the
+//    6. Building    — the plan assembling, four lines.
+//    7. Plan        — their 30-day plan, holding their own declaration, the
 //                     rhythm they just picked, and their own words on week 4.
-//    6. Proof       — the review wall, immediately before the ask.
-//    7. Paywall
-//    8. Connect     — how they take in the Word; orders their daily rows.
-//    9. Time        — when their declaration arrives daily (terminal).
+//    8. Pledge      — "every morning, out loud." The behaviour committed to
+//                     before the price appears, so the ask lands on a decision
+//                     the user has already made.
+//    9. Proof       — the review wall, immediately before the ask.
+//   10. Paywall
+//   11. Connect     — how they take in the Word; orders their daily rows.
+//   12. Time        — when their declaration arrives daily (terminal).
 //
-//  Two rules govern which questions get a screen in an arm this short. A
-//  question earns its place only if (a) the user can answer it in one tap and
-//  (b) its answer is visibly handed back before the paywall. Victory and
-//  minutes both pass: they are the week-4 line and the rhythm row on the plan.
-//  Connect style passes (b) only from tomorrow on, so it now sits after the
-//  paywall next to the other setup question rather than spending a pre-ask
-//  screen — and it no longer offers "reading" and "journaling" as equals to
-//  speaking sixty seconds after the mechanism screen argued that speaking is
-//  the thing Jesus named.
+//  The arm is no longer short for its own sake. Screen count was never what
+//  costs conversion; friction per screen is. Everything from the mechanism to
+//  the review wall is one tap and auto-advances, with a progress bar over it,
+//  so nine screens read faster than four screens with a Continue button on
+//  each. What the extra screens buy is a commitment ladder: how long it has
+//  been, what winning looks like, how much time they will give, and finally
+//  what they are agreeing to do — each one a small yes, each one handed back
+//  before the ask.
+//
+//  Two rules govern which questions get a screen. A question earns its place
+//  only if (a) the user can answer it in one tap and (b) its answer is visibly
+//  handed back before the paywall. Duration is read back on the very next
+//  screen; victory is the plan's week-4 line; minutes is its rhythm row.
+//  Connect style passes (b) only from tomorrow on, so it sits after the paywall
+//  next to the other setup question rather than spending a pre-ask screen — and
+//  it no longer offers "reading" and "journaling" as equals to speaking sixty
+//  seconds after the mechanism screen argued that speaking is the thing Jesus
+//  named.
 //
 //  Screen zero is the arm. There is nothing in front of it: no logo, no scene,
 //  no pitch, no category list. The first thing that happens is the product
@@ -119,6 +137,12 @@ struct DirectOnboardingView: View {
     /// was built.
     @State private var startedAt: Date? = nil
 
+    /// How far through the one-tap half the user is, 0 when off it.
+    private var valueProgress: Double {
+        guard let idx = currentStep.valueScreenIndex else { return 0 }
+        return Double(idx) / Double(DirectStep.totalValueScreens)
+    }
+
     var body: some View {
         ZStack(alignment: .top) {
             backgroundView
@@ -130,6 +154,25 @@ struct DirectOnboardingView: View {
                 ))
                 .id(currentStep.rawValue)
 
+            // Every other arm carries one; this arm was the only one asking
+            // people to answer questions with no idea how many were left. See
+            // `DirectStep.valueScreenIndex` for which screens it covers.
+            if currentStep.valueScreenIndex != nil {
+                VStack {
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            Rectangle().fill(Color.white.opacity(0.15)).frame(height: 3)
+                            Rectangle().fill(Color.white)
+                                .frame(width: geo.size.width * valueProgress, height: 3)
+                                .animation(.spring(response: 0.5, dampingFraction: 0.8), value: valueProgress)
+                        }
+                    }
+                    .frame(height: 3)
+                    .padding(.horizontal, 28)
+                    .padding(.top, size.height * 0.065)
+                    Spacer()
+                }
+            }
         }
         .ignoresSafeArea()
         .onAppear {
@@ -196,6 +239,19 @@ struct DirectOnboardingView: View {
                 pain: pain ?? .more,
                 spokeDeclaration: savedDeclaration != nil
             ) { advance() }
+        case .carriedDuration:
+            // Cost of inaction, in one tap. Best-in-class flows ask this early
+            // and then do arithmetic on the answer; here the next screen does
+            // something better than arithmetic with it.
+            SurveyExtendedQuizScreen(
+                size: size,
+                flow: "direct",
+                question: .carriedDuration,
+                selection: $responses.battleDuration,
+                autoAdvance: true
+            ) { advance() }
+        case .longEnough:
+            DirectLongEnoughScreen(size: size, duration: responses.battleDuration) { advance() }
         case .victoryOutcome:
             // The arm's only forward-looking question, and the user answers it
             // themselves. Everything before this screen is about what is wrong
@@ -208,7 +264,8 @@ struct DirectOnboardingView: View {
                 size: size,
                 flow: "direct",
                 question: .victorySettled(for: planBurden),
-                selection: $responses.victoryOutcome
+                selection: $responses.victoryOutcome,
+                autoAdvance: true
             ) { advance() }
         case .dailyMinutes:
             // A commitment question with no wrong answer: every option is a
@@ -222,7 +279,8 @@ struct DirectOnboardingView: View {
                 size: size,
                 flow: "direct",
                 question: .dailyMinutes,
-                selection: $responses.dailyMinutes
+                selection: $responses.dailyMinutes,
+                autoAdvance: true
             ) { advance() }
         case .planBuilding:
             SurveyPlanBuildingScreen(burden: planBurden, flow: "direct") { advance() }
@@ -241,6 +299,18 @@ struct DirectOnboardingView: View {
                 personalDeclaration: savedDeclaration?.declarationText,
                 dailyMinutes: responses.dailyMinutes,
                 victoryEcho: victoryEcho
+            ) { advance() }
+        case .pledge:
+            // The behaviour committed to before the price appears. Everything
+            // up to here has been the product proving itself; this is the one
+            // screen where the user says what they will do, and it is the last
+            // thing they do before the ask. A yes here is what the paywall is
+            // then asking them to keep.
+            DirectPledgeScreen(
+                size: size,
+                burden: planBurden,
+                declarationText: savedDeclaration?.declarationText,
+                dailyMinutes: responses.dailyMinutes
             ) { advance() }
         case .testimonials:
             TestimonialWallView(size: size, flow: "direct") { advance() }
@@ -261,7 +331,8 @@ struct DirectOnboardingView: View {
                 size: size,
                 flow: "direct",
                 question: .connectStyle,
-                selection: $responses.connectStyle
+                selection: $responses.connectStyle,
+                autoAdvance: true
             ) { advance() }
         case .notificationTime:
             SurveyQ8NotificationScreen(size: size, responses: responses, flow: "direct") { advance() }
@@ -401,6 +472,10 @@ struct DirectOnboardingView: View {
             // free-text open is too heavy an ask for frame one.
             "pain_source": declarationSource != "none" ? declarationSource : (responses.heaviestBurden != nil ? "picker" : "none"),
             "seeded_category": category.rawValue,
+            // How long they had been carrying it before they downloaded. The
+            // one answer here that says something about the user rather than
+            // about the flow, and the one most likely to split conversion.
+            "carried_duration": responses.battleDuration ?? "unknown",
             // The forward-looking answer. Worth reading against conversion on
             // its own: an arm that sells a future the user named should convert
             // differently by which future they named.
@@ -480,14 +555,35 @@ enum DirectStep: Int, CaseIterable {
     case painFallback     = 1  // the picker, ONLY when the declaration produced nothing
     case declarationRetry = 2  // the same feature re-asked narrow, scoped to what they picked
     case mechanism        = 3  // how Jesus answered — after, so it explains what just happened
-    case victoryOutcome   = 4  // what changes when this is settled — burden-aware, one tap
-    case dailyMinutes     = 5  // how much time daily — the commitment, and the plan's rhythm
-    case planBuilding     = 6  // "building your plan" loader (transition, no bar)
-    case planReveal       = 7  // their named 30-day plan — the value crystallized before the ask
-    case testimonials     = 8  // the review wall, right before the ask
-    case paywall          = 9
-    case connectStyle     = 10 // setup, not persuasion — orders their daily rows from tomorrow
-    case notificationTime = 11 // terminal — completes onboarding
+    case carriedDuration  = 4  // how long they've carried it — one tap, read back on the next screen
+    case longEnough       = 5  // their answer answered: Jesus never asked how long it had been
+    case victoryOutcome   = 6  // what changes when this is settled — burden-aware, one tap
+    case dailyMinutes     = 7  // how much time daily — the commitment, and the plan's rhythm
+    case planBuilding     = 8  // "building your plan" loader (transition, no bar)
+    case planReveal       = 9  // their named 30-day plan — the value crystallized before the ask
+    case pledge           = 10 // "every morning, out loud" — the yes taken before the price
+    case testimonials     = 11 // the review wall, right before the ask
+    case paywall          = 12
+    case connectStyle     = 13 // setup, not persuasion — orders their daily rows from tomorrow
+    case notificationTime = 14 // terminal — completes onboarding
+
+    /// Position in the question phase, for the progress bar.
+    ///
+    /// Frame one and its two recovery screens are deliberately off it: they are
+    /// the product doing its job, not questions, and a bar over them would
+    /// announce a form before the user has been given anything. It stops after
+    /// the last question too, the way every other arm's does — the bar fills
+    /// exactly as the asking ends, and the plan, the pledge and the ask run
+    /// without chrome over them.
+    var valueScreenIndex: Int? {
+        Self.valueScreens.firstIndex(of: self).map { $0 + 1 }
+    }
+
+    private static let valueScreens: [DirectStep] = [
+        .mechanism, .carriedDuration, .longEnough, .victoryOutcome, .dailyMinutes
+    ]
+
+    static var totalValueScreens: Int { valueScreens.count }
 
     /// Bumped whenever the raw values are renumbered, a step is inserted, or a
     /// step changes into a materially different screen — so events from two
@@ -510,7 +606,12 @@ enum DirectStep: Int, CaseIterable {
     /// style moved behind the paywall. Every step after the mechanism is
     /// renumbered and the drop-off shape is different, so schema-5 data is not
     /// comparable step-for-step.
-    static let flowSchema = 6
+    /// 6 → 7: the arm stopped optimising for screen count and started
+    /// optimising for friction per screen. A duration question and the screen
+    /// that answers it, a pledge before the ask, auto-advance on every one-tap
+    /// question, and a progress bar over the whole one-tap half. Every step
+    /// after the mechanism is renumbered again.
+    static let flowSchema = 7
 
     /// Stable analytics name. Funnels and breakdowns are built on this, not on
     /// the raw Int — a `step_name` of "mechanism" is readable in PostHog where
@@ -521,10 +622,13 @@ enum DirectStep: Int, CaseIterable {
         case .painFallback:     return "pain_fallback"
         case .declarationRetry: return "personal_declaration_retry"
         case .mechanism:        return "mechanism"
+        case .carriedDuration:  return "carried_duration"
+        case .longEnough:       return "long_enough"
         case .victoryOutcome:   return "victory_outcome"
         case .dailyMinutes:     return "daily_minutes"
         case .planBuilding:     return "plan_building"
         case .planReveal:       return "plan_reveal"
+        case .pledge:           return "pledge"
         case .testimonials:     return "testimonials"
         case .paywall:          return "paywall"
         case .connectStyle:     return "connect_style"
@@ -746,6 +850,262 @@ private struct DirectPainScreen: View {
             "burden": burden.rawValue
         ])
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.28) { onContinue() }
+    }
+}
+
+// MARK: - Screen: Long enough
+
+/// The duration answer, read straight back and then answered.
+///
+/// Asking how long someone has carried something is the standard move; what
+/// usually follows it is arithmetic ("that's 1,095 nights") or an invented
+/// statistic. This arm has something better and true: two people Jesus met who
+/// had carried theirs for eighteen and thirty-eight years, both settled in a
+/// sentence. It lands the cost of carrying it and the reason it is not too late
+/// on the same screen, and it does it by reinforcing the mechanism the screen
+/// before just taught rather than changing the subject to a number.
+///
+/// Nothing here is a statistic, because there is no honest one to quote.
+private struct DirectLongEnoughScreen: View {
+    let size: CGSize
+    /// Raw "battle_duration" answer ("weeks" | "months" | "years" | "always").
+    let duration: String?
+    let onContinue: () -> Void
+
+    @State private var v = false
+
+    /// Their own answer, said back to them. Never longer than the answer was.
+    private var headline: String {
+        switch duration {
+        case "weeks":  return "A few weeks is\nlong enough."
+        case "months": return "Months is\nlong enough."
+        case "years":  return "Years is\nlong enough."
+        case "always": return "That is\nlong enough."
+        default:       return "It has been\nlong enough."
+        }
+    }
+
+    private let cases: [(String, String, String)] = [
+        ("Eighteen years bent over.", "\"Woman, you are set free.\" She straightened up that hour.", "Luke 13:12-13"),
+        ("Thirty-eight years by the pool.", "\"Get up.\" He picked up his mat and walked.", "John 5:5-9")
+    ]
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 24) {
+                    Spacer().frame(height: size.height * 0.14)
+
+                    VStack(spacing: 12) {
+                        Text("HOW LONG IT'S BEEN")
+                            .font(.system(size: 12, weight: .bold, design: .rounded))
+                            .foregroundColor(DS.Palette.gold.opacity(0.9))
+                            .kerning(1.4)
+                            .directStagger(v)
+
+                        Text(headline)
+                            .font(.system(size: 30, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                            .minimumScaleFactor(0.8)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .directStagger(v, delay: 0.12)
+                    }
+                    .padding(.horizontal, 28)
+
+                    Text("Jesus never asked how long it had been.")
+                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .foregroundColor(.white.opacity(0.9))
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.horizontal, 30)
+                        .directStagger(v, delay: 0.28)
+
+                    VStack(spacing: 18) {
+                        ForEach(Array(cases.enumerated()), id: \.offset) { idx, item in
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text(item.0)
+                                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                                    .foregroundColor(DS.Palette.gold)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                Text(item.1)
+                                    .font(.system(size: 15, weight: .regular, design: .rounded))
+                                    .foregroundColor(.white.opacity(0.85))
+                                    .fixedSize(horizontal: false, vertical: true)
+                                Text(item.2)
+                                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                                    .foregroundColor(.white.opacity(0.45))
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .directStagger(v, delay: 0.40 + Double(idx) * 0.16)
+                        }
+                    }
+                    .padding(20)
+                    .dsGlass(cornerRadius: DS.Radius.lg)
+                    .padding(.horizontal, 24)
+
+                    Text("Old never meant harder.\nIt meant nobody had spoken to it yet.")
+                        .font(.system(size: 17, weight: .semibold, design: .rounded))
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                        .lineSpacing(4)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.horizontal, 30)
+                        .directStagger(v, delay: 0.76)
+
+                    Spacer().frame(height: 8)
+                }
+            }
+
+            DirectCTA(label: "Keep Going →") { onContinue() }
+                .padding(.bottom, 36)
+                .directStagger(v, delay: 0.9)
+        }
+        .onAppear {
+            AnalyticsService.shared.track("direct_long_enough_shown", parameters: [
+                "carried_duration": duration ?? "unknown"
+            ])
+            withAnimation { v = true }
+        }
+    }
+}
+
+// MARK: - Screen: The pledge
+
+/// The yes taken before the price.
+///
+/// Everything before this screen is the product proving itself. This is the one
+/// place the user states what *they* will do, and it is the last thing they do
+/// before the ask — so the paywall is not asking them to start something, it is
+/// asking them to keep something they already agreed to a screen ago. Their own
+/// declaration is on it, and the rhythm they picked two screens back, so the
+/// commitment is to a specific sentence for a specific number of seconds rather
+/// than to a vague intention.
+private struct DirectPledgeScreen: View {
+    let size: CGSize
+    let burden: HeaviestBurden
+    /// Their matched declaration, or nil if they never got one.
+    let declarationText: String?
+    /// Raw "daily_minutes" answer, for the length line.
+    let dailyMinutes: String?
+    let onContinue: () -> Void
+
+    @State private var v = false
+
+    private var declaration: String {
+        if let text = declarationText, !text.isEmpty { return text }
+        return burden.previewDeclaration.text
+    }
+
+    private var lengthLine: String {
+        switch dailyMinutes {
+        case "one":   return "One minute. Out loud. Every morning."
+        case "three": return "Three minutes. Out loud. Every morning."
+        case "ten":   return "Ten minutes. Out loud. Every morning."
+        default:      return "Out loud. Every morning."
+        }
+    }
+
+    private let terms: [String] = [
+        "I say it before the day gets loud.",
+        "I say it whether I feel it or not.",
+        "I say it until it is what I believe."
+    ]
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 22) {
+                    Spacer().frame(height: size.height * 0.10)
+
+                    VStack(spacing: 12) {
+                        Text("YOUR PART")
+                            .font(.system(size: 12, weight: .bold, design: .rounded))
+                            .foregroundColor(DS.Palette.gold.opacity(0.9))
+                            .kerning(1.4)
+                            .directStagger(v)
+
+                        Text(lengthLine)
+                            .font(.system(size: 27, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                            .minimumScaleFactor(0.8)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .directStagger(v, delay: 0.10)
+                    }
+                    .padding(.horizontal, 28)
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("THIS IS WHAT I SAY")
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                            .foregroundColor(DS.Palette.gold.opacity(0.85))
+                            .kerning(1.2)
+                        Text(declaration)
+                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+                            .foregroundColor(.white)
+                            .lineSpacing(3)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(20)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .dsGlass(cornerRadius: DS.Radius.lg)
+                    .padding(.horizontal, 24)
+                    .directStagger(v, delay: 0.20)
+
+                    VStack(alignment: .leading, spacing: 13) {
+                        ForEach(Array(terms.enumerated()), id: \.offset) { _, term in
+                            HStack(alignment: .top, spacing: 12) {
+                                Image(systemName: "checkmark")
+                                    .font(.system(size: 14, weight: .bold))
+                                    .foregroundColor(DS.Palette.gold)
+                                    .frame(width: 18)
+                                Text(term)
+                                    .font(.system(size: 16, weight: .regular, design: .rounded))
+                                    .foregroundColor(.white.opacity(0.92))
+                                    .fixedSize(horizontal: false, vertical: true)
+                                Spacer(minLength: 0)
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 30)
+                    .directStagger(v, delay: 0.30)
+
+                    VStack(spacing: 6) {
+                        Text("\"Keep this Book of the Law always on your lips; meditate on it day and night, so that you may be careful to do everything written in it. Then you will be prosperous and successful.\"")
+                            .font(.system(size: 14, weight: .regular, design: .serif))
+                            .italic()
+                            .foregroundColor(.white.opacity(0.75))
+                            .multilineTextAlignment(.center)
+                            .lineSpacing(3)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text("Joshua 1:8")
+                            .font(.system(size: 12, weight: .medium, design: .rounded))
+                            .foregroundColor(DS.Palette.gold.opacity(0.85))
+                    }
+                    .padding(.horizontal, 28)
+                    .directStagger(v, delay: 0.40)
+
+                    Spacer().frame(height: 8)
+                }
+            }
+
+            DirectCTA(label: "I'm In") {
+                AnalyticsService.shared.track("direct_pledge_accepted", parameters: [
+                    "burden": burden.rawValue,
+                    "daily_minutes": dailyMinutes ?? "unknown"
+                ])
+                onContinue()
+            }
+            .padding(.bottom, 36)
+            .directStagger(v, delay: 0.48)
+        }
+        .onAppear {
+            AnalyticsService.shared.track("direct_pledge_shown", parameters: [
+                "burden": burden.rawValue,
+                "has_personal_declaration": (declarationText?.isEmpty == false) as NSNumber
+            ])
+            withAnimation { v = true }
+        }
     }
 }
 
