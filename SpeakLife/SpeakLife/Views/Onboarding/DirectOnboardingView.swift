@@ -25,9 +25,29 @@
 //                     about what speaking does: it is the explanation of
 //                     something they just did. "That's authority. You spoke to
 //                     your mountain just like Jesus" beats promising they will.
-//    2. Proof       — the review wall, immediately before the ask.
-//    3. Paywall
-//    4. Time        — when their declaration arrives daily (terminal).
+//    2. Victory     — "what changes the day this is settled?" One tap. The only
+//                     forward-looking question in the arm, and the user names
+//                     the outcome themselves rather than being sold one.
+//    3. Minutes     — "how much time can you give this daily?" One tap, and
+//                     every answer is a yes. Shrinks the ask to a number the
+//                     user chose before the price is ever shown.
+//    4. Building    — the plan assembling, four lines.
+//    5. Plan        — their 30-day plan, holding their own declaration, the
+//                     rhythm they just picked, and their own words on week 4.
+//    6. Proof       — the review wall, immediately before the ask.
+//    7. Paywall
+//    8. Connect     — how they take in the Word; orders their daily rows.
+//    9. Time        — when their declaration arrives daily (terminal).
+//
+//  Two rules govern which questions get a screen in an arm this short. A
+//  question earns its place only if (a) the user can answer it in one tap and
+//  (b) its answer is visibly handed back before the paywall. Victory and
+//  minutes both pass: they are the week-4 line and the rhythm row on the plan.
+//  Connect style passes (b) only from tomorrow on, so it now sits after the
+//  paywall next to the other setup question rather than spending a pre-ask
+//  screen — and it no longer offers "reading" and "journaling" as equals to
+//  speaking sixty seconds after the mechanism screen argued that speaking is
+//  the thing Jesus named.
 //
 //  Screen zero is the arm. There is nothing in front of it: no logo, no scene,
 //  no pitch, no category list. The first thing that happens is the product
@@ -78,6 +98,22 @@ struct DirectOnboardingView: View {
     /// and the segment the paywall reads.
     @State private var pain: UserPain? = nil
 
+    /// The burden the plan screens speak in. A user who skipped every ask
+    /// carries none, and `allOfIt` is the one set of copy that assumes nothing
+    /// about their situation. Read by the victory question, the loader, the
+    /// plan reveal and the week-4 echo alike, so all four cannot disagree.
+    private var planBurden: HeaviestBurden { responses.heaviestBurden ?? .allOfIt }
+
+    /// The victory answer in the user's own words, for the plan's week-4 line.
+    /// Resolved against `planBurden` rather than `SurveyResponses.victoryEcho`,
+    /// which falls back to `.peace` to mirror the quiz arms' screens — against
+    /// a burden-less user here that would look the answer up in the wrong set
+    /// and quietly return nil.
+    private var victoryEcho: String? {
+        guard let value = responses.victoryOutcome else { return nil }
+        return planBurden.victoryOptions.first(where: { $0.value == value })?.echo
+    }
+
     /// Funnel entry time, for `total_duration_seconds`. Set in onAppear rather
     /// than at init so it measures time on screen, not time since the struct
     /// was built.
@@ -116,7 +152,13 @@ struct DirectOnboardingView: View {
                 viewModel: DIContainer.shared.makePersonalDeclarationViewModel(),
                 size: size,
                 flow: "direct",
-                prompt: "What brought you\nhere today?"
+                prompt: "What brought you\nhere today?",
+                // Frame one opens on the box, not the mic. Tapping the mic
+                // fires the speech-recognition and microphone prompts as the
+                // very first thing that happens in the app, before it has given
+                // the user anything — and a denial lands them on this box
+                // regardless. The mic is one tap away underneath.
+                startInTextMode: true
             ) { declaration in
                 savedDeclaration = declaration
                 if declaration != nil { declarationSource = "open" }
@@ -141,7 +183,8 @@ struct DirectOnboardingView: View {
                 // the frame-one ask's — the whole point of running it.
                 flow: "direct_retry",
                 prompt: DirectPain.prompt(for: responses.heaviestBurden),
-                contextLine: DirectPain.echoLine(for: responses.heaviestBurden)
+                contextLine: DirectPain.echoLine(for: responses.heaviestBurden),
+                startInTextMode: true
             ) { declaration in
                 savedDeclaration = declaration
                 if declaration != nil { declarationSource = "retry" }
@@ -153,25 +196,73 @@ struct DirectOnboardingView: View {
                 pain: pain ?? .more,
                 spokeDeclaration: savedDeclaration != nil
             ) { advance() }
+        case .victoryOutcome:
+            // The arm's only forward-looking question, and the user answers it
+            // themselves. Everything before this screen is about what is wrong
+            // now; this is the first time they say out loud what "won" looks
+            // like — and because the options are written per burden, the four
+            // on screen are already about their situation. The answer is not
+            // filed away: it comes back in their own words on the plan's week-4
+            // line two screens later, which is what earns it the screen.
+            SurveyExtendedQuizScreen(
+                size: size,
+                flow: "direct",
+                question: .victorySettled(for: planBurden),
+                selection: $responses.victoryOutcome
+            ) { advance() }
+        case .dailyMinutes:
+            // A commitment question with no wrong answer: every option is a
+            // yes, and the smallest one is a minute. Asked before any price is
+            // on screen, so the user sets the size of the daily ask themselves
+            // and then sees it printed back as their rhythm on the plan. That
+            // ordering is the point — "1 minute, morning and evening" is a much
+            // easier thing to weigh a subscription against than an unspecified
+            // daily habit.
+            SurveyExtendedQuizScreen(
+                size: size,
+                flow: "direct",
+                question: .dailyMinutes,
+                selection: $responses.dailyMinutes
+            ) { advance() }
+        case .planBuilding:
+            SurveyPlanBuildingScreen(burden: planBurden, flow: "direct") { advance() }
+        case .planReveal:
+            // The screen this arm was missing, and the one every other arm has.
+            // Without it the paywall was the first place a user saw what they
+            // would actually be buying, so the arm asked for money on the
+            // strength of one declaration and a teaching screen. This gathers
+            // everything they gave us into one named, finished thing — their
+            // declaration, their scripture, their rhythm, their words on week 4
+            // — and then the CTA offers to unlock it.
+            SurveyPlanRevealScreen(
+                size: size,
+                burden: planBurden,
+                flow: "direct",
+                personalDeclaration: savedDeclaration?.declarationText,
+                dailyMinutes: responses.dailyMinutes,
+                victoryEcho: victoryEcho
+            ) { advance() }
+        case .testimonials:
+            TestimonialWallView(size: size, flow: "direct") { advance() }
+        case .paywall:
+            HighConversionPaywallView(callback: { advance() }, source: "onboarding", isHardPaywall: true)
         case .connectStyle:
-            // The one question in this arm that is not about their pain, and
-            // the only one whose answer changes the product rather than the
-            // copy: it orders the rows on their daily checklist from tomorrow
-            // on. Placed after the mechanism because the mechanism is the
-            // payoff — interrupting declaration → explanation to ask a setup
-            // question would spend the arm's best moment — and before the
-            // review wall so it is asked while they are still reading rather
-            // than deciding.
+            // A setup question, not a persuasion question: it orders the rows
+            // on their daily checklist from tomorrow on and changes nothing the
+            // user sees before the ask. It used to sit between the mechanism
+            // and the review wall, where it spent a pre-paywall screen and —
+            // worse — offered "reading and reflecting" and "writing and
+            // journaling" as equal options a minute after the mechanism screen
+            // argued that speaking is the thing Jesus actually named. Here it
+            // sits with the other setup question and is still answered by
+            // everyone, because the paywall is hard and the flow continues
+            // through it either way.
             SurveyExtendedQuizScreen(
                 size: size,
                 flow: "direct",
                 question: .connectStyle,
                 selection: $responses.connectStyle
             ) { advance() }
-        case .testimonials:
-            TestimonialWallView(size: size, flow: "direct") { advance() }
-        case .paywall:
-            HighConversionPaywallView(callback: { advance() }, source: "onboarding", isHardPaywall: true)
         case .notificationTime:
             SurveyQ8NotificationScreen(size: size, responses: responses, flow: "direct") { advance() }
         }
@@ -310,9 +401,17 @@ struct DirectOnboardingView: View {
             // free-text open is too heavy an ask for frame one.
             "pain_source": declarationSource != "none" ? declarationSource : (responses.heaviestBurden != nil ? "picker" : "none"),
             "seeded_category": category.rawValue,
-            // Now a product input, not just a stat: it orders their checklist
-            // rows from tomorrow on, so its distribution is worth reading
-            // against completion rather than on its own.
+            // The forward-looking answer. Worth reading against conversion on
+            // its own: an arm that sells a future the user named should convert
+            // differently by which future they named.
+            "victory_outcome": responses.victoryOutcome ?? "unknown",
+            // The size of the daily ask, chosen by the user before any price
+            // was on screen.
+            "daily_minutes": responses.dailyMinutes ?? "unknown",
+            // A product input, not just a stat: it orders their checklist rows
+            // from tomorrow on, so its distribution is worth reading against
+            // retention rather than on its own. Asked after the paywall now, so
+            // it no longer says anything about pre-ask drop-off.
             "connect_style": responses.connectStyle ?? "unknown",
             "notification_time": responses.notificationTime?.rawValue ?? "unknown",
             // The arm's payoff moment. Carried onto completion so conversion
@@ -381,10 +480,14 @@ enum DirectStep: Int, CaseIterable {
     case painFallback     = 1  // the picker, ONLY when the declaration produced nothing
     case declarationRetry = 2  // the same feature re-asked narrow, scoped to what they picked
     case mechanism        = 3  // how Jesus answered — after, so it explains what just happened
-    case connectStyle     = 4  // how they connect with scripture — orders their daily rows
-    case testimonials     = 5  // the review wall, right before the ask
-    case paywall          = 6
-    case notificationTime = 7  // terminal — completes onboarding
+    case victoryOutcome   = 4  // what changes when this is settled — burden-aware, one tap
+    case dailyMinutes     = 5  // how much time daily — the commitment, and the plan's rhythm
+    case planBuilding     = 6  // "building your plan" loader (transition, no bar)
+    case planReveal       = 7  // their named 30-day plan — the value crystallized before the ask
+    case testimonials     = 8  // the review wall, right before the ask
+    case paywall          = 9
+    case connectStyle     = 10 // setup, not persuasion — orders their daily rows from tomorrow
+    case notificationTime = 11 // terminal — completes onboarding
 
     /// Bumped whenever the raw values are renumbered, a step is inserted, or a
     /// step changes into a materially different screen — so events from two
@@ -401,7 +504,13 @@ enum DirectStep: Int, CaseIterable {
     /// step-for-step.
     /// 4 → 5: the connect-style question was added between the mechanism and
     /// the review wall, so every step after it is renumbered.
-    static let flowSchema = 5
+    /// 5 → 6: the pre-paywall half was rebuilt. Two one-tap questions (victory
+    /// outcome, daily minutes) now sit after the mechanism, they feed a plan
+    /// builder and a named plan reveal that the arm never had, and connect
+    /// style moved behind the paywall. Every step after the mechanism is
+    /// renumbered and the drop-off shape is different, so schema-5 data is not
+    /// comparable step-for-step.
+    static let flowSchema = 6
 
     /// Stable analytics name. Funnels and breakdowns are built on this, not on
     /// the raw Int — a `step_name` of "mechanism" is readable in PostHog where
@@ -412,9 +521,13 @@ enum DirectStep: Int, CaseIterable {
         case .painFallback:     return "pain_fallback"
         case .declarationRetry: return "personal_declaration_retry"
         case .mechanism:        return "mechanism"
-        case .connectStyle:     return "connect_style"
+        case .victoryOutcome:   return "victory_outcome"
+        case .dailyMinutes:     return "daily_minutes"
+        case .planBuilding:     return "plan_building"
+        case .planReveal:       return "plan_reveal"
         case .testimonials:     return "testimonials"
         case .paywall:          return "paywall"
+        case .connectStyle:     return "connect_style"
         case .notificationTime: return "notification_time"
         }
     }

@@ -1360,6 +1360,26 @@ struct ExtendedQuizQuestion {
         )
     }
 
+    /// The same outcome question for the direct arm, on that arm's frame.
+    ///
+    /// The shared wording asks what would change "if this battle was actually
+    /// won", which the direct arm cannot use: the screen immediately before it
+    /// tells the user Jesus already won it and handed them the authority to
+    /// enforce it. Asking one screen later whether it might be won undoes that
+    /// in a sentence. Same key and same options, so the answers pool with the
+    /// other arms' — only the framing moves from "if you win" to "when this is
+    /// settled", which is what the arm has been saying all along.
+    static func victorySettled(for burden: HeaviestBurden) -> ExtendedQuizQuestion {
+        ExtendedQuizQuestion(
+            key: "victory_looks_like",
+            title: "What changes the day\nthis is settled?",
+            subtitle: "Name it. That's what your declarations aim at.",
+            options: burden.victoryOptions.map {
+                ExtendedQuizOption(value: $0.value, label: $0.label, symbol: $0.symbol)
+            }
+        )
+    }
+
     /// Quiz v2 only: asked right after the outcome question. Every answer
     /// simply advances — no judgmental follow-up.
     static let belief = ExtendedQuizQuestion(
