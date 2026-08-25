@@ -96,6 +96,17 @@ struct PersonalDeclarationOnboardingView: View {
     /// continuing rather than a second, unrelated ask. Passed only by arms that
     /// asked something first; nil everywhere else leaves the screen unchanged.
     var contextLine: String? = nil
+    /// Open on the text box instead of the microphone.
+    ///
+    /// Tapping the mic fires two system permission prompts (speech recognition
+    /// and the microphone) before the app has delivered anything. On a screen
+    /// that sits five taps into a flow that is a fair trade; on frame one of a
+    /// just-installed app it is the first thing that happens, and a user who
+    /// declines is bounced into the text box anyway — having paid the scare for
+    /// nothing. Arms that put this screen first open on the keyboard-free text
+    /// box and offer the mic as the secondary path. Defaults to the mic so
+    /// every existing call site is unchanged.
+    var startInTextMode: Bool = false
     /// How many active declarations the user may carry. Onboarding and the
     /// after-breakthrough flows only ever add to an empty or near-empty set, so
     /// they take the system cap; the declarations list passes the user's real
@@ -202,7 +213,11 @@ struct PersonalDeclarationOnboardingView: View {
             }
         }
         .onAppear {
-            AnalyticsService.shared.track("personal_declaration_screen_shown", parameters: ["flow": flow])
+            if startInTextMode, case .input = viewModel.step { viewModel.showTextInput = true }
+            AnalyticsService.shared.track("personal_declaration_screen_shown", parameters: [
+                "flow": flow,
+                "input_mode": startInTextMode ? "text" : "voice"
+            ])
             withAnimation(.easeOut(duration: 0.7)) { titleAppeared = true }
             withAnimation(.easeOut(duration: 0.7).delay(0.35)) { micAppeared = true }
             withAnimation(.easeInOut(duration: 2.2).repeatForever(autoreverses: true)) {
@@ -572,6 +587,18 @@ struct PersonalDeclarationOnboardingView: View {
                 Task { await viewModel.submitTextInput() }
             }
             .frame(width: size.width * 0.87, height: 54)
+
+            // Only for arms that opened on the box. The mic is still there for
+            // anyone who would rather talk; it just no longer taxes the first
+            // interaction in the app with two permission prompts.
+            if startInTextMode, !keyboardUp, viewModel.inputText.isEmpty {
+                Button("Or speak it out loud") {
+                    viewModel.errorMessage = nil
+                    withAnimation { viewModel.showTextInput = false }
+                }
+                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .foregroundColor(.white.opacity(0.45))
+            }
         }
     }
 

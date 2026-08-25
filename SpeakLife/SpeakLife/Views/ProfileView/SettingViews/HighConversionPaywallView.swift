@@ -253,29 +253,14 @@ enum UserPain: String, CaseIterable {
 
     var solutionHeader: String { "How SpeakLife works on this" }
 
-    /// The last line before the tap. Names what this is not, then what it is.
-    var assurance: String {
-        let notThis: String
-        switch self {
-        case .peace, .joy:            notThis = "tips or affirmations"
-        case .fear:                   notThis = "positive self-talk"
-        case .health:                 notThis = "wishful thinking"
-        case .abundance:              notThis = "budgeting tips"
-        case .identity, .shame:       notThis = "self-help"
-        case .bondage:                notThis = "willpower"
-        case .purpose:                notThis = "motivation"
-        case .grief, .loneliness:     notThis = "platitudes"
-        case .marriage, .family:      notThis = "advice about them"
-        case .nearness:               notThis = "trying harder"
-        case .more:                   notThis = "tips or affirmations"
-        }
-        return "Not \(notThis). God's own Word over \(domain), spoken the way Jesus did."
-    }
-
-    /// Rows and closing line for users we have no pain for at all (settings,
-    /// feature gates, the quiz's `unsegmented` bucket).
+    /// Rows for users we have no pain for at all (settings, feature gates, the
+    /// quiz's `unsegmented` bucket).
     static let generalSolutions: [(icon: String, title: String, detail: String)] = UserPain.more.solutions
-    static let generalAssurance = "Not tips or affirmations. God's own Word, in your mouth, the way Jesus prayed."
+
+    /// The last line before the tap. One line for everybody — see
+    /// `HighConversionPaywallView.closingAssuranceLine` for why it stopped
+    /// varying by pain.
+    static let closingAssurance = "Speak Life to activate God's promises."
 }
 
 struct HighConversionPaywallView: View {
@@ -1013,17 +998,32 @@ struct HighConversionPaywallView: View {
     // post-purchase mission screen carries it, which is where a "you did
     // something good" message actually lands.
     //
-    // What belongs here is the last doubt: is this the right answer for what I
-    // came in with? The honest close is that the guarantee was never the app —
-    // it is Scripture — so the line names what this is not, then what it is,
-    // aimed at the problem the headline already named.
+    // What belongs here is the last doubt, and the last doubt is not "is this
+    // the right app" — it is "will anything actually move." So the line names
+    // the mechanism instead of defending the product, and it makes the app's
+    // own name the verb that does it. It is the same authority the onboarding
+    // mechanism screen teaches, said once more at the tap.
+    //
+    // The promises are what gets activated, not heaven. Heaven already moved —
+    // that is the whole enforcement frame the mechanism screen is built on —
+    // and what the speaker takes hold of by speaking is the promise. A line
+    // that activates heaven instead would quietly make the victory wait on the
+    // user's performance, which is the one thing this app does not teach.
+    //
+    // It no longer varies by pain. The line above it, the four rows above that,
+    // and the headline above those are all already pain-specific; by the time
+    // the eye reaches this line the personalization has been made, and a flat
+    // sentence lands harder here than a fifteenth tailored one.
     private var closingAssuranceLine: some View {
         HStack(alignment: .top, spacing: 6) {
-            Image(systemName: "book.closed.fill")
+            // Was a closed book, back when the line's argument was that the
+            // guarantee is Scripture rather than the app. The argument is now
+            // the speaking itself.
+            Image(systemName: "quote.bubble.fill")
                 .font(.system(size: 11))
                 .foregroundColor(.white.opacity(0.6))
                 .padding(.top, 2)
-            Text(pain?.assurance ?? UserPain.generalAssurance)
+            Text(UserPain.closingAssurance)
                 .font(.system(size: 12))
                 .foregroundColor(.white.opacity(0.6))
                 .multilineTextAlignment(.center)
