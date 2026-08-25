@@ -260,7 +260,7 @@ enum UserPain: String, CaseIterable {
     /// The last line before the tap. One line for everybody — see
     /// `HighConversionPaywallView.closingAssuranceLine` for why it stopped
     /// varying by pain.
-    static let closingAssurance = "Speak God's promises to activate Heaven."
+    static let closingAssurance = "Speak Life to activate God's promises."
 }
 
 struct HighConversionPaywallView: View {
@@ -1000,9 +1000,15 @@ struct HighConversionPaywallView: View {
     //
     // What belongs here is the last doubt, and the last doubt is not "is this
     // the right app" — it is "will anything actually move." So the line names
-    // the mechanism instead of defending the product: promises spoken, heaven
-    // answering. It is the same authority the onboarding mechanism screen
-    // teaches, said once more at the tap.
+    // the mechanism instead of defending the product, and it makes the app's
+    // own name the verb that does it. It is the same authority the onboarding
+    // mechanism screen teaches, said once more at the tap.
+    //
+    // The promises are what gets activated, not heaven. Heaven already moved —
+    // that is the whole enforcement frame the mechanism screen is built on —
+    // and what the speaker takes hold of by speaking is the promise. A line
+    // that activates heaven instead would quietly make the victory wait on the
+    // user's performance, which is the one thing this app does not teach.
     //
     // It no longer varies by pain. The line above it, the four rows above that,
     // and the headline above those are all already pain-specific; by the time
