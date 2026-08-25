@@ -260,7 +260,7 @@ enum UserPain: String, CaseIterable {
     /// The last line before the tap. One line for everybody — see
     /// `HighConversionPaywallView.closingAssuranceLine` for why it stopped
     /// varying by pain.
-    static let closingAssurance = "Heaven already said yes. Your mouth is how it lands here."
+    static let closingAssurance = "Speak God's promises to activate Heaven."
 }
 
 struct HighConversionPaywallView: View {
@@ -999,22 +999,20 @@ struct HighConversionPaywallView: View {
     // something good" message actually lands.
     //
     // What belongs here is the last doubt, and the last doubt is not "is this
-    // the right app" — it is "will anything actually move." So the line answers
-    // that instead of defending the product: the yes is already given, and
-    // speaking is how it reaches the ground. It is the same authority the
-    // onboarding mechanism screen teaches, said once more at the tap.
+    // the right app" — it is "will anything actually move." So the line names
+    // the mechanism instead of defending the product: promises spoken, heaven
+    // answering. It is the same authority the onboarding mechanism screen
+    // teaches, said once more at the tap.
     //
     // It no longer varies by pain. The line above it, the four rows above that,
     // and the headline above those are all already pain-specific; by the time
     // the eye reaches this line the personalization has been made, and a flat
-    // sentence lands harder here than a fifteenth tailored one. It also keeps
-    // the promise general on purpose — heaven's yes is not narrowed to the one
-    // thing the matcher happened to classify.
+    // sentence lands harder here than a fifteenth tailored one.
     private var closingAssuranceLine: some View {
         HStack(alignment: .top, spacing: 6) {
             // Was a closed book, back when the line's argument was that the
             // guarantee is Scripture rather than the app. The argument is now
-            // what the mouth does with it.
+            // the speaking itself.
             Image(systemName: "quote.bubble.fill")
                 .font(.system(size: 11))
                 .foregroundColor(.white.opacity(0.6))
