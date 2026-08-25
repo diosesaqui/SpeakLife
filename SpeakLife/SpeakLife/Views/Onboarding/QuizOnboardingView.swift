@@ -787,7 +787,7 @@ struct QuizOnboardingView: View {
         // category seeded into home + Daily Burst in applySegmentDefaults.
         // Previously expanded to a hardcoded 4-category mix, which surfaced
         // pushes from categories the user never picked.
-        let primaryCategory = selectedBurden?.goalWord.declarationCategory ?? segment.primaryCategory
+        let primaryCategory = selectedBurden?.seedCategory ?? segment.primaryCategory
         let categories: Set<DeclarationCategory> = [primaryCategory]
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
             AnalyticsService.shared.track("notification_permission", parameters: [
@@ -861,8 +861,7 @@ struct QuizOnboardingView: View {
         //     home + Daily Burst + push notifications.
         //   - Segment (ad-match axis) drives paywall framing already applied
         //     in HighConversionPaywallView.
-        let burdenGoalWord = selectedBurden?.goalWord
-        let category = burdenGoalWord?.declarationCategory ?? segment.primaryCategory
+        let category = selectedBurden?.seedCategory ?? segment.primaryCategory
 
         UserDefaults.standard.set(category.rawValue, forKey: "selectedCategory")
         UserPreferencesTracker.shared.trackCategorySelection(category.rawValue)

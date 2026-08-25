@@ -423,11 +423,11 @@ struct DirectOnboardingView: View {
         }
         // The matcher's own category beats the one derived from the burden: it
         // classified what the user actually wrote, where the burden is that
-        // answer rounded to one of seven. Only falls back to the goal word for
-        // users who never got a declaration.
+        // answer rounded to one of seven. Only falls back to the burden's own
+        // seed category for users who never got a declaration.
         let category = savedDeclaration
             .flatMap { DeclarationCategory(rawValue: $0.categoryRaw) }
-            ?? goalWord.declarationCategory
+            ?? responses.seedCategory
         let notificationCategoriesSet: Set<DeclarationCategory> = [category]
         appState.selectedNotificationCategories = category.rawValue
         UserDefaults.standard.set(category.rawValue, forKey: "selectedCategory")

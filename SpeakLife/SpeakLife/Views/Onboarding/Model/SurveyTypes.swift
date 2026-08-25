@@ -91,6 +91,40 @@ enum HeaviestBurden: String, CaseIterable, Identifiable {
         }
     }
 
+    /// The category the user's feed, Daily Burst and daily pushes are seeded
+    /// from.
+    ///
+    /// Split out of `goalWord.declarationCategory`, which was doing two jobs at
+    /// once. A goal word is a *branding* concept — it names the plan ("30-Day
+    /// Purpose Possession"), the style label and the icon — and routing content
+    /// through it meant the seed category inherited whatever category happened
+    /// to suit the branding. Two burdens came out wrong because of it:
+    ///
+    /// - `purpose` seeded `faith`, a general-purpose bucket, when `destiny` is
+    ///   the calling category and holds by far the most declarations. The
+    ///   burden's own preview declaration on the plan reveal already reads
+    ///   "I am called and commissioned... my destiny cannot be delayed", so the
+    ///   plan card was promising destiny while the feed handed back faith.
+    /// - `allOfIt` seeded `confidence`, which is neither what the row says
+    ///   ("I just want more of God") nor a deep enough pool to carry the
+    ///   catch-all bucket. `faith` matches the row and is the broadest set,
+    ///   which is what a user who named no specific pain should get.
+    ///
+    /// Everything else resolves exactly as it did before. `goalWord` keeps its
+    /// own `declarationCategory` and is still the fallback for a flow that
+    /// never captured a burden.
+    var seedCategory: DeclarationCategory {
+        switch self {
+        case .peace:     return .anxiety
+        case .health:    return .health
+        case .joy:       return .joy
+        case .identity:  return .identity
+        case .purpose:   return .destiny
+        case .abundance: return .wealth
+        case .allOfIt:   return .faith
+        }
+    }
+
     var declarationStyle: DeclarationStyle {
         switch self {
         case .peace:     return .peace
@@ -574,6 +608,13 @@ class SurveyResponses: ObservableObject {
 
     var resolvedGoalWord: SurveyGoalWord {
         heaviestBurden?.goalWord ?? .peace
+    }
+
+    /// The category to seed the feed, Daily Burst and pushes from. The burden
+    /// decides when there is one; the goal word's own category is the fallback
+    /// for a flow that never captured one. See `HeaviestBurden.seedCategory`.
+    var seedCategory: DeclarationCategory {
+        heaviestBurden?.seedCategory ?? resolvedGoalWord.declarationCategory
     }
 
     var primaryDeclarationStyle: DeclarationStyle? {
