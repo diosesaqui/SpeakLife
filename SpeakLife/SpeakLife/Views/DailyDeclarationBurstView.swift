@@ -62,6 +62,28 @@ struct DailyDeclarationBurstView: View {
     @State private var showIntroScreen = true
     @State private var introPulse: CGFloat = 1
 
+    /// Declaration or scripture — what the seven slats put in the user's mouth.
+    ///
+    /// `@AppStorage` rather than `@State`, because this is a preference and not a
+    /// session choice: someone who prefers speaking the verse should not have to
+    /// re-pick it every morning. Stored as a raw string so the enum can gain a
+    /// case without stranding anyone on an unreadable default.
+    @AppStorage("burstSpeakMode") private var speakModeRaw = BurstSpeakMode.declaration.rawValue
+
+    /// Reads the stored preference, and writes it back through the same key so
+    /// the intro screen and the stage are always looking at one value.
+    private var speakMode: Binding<BurstSpeakMode> {
+        Binding(
+            get: { BurstSpeakMode.from(rawValue: speakModeRaw) },
+            set: { speakModeRaw = $0.rawValue }
+        )
+    }
+
+    /// True when at least one slat carries a verse, so the switch is worth
+    /// offering. A burst made entirely of the user's own written declarations has
+    /// nothing to switch to.
+    private var scriptureAvailable: Bool { session?.scriptureAvailable ?? false }
+
     // The eighth slat: one corresponding action, mapped to the theme the seven
     // declarations were actually about.
     @State private var showActionSlide = false
@@ -316,6 +338,22 @@ struct DailyDeclarationBurstView: View {
                         introHint(icon: "hand.raised.fill", text: "Let go when done")
                     }
                     .padding(.top, DS.Spacing.xs)
+
+                    // The choice is offered here as well as inside the burst, so
+                    // someone who wants the verse in their mouth picks it before
+                    // the first card rather than discovering the switch on slat
+                    // three. Same key, same control — one preference, two doors.
+                    if scriptureAvailable {
+                        VStack(spacing: DS.Spacing.xs) {
+                            Text("What you'll speak")
+                                .font(.system(size: 13, weight: .semibold))
+                                .kerning(0.8)
+                                .foregroundColor(.white.opacity(0.6))
+
+                            BurstSpeakModeToggle(mode: speakMode.wrappedValue, onChange: chooseMode)
+                        }
+                        .padding(.top, DS.Spacing.sm)
+                    }
                 }
             }
             .dsAppear(0)
@@ -394,10 +432,12 @@ struct DailyDeclarationBurstView: View {
                     declarations: morningDeclarations,
                     index: $currentDeclarationIndex,
                     isTransitioning: $isTransitioning,
+                    speakMode: speakMode,
                     size: geometry.size,
                     onAdvance: recordAdvance,
                     onFinish: finishBurst,
-                    onClose: { dismiss() }
+                    onClose: { dismiss() },
+                    onModeChange: recordModeChange
                 )
             }
         }
@@ -836,14 +876,57 @@ struct DailyDeclarationBurstView: View {
     
     // MARK: - Actions
     
+    /// The mode picked on the intro, before there is a card to speak.
+    ///
+    /// Separate from the stage's own handler because there is nothing to guard
+    /// here — no charge is running and no card is leaving — and the event needs
+    /// to say the choice was made up front rather than mid-burst.
+    private func chooseMode(_ mode: BurstSpeakMode) {
+        guard mode != speakMode.wrappedValue else { return }
+
+        Juice.play(.tapLight)
+        withAnimation(DS.Motion.quick) { speakMode.wrappedValue = mode }
+
+        AnalyticsService.shared.track("daily_burst_mode_changed", parameters: [
+            "mode": mode.rawValue,
+            "where": "intro",
+            "source": source.rawValue
+        ])
+    }
+
+    /// The mode switched partway through the burst. `position` is the slat they
+    /// were on, so a switch on slat one reads differently from a switch on six.
+    private func recordModeChange(_ mode: BurstSpeakMode) {
+        AnalyticsService.shared.track("daily_burst_mode_changed", parameters: [
+            "mode": mode.rawValue,
+            "where": "burst",
+            "position": currentDeclarationIndex + 1,
+            "source": source.rawValue
+        ])
+    }
+
     private func startBurst() {
         AnalyticsService.shared.track("daily_burst_started", parameters: [
             "streak": streakViewModel.displayStreak,
-            "source": source.rawValue
+            "source": source.rawValue,
+            "mode": speakMode.wrappedValue.rawValue,
+            // How many of the seven can actually honour scripture mode. Without
+            // it, a burst that silently fell back to declarations on five slats
+            // would be indistinguishable from one that spoke seven verses.
+            "scripture_slats": session?.scriptureCount ?? 0
         ])
         withAnimation(.easeIn(duration: 0.4)) {
             burstActive = true
         }
+    }
+
+    /// What the slat at `index` actually rendered as, after the fallback a slat
+    /// with no verse behind it takes.
+    private func spokenMode(at index: Int) -> BurstSpeakMode {
+        guard morningDeclarations.indices.contains(index) else {
+            return speakMode.wrappedValue
+        }
+        return morningDeclarations[index].resolvedMode(speakMode.wrappedValue)
     }
 
     /// One line spoken. Recorded per declaration so the hold-to-speak surge can
@@ -854,7 +937,11 @@ struct DailyDeclarationBurstView: View {
         AnalyticsService.shared.track("daily_burst_declaration_spoken", parameters: [
             "method": method.rawValue,
             "position": index + 1,
-            "of": morningDeclarations.count
+            "of": morningDeclarations.count,
+            // The mode the slat actually rendered in, not the one selected: a
+            // slat with no verse behind it falls back to its declaration, and
+            // reporting the selection would count that as a verse spoken.
+            "mode": spokenMode(at: index).rawValue
         ])
     }
 
@@ -879,7 +966,8 @@ struct DailyDeclarationBurstView: View {
             "streak": streakViewModel.displayStreak,
             "surges": surgeCount,
             "final_method": method.rawValue,
-            "source": source.rawValue
+            "source": source.rawValue,
+            "mode": speakMode.wrappedValue.rawValue
         ])
 
         presentActionSlide()
