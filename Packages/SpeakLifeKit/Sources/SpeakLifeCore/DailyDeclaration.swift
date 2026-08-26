@@ -133,20 +133,38 @@ public enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  C
         .wealth,
         .work,
         
+        // Tier 5 - Relationships (continued)
+        .relationship,
+        .singleParent,
+        .divorce,
+
+        // Tier 6 - Provision & Protection (continued)
+        .business,
+        .debt,
+        .housing,
+        .education,
+
         // Tier 7 - Challenges & Struggles
         .anxiety,
-       // .fear, // might get rid of these
+        .fear,
         .hardtimes,
         .addiction,
-        
+        .grief,
+        .anger,
+        .forgiveness,
+        .mentalHealth,
+        .wellness,
+        .fertility,
+
         // Tier 8 - Eternal Perspective
-//        .heaven, // might get rid of these
-//        .confidence, // might get rid of these
+        .heaven,
+        .confidence,
+        .newSeason,
+        .salvation,
+        .spiritualGrowth,
         .genesis,
         .exodus,
         .leviticus,
-        .numbers,
-        .deuteronomy,
         .joshua,
         .judges,
         .ruth,
@@ -184,8 +202,6 @@ public enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  C
         .genesis,
         .exodus,
         .leviticus,
-        .numbers,
-        .deuteronomy,
         .joshua,
         .judges,
         .ruth,
@@ -259,21 +275,39 @@ public enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  C
         .parenting,
         .friendship,
         
+        // Tier 5 - Relationships (continued)
+        .relationship,
+        .singleParent,
+        .divorce,
+
         // Tier 6 - Provision & Protection
         .godsprotection,
         .favor,
         .wealth,
         .work,
-        
+        .business,
+        .debt,
+        .housing,
+        .education,
+
         // Tier 7 - Challenges & Struggles
         .anxiety,
         .fear,
         .hardtimes,
         .addiction,
-        
+        .grief,
+        .anger,
+        .forgiveness,
+        .mentalHealth,
+        .wellness,
+        .fertility,
+
         // Tier 8 - Eternal Perspective
         .heaven,
-       // .confidence
+        .confidence,
+        .newSeason,
+        .salvation,
+        .spiritualGrowth,
     ]
     
     public var isBibleBook: Bool {
@@ -288,6 +322,20 @@ public enum DeclarationCategory: String, CaseIterable, Identifiable, Codable,  C
        // case .selfcontrol: return "Self Control"
         case .godsheart: return "God's Heart"
         case .spiritualGrowth: return "Spiritual Growth"
+        case .mentalHealth: return "Mental Health"
+        case .singleParent: return "Single Parent"
+        case .newSeason: return "New Season"
+        case .salvation: return "Salvation & Loved Ones"
+        case .relationship: return "Dating & Relationships"
+        case .wellness: return "Body & Wellness"
+        case .grief: return "Comfort in Loss"
+        case .debt: return "Freedom from Debt"
+        case .housing: return "Home & Housing"
+        case .education: return "School & Study"
+        case .business: return "Business & Calling"
+        case .divorce: return "Healing After Divorce"
+        case .forgiveness: return "Forgiving Others"
+        case .anger: return "Peace Over Anger"
         case .obedience: return "Surrender & Obedience"
         case .innerHealing: return "Emotional & Inner Healing"
         case .work: return "Work & Career"
