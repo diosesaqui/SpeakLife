@@ -203,51 +203,79 @@ step-for-step.
 
 `direct` is the depth test. Every other arm pitches first and asks what is wrong
 five or six screens in; this one asks on the **first frame** and reaches the
-paywall in four screens instead of sixteen. Cut: the extended quiz, the product
-capability recap, the plan-building loader, the plan reveal, the pledge, the
-rating ask, and the personal-declaration capture. Its natural control is any arm
-running the full quiz — `warfare` (the default) for an arm-vs-default read, or
-`closer` if you want depth isolated from angle.
+paywall in three screens instead of sixteen — and the first of those three is the
+personal-declaration feature itself, so the product does its one job on the
+user's real situation before a word of pitch. The category picker still exists
+but only as a fallback for users the declaration produced nothing for. Cut: the
+extended quiz, the product capability recap, the plan-building loader, the plan
+reveal, the pledge and the rating ask. Its natural control is any arm running the
+full quiz — `warfare` (the default) for an arm-vs-default read, or `closer` if
+you want depth isolated from angle.
 
-Because the front half is four screens, **per-step drop-off is the whole story
-here**. Build the arm's internal funnel on `step_name`, not on the raw `step`
-integer:
+The whole front half is the declaration screen, so **that screen's drop-off is
+the arm**. Build the internal funnel on `step_name`, not the raw `step` integer:
 
-`direct_pain_shown` → `direct_pain_answered` → `direct_mechanism_shown` →
-`direct_declaration_shown` → `direct_declaration_spoken` →
-`testimonial_wall_shown` (`flow: direct`) → `paywall_impression` →
-`direct_onboarding_completed`
+`personal_declaration_screen_shown` (`flow: direct`) → `personal_declaration_saved` →
+`direct_mechanism_shown` → `testimonial_wall_shown` (`flow: direct`) →
+`paywall_impression` → `direct_onboarding_completed`
+
+The recovery ladder runs beside it, for the users the first ask lost:
+`direct_pain_shown` → `direct_pain_answered` → `personal_declaration_saved`
+(`flow: direct_retry`).
 
 | Event | Properties | Why it matters |
 |-------|-----------|----------------|
 | `direct_onboarding_started` | `flow_schema` | Arm entry; denominator for everything below |
-| `direct_pain_shown` | `flow_schema` | Screen-one reach |
-| `direct_pain_answered` | `burden` | **The arm's first and hardest ask — a one-tap answer on frame one.** Its drop is the whole bet |
-| `direct_mechanism_shown` | `burden` | "Jesus never begged the problem to leave" reach |
-| `direct_declaration_shown` | `burden` | Payoff reach |
-| `direct_declaration_spoken` | `burden` | **Say-it-out-loud take-rate — the arm's key micro-conversion** |
-| `direct_step_completed` | `step`, `step_name`, `flow_schema` | Per-step drop-off. **Build funnels on `step_name`** (`pain` / `mechanism` / `declaration` / `testimonials` / `paywall` / `notification_time`) |
-| `direct_onboarding_completed` | `goal_word`, `burden`, `notification_time`, `spoke_declaration`, `total_duration_seconds`, `flow_schema` | Completion, plus the two cuts worth making |
+| `personal_declaration_screen_shown` | `flow` | Frame-one reach (shared screen, stamped `direct`) |
+| `personal_declaration_saved` / `_skipped` | `flow` | **The arm's whole bet: will a cold user describe their situation on frame one?** Shared with every other arm running this screen, so it is directly comparable — but note this arm asks it first and they ask it deep in the back half |
+| `direct_pain_shown` / `direct_pain_answered` | `flow_schema`, `burden` | The fallback picker. **Only fires for users the declaration produced nothing for** — its volume is the size of the refusal |
+| `personal_declaration_*` (`flow: direct_retry`) | `flow` | The narrow re-ask after the picker. Its take-rate is how much of the refusal the recovery ladder wins back |
+| `direct_mechanism_shown` | `pain`, `spoke_declaration` | Which of the two mechanism framings they saw. The screen itself is fixed: three things Jesus spoke to, Mark 11:23-24, then one line for this pain |
+| `direct_step_completed` | `step`, `step_name`, `flow_schema` | Per-step drop-off (`personal_declaration` / `pain_fallback` / `personal_declaration_retry` / `mechanism` / `testimonials` / `paywall` / `notification_time`) |
+| `direct_onboarding_completed` | `goal_word`, `pain`, `burden`, `pain_source`, `seeded_category`, `notification_time`, `set_personal_declaration`, `total_duration_seconds`, `flow_schema` | Completion, plus every cut worth making |
 
-Shared screens stamp `flow: "direct"` (`testimonial_wall_shown`,
-`survey_q8_shown`), and the paywall reads `appState.onboardingSegment`, so every
-paywall event on this arm carries `segment: direct_<burden>`.
+Shared screens stamp `flow: "direct"` (`personal_declaration_*`,
+`testimonial_wall_shown`, `survey_q8_shown`), and the paywall reads
+`appState.onboardingSegment`, so every paywall event carries
+`segment: direct_<burden>` — including for users whose burden was read back out
+of the matcher's category rather than tapped.
 
-Two numbers to watch beyond conversion:
+Three numbers to watch beyond conversion:
 
-- **`direct_pain_answered` / `direct_pain_shown`.** Asking on frame one, before
-  any pitch, is the risky part. If this holds above the other arms' first-screen
-  pass-through, the premise is sound even if conversion lands flat.
-- **`spoke_declaration` on `direct_onboarding_completed`.** Cut conversion by it.
-  If speakers convert far better than non-speakers, the micro-commitment is
-  doing the work and belongs in the other arms too.
+- **`personal_declaration_saved` / `personal_declaration_screen_shown`.** Asking
+  a cold user to describe their situation on frame one, before any framing, is
+  the entire risk of this arm. Compare it against the same ratio in `warfare` or
+  `closer`, where the identical screen runs deep in the back half with fifteen
+  screens of setup in front of it. If it holds anywhere near those, framing was
+  never load-bearing.
+- **`pain_source` on `direct_onboarding_completed`** (`open` / `retry` /
+  `picker` / `none`) — how far down the recovery ladder each user had to go.
+  `open` is the frame-one ask landing. `retry` is the narrow re-ask rescuing
+  someone who declined it, and a meaningful share there earns that extra screen
+  on its own. `picker` is a tap and nothing more; a large share says the
+  free-text open is too heavy an ask for frame one. `none` gave us nothing.
+- **`set_personal_declaration`, cut against conversion.** This arm puts the
+  declaration first instead of in the back half; if the users who got one convert
+  far better, position is what's earning and it should move forward elsewhere.
 
-`total_duration_seconds` is the arm's headline claim — compare its median
-against the quiz arms to confirm the flow actually is faster in practice, not
-just shorter on paper.
+`total_duration_seconds` is the arm's headline claim — compare its median against
+the quiz arms to confirm the flow actually is faster in practice, not just
+shorter on paper.
 
-**Person property:** this arm sets `onboarding_burden` (`peace` / `health` /
-`joy` / `identity` / `purpose` / `abundance` / `more`) when the opening question
+> **`flow_schema` is at 4.** Schema 1 opened with the picker and showed a canned
+> one-of-seven declaration; schema 2 made that step the real feature but kept it
+> third; schema 3 moved it to frame one and demoted the picker to a fallback;
+> schema 4 added the narrow re-ask after the picker. The step order and the
+> drop-off shape differ across all four, so **filter per-step funnels to
+> `flow_schema = 4`** rather than pooling them. Retired:
+> `direct_declaration_shown` / `direct_declaration_spoken` and the
+> `spoke_declaration` completion property (schema 1), and the guarantee that
+> every user passes through `direct_pain_shown` (schemas 1–2).
+
+**Person property:** this arm sets `onboarding_burden` to the resolved
+`UserPain` (`peace` / `fear` / `health` / `abundance` / `identity` / `shame` /
+`bondage` / `purpose` / `joy` / `grief` / `loneliness` / `marriage` / `family` /
+`nearness` / `more`) when the opening question
 is answered, so **every** later event — `trial_started`, `subscription_started`,
 retention — can be split by the pain the user walked in with. Only `direct` sets
 it today, so it reads null for other arms.

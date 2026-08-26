@@ -482,6 +482,84 @@ final class DailyChecklistTests: XCTestCase {
         }
     }
 
+    // MARK: - Connect style
+
+    /// The Burst leads no matter what they answered. Their modality is the
+    /// on-ramp; speaking is the thing the product exists to produce, and it is
+    /// also the only row that earns the streak.
+    func testConnectStyle_NeverDisplacesTheBurst() {
+        withStandardTasks {
+            for style in ConnectStyle.allCases {
+                let ids = TaskLibrary.getCoreTasksForStreak(3, connectStyle: style).map(\.id)
+                XCTAssertEqual(ids.first, "complete_daily_burst",
+                               "\(style.rawValue) displaced the Burst: \(ids)")
+            }
+        }
+    }
+
+    /// The point of the whole feature: the row they said they connect through
+    /// leads the content rows instead of sitting wherever the phase mix left it.
+    func testConnectStyle_LeadsTheContentRows() {
+        withStandardTasks {
+            let listening = TaskLibrary.getCoreTasksForStreak(3, connectStyle: .listening).map(\.id)
+            XCTAssertEqual(listening.dropFirst().first, "listen_audio", "ordered as \(listening)")
+
+            let reading = TaskLibrary.getCoreTasksForStreak(3, connectStyle: .reading).map(\.id)
+            XCTAssertEqual(reading.dropFirst().first, "read_devotional", "ordered as \(reading)")
+        }
+    }
+
+    /// Journaling is the only answer with no matching row in the foundation
+    /// week — `journal_insight` is gated to day 8 and `gratitude_moment` to
+    /// day 2 — so those users would spend week one with nothing resembling what
+    /// they asked for.
+    func testConnectStyle_JournalingGetsAJournalRowOnDayOne() {
+        withStandardTasks {
+            let ids = TaskLibrary.getCoreTasksForStreak(1, connectStyle: .journaling).map(\.id)
+            XCTAssertTrue(ids.contains("journal_insight"), "day 1 served \(ids)")
+            XCTAssertEqual(ids.dropFirst().first, "journal_insight", "ordered as \(ids)")
+        }
+    }
+
+    /// It orders, it never adds — except the journaling row above. Anyone else
+    /// gets exactly the rows their phase and streak already earned them.
+    func testConnectStyle_ChangesOrderNotMembership() {
+        withStandardTasks {
+            let baseline = Set(TaskLibrary.getCoreTasksForStreak(3, connectStyle: nil).map(\.id))
+            for style in ConnectStyle.allCases where style != .journaling {
+                let styled = Set(TaskLibrary.getCoreTasksForStreak(3, connectStyle: style).map(\.id))
+                XCTAssertEqual(styled, baseline, "\(style.rawValue) changed which rows are served")
+            }
+        }
+    }
+
+    /// No answer, no change — the ordering is inert for every user who has not
+    /// been asked, which is everyone who onboarded before this shipped and
+    /// everyone in an arm that does not ask.
+    ///
+    /// Asserted against the literal foundation order rather than against
+    /// another nil call, which would compare a thing to itself and pass no
+    /// matter what `leadWithPreferredModality` did.
+    func testConnectStyle_AbsentAnswerLeavesOrderUntouched() {
+        withStandardTasks {
+            let ids = TaskLibrary.getCoreTasksForStreak(3, connectStyle: nil).map(\.id)
+            XCTAssertEqual(ids, ["complete_daily_burst", "read_devotional",
+                                 "listen_audio", "gratitude_moment"],
+                           "unstyled day 3 ordered as \(ids)")
+        }
+    }
+
+    func testConnectStyle_RoundTripsThroughStorage() {
+        let defaults = UserDefaults(suiteName: "connect-style-tests")!
+        defaults.removePersistentDomain(forName: "connect-style-tests")
+
+        XCTAssertNil(ConnectStyle.stored(defaults: defaults))
+        ConnectStyle.store(.journaling, defaults: defaults)
+        XCTAssertEqual(ConnectStyle.stored(defaults: defaults), .journaling)
+        ConnectStyle.store(nil, defaults: defaults)
+        XCTAssertNil(ConnectStyle.stored(defaults: defaults))
+    }
+
     // MARK: - Retired tasks
 
     /// Seven tasks were unlocked 146 times across 30 days and completed zero

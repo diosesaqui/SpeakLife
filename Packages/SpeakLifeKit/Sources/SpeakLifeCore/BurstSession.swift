@@ -32,18 +32,95 @@ import Foundation
 /// category, so a view that keeps only the label has lost the theme.
 public struct BurstDeclaration: Equatable {
     public let text: String
+    /// The reference only, e.g. "Psalm 139:14". Named `verse` since before the
+    /// scripture text was carried alongside it; the quote itself is `scripture`.
     public let verse: String
+    /// The scripture quoted in full, when the source carried it.
+    ///
+    /// Optional because it genuinely is: a declaration the user wrote themselves
+    /// has no verse behind it, and a handful of the bundled ones carry only a
+    /// reference. Empty strings are normalised to nil at init so no caller has to
+    /// check for both.
+    public let scripture: String?
     /// What the chip above the declaration reads.
     public let categoryLabel: String
     public let category: DeclarationCategory?
 
-    public init(text: String, verse: String, category: DeclarationCategory?, categoryLabel: String? = nil) {
+    public init(
+        text: String,
+        verse: String,
+        scripture: String? = nil,
+        category: DeclarationCategory?,
+        categoryLabel: String? = nil
+    ) {
         self.text = text
         self.verse = verse
+        let trimmed = scripture?.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.scripture = (trimmed?.isEmpty == false) ? trimmed : nil
         self.category = category
         // Defaulting the label off the category is what keeps the two in step;
         // callers only pass one explicitly when the campaign names the theme.
         self.categoryLabel = categoryLabel ?? category?.name ?? ""
+    }
+
+    /// True when this slat can be spoken as scripture.
+    public var hasScripture: Bool { scripture != nil }
+
+    /// The line to actually put in someone's mouth.
+    ///
+    /// Falls back to the declaration whenever the scripture is missing, so a
+    /// burst in scripture mode never shows a blank card. The fallback is silent
+    /// on purpose: a slat that reads "no verse available" would be a worse thing
+    /// to hand someone mid-burst than simply giving them the declaration.
+    public func spokenLine(_ mode: BurstSpeakMode) -> String {
+        switch mode {
+        case .declaration: return text
+        case .scripture:   return scripture ?? text
+        }
+    }
+
+    /// Whether `spokenLine` actually honoured the requested mode. The card uses
+    /// this to decide how to style the line, since a declaration set in quotes
+    /// under a "Scripture" tab would be a lie.
+    public func resolvedMode(_ mode: BurstSpeakMode) -> BurstSpeakMode {
+        (mode == .scripture && !hasScripture) ? .declaration : mode
+    }
+}
+
+// MARK: - Speak Mode
+
+/// Which words the burst puts in the user's mouth.
+///
+/// Both are the same seven slats in the same order, with the same reference
+/// underneath. Only the line being spoken changes, so a burst switched halfway
+/// through keeps its place, its progress and its theme.
+public enum BurstSpeakMode: String, CaseIterable, Equatable {
+    /// The declaration: first person, present tense, written to be spoken.
+    case declaration
+    /// The scripture it stands on, quoted.
+    case scripture
+
+    /// Label for the segment control.
+    public var title: String {
+        switch self {
+        case .declaration: return "Declaration"
+        case .scripture:   return "Scripture"
+        }
+    }
+
+    public var icon: String {
+        switch self {
+        case .declaration: return "bolt.fill"
+        case .scripture:   return "book.fill"
+        }
+    }
+
+    /// Parses a persisted raw value, defaulting to the declaration — which is
+    /// what the burst has always been, so an unreadable preference costs nobody
+    /// their familiar screen.
+    public static func from(rawValue: String?) -> BurstSpeakMode {
+        guard let rawValue, let mode = BurstSpeakMode(rawValue: rawValue) else { return .declaration }
+        return mode
     }
 }
 
@@ -84,6 +161,23 @@ public struct BurstSession: Equatable {
         self.declarations = declarations
         self.origin = origin
         self.theme = theme
+    }
+
+    /// Whether this burst can be spoken as scripture at all.
+    ///
+    /// One line carrying a verse is enough to offer the switch: the rest fall
+    /// back to their declaration, which is still seven lines of truth. A burst
+    /// with none — someone speaking only their own written declarations — is
+    /// offered no switch, because flipping it would change nothing on screen and
+    /// a control that does nothing is worse than no control.
+    public var scriptureAvailable: Bool {
+        declarations.contains(where: \.hasScripture)
+    }
+
+    /// How many slats can honour scripture mode. Reported with the burst so the
+    /// fallback rate is measurable rather than assumed.
+    public var scriptureCount: Int {
+        declarations.filter(\.hasScripture).count
     }
 }
 
@@ -282,6 +376,7 @@ public struct BurstSessionBuilder {
                     BurstDeclaration(
                         text: candidate.text,
                         verse: candidate.book ?? "",
+                        scripture: candidate.bibleVerseText,
                         category: candidate.category
                     )
                 )
@@ -313,6 +408,10 @@ public struct BurstSessionBuilder {
         BurstDeclaration(
             text: day.anchorText,
             verse: day.anchorBook,
+            // `anchorVerse` is the quote; `anchorBook` is the reference. The
+            // campaign already carries both, so scripture mode costs a campaign
+            // burst nothing.
+            scripture: day.anchorVerse,
             category: enforcement.theme,
             categoryLabel: enforcement.themeName
         )
@@ -403,6 +502,7 @@ public struct BurstSessionBuilder {
                 BurstDeclaration(
                     text: declaration.text,
                     verse: declaration.book ?? "",
+                    scripture: declaration.bibleVerseText,
                     category: declaration.category
                 )
             )
@@ -428,13 +528,50 @@ public struct BurstSessionBuilder {
 
     /// Used when the pool cannot fill the burst — a brand new install, or a
     /// category whose declarations have not loaded yet.
+    /// Each carries its scripture as well as its reference, so a burst opened on
+    /// a brand new install can still be spoken either way.
     public static let fallback: [BurstDeclaration] = [
-        BurstDeclaration(text: "I am loved by God unconditionally", verse: "Romans 8:38-39", category: .love),
-        BurstDeclaration(text: "My God supplies all my needs according to His riches", verse: "Philippians 4:19", category: .wealth),
-        BurstDeclaration(text: "I have the mind of Christ", verse: "1 Corinthians 2:16", category: .wisdom),
-        BurstDeclaration(text: "Greater is He that is in me than he that is in the world", verse: "1 John 4:4", category: .warfare),
-        BurstDeclaration(text: "I can do all things through Christ who strengthens me", verse: "Philippians 4:13", category: .faith),
-        BurstDeclaration(text: "The joy of the Lord is my strength", verse: "Nehemiah 8:10", category: .joy),
-        BurstDeclaration(text: "I am fearfully and wonderfully made", verse: "Psalm 139:14", category: .identity)
+        BurstDeclaration(
+            text: "I am loved by God unconditionally",
+            verse: "Romans 8:38-39",
+            scripture: "For I am convinced that neither death nor life, neither angels nor demons, neither the present nor the future, nor any powers, neither height nor depth, nor anything else in all creation, will be able to separate us from the love of God that is in Christ Jesus our Lord.",
+            category: .love
+        ),
+        BurstDeclaration(
+            text: "My God supplies all my needs according to His riches",
+            verse: "Philippians 4:19",
+            scripture: "And my God will meet all your needs according to the riches of his glory in Christ Jesus.",
+            category: .wealth
+        ),
+        BurstDeclaration(
+            text: "I have the mind of Christ",
+            verse: "1 Corinthians 2:16",
+            scripture: "For who has known the mind of the Lord so as to instruct him? But we have the mind of Christ.",
+            category: .wisdom
+        ),
+        BurstDeclaration(
+            text: "Greater is He that is in me than he that is in the world",
+            verse: "1 John 4:4",
+            scripture: "You, dear children, are from God and have overcome them, because the one who is in you is greater than the one who is in the world.",
+            category: .warfare
+        ),
+        BurstDeclaration(
+            text: "I can do all things through Christ who strengthens me",
+            verse: "Philippians 4:13",
+            scripture: "I can do all this through him who gives me strength.",
+            category: .faith
+        ),
+        BurstDeclaration(
+            text: "The joy of the Lord is my strength",
+            verse: "Nehemiah 8:10",
+            scripture: "Do not grieve, for the joy of the Lord is your strength.",
+            category: .joy
+        ),
+        BurstDeclaration(
+            text: "I am fearfully and wonderfully made",
+            verse: "Psalm 139:14",
+            scripture: "I praise you because I am fearfully and wonderfully made; your works are wonderful, I know that full well.",
+            category: .identity
+        )
     ]
 }

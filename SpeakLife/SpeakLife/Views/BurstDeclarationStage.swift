@@ -20,6 +20,12 @@
 //  who taps their way through loses a streak, and the ritual is there for anyone
 //  who wants it.
 //
+//  What gets spoken is the user's call. The same seven slats can be run as the
+//  declarations or as the scripture behind them, switched from a control above
+//  the deck at any point in the burst. The switch changes the words on the card
+//  and nothing else: same order, same place, same progress, same theme. Someone
+//  who wants the verse in their own mouth gets it without leaving the flow.
+//
 //  Two rules were learned the hard way, from speaking a real burst out loud:
 //
 //    · The finger is the only thing that knows when the mouth is finished.
@@ -53,12 +59,18 @@ struct BurstDeclarationStage: View {
     @Binding var index: Int
     /// Owned by the parent because the ambient power effect gates on it too.
     @Binding var isTransitioning: Bool
+    /// Declaration or scripture. A binding rather than local state because the
+    /// choice is persisted by the parent and survives the burst.
+    @Binding var speakMode: BurstSpeakMode
     let size: CGSize
     /// Fired the instant a declaration is left, before the index moves.
     let onAdvance: (BurstAdvanceMethod, Int) -> Void
     /// The seventh line has been spoken.
     let onFinish: (BurstAdvanceMethod) -> Void
     let onClose: () -> Void
+    /// The user switched what they are speaking. Reported so the split between
+    /// the two can be measured rather than guessed at.
+    var onModeChange: (BurstSpeakMode) -> Void = { _ in }
 
     @State private var cardOpacity: Double = 1
     @State private var cardLift: CGFloat = 0
@@ -101,8 +113,30 @@ struct BurstDeclarationStage: View {
     /// declares rather than reads, so the charge lands about when the mouth does.
     /// It only decides when the reward fires; the card still waits for the lift.
     private var chargeDuration: Double {
-        let words = current?.text.split(separator: " ").count ?? 12
+        // The spoken line, not the declaration. A verse routinely runs twice the
+        // length of the declaration drawn from it, so pacing the ring off `text`
+        // in scripture mode would seal the card while the mouth is still in the
+        // middle of Romans 8.
+        let words = spokenLine?.split(separator: " ").count ?? 12
         return min(max(Double(words) / 2.6 + 0.7, 2.0), 7.5)
+    }
+
+    /// What this slat puts in the user's mouth right now.
+    private var spokenLine: String? {
+        current?.spokenLine(speakMode)
+    }
+
+    /// The mode the current slat can actually honour. A declaration with no verse
+    /// behind it stays a declaration even while the control reads "Scripture".
+    private var resolvedMode: BurstSpeakMode {
+        current?.resolvedMode(speakMode) ?? .declaration
+    }
+
+    /// Whether the switch is worth showing at all. Nothing in the burst carries a
+    /// verse — a burst of the user's own written declarations — and flipping it
+    /// would change nothing on screen.
+    private var scriptureAvailable: Bool {
+        declarations.contains(where: \.hasScripture)
     }
 
     var body: some View {
@@ -110,6 +144,18 @@ struct BurstDeclarationStage: View {
             header
                 .padding(.horizontal, DS.Spacing.lg)
                 .padding(.top, 60)
+
+            if scriptureAvailable {
+                BurstSpeakModeToggle(mode: speakMode, onChange: changeMode)
+                    // Locked while a card is leaving or a charge is live. Both
+                    // are timed off the length of the line on screen, and
+                    // swapping that line out from under a ring already in flight
+                    // has nothing good in it.
+                    .disabled(isTransitioning || isCharging)
+                    .opacity(isTransitioning || isCharging ? 0.45 : 1)
+                    .animation(DS.Motion.quick, value: isCharging)
+                    .padding(.top, DS.Spacing.md)
+            }
 
             Spacer(minLength: DS.Spacing.md)
 
@@ -253,13 +299,7 @@ struct BurstDeclarationStage: View {
 
             Spacer(minLength: DS.Spacing.sm)
 
-            Text(declaration.text)
-                .font(.system(size: declarationFontSize(for: declaration.text),
-                              weight: .bold, design: .serif))
-                .foregroundColor(.white)
-                .multilineTextAlignment(.center)
-                .minimumScaleFactor(0.65)
-                .modifier(SpeakReveal(delay: 0.10))
+            spokenText(declaration)
 
             // The charge, under the line being spoken.
             //
@@ -294,6 +334,32 @@ struct BurstDeclarationStage: View {
         .offset(y: cardLift)
         .opacity(cardOpacity)
         .dsAppear(0, rise: 22)
+    }
+
+    /// The line on the card: the declaration, or the scripture behind it.
+    ///
+    /// Keyed on the mode as well as the index so a switch mid-burst replays the
+    /// reveal on the new words rather than swapping them in dead. The card
+    /// itself keeps its identity, so the deck does not re-enter underneath.
+    private func spokenText(_ declaration: BurstDeclaration) -> some View {
+        let line = declaration.spokenLine(speakMode)
+        let mode = declaration.resolvedMode(speakMode)
+        // Scripture is somebody else's words, so it is set the way a quotation
+        // is: curly quotes and italic. The declaration is the user's own and
+        // stays upright and bold.
+        let styled = Text(mode == .scripture ? "\u{201C}\(line)\u{201D}" : line)
+            .font(.system(size: declarationFontSize(for: line),
+                          weight: mode == .scripture ? .semibold : .bold,
+                          design: .serif))
+        let quoted = mode == .scripture ? styled.italic() : styled
+
+        return quoted
+            .foregroundColor(.white)
+            .multilineTextAlignment(.center)
+            .lineSpacing(mode == .scripture ? 3 : 0)
+            .minimumScaleFactor(0.55)
+            .modifier(SpeakReveal(delay: 0.10))
+            .id("\(index)-\(mode.rawValue)")
     }
 
     private var cardSurface: some View {
@@ -391,21 +457,48 @@ struct BurstDeclarationStage: View {
 
     /// The hint's whole job is teaching that the lift is what advances, since
     /// that is the one part of this interaction nobody expects.
+    ///
+    /// It names the verse in scripture mode, off the slat's *resolved* mode
+    /// rather than the selection, so a slat that fell back to its declaration is
+    /// not told to speak a verse that is not on screen.
     private var hint: String {
         if isSealed { return "Let go when you're done." }
         if isCharging { return "Keep speaking. Take as long as you need." }
-        return "Hold the button while you speak it out loud"
+        return resolvedMode == .scripture
+            ? "Hold the button while you speak this verse out loud"
+            : "Hold the button while you speak it out loud"
     }
 
     // MARK: - Derived visuals
 
-    /// Long declarations step down a size rather than wrapping into a wall.
+    /// Long lines step down a size rather than wrapping into a wall.
+    ///
+    /// The bottom two steps are for scripture: a quoted verse routinely runs
+    /// past 200 characters where a declaration is written to stop under 100, and
+    /// leaving those at 21pt pushed the card into `minimumScaleFactor` where the
+    /// type shrinks unevenly instead of settling on a size.
     private func declarationFontSize(for text: String) -> CGFloat {
         switch text.count {
         case ..<70:  return 28
         case ..<120: return 24
-        default:     return 21
+        case ..<200: return 21
+        case ..<300: return 18
+        default:     return 16
         }
+    }
+
+    // MARK: - Speak mode
+
+    /// Switches what the burst is speaking, in place.
+    ///
+    /// Deliberately does not touch `index`: the user is on slat four of seven and
+    /// switching the words should not cost them the three they already spoke.
+    private func changeMode(_ mode: BurstSpeakMode) {
+        guard !isTransitioning, !isCharging, mode != speakMode else { return }
+
+        Juice.play(.tapLight)
+        withAnimation(DS.Motion.quick) { speakMode = mode }
+        onModeChange(mode)
     }
 
     // MARK: - Advancing
@@ -609,6 +702,84 @@ private struct HoldToDeclareButton: View {
         isSealed = false
         charge = 0
         pressScale = 1
+    }
+}
+
+// MARK: - Speak mode toggle
+
+/// Two segments: the declaration, or the scripture behind it.
+///
+/// A segmented control rather than a switch, because neither option is the "off"
+/// state of the other. Both are seven lines spoken out loud; they are simply
+/// different words, and a switch labelled "Scripture" would imply the
+/// declarations are the default and the verse an extra.
+///
+/// Small and quiet on purpose. It sits above the deck where it can be found
+/// mid-burst, but the card is what the eye should land on.
+struct BurstSpeakModeToggle: View {
+
+    /// The mode currently in force. A plain value, not a binding: the control
+    /// reports the tap and the owner decides whether to honour it, since the
+    /// stage has to refuse a switch made while a charge is in flight.
+    let mode: BurstSpeakMode
+    let onChange: (BurstSpeakMode) -> Void
+
+    /// Slides the lit capsule between the two segments rather than cross-fading
+    /// it, so the control reads as one thing moving.
+    @Namespace private var indicator
+
+    var body: some View {
+        HStack(spacing: 2) {
+            ForEach(BurstSpeakMode.allCases, id: \.self) { option in
+                segment(option)
+            }
+        }
+        .padding(3)
+        .background(
+            Capsule()
+                .fill(Color.black.opacity(0.28))
+                .overlay(Capsule().stroke(Color.white.opacity(0.14), lineWidth: 1))
+        )
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("What to speak")
+    }
+
+    private func segment(_ option: BurstSpeakMode) -> some View {
+        let isOn = mode == option
+
+        return Button {
+            onChange(option)
+        } label: {
+            HStack(spacing: DS.Spacing.xxs) {
+                Image(systemName: option.icon)
+                    .font(.system(size: 11, weight: .bold))
+                Text(option.title)
+                    .font(.system(size: 14, weight: .semibold))
+            }
+            .foregroundColor(isOn ? .white : .white.opacity(0.62))
+            .padding(.horizontal, DS.Spacing.sm)
+            .padding(.vertical, 7)
+            .background(
+                ZStack {
+                    if isOn {
+                        Capsule()
+                            .fill(DS.Gradient.ember)
+                            .shadow(color: Color(red: 1.0, green: 0.34, blue: 0.13).opacity(0.45),
+                                    radius: 8, x: 0, y: 3)
+                            .matchedGeometryEffect(id: "burstSpeakMode", in: indicator)
+                    }
+                }
+            )
+            .contentShape(Capsule())
+        }
+        // `.plain` rather than `.dsPressable`: the scale-down would fight the
+        // indicator sliding across, and `changeMode` fires the haptic already.
+        .buttonStyle(.plain)
+        .accessibilityLabel(option.title)
+        .accessibilityAddTraits(isOn ? [.isButton, .isSelected] : [.isButton])
+        .accessibilityHint(isOn
+            ? "Currently speaking the \(option.title.lowercased())."
+            : "Speak the \(option.title.lowercased()) instead.")
     }
 }
 

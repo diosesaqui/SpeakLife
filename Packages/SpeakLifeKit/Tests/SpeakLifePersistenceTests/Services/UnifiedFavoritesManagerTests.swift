@@ -449,18 +449,24 @@ final class UnifiedFavoritesManagerTests: XCTestCase {
         _ = try await mockDeclarationRepo.createFromDeclaration(affirmation)
         _ = try await mockDeclarationRepo.createFromDeclaration(journal)
         
-        // Manually update manager's declarationFavorites for testing
-        manager.declarationFavorites = [affirmation, journal]
-        
-        // When
-        let affirmations = manager.getDeclarationFavorites(byContentType: .affirmation)
-        let journals = manager.getDeclarationFavorites(byContentType: .journal)
-        
-        // Then
-        XCTAssertEqual(affirmations.count, 1)
-        XCTAssertEqual(journals.count, 1)
-        XCTAssertEqual(affirmations.first?.text, "Affirmation")
-        XCTAssertEqual(journals.first?.text, "Journal")
+        // Manually update manager's declarationFavorites for testing, then read
+        // it back on the same main-actor hop. Same race as the audio case
+        // below: a `.NSPersistentStoreRemoteChange` refresh reloads this array
+        // from the mock repository on the main queue, and splitting the write
+        // from the reads leaves it a gap to land in.
+        await MainActor.run {
+            self.manager.declarationFavorites = [affirmation, journal]
+
+            // When
+            let affirmations = self.manager.getDeclarationFavorites(byContentType: .affirmation)
+            let journals = self.manager.getDeclarationFavorites(byContentType: .journal)
+
+            // Then
+            XCTAssertEqual(affirmations.count, 1)
+            XCTAssertEqual(journals.count, 1)
+            XCTAssertEqual(affirmations.first?.text, "Affirmation")
+            XCTAssertEqual(journals.first?.text, "Journal")
+        }
     }
     
     func testGetAudioFavoritesByTag() async throws {
@@ -488,18 +494,31 @@ final class UnifiedFavoritesManagerTests: XCTestCase {
         _ = try await mockAudioRepo.createFromAudioDeclaration(faithAudio)
         _ = try await mockAudioRepo.createFromAudioDeclaration(prayerAudio)
         
-        // Manually update manager's audioFavorites for testing
-        manager.audioFavorites = [faithAudio, prayerAudio]
-        
-        // When
-        let faithFavorites = manager.getAudioFavorites(byTag: "faith")
-        let prayerFavorites = manager.getAudioFavorites(byTag: "prayer")
-        
-        // Then
-        XCTAssertEqual(faithFavorites.count, 1)
-        XCTAssertEqual(prayerFavorites.count, 1)
-        XCTAssertEqual(faithFavorites.first?.title, "Faith Audio")
-        XCTAssertEqual(prayerFavorites.first?.title, "Prayer Audio")
+        // Manually update manager's audioFavorites for testing, then read it
+        // back without leaving the main actor in between.
+        //
+        // Every write to `audioFavorites` lands in `updateAudioFavorites(_:)`,
+        // which assigns inside `DispatchQueue.main.async`, and the manager
+        // refreshes on any `.NSPersistentStoreRemoteChange` posted anywhere in
+        // the process — the observer it registers with `queue: .main`. Setting
+        // the property from the test's own thread and reading it on the next
+        // line let one of those queued refreshes land in the gap and reload the
+        // array from the empty mock repository, so the tag lookups came back
+        // with nothing. Assignment and reads share one main-actor hop here, and
+        // a main-queue refresh can no longer interleave between them.
+        await MainActor.run {
+            self.manager.audioFavorites = [faithAudio, prayerAudio]
+
+            // When
+            let faithFavorites = self.manager.getAudioFavorites(byTag: "faith")
+            let prayerFavorites = self.manager.getAudioFavorites(byTag: "prayer")
+
+            // Then
+            XCTAssertEqual(faithFavorites.count, 1)
+            XCTAssertEqual(prayerFavorites.count, 1)
+            XCTAssertEqual(faithFavorites.first?.title, "Faith Audio")
+            XCTAssertEqual(prayerFavorites.first?.title, "Prayer Audio")
+        }
     }
     
     func testRefreshAllFavorites() {

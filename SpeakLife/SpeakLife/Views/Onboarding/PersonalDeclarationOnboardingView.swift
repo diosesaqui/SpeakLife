@@ -50,6 +50,27 @@ private struct PulseRing: View {
     }
 }
 
+// MARK: - Safe-area inset
+
+/// Window safe-area insets, read from UIKit.
+///
+/// Every call site wraps this screen in `.ignoresSafeArea()` and the screen pins
+/// itself to `size`, so a SwiftUI GeometryReader in here reports zero insets.
+/// The typing states used a fixed 20pt top spacer, which is fine on a phone with
+/// a 20pt status bar and puts the first line of content underneath the clock and
+/// the carrier on every device shipped since the notch.
+private enum PDInsets {
+    private static var keyWindow: UIWindow? {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+            .first { $0.isKeyWindow }
+    }
+
+    /// Falls back to the common notch height if no window is available yet.
+    static var top: CGFloat { keyWindow?.safeAreaInsets.top ?? 47 }
+}
+
 // MARK: - Main View
 
 struct PersonalDeclarationOnboardingView: View {
@@ -58,11 +79,34 @@ struct PersonalDeclarationOnboardingView: View {
 
     let size: CGSize
     /// Which flow is showing this screen ("quiz" | "survey" | "identity" |
-    /// "outcomes" | "warfare" | "product" | "migration" | "app" | "legacy").
+    /// "outcomes" | "warfare" | "product" | "closer" | "direct" | "migration" |
+    /// "app" | "legacy").
     /// Stamped onto the personal-declaration events so funnels can split the
     /// shared screen by surface. Defaults to "quiz" for the quiz flow's
     /// existing call site.
     var flow: String = "quiz"
+    /// An optional replacement for the opening question. The default asks what
+    /// they are trusting God for, which is aspirational and invites an answer
+    /// too broad to match well ("peace", "my family"). An arm that already
+    /// knows the domain can ask for the specific situation inside it instead,
+    /// which is what the matcher actually needs. nil keeps the default.
+    var prompt: String? = nil
+    /// An optional receipt of something the user already told this flow, shown
+    /// above the question so this screen reads as the same conversation
+    /// continuing rather than a second, unrelated ask. Passed only by arms that
+    /// asked something first; nil everywhere else leaves the screen unchanged.
+    var contextLine: String? = nil
+    /// Open on the text box instead of the microphone.
+    ///
+    /// Tapping the mic fires two system permission prompts (speech recognition
+    /// and the microphone) before the app has delivered anything. On a screen
+    /// that sits five taps into a flow that is a fair trade; on frame one of a
+    /// just-installed app it is the first thing that happens, and a user who
+    /// declines is bounced into the text box anyway — having paid the scare for
+    /// nothing. Arms that put this screen first open on the keyboard-free text
+    /// box and offer the mic as the secondary path. Defaults to the mic so
+    /// every existing call site is unchanged.
+    var startInTextMode: Bool = false
     /// How many active declarations the user may carry. Onboarding and the
     /// after-breakthrough flows only ever add to an empty or near-empty set, so
     /// they take the system cap; the declarations list passes the user's real
@@ -141,9 +185,15 @@ struct PersonalDeclarationOnboardingView: View {
                 case .result:                       resultView
                 }
             }
-            // Squeeze the step into the space the keyboard leaves. The steps
-            // that type also tighten their own top padding (see `keyboardUp`)
-            // so nothing runs off the top of the shortened box.
+            // Squeeze the step into the space the keyboard leaves, anchored to
+            // the top of it. Anchoring is the load-bearing part: this is a
+            // ZStack, so a step taller than the shortened box would otherwise
+            // be centred in it and spill equally out of BOTH ends — and the end
+            // that leaves the screen is the top one, taking the question with
+            // it and leaving what the user typed sitting over the status bar.
+            // Overflow now goes downward, behind the keyboard, where it is
+            // recoverable by dismissing it.
+            .frame(maxHeight: .infinity, alignment: .top)
             .padding(.bottom, keyboardHeight)
         }
         .frame(width: size.width, height: size.height)
@@ -163,7 +213,11 @@ struct PersonalDeclarationOnboardingView: View {
             }
         }
         .onAppear {
-            AnalyticsService.shared.track("personal_declaration_screen_shown", parameters: ["flow": flow])
+            if startInTextMode, case .input = viewModel.step { viewModel.showTextInput = true }
+            AnalyticsService.shared.track("personal_declaration_screen_shown", parameters: [
+                "flow": flow,
+                "input_mode": startInTextMode ? "text" : "voice"
+            ])
             withAnimation(.easeOut(duration: 0.7)) { titleAppeared = true }
             withAnimation(.easeOut(duration: 0.7).delay(0.35)) { micAppeared = true }
             withAnimation(.easeInOut(duration: 2.2).repeatForever(autoreverses: true)) {
@@ -182,15 +236,34 @@ struct PersonalDeclarationOnboardingView: View {
             // Fixed while typing rather than a share of screen height: the tall
             // phones don't need the extra top margin, and the short one — the
             // only device where this gets tight — can't spare it.
-            Spacer().frame(height: keyboardUp ? 20 : size.height * 0.11)
+            Spacer().frame(height: keyboardUp ? PDInsets.top + 12 : size.height * 0.11)
 
             // Title block
             VStack(spacing: 14) {
-                // Two lines, always. At 30pt the first line overflows a 4.7"
-                // screen and wraps to three, which is exactly the device with
-                // no height to spare once the keyboard is up; the scale factor
-                // makes the height predictable instead of device-dependent.
-                Text("What's one thing you're\ntrusting God for?")
+                // Dropped the moment the keyboard is up: it exists to connect
+                // this screen to the last one, and by the time they are typing
+                // it has done that job — while the 4.7" screen has no height to
+                // spare for it. Never rendered at all when no arm passed one.
+                if let contextLine, !keyboardUp {
+                    Text(contextLine)
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                        .foregroundColor(.white.opacity(0.55))
+                        .multilineTextAlignment(.center)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.85)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.horizontal, 32)
+                        .opacity(titleAppeared ? 1 : 0)
+                        .offset(y: titleAppeared ? 0 : 18)
+                        .animation(.easeOut(duration: 0.6), value: titleAppeared)
+                }
+
+                // Two lines, always. At 30pt the default's first line overflows
+                // a 4.7" screen and wraps to three, which is exactly the device
+                // with no height to spare once the keyboard is up; the line
+                // limit plus scale factor makes the height predictable instead
+                // of device-dependent, for an override as well as the default.
+                Text(prompt ?? "What's one thing you're\ntrusting God for?")
                     .font(.system(size: keyboardUp ? 26 : 30, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
@@ -211,6 +284,7 @@ struct PersonalDeclarationOnboardingView: View {
 //                    .animation(.easeOut(duration: 0.6).delay(0.12), value: titleAppeared)
             }
 
+
             // Kept while typing — it is permission to be raw, which matters
             // most at the moment they are actually writing. Held to two lines
             // for the same reason as the title above.
@@ -224,13 +298,47 @@ struct PersonalDeclarationOnboardingView: View {
                 .opacity(titleAppeared ? 1 : 0)
                 .animation(.easeOut(duration: 0.6).delay(0.25), value: titleAppeared)
 
+            // The reassurance belongs at the moment they are deciding whether to
+            // be honest, which is before the first keystroke — so it is dropped
+            // once the keyboard is up, the same rule `contextLine` above follows
+            // and for the same reason: the short screen has no height to spare
+            // once the box and the CTA have to fit above the keys.
+            //
+            // Worded against what the code actually does. The declaration is
+            // stored in UserDefaults on this device, is never synced to iCloud,
+            // is never visible to another user, and analytics records only the
+            // resolved category — never these words. It is NOT true that the
+            // text never leaves the phone: `ClaudeDeclarationMatcher` posts it
+            // to the Anthropic API to find the match, so no claim here says or
+            // implies otherwise.
+            if !keyboardUp {
+                Label("Private and confidential. Only ever used to find your declaration.",
+                      systemImage: "lock.fill")
+                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                    .foregroundColor(.white.opacity(0.4))
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.85)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 36)
+                    .padding(.top, 12)
+                    .opacity(titleAppeared ? 1 : 0)
+                    .animation(.easeOut(duration: 0.6).delay(0.35), value: titleAppeared)
+            }
+
             // Keyboard down, the block floats centered — that is the mic state,
-            // and it should sit in the middle of the screen. Keyboard up, these
-            // flexible spacers would still split the slack evenly and leave the
-            // answer box hanging in the middle of a half-height screen, so they
-            // go fixed: the prompt keeps the top and the box rises to meet it.
+            // and it should sit in the middle of the screen.
+            //
+            // Keyboard up, this is the ONLY flexible spacer, and that is the
+            // whole layout: the prompt holds the top, and every bit of slack
+            // collects here so the answer box, the CTA and the skip link are
+            // pushed down against the keys. It used to be fixed at 22 with the
+            // flexible one below the skip link, which put the slack in exactly
+            // the wrong place — once the box hit its 220pt cap on a large phone
+            // the leftovers pooled *under* the CTA and left it stranded a
+            // couple of hundred points above the keyboard.
             if keyboardUp {
-                Spacer().frame(height: 22)
+                Spacer(minLength: 22)
             } else {
                 Spacer()
             }
@@ -259,12 +367,12 @@ struct PersonalDeclarationOnboardingView: View {
                 .allowsHitTesting(skipVisible)
                 .animation(.easeIn(duration: 0.4), value: skipVisible)
 
-            // With the spacers above pinned, this is the only flexible one left
-            // while typing: it soaks up whatever the answer box leaves once the
-            // box hits its cap, so the column stays top-anchored on a big phone
-            // instead of drifting back to center.
+            // Fixed while typing. This is the gap between the skip link and the
+            // top of the keyboard, and it is the one measurement on this screen
+            // that should not vary with device height — a hair of breathing
+            // room, nothing more. Any flex here re-opens the dead band.
             if keyboardUp {
-                Spacer(minLength: size.height * 0.02)
+                Spacer().frame(height: 12)
             } else {
                 Spacer().frame(height: size.height * 0.05)
             }
@@ -430,7 +538,7 @@ struct PersonalDeclarationOnboardingView: View {
                     )
 
                 if viewModel.inputText.isEmpty {
-                    Text("Type what you're believing for...")
+                    Text("Type what's on your heart...")
                         .foregroundColor(.white.opacity(0.35))
                         .font(.system(size: 15))
                         .padding(14)
@@ -451,7 +559,7 @@ struct PersonalDeclarationOnboardingView: View {
             // The low bound is the safety valve: on the shortest screen the box
             // gives height back rather than pushing the CTA off the bottom, and
             // 76pt still shows three lines of what they are typing.
-            .frame(minHeight: keyboardUp ? 76 : 110, maxHeight: keyboardUp ? 220 : 110)
+            .frame(minHeight: keyboardUp ? 76 : 110, maxHeight: keyboardUp ? 180 : 110)
             .padding(.horizontal, 24)
 
             if let error = viewModel.errorMessage {
@@ -468,9 +576,29 @@ struct PersonalDeclarationOnboardingView: View {
                 buttonTitle: "Find My Declaration"
             ) {
                 viewModel.errorMessage = nil
+                // They have finished typing, so put the keyboard away before the
+                // matching state renders. Without this the spinner shares the
+                // screen with a keyboard nothing can type into, and it centres
+                // in the shortened box rather than on the screen — the teardown
+                // of the TextEditor dismisses it a beat later either way, so
+                // this only makes the transition deterministic instead of
+                // dependent on when SwiftUI happens to release first responder.
+                hideKeyboard()
                 Task { await viewModel.submitTextInput() }
             }
             .frame(width: size.width * 0.87, height: 54)
+
+            // Only for arms that opened on the box. The mic is still there for
+            // anyone who would rather talk; it just no longer taxes the first
+            // interaction in the app with two permission prompts.
+            if startInTextMode, !keyboardUp, viewModel.inputText.isEmpty {
+                Button("Or speak it out loud") {
+                    viewModel.errorMessage = nil
+                    withAnimation { viewModel.showTextInput = false }
+                }
+                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .foregroundColor(.white.opacity(0.45))
+            }
         }
     }
 
@@ -556,7 +684,7 @@ struct PersonalDeclarationOnboardingView: View {
 
     private var clarifyView: some View {
         VStack(spacing: 0) {
-            Spacer().frame(height: size.height * (keyboardUp ? 0.05 : 0.12))
+            Spacer().frame(height: keyboardUp ? PDInsets.top + 12 : size.height * 0.12)
 
             VStack(spacing: 12) {
                 Text("🤔")
@@ -672,6 +800,19 @@ struct PersonalDeclarationOnboardingView: View {
                     .foregroundColor(.white.opacity(0.5))
             }
         }
+        // Centred in whatever box the step container hands it.
+        //
+        // The container top-anchors every step, which the other four want:
+        // they each open with their own `Spacer` and would otherwise spill off
+        // the top when the keyboard shortens the box. This one has no spacer at
+        // all — it is a spinner and two lines — so top-anchoring pinned it flush
+        // against y=0, and since every call site wraps this screen in
+        // `.ignoresSafeArea()`, that put the spinner under the status bar and
+        // the Dynamic Island.
+        //
+        // Filling the height puts the centring back under this view's control
+        // rather than the container's, without disturbing the other steps.
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: - Result View

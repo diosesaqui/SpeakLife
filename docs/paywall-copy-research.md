@@ -97,33 +97,73 @@ it is empty exactly when this screen needs it.
 | Pain | Headline |
 |------|----------|
 | peace | Your mind won't stop. |
+| fear | You keep waiting for bad news. |
 | health | Your body is still waiting on an answer. |
-| abundance | The money keeps running out before the month does. |
-| identity | You've lost sight of who you are. |
+| abundance | The numbers don't work right now. |
+| identity | You don't feel good enough. |
+| shame | You can't seem to put it down. |
+| bondage | You keep going back to it. |
 | purpose | You're off the track you were built for. |
 | joy | Everything feels flat. |
-| more | You've prayed for years. It hasn't moved. |
+| grief | You lost something you can't replace. |
+| loneliness | You're carrying this on your own. |
+| marriage | Home doesn't feel like home right now. |
+| family | Someone you love is on your heart. |
+| nearness | God feels further away than He used to. |
+| more | You've prayed about it. It hasn't moved. |
 
-**Subhead:** the turn, aimed at that pain. E.g. for peace — *"Reading one more
-verse about peace hasn't quieted it. Jesus didn't ask the storm to settle. He
-spoke to it, and SpeakLife puts that same Word in your mouth every morning until
-your mind is what obeys."*
+**Fifteen, not seven.** The first version mirrored the seven options on the old
+category screen. But the `direct` arm resolves pain from what the user *wrote*,
+and the matcher classifies that into forty-odd declaration categories — so seven
+buckets sent fear, loneliness, grief, addiction, bitterness, marriage and every
+family situation to the same generic catch-all, which is the one thing a
+pain-led paywall cannot do. `UserPain.from(categoryRaw:)` is the exhaustive map;
+`more` is still the catch-all but should now be rare rather than routine. The
+seven legacy segment values from the other arms all remain case names, so those
+arms round-trip unchanged.
 
-**Headline (no segment — settings, feature gates, `unsegmented`):** still pain-led,
-naming the one problem every user on this screen shares —
-> **You've prayed about it. It hasn't moved.**
-> Jesus never begged the storm to leave. He spoke to it. SpeakLife puts the exact Word for what you're facing in your mouth every morning, until it obeys.
+**Subhead: declare it, then act on it.** The headline already named the problem,
+so this line says what to do — and it names the second half on purpose. Ten to
+thirteen words:
 
-**Headline (just spoke their personal declaration):** unchanged, and it keeps
-priority over the pain — naming a problem right after someone took authority over
-it steps on the warmest moment in the funnel.
-> **You just spoke to your storm.**
-> Jesus stilled a sea with three words. Keep speaking your *peace* every morning until it obeys.
+> **You don't feel good enough.**
+> Declare what God already said you are, then carry yourself like it's true.
+
+**Both halves, every time.** Saying it and then living unchanged is the thing
+James calls dead faith, and a paywall that only promises a feeling is selling one
+internal state in place of another. The first draft of the mechanism screen's
+closing line read *"provision becomes what you expect instead of what you hope
+for"* — expect and hope are the same thing wearing different clothes, and the
+user does nothing differently either way. Every line now names the declaration
+and then the move that proves they believed it. The onboarding mechanism screen
+cites James 2:17 under that line, so "then do something" is scripture's
+instruction and not ours.
+
+**The "spoken the way Jesus did" reinforcement is not in the subhead.** It closes
+every paywall in the assurance line, and the mechanism screen carries the full
+proof — three things Jesus spoke to, plus Mark 11:23-24 — so by the paywall it is
+being recalled, not argued.
+
+Drafts that failed on the way here, worth carrying to the next surface: 38–45
+words (a paragraph in 14pt on a screen whose next job is a price); halved but
+still opening on the dead end the headline had already named; and solution-only
+but purely descriptive, which is accurate and inert.
+
+**One consistency rule this screen learned the hard way.** The subhead, the four
+rows and the closing line must all resolve from `UserPain`. They briefly did not:
+the fresh-personal-declaration branch read `surveyGoalWord`, which is written at
+the *end* of onboarding, so at the paywall it is empty or a run stale — and a
+provision paywall shipped subheaded *"your joy declarations"* over provision rows
+and a provision closing line. Three sources of truth, one of them a run behind.
+`pain` now wins wherever it is known.
 
 **Solution rows (beat 3):** the same four capabilities every time — declarations,
 audio, the 30-day plan, Bible chat — each with a title and a detail line written
-against the named pain. For peace: *Speak peace, don't just read it* · *Audio for
-the loud hours* · *Caught before it spirals* · *An answer at 3am*. The clean layout
+against the named pain. Row one is bespoke per pain — for peace, *Speak peace,
+don't just read it* — and the other three are the same three capabilities aimed
+at that pain's domain ("over your mind", "over your home", "over the people you
+love"), which is what keeps fifteen sets of copy honest rather than fifteen sets
+of invented differences. The clean layout
 carries a titles-only three-row version — naming a problem and then showing nothing
 but a price is a worse screen than the one it replaced.
 
@@ -135,6 +175,25 @@ carries it; there is no second social-proof line competing with the mechanics.
 
 **CTA:** trial-eligible → **"Try 7 Days Free"** (real StoreKit day count);
 otherwise **"Continue"**. (Control keeps "Start Free Trial" / "Start Taking Ground →".)
+
+**Closing line, under the CTA.** Two lines run here: the risk reversal ("No
+payment due now · Cancel anytime in Settings", trial-eligible only) and then the
+last doubt-killer — *is this the right answer for what I came in with?* It names
+what this is not, then what it is, aimed at the pain the headline named:
+
+> 📕 Not tips or affirmations. God's own Word over your mind, spoken the way Jesus did.
+
+The honest close is that the guarantee was never the app, it is Scripture, so the
+line points at Scripture rather than at features or at us.
+
+This slot previously carried the generosity / pay-what-you-can framing ("your
+subscription helps keep SpeakLife within reach for believers who can't afford
+full price"). That is a *meaning* frame, not a *decision* frame — it told a
+hesitating user what their money does for someone else at the exact moment they
+were still asking whether it does anything for them. It is not lost: the
+post-purchase mission screen carries it, which is where a "you did something
+good" message actually lands. The pay-what-you-can link itself is unchanged and
+still sits directly below, gated by `showPayWhatYouCanCTA`.
 
 Why this shape: the storm arm's weakness was that it opened on the answer. A user
 who has not yet had their problem named has no reason to weigh a mechanism, and

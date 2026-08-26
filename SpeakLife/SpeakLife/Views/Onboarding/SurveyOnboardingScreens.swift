@@ -1311,6 +1311,22 @@ struct ExtendedQuizQuestion {
         ]
     )
 
+    /// The same duration question on the direct arm's frame. The shared
+    /// wording calls it a battle, which is the warfare arms' vocabulary; the
+    /// direct arm has said "what you're carrying" since frame one. Same key and
+    /// same option values, so the answers still pool across arms.
+    static let carriedDuration = ExtendedQuizQuestion(
+        key: "battle_duration",
+        title: "How long have you\nbeen carrying this?",
+        subtitle: "Be honest. Nothing here is too old to move.",
+        options: [
+            ExtendedQuizOption(value: "weeks",  label: "A few weeks", symbol: "clock"),
+            ExtendedQuizOption(value: "months", label: "A few months", symbol: "calendar"),
+            ExtendedQuizOption(value: "years",  label: "Years", symbol: "hourglass"),
+            ExtendedQuizOption(value: "always", label: "As long as I can remember", symbol: "infinity")
+        ]
+    )
+
     static let hitsHardest = ExtendedQuizQuestion(
         key: "hits_hardest",
         title: "When does it hit hardest?",
@@ -1354,6 +1370,26 @@ struct ExtendedQuizQuestion {
             key: "victory_looks_like",
             title: "What would change if this\nbattle was actually won?",
             subtitle: "Name it. That's what we aim at.",
+            options: burden.victoryOptions.map {
+                ExtendedQuizOption(value: $0.value, label: $0.label, symbol: $0.symbol)
+            }
+        )
+    }
+
+    /// The same outcome question for the direct arm, on that arm's frame.
+    ///
+    /// The shared wording asks what would change "if this battle was actually
+    /// won", which the direct arm cannot use: the screen immediately before it
+    /// tells the user Jesus already won it and handed them the authority to
+    /// enforce it. Asking one screen later whether it might be won undoes that
+    /// in a sentence. Same key and same options, so the answers pool with the
+    /// other arms' — only the framing moves from "if you win" to "when this is
+    /// settled", which is what the arm has been saying all along.
+    static func victorySettled(for burden: HeaviestBurden) -> ExtendedQuizQuestion {
+        ExtendedQuizQuestion(
+            key: "victory_looks_like",
+            title: "What changes the day\nthis is settled?",
+            subtitle: "Name it. That's what your declarations aim at.",
             options: burden.victoryOptions.map {
                 ExtendedQuizOption(value: $0.value, label: $0.label, symbol: $0.symbol)
             }
@@ -1438,9 +1474,20 @@ struct SurveyExtendedQuizScreen: View {
     let flow: String
     let question: ExtendedQuizQuestion
     @Binding var selection: String?
+    /// Advance on the tap that selects, with no Continue button at all.
+    ///
+    /// Select-then-confirm costs two taps on a question that only ever has one
+    /// answer, and the second tap buys nothing: there is no review step, and
+    /// the option row already shows what was chosen. Arms optimising for
+    /// friction-per-screen turn this on. Defaults to the confirm button so
+    /// every existing call site is unchanged.
+    var autoAdvance: Bool = false
     let onContinue: () -> Void
 
     @State private var v = false
+    /// Latched on the advancing tap so a double tap mid-transition cannot fire
+    /// the answer event (or the parent's advance) twice.
+    @State private var advancing = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -1469,7 +1516,7 @@ struct SurveyExtendedQuizScreen: View {
                     VStack(spacing: 10) {
                         ForEach(question.options) { option in
                             QuizOptionRow(option: option, isSelected: selection == option.value) {
-                                selection = option.value
+                                select(option.value)
                             }
                         }
                     }
@@ -1480,15 +1527,14 @@ struct SurveyExtendedQuizScreen: View {
                 }
             }
 
-            SurveyContinueButton(isEnabled: selection != nil) {
-                AnalyticsService.shared.track("quiz_question_answered", parameters: [
-                    "flow": flow,
-                    "question": question.key,
-                    "answer": selection ?? "unknown"
-                ])
-                onContinue()
+            if autoAdvance {
+                // Keep the bottom inset the confirm button was holding, so the
+                // last option doesn't sit against the home indicator.
+                Spacer().frame(height: 36)
+            } else {
+                SurveyContinueButton(isEnabled: selection != nil) { submit() }
+                    .padding(.top, 8).padding(.bottom, 36)
             }
-            .padding(.top, 8).padding(.bottom, 36)
         }
         .onAppear {
             AnalyticsService.shared.track("quiz_question_shown", parameters: [
@@ -1497,6 +1543,26 @@ struct SurveyExtendedQuizScreen: View {
             ])
             withAnimation { v = true }
         }
+    }
+
+    /// Records the choice, and on an auto-advancing screen moves on after a
+    /// short beat — long enough that the highlight is seen, short enough that
+    /// it still reads as one tap.
+    private func select(_ value: String) {
+        guard !advancing else { return }
+        withAnimation(.easeOut(duration: 0.15)) { selection = value }
+        guard autoAdvance else { return }
+        advancing = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.28) { submit() }
+    }
+
+    private func submit() {
+        AnalyticsService.shared.track("quiz_question_answered", parameters: [
+            "flow": flow,
+            "question": question.key,
+            "answer": selection ?? "unknown"
+        ])
+        onContinue()
     }
 }
 

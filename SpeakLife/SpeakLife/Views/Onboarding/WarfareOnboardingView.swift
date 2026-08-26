@@ -244,11 +244,17 @@ struct WarfareOnboardingView: View {
         if let style = responses.primaryDeclarationStyle {
             appState.selectedDeclarationStyles = [style.rawValue]
         }
-        let category = goalWord.declarationCategory
+        // Seeded from the burden, not from the goal word's branding category.
+        let category = responses.seedCategory
         let notificationCategoriesSet: Set<DeclarationCategory> = [category]
         appState.selectedNotificationCategories = category.rawValue
         UserDefaults.standard.set(category.rawValue, forKey: "selectedCategory")
         UserPreferencesTracker.shared.trackCategorySelection(category.rawValue)
+        // The answer has to outlive onboarding to be worth asking. Every arm
+        // that asks this question kept it on `SurveyResponses`, where it died
+        // with the flow — which is why 527 answers were collected and read by
+        // nothing. `TaskLibrary` reads this key when it builds the day.
+        ConnectStyle.store(responses.connectStyle.flatMap(ConnectStyle.init(rawValue:)))
         declarationStore.choose(category) { _ in }
         if let notifTime = responses.notificationTime {
             appState.startTimeIndex = notifTime.startTimeIndex

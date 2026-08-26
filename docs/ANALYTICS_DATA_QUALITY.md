@@ -38,7 +38,7 @@ It is a rollout curve, not a bug — 100% null before 4.54, down to 7.4% by
 Any audit of instrumentation quality must scope to current builds:
 
 ```sql
-AND properties.$app_version IN ('4.54','4.55','4.56','4.57')
+AND properties.$app_version IN ('4.54','4.55','4.56','4.57','4.58')
 ```
 
 Corollary: `days_since_install` is unusable as a cohorting dimension on older

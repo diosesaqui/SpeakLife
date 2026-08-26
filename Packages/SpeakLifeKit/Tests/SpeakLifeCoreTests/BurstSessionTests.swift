@@ -493,4 +493,109 @@ final class BurstSessionTests: XCTestCase {
         XCTAssertEqual(campaign.themeName, "Anxiety & Worry")
         XCTAssertEqual(campaign.displayTitle, "Enforcing Peace")
     }
+
+    // MARK: - Speak mode
+    //
+    // The burst can be spoken as the declarations or as the scripture behind
+    // them. The switch is only honest if the verses are actually carried through
+    // composition, so these pin that end to end rather than at the view.
+
+    func testPoolBurstCarriesTheScriptureBehindEachLine() {
+        let source = Declaration(
+            text: "I am fearfully and wonderfully made",
+            book: "Psalm 139:14",
+            bibleVerseText: "I praise you because I am fearfully and wonderfully made.",
+            category: .identity
+        )
+
+        let session = builder(count: 1).build(
+            enforcement: nil, currentDay: 1,
+            favorites: [], custom: [], categoryPool: [source], selected: .identity
+        )
+
+        XCTAssertEqual(session.declarations.first?.scripture,
+                       "I praise you because I am fearfully and wonderfully made.")
+        XCTAssertEqual(session.declarations.first?.verse, "Psalm 139:14",
+                       "the reference and the quote are different fields")
+        XCTAssertTrue(session.scriptureAvailable)
+    }
+
+    func testCampaignAnchorIsSpeakableAsScripture() {
+        // The anchor is what "day 4" means, and the campaign already carries both
+        // halves of it. Scripture mode must cost a campaign burst nothing.
+        let campaign = Enforcement(
+            id: "assembled_anxiety", title: "Enforcing Peace", tagline: "t", theme: .anxiety,
+            days: [EnforcementDay(dayNumber: 1, anchorText: "I am kept in perfect peace",
+                                  anchorVerse: "You will keep in perfect peace those whose minds are steadfast.",
+                                  anchorBook: "Isaiah 26:3", anchorTranslation: "NIV",
+                                  audioId: "a.mp3", audioTitle: "A", audioMinutes: 3)]
+        )
+
+        let session = builder(count: 1).build(
+            enforcement: campaign, currentDay: 1,
+            favorites: [], custom: [], categoryPool: [], selected: nil
+        )
+
+        let anchor = session.declarations.first
+        XCTAssertEqual(anchor?.text, "I am kept in perfect peace")
+        XCTAssertEqual(anchor?.scripture,
+                       "You will keep in perfect peace those whose minds are steadfast.")
+        XCTAssertEqual(anchor?.spokenLine(.scripture),
+                       "You will keep in perfect peace those whose minds are steadfast.")
+    }
+
+    func testALineWithNoVerseFallsBackToItsDeclaration() {
+        // Someone's own written declaration has no scripture behind it. Scripture
+        // mode must give them their own words back, never a blank card.
+        let own = BurstDeclaration(text: "I finish what I start", verse: "", category: .obedience)
+
+        XCTAssertFalse(own.hasScripture)
+        XCTAssertEqual(own.spokenLine(.scripture), "I finish what I start")
+        XCTAssertEqual(own.resolvedMode(.scripture), .declaration,
+                       "the card must not set a declaration in quotation marks")
+    }
+
+    func testBlankScriptureIsTreatedAsAbsent() {
+        // The bundled content carries a handful of empty strings where a verse
+        // should be. An empty quote is not a verse, and a card showing one would
+        // be worse than the declaration it replaced.
+        let blank = BurstDeclaration(text: "t", verse: "Book 1:1", scripture: "   ", category: .faith)
+
+        XCTAssertNil(blank.scripture)
+        XCTAssertFalse(blank.hasScripture)
+    }
+
+    func testABurstOfOnlyPersonalDeclarationsOffersNoSwitch() {
+        let session = builder(count: 2).build(
+            enforcement: nil, currentDay: 1,
+            favorites: [],
+            custom: [Declaration(text: "mine one", category: .myOwn),
+                     Declaration(text: "mine two", category: .myOwn)],
+            categoryPool: [], selected: .myOwn
+        )
+
+        XCTAssertFalse(session.scriptureAvailable,
+                       "nothing to switch to, so the control must not be offered")
+        XCTAssertEqual(session.scriptureCount, 0)
+    }
+
+    func testFallbackLinesAreSpeakableEitherWay() {
+        // A brand new install with nothing loaded still gets seven lines, and
+        // scripture mode has to work on the very first burst someone ever opens.
+        for line in BurstSessionBuilder.fallback {
+            XCTAssertTrue(line.hasScripture, "\(line.verse) carries no scripture")
+            XCTAssertNotEqual(line.spokenLine(.scripture), line.text)
+        }
+    }
+
+    func testStoredModeDefaultsToTheDeclaration() {
+        // The preference is persisted as a raw string. A value written by a
+        // future build, or none at all, must land on the screen the burst has
+        // always had rather than an empty one.
+        XCTAssertEqual(BurstSpeakMode.from(rawValue: nil), .declaration)
+        XCTAssertEqual(BurstSpeakMode.from(rawValue: "something_else"), .declaration)
+        XCTAssertEqual(BurstSpeakMode.from(rawValue: "scripture"), .scripture)
+        XCTAssertEqual(BurstSpeakMode.scripture.rawValue, "scripture", "wire format changed")
+        XCTAssertEqual(BurstSpeakMode.declaration.rawValue, "declaration", "wire format changed")
+    }
 }

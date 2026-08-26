@@ -144,7 +144,8 @@ struct SurveyOnboardingView: View {
         if let style = responses.primaryDeclarationStyle {
             appState.selectedDeclarationStyles = [style.rawValue]
         }
-        let category = goalWord.declarationCategory
+        // Seeded from the burden, not from the goal word's branding category.
+        let category = responses.seedCategory
         // Schedule notifications from ONLY the user's selected category — same
         // category seeded into the home feed below. Previously we expanded to a
         // hardcoded set of 4 related categories via goalWord.notificationCategories,
