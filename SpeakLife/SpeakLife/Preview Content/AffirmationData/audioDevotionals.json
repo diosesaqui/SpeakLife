@@ -1,6 +1,6 @@
 {
     "version": 1,
-    "selectedFilterId": "speaklife",
+    "selectedFilterId": "declarations",
     "filterConfigs": [
         {
             "id": "favorites",
@@ -10,12 +10,12 @@
         {
             "id": "declarations",
             "displayName": "Mountain-Moving Prayers",
-            "order": 2
+            "order": 1
         },
         {
             "id": "speaklife",
             "displayName": "SpeakLife",
-            "order": 1,
+            "order": 2,
             "reversed": false
         },
         {
