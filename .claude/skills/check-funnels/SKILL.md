@@ -53,7 +53,11 @@ connected, tell the user to add it (see `docs/ANALYTICS_FUNNELS.md`) and stop.
 **Activation → Paid Funnel** — `funnelOrderType: ordered`, window **30 days**, ordered steps:
 `onboarding_completed` → `paywall_impression` → `trial_started` → `rc_trial_converted_event`
 (Steps 1–3 are in-app events; step 4 is RevenueCat's server-side PostHog integration. Identity
-joins via the `$posthogUserId` RC attribute set in AnalyticsService.setUserId. No `screen_viewed`
+joins via the `$posthogUserId` RC attribute, set in `GrowthMetrics.linkRevenueIdentity` on every
+launch. It was NOT set in `AnalyticsService.setUserId` as this file previously claimed — that
+method only calls PostHog's `identify`, so before the attribute existed every `rc_*` event landed
+on a RevenueCat-keyed person with no funnel steps on it and step 4 read zero for structural
+reasons, not product ones. Data before that fix shipped is still split. No `screen_viewed`
 or `paywall_conversion` step — both would mis-order or double-count. If `rc_trial_converted_event`
 reads zero, check the RC→PostHog integration is enabled, not just that no build shipped.)
 

@@ -86,16 +86,20 @@ the device. That is a debugging aid only and must not ship.
 
 ## 4. RevenueCat dashboard
 
-- [ ] **Turn on the PostHog integration** (RevenueCat → Integrations → PostHog,
-      with the PostHog project API key). **This is not optional now.** The app
-      has stopped computing revenue, so until this is on, revenue is reported
-      by nobody.
-- [ ] **Confirm the plan includes third-party integrations.** If it does not,
-      revert the revenue change or upgrade — do not ship the gap.
+- [x] ~~Turn on the PostHog integration.~~ **Already on**, and has been since
+      **2026-08-08** — `ANALYTICS_DATA_QUALITY.md` Rule 8 dates the `rc_*`
+      event history from then, and those events only exist because RevenueCat
+      is sending them. Nothing to enable. The plan question is likewise already
+      answered: the integration is running, so the plan covers it.
+- [ ] **Verify it is still on** before relying on it: in PostHog, confirm
+      `rc_renewal_event` or `rc_trial_converted_event` has landed in the last
+      few days. If the series stops, that is the integration, not the app.
 - [ ] After the first purchase on a real build, confirm the subscriber in
-      RevenueCat carries a **`$posthogUserId`** attribute. That attribute is
-      what lets a renewal find the right PostHog person; without it, revenue
-      lands on RevenueCat-keyed records with no behaviour on them.
+      RevenueCat carries a **`$posthogUserId`** attribute. **This is the part
+      that was actually missing** — the integration was sending revenue all
+      along, to person records the app's behaviour never touched (78 with
+      revenue, 3,914 with behaviour, overlap zero). Without the attribute the
+      events keep arriving and keep being unjoinable.
 
 ## 5. Device test, on TestFlight
 
