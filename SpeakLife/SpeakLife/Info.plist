@@ -47,6 +47,24 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<!-- SKAdNetwork conversion value: the Meta SDK owns it. This key makes
+	     that explicit rather than relying on the SDK default, so the decision
+	     survives a Facebook SDK upgrade that changes what the default is.
+	     TikTok stands down via `config.disableSKAdNetworkSupport()` in
+	     AppDelegate.initializeTikTokSDK(). Exactly one writer, always. -->
+	<key>FacebookSKAdNetworkReportEnabled</key>
+	<true/>
+	<!-- Below is inert for this app and kept only to avoid churn.
+	     `SKAdNetworkItems` is a key for apps that DISPLAY ads: it declares
+	     which networks may serve ads inside the app. SpeakLife is an
+	     advertised app, never a publisher (the AdMob imports in
+	     Core/GoogleAdMob.swift and Core/Components/AdBanner.swift have been
+	     commented out for a long time), so nothing reads this. It is also
+	     malformed for its own purpose — Apple expects an array of dicts
+	     keyed `SKAdNetworkIdentifier`, not an array of bare strings. Do not
+	     spend time extending it; it buys nothing while the app shows no ads.
+	     `SKAdNetworkSupportEnabled` is not an Apple key and no SDK in this
+	     project reads it. -->
 	<key>SKAdNetworkSupportEnabled</key>
 	<true/>
 	<key>SKAdNetworkItems</key>

@@ -16,7 +16,7 @@ of them per hour spent.
 | Meta | Partial. `AppLinkUtility.fetchDeferredAppLink` only, and only for campaigns that carry a deferred link — and it runs *after* the ATT answer. `acquisition_channel = meta` is a floor, never the total. |
 | TikTok | **Nothing.** TikTok Business SDK sends events *to* TikTok; it returns no attribution. Every TikTok install files as `organic`. |
 | Google | **Nothing.** Same. |
-| SKAdNetwork | 52 network ids in `Info.plist`, `SKAdNetworkSupportEnabled = true`. **No app code ever calls `updatePostbackConversionValue`.** |
+| SKAdNetwork | Conversion value now owned by the Meta SDK alone; TikTok stands down via `disableSKAdNetworkSupport()`. The 52 `SKAdNetworkItems` entries are inert (see §4). |
 | Branch | Fully written in `AppDelegate.swift` behind `#if canImport(BranchSDK)`, package never added, so it contributes nothing. |
 | RevenueCat | 5.61.0, attribution namespace already used (`setMediaSource`, `setFBAnonymousID`, `setFirebaseAppInstanceID`). |
 
@@ -26,12 +26,12 @@ of them per hour spent.
    bucket, which simultaneously overstates organic and makes those channels
    unpriceable. Any "organic is our best channel" read off PostHog today is
    partly TikTok spend wearing a disguise.
-2. **Every SKAN postback leaves with conversion value 0.** Nothing in the app
-   sets one. Whatever Meta's and TikTok's SDKs do on their own, they are both
-   writing to a single per-install slot that is last-writer-wins — so at best
-   one of them is right and the other is clobbered. Meta and TikTok are
-   optimising SpeakLife campaigns against a signal that says every install is
-   worth the same, which is the most expensive bug in this table.
+2. **Two SDKs were writing the same SKAdNetwork conversion value.** Each
+   install gets one 6-bit value and `updatePostbackConversionValue` is
+   last-writer-wins. Meta's SDK writes it off automatic in-app-purchase
+   logging (on by default, never disabled here) and TikTok's writes it from a
+   schema fetched at runtime. Whichever wrote second won, and neither knew it
+   lost. Fixed in §4.
 
 ---
 
@@ -149,13 +149,54 @@ means `acquisition_attributed` fires twice for those installs. Filter on
 
 ---
 
-## 4. Do these first, whatever you decide about the MMP
+## 4. The free fixes, and one correction
 
-Both are free, neither needs a vendor, and both are worth more per hour than
-the integration above:
+### Done: one SKAdNetwork conversion-value writer
 
-1. **Own the SKAN conversion value.** Pick one writer and give it a schema
-   that reflects subscription value. Today every install reports as identical
-   to Meta and TikTok, which is actively degrading their optimisation.
-2. **Expand `SKAdNetworkItems`.** 52 ids is a partial list; each missing one is
-   an install nobody gets credit for. Costs one plist paste.
+`AppDelegate.initializeTikTokSDK()` now calls `config.disableSKAdNetworkSupport()`
+before `initializeSdk`, and `Info.plist` sets `FacebookSKAdNetworkReportEnabled`
+to `true` explicitly rather than leaning on the SDK default. Meta owns the
+value; TikTok stands down. TikTok documents this exact call for the case where
+another SDK owns SKAN.
+
+Meta gets it because it is the larger paid channel and already owns the
+deferred-app-link path. To flip: delete the `disableSKAdNetworkSupport()` line
+and set `FacebookSKAdNetworkReportEnabled` to `false`. Never both, and never a
+third writer in app code.
+
+**Remaining half, and it is a dashboard job, not a code one:** the value is
+only meaningful once the schema in Meta Events Manager reflects subscription
+value — paywall view → trial start → paid conversion, not raw revenue buckets.
+Until that schema is set, Meta is now writing a *consistent* value rather than
+a contested one, which is strictly better but not yet the win.
+
+Whether TikTok was actually clobbering depends on whether a SKAN schema was
+ever uploaded to TikTok Events Manager — its SDK writes from a remote config,
+so with no schema it may have been writing nothing. Standing it down costs
+nothing either way, and removes the question.
+
+### Correction: `SKAdNetworkItems` is not a fix
+
+An earlier draft of this doc said to expand the 52-entry `SKAdNetworkItems`
+list to AppsFlyer's ~150. **That was wrong, and doing it would buy nothing.**
+
+`SKAdNetworkItems` is a key for apps that **display** ads — it declares which
+ad networks may serve ads *inside* the app, and only ads from listed networks
+are eligible for install validation. SpeakLife is an advertised app, never a
+publisher: the AdMob imports in `Core/GoogleAdMob.swift` and
+`Core/Components/AdBanner.swift` are commented out, and no ad SDK is in
+`Package.resolved`. Nothing reads the key.
+
+The list is also malformed for its own purpose — Apple expects an array of
+dicts keyed `SKAdNetworkIdentifier`, and this is an array of bare strings —
+which is a second sign it has been dead since AdMob was removed. Left in place
+with an explanatory comment rather than deleted, since removing it changes
+nothing either.
+
+`SKAdNetworkSupportEnabled` next to it is not an Apple key and no SDK in this
+project reads it. Also left alone.
+
+### Unrelated, noticed in passing
+
+`Info.plist` sets `NSAllowsArbitraryLoads = true`, which disables App Transport
+Security app-wide. Not an attribution problem, but worth a look on its own.

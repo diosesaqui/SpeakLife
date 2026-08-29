@@ -66,6 +66,26 @@ final class AppDelegate: NSObject, MessagingDelegate {
         // this does not block the UI.
         let start = {
             let config = TikTokConfig(accessToken: "TTT9Kn1rHyqZN1AMEcrMS6WBCnh7pFj2", appId: "7421777490315624455", tiktokAppId: "7421777490315624455")
+
+            // SKAdNetwork gives each install ONE conversion value, and
+            // `updatePostbackConversionValue` is last-writer-wins. Two SDKs in
+            // this app want to write it: the Meta SDK does so off its
+            // automatic in-app-purchase logging (on by default, never disabled
+            // here), and TikTok's does so from a schema fetched at runtime.
+            // Whichever writes second wins, and neither knows it lost — the
+            // networks just optimize against a value that means something
+            // other than what they think.
+            //
+            // Meta is the app's larger paid channel and already owns the
+            // deferred-app-link path, so it keeps the conversion value and
+            // TikTok stands down. TikTok documents exactly this call for the
+            // case where another SDK owns SKAN.
+            //
+            // To hand ownership to TikTok instead: delete this line and set
+            // `FacebookSKAdNetworkReportEnabled` to false in Info.plist. Never
+            // leave both on, and never add a third writer in app code.
+            config?.disableSKAdNetworkSupport()
+
             #if DEBUG
             config?.enableDebugMode()
             #endif
