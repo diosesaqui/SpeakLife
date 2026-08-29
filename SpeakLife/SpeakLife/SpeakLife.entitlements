@@ -2,6 +2,23 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- Branch universal links, from the Branch dashboard's Deep Linking
+	     Domains. Both are required: Branch issues a primary and an "-alternate"
+	     domain and uses the pair so links still resolve when one domain is
+	     already claimed by another app. Branch serves the
+	     apple-app-site-association file for them itself, provided the Apple
+	     Team ID and bundle id are filled in on the same dashboard page, so
+	     nothing is hosted on our side.
+
+	     Branch allows the app.link subdomain to be changed ONCE, ever, and that
+	     change has now been spent: it was the auto-assigned `vqdga`, and is
+	     `speaklife`. These two strings cannot change again without a new
+	     Branch app. -->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:speaklife.app.link</string>
+		<string>applinks:speaklife-alternate.app.link</string>
+	</array>
 	<key>aps-environment</key>
 	<string>production</string>
 	<key>com.apple.developer.applesignin</key>

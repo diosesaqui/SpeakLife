@@ -153,6 +153,7 @@ struct SpeakLifeApp: App {
                         AcquisitionAttribution.shared.recordDeepLink(url, source: "deeplink")
                         // Let Branch process already-installed link opens too.
                         BranchAttribution.handleDeepLink(url)
+                        AppsFlyerAttribution.handleDeepLink(url)
                         if url.absoluteString == "speaklife://event/daily-declarations" {
 
                         }

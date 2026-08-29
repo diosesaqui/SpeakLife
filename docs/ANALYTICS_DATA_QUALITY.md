@@ -223,13 +223,20 @@ exactly zero.** No question crossing the two — "LTV by onboarding variant",
 "revenue by acquisition cohort", "do activated users pay more" — had a join to
 make.
 
-`GrowthMetrics.linkRevenueIdentity` now aliases the RevenueCat id onto the app's
-person on foreground. **This fixes new data only; historical revenue stays
-orphaned.** Do not trust any pre-fix cohort revenue number.
+The aliasing that was here first only half-worked. `aliasUser` runs on the
+client, so it joins identities for events the app itself sends — and every
+`rc_*` event is sent by RevenueCat's servers, often while the app is shut. The
+server decides which PostHog person to write to, and it decides by reading the
+`$posthogUserId` subscriber attribute. Nothing was setting it.
+
+`GrowthMetrics.linkRevenueIdentity` now pushes PostHog's distinct id into
+RevenueCat on every launch, alongside the alias, so the join runs in both
+directions. **This fixes new data only; historical revenue stays orphaned.** Do
+not trust any pre-fix cohort revenue number.
 
 | # | Metric | Event / person property | Gap it closed |
 |---|---|---|---|
-| 1 | **LTV / ARPU** | `revenue_recorded`; person `lifetime_revenue_usd`, `purchase_count`, `plan`, `billing_term`, `first_purchase_at` | Revenue was per-transaction only. A person who renewed four times was indistinguishable from one who paid once, so payback used first-purchase price. |
+| 1 | **LTV / ARPU** | `rc_*` events' `revenue` (RevenueCat); person `plan`, `billing_term` | ~~`revenue_recorded` / `lifetime_revenue_usd`~~ **removed.** They accumulated `product.price` — the buyer's LOCAL currency — into a field named `_usd`, and only ever ran in-app, so renewals and trial conversions were never counted. RevenueCat owns revenue now: real USD, and it sees the server-side events. |
 | 2 | **Activation** | `user_activated` (once ever); person `activated_at`, `hours_to_activate` | No definition of "an install became a user" existed. Fires on first declaration spoken, audio played, chat message or checklist task. |
 | 3 | **Retention / resurrection** | `app_day_started` (once per calendar day) | `Application Opened` is autocapture and fires on every foreground, so it counted app switching, not days. Carries `days_since_last_open` and `is_resurrected`. |
 | 4 | **Session length** | `session_ended` | `endSession()` had **zero call sites**: 32,444 sessions started over 90 days, none ended. Session duration was never measured. Now wired to `scenePhase == .background`. |
@@ -244,10 +251,9 @@ orphaned.** Do not trust any pre-fix cohort revenue number.
 
 - **Notification *delivery*** — only opens. Open rate has no true denominator;
   `lifecycle_notifications_scheduled` counts scheduling, not delivery.
-- **Renewal revenue while the app is closed.** `recordPurchase` runs in-app, so
-  server-side renewals only reach PostHog as `rc_renewal_event`. Once the alias
-  above has been live a while, sum `rc_*` `revenue` per person instead of
-  trusting `lifetime_revenue_usd` alone.
+- ~~**Renewal revenue while the app is closed.**~~ Resolved by handing revenue
+  to RevenueCat and setting `$posthogUserId`. Sum `rc_*` `revenue` per person;
+  there is no longer a client-side figure to compare it against.
 - **Paid acquisition source per person.** Branch/Meta attribution is wired for
   onboarding routing but not mirrored to a person property, so CAC-vs-LTV still
   can't be split by channel.
@@ -347,10 +353,15 @@ forward. Cohort on `install_date` when comparing.
 SELECT
     person.properties.acquisition_channel AS channel,
     uniq(person_id) AS people,
-    round(avg(toFloat(person.properties.lifetime_revenue_usd)), 2) AS avg_ltv
+    round(sum(toFloat(JSONExtractRaw(properties, 'revenue'))), 2) AS revenue
 FROM events
 WHERE timestamp >= now() - INTERVAL 30 DAY
   AND isNotNull(person.properties.acquisition_channel)
+  AND event LIKE 'rc_%'
 GROUP BY channel
 ORDER BY people DESC
 ```
+
+Revenue comes from the `rc_*` events, not from a person property — the
+`lifetime_revenue_usd` this query used to read no longer exists, and the values
+it held were local currency mislabelled as USD.

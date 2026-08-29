@@ -706,6 +706,16 @@ final class SubscriptionStore: ObservableObject {
         let premiumActive   = RevenueCatManager.shared.isPremiumActive(info)
         let devotionalActive = RevenueCatManager.shared.isDevotionalActive(info)
 
+        // Captured before the mirrors below overwrite them. The cancellation
+        // check needs the PREVIOUS subscription state, and it used to read
+        // `subscriptionGroupStatus` after this method had already set it to nil
+        // for exactly the case it was testing for — so `!premiumActive &&
+        // subscriptionGroupStatus != nil` was never true and no cancellation
+        // was ever reported from RevenueCat. `purchasedSubscriptions` is
+        // cleared on the same path, so the product id has to be read here too.
+        let wasSubscribed = subscriptionGroupStatus != nil
+        let lastKnownProductId = purchasedSubscriptions.first?.id
+
         isPremium          = premiumActive
         isInTrial          = premiumActive && RevenueCatManager.shared.isPremiumInTrial(info)
         isInDevotionalPremium = devotionalActive
@@ -739,13 +749,11 @@ final class SubscriptionStore: ObservableObject {
         subscriptionGroupStatus = premiumActive ? .subscribed : nil
 
         // Track cancellations
-        if !premiumActive && subscriptionGroupStatus != nil {
-            if let last = purchasedSubscriptions.first {
-                AnalyticsService.shared.trackSubscriptionCancelled(
-                    productId: last.id,
-                    metadata: ["source": "rc_customer_info_update"]
-                )
-            }
+        if wasSubscribed && !premiumActive {
+            AnalyticsService.shared.trackSubscriptionCancelled(
+                productId: lastKnownProductId ?? "unknown",
+                metadata: ["source": "rc_customer_info_update"]
+            )
         }
     }
 
@@ -937,11 +945,11 @@ final class SubscriptionStore: ObservableObject {
             "variant": onboardingVariantName
         ])
 
-        // LTV. Nothing accumulated revenue per person before this, so a person
-        // who renewed four times was indistinguishable from one who paid once
-        // and every payback number was first-purchase price. A trial start is
-        // worth 0 until it converts — booking the price here would inflate LTV
-        // by the whole cancelled-trial population.
+        // Plan dimensions only. Revenue is RevenueCat's: it reports amounts in
+        // real USD and it sees the renewals and trial conversions that happen
+        // server-side while this app is shut, neither of which this process can
+        // observe. Booking `priceValue` here would be the buyer's LOCAL
+        // currency filed as USD, and would still miss every renewal.
         if willStartTrial {
             GrowthMetrics.shared.recordTrialStarted(
                 productId: product.id,
@@ -949,11 +957,9 @@ final class SubscriptionStore: ObservableObject {
                 trialDays: TrialExperienceService.introTrialDays(for: product) ?? 0
             )
         } else {
-            GrowthMetrics.shared.recordPurchase(
+            GrowthMetrics.shared.recordPurchaseDimensions(
                 productId: product.id,
-                plan: planLabel(for: product),
-                revenueUSD: priceValue,
-                isRenewal: false
+                plan: planLabel(for: product)
             )
         }
 

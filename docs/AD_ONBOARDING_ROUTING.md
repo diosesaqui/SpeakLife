@@ -39,10 +39,11 @@ experiment. The variant is **frozen** once onboarding appears
 
 1. Create a free Branch account, add the iOS app (bundle `com.Franchiz.SpeakLife`),
    set the Apple App Prefix/Team ID, and turn on the App Store + universal links.
-2. In Xcode: **File → Add Package Dependencies →**
-   `https://github.com/BranchMetrics/ios-branch-sdk-spm` → add **BranchSDK** to the
-   app target. (The integration code is already committed behind
-   `#if canImport(BranchSDK)`; adding the package activates it.)
+2. ~~Add the Swift Package.~~ **Done** — `ios-branch-sdk-spm` 3.9.1 is pinned in
+   `Package.resolved` and `BranchSDK` is linked to the app target, so
+   `canImport(BranchSDK)` is now true and the wrapper in `AppDelegate.swift` is
+   live code. It still no-ops on every entry point until `branch_key` is set
+   (step 3), so shipping without the key changes nothing.
 3. In the app target **Info** tab, add:
    - `branch_key` (String) = your Branch key from the dashboard.
    - URL Type with scheme `speaklife` (already present) — keep it.

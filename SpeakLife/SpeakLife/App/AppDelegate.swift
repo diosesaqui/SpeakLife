@@ -17,6 +17,9 @@ import FirebaseRemoteConfigInternal
 #if canImport(BranchSDK)
 import BranchSDK
 #endif
+#if canImport(AppsFlyerLib)
+import AppsFlyerLib
+#endif
 import TikTokBusinessSDK
 import RevenueCat
 import PostHog
@@ -63,6 +66,26 @@ final class AppDelegate: NSObject, MessagingDelegate {
         // this does not block the UI.
         let start = {
             let config = TikTokConfig(accessToken: "TTT9Kn1rHyqZN1AMEcrMS6WBCnh7pFj2", appId: "7421777490315624455", tiktokAppId: "7421777490315624455")
+
+            // SKAdNetwork gives each install ONE conversion value, and
+            // `updatePostbackConversionValue` is last-writer-wins. Two SDKs in
+            // this app want to write it: the Meta SDK does so off its
+            // automatic in-app-purchase logging (on by default, never disabled
+            // here), and TikTok's does so from a schema fetched at runtime.
+            // Whichever writes second wins, and neither knows it lost — the
+            // networks just optimize against a value that means something
+            // other than what they think.
+            //
+            // Meta is the app's larger paid channel and already owns the
+            // deferred-app-link path, so it keeps the conversion value and
+            // TikTok stands down. TikTok documents exactly this call for the
+            // case where another SDK owns SKAN.
+            //
+            // To hand ownership to TikTok instead: delete this line and set
+            // `FacebookSKAdNetworkReportEnabled` to false in Info.plist. Never
+            // leave both on, and never add a third writer in app code.
+            config?.disableSKAdNetworkSupport()
+
             #if DEBUG
             config?.enableDebugMode()
             #endif
@@ -193,17 +216,26 @@ final class AppDelegate: NSObject, MessagingDelegate {
         )
 
         // Branch (MMP): resolve the deferred deep link at launch (no ATT wait) so
-        // ad-matched onboarding is known before onboarding renders. No-op until the
-        // BranchSDK Swift Package is added in Xcode.
+        // ad-matched onboarding is known before onboarding renders. Live — the
+        // package is added and `branch_key` is set.
         BranchAttribution.initSession(launchOptions: launchOptions)
+
+        // AppsFlyer (MMP): the same job as Branch, and the ALTERNATIVE to it,
+        // never an addition — two MMPs double-count every install. Branch is
+        // the one chosen (see docs/ATTRIBUTION_MMP.md §6), so this stays dead:
+        // its package is not added, and it would additionally need
+        // AppsFlyerDevKey / AppsFlyerAppleAppID in Info.plist. If AppsFlyer is
+        // ever adopted, delete the Branch call above in the same change.
+        AppsFlyerAttribution.configure()
 
         // Per-person acquisition channel. Starts the Apple Search Ads token
         // exchange and schedules the organic fallback, so every person ends up
         // with a channel and CAC can be set against LTV per channel.
         //
-        // Runs regardless of Branch: that SDK is not in Package.resolved, so the
-        // whole BranchAttribution enum above is currently compiled out and
-        // contributes no attribution at all.
+        // Runs alongside Branch rather than instead of it. Branch reports the
+        // click that produced the install; this owns Apple Search Ads, which
+        // Branch does not, and the priority ladder that decides which source
+        // wins when both speak.
         AcquisitionAttribution.shared.start()
 
         Messaging.messaging().delegate = self
@@ -290,11 +322,24 @@ final class AppDelegate: NSObject, MessagingDelegate {
         // Track TikTok app launch (will queue until SDK is ready)
         Event.trackTikTokAppLaunch()
         
-        // Track install on first launch (only called once)
-        let isFirstLaunch = UserDefaults.standard.bool(forKey: "hasLaunchedBefore")
-        if !isFirstLaunch {
-            UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
-            Event.trackTikTokAppInstall()
+        // Track install on first launch (only called once).
+        //
+        // This used to dedupe on `hasLaunchedBefore`, which SpeakLifeApp also
+        // owns as the @AppStorage flag behind "first launch turns background
+        // music on". didFinishLaunching runs before that view's .onAppear, so
+        // this write consumed the flag every time and the music default never
+        // once applied on a real first launch. Two unrelated jobs, two keys.
+        //
+        // Seeded from the old key so the existing base — already launched,
+        // already counted — does not re-fire an install event on upgrade.
+        let defaults = UserDefaults.standard
+        let didTrackInstallKey = "analytics_did_track_install"
+        if !defaults.bool(forKey: didTrackInstallKey) {
+            let isExistingInstall = defaults.bool(forKey: "hasLaunchedBefore")
+            defaults.set(true, forKey: didTrackInstallKey)
+            if !isExistingInstall {
+                Event.trackTikTokAppInstall()
+            }
         }
         
         NotificationCenter.default.addObserver(self, selector: #selector(scheduleNotificationRequest), name: UIApplication.didEnterBackgroundNotification, object: nil)
@@ -416,6 +461,7 @@ extension AppDelegate {
             options: [UIApplication.OpenURLOptionsKey : Any] = [:]
         ) -> Bool {
             BranchAttribution.handleOpen(app, url, options)
+            AppsFlyerAttribution.handleOpen(app, url, options)
             AcquisitionAttribution.shared.recordDeepLink(url, source: "custom_scheme")
             return ApplicationDelegate.shared.application(
                 app,
@@ -433,6 +479,7 @@ extension AppDelegate {
             // Branch universal links (already-installed taps) — deferred installs
             // are handled by initSession above.
             BranchAttribution.handleUserActivity(userActivity)
+            AppsFlyerAttribution.handleUserActivity(userActivity)
             // Universal links are the web-side half of the same campaigns, so
             // they carry the same UTM set as the custom-scheme links above.
             if userActivity.activityType == NSUserActivityTypeBrowsingWeb,
@@ -544,17 +591,30 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
 
 // MARK: - Branch (MMP) ad-matched onboarding
 //
-// Thin wrapper around the Branch SDK. Guarded by `canImport(BranchSDK)` so the
-// app builds before the Swift Package is added in Xcode; it activates the moment
-// the package is added. Unlike Meta's deferred app link (gated by the ATT
+// Thin wrapper around the Branch SDK. The `canImport(BranchSDK)` guards are
+// kept so the file still compiles if the package is ever removed, but the
+// package IS added and the key IS set, so this is live code. Unlike Meta's
+// deferred app link (gated by the ATT
 // response), Branch resolves the deferred link AT LAUNCH without waiting on ATT,
 // so the ad's `ob=<variant>` is known before onboarding renders.
 enum BranchAttribution {
+
+    /// Branch reads its key from the `branch_key` Info.plist entry. The Swift
+    /// Package is now added, so `canImport(BranchSDK)` is true and every method
+    /// below is live code — but the dashboard half (key, OneLink subdomain,
+    /// Associated Domains) is configuration this repo does not carry. Without a
+    /// key the SDK cannot attribute anything and only logs, so the whole
+    /// wrapper stays a no-op until the key is present.
+    private static var isConfigured: Bool {
+        guard let key = Bundle.main.object(forInfoDictionaryKey: "branch_key") as? String else { return false }
+        return !key.isEmpty
+    }
 
     /// Call as early as possible in didFinishLaunching. Resolves the deferred deep
     /// link for fresh installs and routes `ob=<variant>` into the onboarding override.
     static func initSession(launchOptions: [UIApplication.LaunchOptionsKey: Any]?) {
         #if canImport(BranchSDK)
+        guard isConfigured else { return }
         Branch.getInstance().initSession(launchOptions: launchOptions) { params, _ in
             apply(params as? [String: Any])
         }
@@ -564,6 +624,7 @@ enum BranchAttribution {
     /// Forward already-installed Branch link opens (custom scheme).
     static func handleOpen(_ app: UIApplication, _ url: URL, _ options: [UIApplication.OpenURLOptionsKey: Any]) {
         #if canImport(BranchSDK)
+        guard isConfigured else { return }
         _ = Branch.getInstance().application(app, open: url, options: options)
         #endif
     }
@@ -571,6 +632,7 @@ enum BranchAttribution {
     /// Forward direct deep-link opens (SwiftUI `.onOpenURL`).
     static func handleDeepLink(_ url: URL) {
         #if canImport(BranchSDK)
+        guard isConfigured else { return }
         Branch.getInstance().handleDeepLink(url)
         #endif
     }
@@ -578,6 +640,7 @@ enum BranchAttribution {
     /// Forward universal-link opens (SwiftUI `.onContinueUserActivity`).
     static func handleUserActivity(_ userActivity: NSUserActivity) {
         #if canImport(BranchSDK)
+        guard isConfigured else { return }
         _ = Branch.getInstance().continue(userActivity)
         #endif
     }
@@ -613,3 +676,186 @@ enum BranchAttribution {
     }
     #endif
 }
+
+// MARK: - AppsFlyer (MMP)
+//
+// Thin wrapper around the AppsFlyer SDK, written to the same shape as
+// `BranchAttribution` above: guarded by `canImport(AppsFlyerLib)` so the app
+// builds and ships unchanged until the Swift Package is added in Xcode, and
+// activates the moment it is.
+//
+// What it adds that the app cannot get on its own:
+//
+// * TikTok and Google installs. `AcquisitionAttribution` resolves Apple Search
+//   Ads deterministically and Meta only when a campaign carries a deferred
+//   link. Every TikTok and Google install currently files as `organic`, so
+//   those channels have no CAC at all.
+// * A deferred deep link that does NOT wait on ATT, which is the whole reason
+//   `docs/AD_ONBOARDING_ROUTING.md` wanted an MMP: the ad's `ob=` variant has
+//   to be known before onboarding renders, and Meta's `fetchDeferredAppLink`
+//   only answers after the ATT response.
+// * One owner for the SKAdNetwork conversion value. The Meta and TikTok SDKs
+//   both ship their own SKAN reporters and `updatePostbackConversionValue` is
+//   last-writer-wins per install, so today they overwrite each other.
+//
+// Configuration lives in Info.plist rather than in source, so no key is
+// committed and the wrapper stays inert until both values are set:
+//
+//   AppsFlyerDevKey     (String) — from the AppsFlyer dashboard
+//   AppsFlyerAppleAppID (String) — the numeric App Store id, digits only
+//
+enum AppsFlyerAttribution {
+
+    /// Info.plist keys. Both must be present or the SDK is never configured,
+    /// which keeps a package-added-but-not-yet-provisioned build silent rather
+    /// than crashing on an empty dev key.
+    private enum PlistKey {
+        static let devKey = "AppsFlyerDevKey"
+        static let appleAppID = "AppsFlyerAppleAppID"
+    }
+
+    /// Call from `didFinishLaunchingWithOptions`, after RevenueCat is
+    /// configured (AppDelegate.init does that) so the AppsFlyer id can be
+    /// handed straight to RevenueCat's subscriber attributes.
+    static func configure() {
+        #if canImport(AppsFlyerLib)
+        guard let devKey = Bundle.main.object(forInfoDictionaryKey: PlistKey.devKey) as? String,
+              !devKey.isEmpty,
+              let appleAppID = Bundle.main.object(forInfoDictionaryKey: PlistKey.appleAppID) as? String,
+              !appleAppID.isEmpty else { return }
+
+        let lib = AppsFlyerLib.shared()
+        lib.appsFlyerDevKey = devKey
+        lib.appleAppID = appleAppID
+        lib.delegate = AppsFlyerBridge.shared
+        lib.deepLinkDelegate = AppsFlyerBridge.shared
+        #if DEBUG
+        lib.isDebug = true
+        #endif
+
+        // Hold the install postback until the person answers ATT, so a granted
+        // IDFA is attached to it rather than arriving after attribution has
+        // already been decided. The prompt fires ~1.5s into the landing screen
+        // (see SpeakLifeApp), so ten seconds covers a real answer without
+        // stalling attribution behind someone who never taps.
+        lib.waitForATTUserAuthorization(timeoutInterval: 10)
+
+        // RevenueCat's AppsFlyer integration keys on this attribute. Without
+        // it, the trial starts, conversions and renewals RevenueCat sends
+        // server-side never join the install, and channel LTV stops at the
+        // first payment made while the app was open.
+        if Purchases.isConfigured {
+            let uid = lib.getAppsFlyerUID()
+            Purchases.shared.attribution.setAppsflyerID(uid)
+            // Same identity in both directions, so an AppsFlyer-side export can
+            // be joined to a RevenueCat subscriber without a mapping table.
+            lib.customerUserID = Purchases.shared.appUserID
+        }
+
+        // AppsFlyer requires `start()` while the app is active; calling it from
+        // didFinishLaunching (pre-active) drops the session. Observing here
+        // keeps the call site in one file instead of adding another lifecycle
+        // hook to AppDelegate.
+        NotificationCenter.default.addObserver(
+            AppsFlyerBridge.shared,
+            selector: #selector(AppsFlyerBridge.applicationDidBecomeActive),
+            name: UIApplication.didBecomeActiveNotification,
+            object: nil
+        )
+        #endif
+    }
+
+    /// Forward custom-scheme opens (`speaklife://…`).
+    static func handleOpen(_ app: UIApplication, _ url: URL, _ options: [UIApplication.OpenURLOptionsKey: Any]) {
+        #if canImport(AppsFlyerLib)
+        AppsFlyerLib.shared().handleOpen(url, options: options)
+        #endif
+    }
+
+    /// Forward direct deep-link opens (SwiftUI `.onOpenURL`).
+    static func handleDeepLink(_ url: URL) {
+        #if canImport(AppsFlyerLib)
+        AppsFlyerLib.shared().handleOpen(url, options: nil)
+        #endif
+    }
+
+    /// Forward universal-link opens (OneLink taps by already-installed users).
+    static func handleUserActivity(_ userActivity: NSUserActivity) {
+        #if canImport(AppsFlyerLib)
+        AppsFlyerLib.shared().continue(userActivity, restorationHandler: nil)
+        #endif
+    }
+}
+
+#if canImport(AppsFlyerLib)
+/// Delegate target for the AppsFlyer SDK. Separate from the enum above because
+/// the SDK protocols are `@objc` and need a retained NSObject.
+final class AppsFlyerBridge: NSObject, AppsFlyerLibDelegate, AppsFlyerDeepLinkDelegate {
+
+    static let shared = AppsFlyerBridge()
+
+    private var didStart = false
+
+    @objc func applicationDidBecomeActive() {
+        // start() is idempotent on the SDK side, but the app foregrounds many
+        // times a day and each call re-sends a session.
+        guard !didStart else { return }
+        didStart = true
+        AppsFlyerLib.shared().start()
+    }
+
+    // MARK: - Install attribution
+
+    func onConversionDataSuccess(_ data: [AnyHashable: Any]) {
+        // "Organic" is AppsFlyer telling us it found no click. Recording
+        // nothing lets AcquisitionAttribution's own organic finalizer own that
+        // decision, which is where the 8-second look-before-you-write window
+        // lives.
+        let status = data["af_status"] as? String
+        guard status?.caseInsensitiveCompare("Non-organic") == .orderedSame else { return }
+
+        let mediaSource = data["media_source"] as? String
+        let channel = AcquisitionChannel.from(sourceString: mediaSource)
+
+        AcquisitionAttribution.shared.record(
+            channel: channel == .unknown ? .ownedDeeplink : channel,
+            source: mediaSource ?? "appsflyer",
+            campaign: data["campaign"] as? String,
+            adGroup: (data["adset"] as? String) ?? (data["af_adset"] as? String),
+            creative: (data["af_ad"] as? String) ?? (data["af_ad_id"] as? String),
+            keyword: (data["af_keywords"] as? String) ?? (data["keyword"] as? String)
+        )
+
+        applyOnboardingVariant(from: data)
+    }
+
+    func onConversionDataFail(_ error: Error) {
+        // Deliberately silent beyond the log: a failed conversion lookup must
+        // not write a channel, or the failure itself becomes an attribution.
+        print("⚠️ AppsFlyer conversion data failed: \(error.localizedDescription)")
+    }
+
+    // MARK: - Deep links (OneLink)
+
+    func didResolveDeepLink(_ result: DeepLinkResult) {
+        guard result.status == .found, let deepLink = result.deepLink else { return }
+        applyOnboardingVariant(from: deepLink.clickEvent)
+
+        if let url = deepLink.clickEvent["link"] as? String, let parsed = URL(string: url) {
+            AcquisitionAttribution.shared.recordDeepLink(parsed, source: "appsflyer_onelink")
+        }
+    }
+
+    /// Routes the ad's onboarding arm into the same override every other source
+    /// funnels through (`docs/AD_ONBOARDING_ROUTING.md`). OneLink can carry the
+    /// value as a custom parameter or as the reserved `deep_link_value`, so
+    /// both spellings are read.
+    private func applyOnboardingVariant(from data: [AnyHashable: Any]) {
+        let variant = (data["ob"] as? String)
+            ?? (data["deep_link_value"] as? String)
+            ?? (data["deep_link_sub1"] as? String)
+        guard let variant = variant else { return }
+        SubscriptionStore.assignOnboardingVariantFromAd(variant, source: "ad")
+    }
+}
+#endif

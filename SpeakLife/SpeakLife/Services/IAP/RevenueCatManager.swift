@@ -64,6 +64,25 @@ final class RevenueCatManager {
         if let keyword = keyword { attribution.setKeyword(keyword) }
     }
 
+    /// Pushes PostHog's distinct id into RevenueCat as the reserved
+    /// `$posthogUserId` attribute.
+    ///
+    /// This is what makes RevenueCat the owner of revenue actually work. RC's
+    /// PostHog integration fires server-side, on renewals and trial
+    /// conversions that happen while the app is shut, and it chooses which
+    /// PostHog person to attach the event to by reading this attribute. The
+    /// app's own `aliasUser` call joins identities from the client side, which
+    /// covers events the app itself sends and nothing else — without this,
+    /// server-side revenue keeps landing on RevenueCat-keyed person records
+    /// with no behaviour on them, which is the 78-vs-3,914 zero-overlap split
+    /// GrowthMetrics documents.
+    ///
+    /// Safe to call repeatedly — RC only writes changed attributes.
+    func setPostHogUserID(_ distinctId: String) {
+        guard Purchases.isConfigured, !distinctId.isEmpty else { return }
+        Purchases.shared.attribution.setAttributes(["$posthogUserId": distinctId])
+    }
+
     /// Stable per-install identity RevenueCat uses for this user. The Bible Chat
     /// proxy keys server-side entitlement checks and usage metering off this.
     var appUserID: String {
