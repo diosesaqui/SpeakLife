@@ -319,11 +319,24 @@ final class AppDelegate: NSObject, MessagingDelegate {
         // Track TikTok app launch (will queue until SDK is ready)
         Event.trackTikTokAppLaunch()
         
-        // Track install on first launch (only called once)
-        let isFirstLaunch = UserDefaults.standard.bool(forKey: "hasLaunchedBefore")
-        if !isFirstLaunch {
-            UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
-            Event.trackTikTokAppInstall()
+        // Track install on first launch (only called once).
+        //
+        // This used to dedupe on `hasLaunchedBefore`, which SpeakLifeApp also
+        // owns as the @AppStorage flag behind "first launch turns background
+        // music on". didFinishLaunching runs before that view's .onAppear, so
+        // this write consumed the flag every time and the music default never
+        // once applied on a real first launch. Two unrelated jobs, two keys.
+        //
+        // Seeded from the old key so the existing base — already launched,
+        // already counted — does not re-fire an install event on upgrade.
+        let defaults = UserDefaults.standard
+        let didTrackInstallKey = "analytics_did_track_install"
+        if !defaults.bool(forKey: didTrackInstallKey) {
+            let isExistingInstall = defaults.bool(forKey: "hasLaunchedBefore")
+            defaults.set(true, forKey: didTrackInstallKey)
+            if !isExistingInstall {
+                Event.trackTikTokAppInstall()
+            }
         }
         
         NotificationCenter.default.addObserver(self, selector: #selector(scheduleNotificationRequest), name: UIApplication.didEnterBackgroundNotification, object: nil)
@@ -582,10 +595,22 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
 // so the ad's `ob=<variant>` is known before onboarding renders.
 enum BranchAttribution {
 
+    /// Branch reads its key from the `branch_key` Info.plist entry. The Swift
+    /// Package is now added, so `canImport(BranchSDK)` is true and every method
+    /// below is live code — but the dashboard half (key, OneLink subdomain,
+    /// Associated Domains) is configuration this repo does not carry. Without a
+    /// key the SDK cannot attribute anything and only logs, so the whole
+    /// wrapper stays a no-op until the key is present.
+    private static var isConfigured: Bool {
+        guard let key = Bundle.main.object(forInfoDictionaryKey: "branch_key") as? String else { return false }
+        return !key.isEmpty
+    }
+
     /// Call as early as possible in didFinishLaunching. Resolves the deferred deep
     /// link for fresh installs and routes `ob=<variant>` into the onboarding override.
     static func initSession(launchOptions: [UIApplication.LaunchOptionsKey: Any]?) {
         #if canImport(BranchSDK)
+        guard isConfigured else { return }
         Branch.getInstance().initSession(launchOptions: launchOptions) { params, _ in
             apply(params as? [String: Any])
         }
@@ -595,6 +620,7 @@ enum BranchAttribution {
     /// Forward already-installed Branch link opens (custom scheme).
     static func handleOpen(_ app: UIApplication, _ url: URL, _ options: [UIApplication.OpenURLOptionsKey: Any]) {
         #if canImport(BranchSDK)
+        guard isConfigured else { return }
         _ = Branch.getInstance().application(app, open: url, options: options)
         #endif
     }
@@ -602,6 +628,7 @@ enum BranchAttribution {
     /// Forward direct deep-link opens (SwiftUI `.onOpenURL`).
     static func handleDeepLink(_ url: URL) {
         #if canImport(BranchSDK)
+        guard isConfigured else { return }
         Branch.getInstance().handleDeepLink(url)
         #endif
     }
@@ -609,6 +636,7 @@ enum BranchAttribution {
     /// Forward universal-link opens (SwiftUI `.onContinueUserActivity`).
     static func handleUserActivity(_ userActivity: NSUserActivity) {
         #if canImport(BranchSDK)
+        guard isConfigured else { return }
         _ = Branch.getInstance().continue(userActivity)
         #endif
     }

@@ -706,6 +706,16 @@ final class SubscriptionStore: ObservableObject {
         let premiumActive   = RevenueCatManager.shared.isPremiumActive(info)
         let devotionalActive = RevenueCatManager.shared.isDevotionalActive(info)
 
+        // Captured before the mirrors below overwrite them. The cancellation
+        // check needs the PREVIOUS subscription state, and it used to read
+        // `subscriptionGroupStatus` after this method had already set it to nil
+        // for exactly the case it was testing for — so `!premiumActive &&
+        // subscriptionGroupStatus != nil` was never true and no cancellation
+        // was ever reported from RevenueCat. `purchasedSubscriptions` is
+        // cleared on the same path, so the product id has to be read here too.
+        let wasSubscribed = subscriptionGroupStatus != nil
+        let lastKnownProductId = purchasedSubscriptions.first?.id
+
         isPremium          = premiumActive
         isInTrial          = premiumActive && RevenueCatManager.shared.isPremiumInTrial(info)
         isInDevotionalPremium = devotionalActive
@@ -739,13 +749,11 @@ final class SubscriptionStore: ObservableObject {
         subscriptionGroupStatus = premiumActive ? .subscribed : nil
 
         // Track cancellations
-        if !premiumActive && subscriptionGroupStatus != nil {
-            if let last = purchasedSubscriptions.first {
-                AnalyticsService.shared.trackSubscriptionCancelled(
-                    productId: last.id,
-                    metadata: ["source": "rc_customer_info_update"]
-                )
-            }
+        if wasSubscribed && !premiumActive {
+            AnalyticsService.shared.trackSubscriptionCancelled(
+                productId: lastKnownProductId ?? "unknown",
+                metadata: ["source": "rc_customer_info_update"]
+            )
         }
     }
 

@@ -17,7 +17,7 @@ of them per hour spent.
 | TikTok | **Nothing.** TikTok Business SDK sends events *to* TikTok; it returns no attribution. Every TikTok install files as `organic`. |
 | Google | **Nothing.** Same. |
 | SKAdNetwork | Conversion value now owned by the Meta SDK alone; TikTok stands down via `disableSKAdNetworkSupport()`. The 52 `SKAdNetworkItems` entries are inert (see §4). |
-| Branch | Fully written in `AppDelegate.swift` behind `#if canImport(BranchSDK)`, package never added, so it contributes nothing. |
+| Branch | Package now added (`ios-branch-sdk-spm` 3.9.1) and the wrapper is live code, but it no-ops until `branch_key` is in Info.plist. Two values still needed: the key, and the Associated Domains entitlement for OneLink-equivalent deep links. |
 | RevenueCat | 5.61.0, attribution namespace already used (`setMediaSource`, `setFBAnonymousID`, `setFirebaseAppInstanceID`). |
 
 **The two gaps that cost money right now:**
@@ -200,3 +200,71 @@ project reads it. Also left alone.
 
 `Info.plist` sets `NSAllowsArbitraryLoads = true`, which disables App Transport
 Security app-wide. Not an attribution problem, but worth a look on its own.
+
+---
+
+## 5. Review findings: downloads, purchases, attribution
+
+Four faults found reviewing these paths are fixed in code. Two are recorded
+here instead, because the fix changes what existing dashboards mean and that is
+a decision, not a patch.
+
+### Open: lifetime revenue is not in USD
+
+`SubscriptionStore.purchase` computes `priceValue` from `product.price` —
+StoreKit's price in **the user's local currency** — and passes it straight into
+`GrowthMetrics.recordPurchase(revenueUSD:)`. The currency is read two lines
+later (`product.priceFormatStyle.currencyCode`) and correctly attached to the
+Meta and TikTok events, but it never reaches `GrowthMetrics`.
+
+So a subscriber in Japan paying ¥5,800 adds 5,800 to `lifetime_revenue_usd`,
+and one in Mexico paying MX$399 adds 399. Every number built on that field —
+person-level LTV, the `revenue_usd` property on `revenue_recorded`, LTV by
+onboarding variant, any CAC payback — is inflated by an unknown amount that
+scales with how international the base is. A US-only base is unaffected, which
+is exactly why this can sit undetected.
+
+Three ways out, in order of preference:
+
+1. **Stop computing LTV in the app.** RevenueCat already normalises revenue to
+   USD server-side. Let its PostHog integration own revenue, and keep
+   `GrowthMetrics` for behavioural person properties only. Removes the whole
+   class of problem, and fixes the renewal gap below at the same time.
+2. **Record honestly and segment.** Pass `currency` through, keep
+   `lifetime_revenue_usd` accumulating only USD transactions, and add a
+   `has_non_usd_revenue` person flag so a mixed-currency person is filterable
+   rather than silently wrong.
+3. **Rename the field** to `lifetime_revenue_local` and carry `currency`
+   alongside. Honest, but every existing dashboard keyed on the old name breaks
+   on the same day.
+
+Whichever is chosen, historical values in the field are already contaminated
+and cannot be repaired from the client.
+
+### Open: renewals and trial conversions are never recorded
+
+`GrowthMetrics.recordPurchase` documents itself as "call for every paid
+transaction — first purchase, conversion and renewal alike. Renewals are the
+whole point." It has exactly one call site: the in-app purchase flow, always
+`isRenewal: false`.
+
+Renewals and trial conversions happen on Apple's servers while the app is shut,
+so the client never sees them. Consequences:
+
+- `lifetime_revenue_usd` is first-purchase price, permanently. The condition
+  the comment says was fixed is still live.
+- `trial_converted` is set `false` at trial start and has no reachable path to
+  `true`, so trial conversion rate read off the person property is zero for
+  everyone.
+
+`SubscriptionStore.setupRCCustomerInfoListener` already receives every
+`CustomerInfo` update, including background renewals — it is documented as
+existing for exactly that — but `applyCustomerInfo` only mirrors entitlement
+state. It is tempting to record revenue there, and it should not be done
+without care: `CustomerInfo` carries no transaction price, so the amount would
+have to be guessed from the last known product, and the delegate fires on
+every refresh, so a naive hook would double-count.
+
+The clean fix is server-side: RevenueCat's own integration posts trials,
+conversions, renewals and refunds with real amounts. That is the same
+recommendation as option 1 above, which is why they should be decided together.

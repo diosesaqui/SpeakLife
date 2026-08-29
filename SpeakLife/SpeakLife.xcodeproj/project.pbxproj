@@ -78,6 +78,7 @@
 		454807892E3F3CAA00B8C71B /* BadgeRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 454807842E3F3CAA00B8C71B /* BadgeRenderer.swift */; };
 		4548078C2E3F3E6500B8C71B /* BadgeTestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4548078A2E3F3E1D00B8C71B /* BadgeTestView.swift */; };
 		4553AE002FD2DDA70000D657 /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = 4553ADFF2FD2DDA70000D657 /* PostHog */; };
+		45B4A9C10000000300000003 /* BranchSDK in Frameworks */ = {isa = PBXBuildFile; productRef = 45B4A9C10000000200000002 /* BranchSDK */; };
 		45567D262F27239A00382072 /* EnhancedOnboardingScreensRefactored.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45567D252F27239A00382072 /* EnhancedOnboardingScreensRefactored.swift */; };
 		45567D282F2723FE00382072 /* EnhancedOnboardingViewRefactored.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45567D272F2723FE00382072 /* EnhancedOnboardingViewRefactored.swift */; };
 		45567D2A2F27251400382072 /* EnhancedOnboardingModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45567D292F27251400382072 /* EnhancedOnboardingModels.swift */; };
@@ -798,6 +799,7 @@
 				452D17DD2D703E9E000AB1D1 /* FirebaseStorage in Frameworks */,
 				45F6D87E2F2AD75200C0B98D /* FirebaseAuth in Frameworks */,
 				4553AE002FD2DDA70000D657 /* PostHog in Frameworks */,
+				45B4A9C10000000300000003 /* BranchSDK in Frameworks */,
 				7A00721D2908D50800965AF7 /* BuildFile in Frameworks */,
 				7A7BEBCD2913536B008D08A3 /* StoreKit.framework in Frameworks */,
 				45FF1F4A00000001A0000003 /* SpeakLifeCore in Frameworks */,
@@ -1837,6 +1839,7 @@
 				45F6D87D2F2AD75200C0B98D /* FirebaseAuth */,
 				45E56DC22F5BD28600859EDC /* RevenueCat */,
 				4553ADFF2FD2DDA70000D657 /* PostHog */,
+				45B4A9C10000000200000002 /* BranchSDK */,
 				45FF1F4A00000001A0000002 /* SpeakLifeCore */,
 				45FF1F4A00000002A0000002 /* SpeakLifePersistence */,
 				45FF1F4A00000003A0000002 /* SpeakLifeServices */,
@@ -1900,6 +1903,7 @@
 				457CD38C2E84A11000F435EC /* XCRemoteSwiftPackageReference "tiktok-business-ios-sdk" */,
 				45E56DC12F5BD28600859EDC /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
 				4553ADFE2FD2DDA70000D657 /* XCRemoteSwiftPackageReference "posthog-ios" */,
+				45B4A9C10000000100000001 /* XCRemoteSwiftPackageReference "ios-branch-sdk-spm" */,
 				45FF1F4A00000001A0000001 /* XCLocalSwiftPackageReference "Packages/SpeakLifeKit" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -2694,6 +2698,14 @@
 				minimumVersion = 3.59.3;
 			};
 		};
+		45B4A9C10000000100000001 /* XCRemoteSwiftPackageReference "ios-branch-sdk-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/BranchMetrics/ios-branch-sdk-spm";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.9.1;
+			};
+		};
 		457CD38C2E84A11000F435EC /* XCRemoteSwiftPackageReference "tiktok-business-ios-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/tiktok/tiktok-business-ios-sdk";
@@ -2760,6 +2772,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 4553ADFE2FD2DDA70000D657 /* XCRemoteSwiftPackageReference "posthog-ios" */;
 			productName = PostHog;
+		};
+		45B4A9C10000000200000002 /* BranchSDK */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 45B4A9C10000000100000001 /* XCRemoteSwiftPackageReference "ios-branch-sdk-spm" */;
+			productName = BranchSDK;
 		};
 		457CD38D2E84A11000F435EC /* TikTokBusinessSDK */ = {
 			isa = XCSwiftPackageProductDependency;

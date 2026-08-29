@@ -187,6 +187,13 @@ final class AnalyticsService: AnalyticsTracking {
     private var screensThisSession = 0
     private let screenLock = NSLock()
     private var userProperties: [String: Any] = [:]
+    private let userPropertiesLock = NSLock()
+
+    /// Guards `sessionStartTime` only. It used to be read and written under
+    /// `providersLock`, which guards an unrelated array, while `startSession`
+    /// wrote it under no lock at all — so foreground/background races could
+    /// drop a `session_ended` or double-count a session.
+    private let sessionLock = NSLock()
 
     private var providers: [AnalyticsProvider] = []
     private let providersLock = NSLock()
@@ -267,8 +274,14 @@ final class AnalyticsService: AnalyticsTracking {
         providersLock.unlock()
 
         // Replay known user properties so a late-registered provider starts
-        // with the same context as the others.
-        for (key, value) in userProperties {
+        // with the same context as the others. Snapshot under the lock: this
+        // iterates a dictionary that `setUserProperty` mutates from whatever
+        // thread the caller is on.
+        userPropertiesLock.lock()
+        let knownProperties = userProperties
+        userPropertiesLock.unlock()
+
+        for (key, value) in knownProperties {
             provider.setUserProperty(value, forName: key)
         }
     }
@@ -301,7 +314,10 @@ final class AnalyticsService: AnalyticsTracking {
     // MARK: Session
 
     private func startSession() {
+        sessionLock.lock()
         sessionStartTime = Date()
+        sessionLock.unlock()
+
         dispatch("session_started", parameters: [
             "timestamp": Date().iso8601String,
             "platform": "ios"
@@ -323,10 +339,10 @@ final class AnalyticsService: AnalyticsTracking {
         screensThisSession = 0
         screenLock.unlock()
 
-        providersLock.lock()
+        sessionLock.lock()
         let startTime = sessionStartTime
         sessionStartTime = nil
-        providersLock.unlock()
+        sessionLock.unlock()
 
         guard let startTime = startTime else { return }
         let duration = Date().timeIntervalSince(startTime)
@@ -342,9 +358,9 @@ final class AnalyticsService: AnalyticsTracking {
 
     /// Starts a fresh session on foreground when the previous one was ended.
     func resumeSessionIfNeeded() {
-        providersLock.lock()
+        sessionLock.lock()
         let needsStart = sessionStartTime == nil
-        providersLock.unlock()
+        sessionLock.unlock()
 
         guard needsStart else { return }
         startSession()
@@ -518,7 +534,13 @@ final class AnalyticsService: AnalyticsTracking {
     }
 
     func setUserProperty(_ key: String, value: Any) {
+        // Called from wherever the caller happens to be — the Apple Search Ads
+        // resolver runs on a detached task, RevenueCat callbacks on their own
+        // queue — so this dictionary is genuinely reached concurrently, and an
+        // unsynchronized Swift Dictionary write is a crash, not just a race.
+        userPropertiesLock.lock()
         userProperties[key] = value
+        userPropertiesLock.unlock()
 
         for provider in snapshotProviders() {
             provider.setUserProperty(value, forName: key)
