@@ -10,7 +10,7 @@ Values you will need repeatedly:
 | Apple Team ID (App Prefix) | `G7398P2856` |
 | Bundle ID | `com.Franchiz.SpeakLife` |
 | Branch key | `key_live_pAyTGgj5uXAKKXaaKyPRWefkrEb34NYf` (in `Info.plist`) |
-| Deep linking domains | `vqdga.app.link`, `vqdga-alternate.app.link` |
+| Deep linking domains | `speaklife.app.link`, `speaklife-alternate.app.link` |
 
 The Team ID above is the app target's. `652R6A63L8` also appears in the project
 but belongs only to the test target — do not use it anywhere here.
@@ -34,12 +34,11 @@ but belongs only to the test target — do not use it anywhere here.
       that is not in this app. Not worth a second permission dialog during
       onboarding unless deferred-link match rates turn out to be genuinely bad.
       Revisit with real numbers, not before.
-- [ ] **Decide the subdomain now, not later.** Branch assigned the random
-      `vqdga`. It can be changed exactly **once, ever**. If it should read
-      `speaklife.app.link`, change it before any link ships: afterwards every
-      live link breaks *and* the entitlement needs another App Store release to
-      match. If `vqdga` is fine, say so and move on — it is invisible to users
-      who tap a link.
+- [x] ~~Decide the subdomain.~~ **Done** — changed from the auto-assigned
+      `speaklife` to `speaklife` before any link shipped, which is the only window
+      in which it was free to do. Branch allows this change **once, ever**, so
+      it is now fixed: `speaklife.app.link` cannot be changed again without
+      creating a new Branch app, and the entitlement is pinned to it.
 - [ ] **Create one Quick Link per onboarding angle**, each with custom data
       `ob=<variant>`. Valid values, from `SubscriptionStore.OnboardingVariant`:
       `quiz`, `product`, `identity`, `outcomes`, `warfare`, `promises`,
@@ -52,19 +51,19 @@ Branch hosts it; nothing is hosted on our side. Confirm it is actually correct
 before wiring ads:
 
 ```
-curl -s https://vqdga.app.link/apple-app-site-association | python3 -m json.tool
+curl -s https://speaklife.app.link/apple-app-site-association | python3 -m json.tool
 ```
 
 - [ ] The response lists **`G7398P2856.com.Franchiz.SpeakLife`** under
       `applinks`. If the prefix is missing or different, step 1 is wrong — fix
       it there, not here.
-- [ ] Repeat for `https://vqdga-alternate.app.link/apple-app-site-association`.
+- [ ] Repeat for `https://speaklife-alternate.app.link/apple-app-site-association`.
 
 Two things about how iOS reads this file, both of which cause "it worked on my
 machine" confusion:
 
 - iOS fetches it through **Apple's CDN**
-  (`app-site-association.cdn-apple.com/a/v1/vqdga.app.link`), not from Branch
+  (`app-site-association.cdn-apple.com/a/v1/speaklife.app.link`), not from Branch
   directly, so a dashboard change can take **up to 24 hours** to reach devices.
 - The file is fetched **at install time**. An already-installed build will not
   pick up a change — delete the app and reinstall to force a refetch.

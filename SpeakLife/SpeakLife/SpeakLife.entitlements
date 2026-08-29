@@ -10,15 +10,14 @@
 	     Team ID and bundle id are filled in on the same dashboard page, so
 	     nothing is hosted on our side.
 
-	     `vqdga` is the random subdomain Branch auto-assigned. Branch allows the
-	     app.link subdomain to be changed ONCE, ever. If it should read
-	     `speaklife.app.link` instead, change it in the dashboard BEFORE any
-	     link ships — afterwards every live link breaks and this entitlement
-	     needs another App Store release to match. -->
+	     Branch allows the app.link subdomain to be changed ONCE, ever, and that
+	     change has now been spent: it was the auto-assigned `vqdga`, and is
+	     `speaklife`. These two strings cannot change again without a new
+	     Branch app. -->
 	<key>com.apple.developer.associated-domains</key>
 	<array>
-		<string>applinks:vqdga.app.link</string>
-		<string>applinks:vqdga-alternate.app.link</string>
+		<string>applinks:speaklife.app.link</string>
+		<string>applinks:speaklife-alternate.app.link</string>
 	</array>
 	<key>aps-environment</key>
 	<string>production</string>
