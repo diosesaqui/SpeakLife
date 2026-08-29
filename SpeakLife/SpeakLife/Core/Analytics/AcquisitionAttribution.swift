@@ -79,7 +79,9 @@ enum AcquisitionChannel: String {
         if value.contains("apple") || value.contains("asa") { return .appleSearchAds }
         if value.contains("facebook") || value.contains("meta")
             || value.contains("instagram") || value.contains("ig") { return .meta }
-        if value.contains("tiktok") { return .tiktok }
+        // `bytedanceglobal_int` is how an MMP names TikTok's ad network, and it
+        // contains neither "tiktok" nor anything else matched here.
+        if value.contains("tiktok") || value.contains("bytedance") { return .tiktok }
         if value.contains("google") || value.contains("youtube") || value.contains("adwords") { return .google }
         if value.contains("email") || value.contains("push")
             || value.contains("qr") || value.contains("bio") { return .ownedDeeplink }
