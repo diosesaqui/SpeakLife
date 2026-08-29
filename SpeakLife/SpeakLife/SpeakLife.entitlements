@@ -2,6 +2,20 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- Branch universal links. Uncomment and substitute the app.link subdomain
+	     from the Branch dashboard (App Settings -> General -> Link Domain).
+	     Both entries are required: Branch issues a primary and an "-alternate"
+	     domain and uses the pair to make links work when one is already
+	     associated with another app. Branch hosts the apple-app-site-association
+	     file itself once the Apple Team ID and bundle id are set in its
+	     dashboard, so nothing needs hosting here.
+
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:YOURSUBDOMAIN.app.link</string>
+		<string>applinks:YOURSUBDOMAIN-alternate.app.link</string>
+	</array>
+	-->
 	<key>aps-environment</key>
 	<string>production</string>
 	<key>com.apple.developer.applesignin</key>
