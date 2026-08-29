@@ -39,7 +39,6 @@ final class GrowthMetrics {
         static let lastDayStarted = "growth_last_day_started"
         static let lastOpenAt = "growth_last_open_at"
         static let featuresUsed = "growth_features_used"
-        static let trialStartedAt = "growth_trial_started_at"
         static let maxStreak = "growth_max_streak"
         static let aliasedRevenueID = "growth_aliased_revenue_id"
     }
@@ -53,6 +52,7 @@ final class GrowthMetrics {
         static let plan = "plan"
         static let billingTerm = "billing_term"
         static let trialStartedAt = "trial_started_at"
+        static let trialDays = "trial_days"
         static let activatedAt = "activated_at"
         static let hoursToActivate = "hours_to_activate"
         static let maxStreak = "max_streak"
@@ -236,12 +236,22 @@ final class GrowthMetrics {
     // does not carry: the app's own view of which plan the person is on.
 
     func recordTrialStarted(productId: String, plan: String, trialDays: Int) {
-        let now = Date()
-        defaults.set(now, forKey: Key.trialStartedAt)
-
-        AnalyticsService.shared.setUserProperty(Person.trialStartedAt, value: now.analyticsISO8601String)
+        AnalyticsService.shared.setUserProperty(
+            Person.trialStartedAt, value: Date().analyticsISO8601String
+        )
         AnalyticsService.shared.setUserProperty(Person.plan, value: plan)
         AnalyticsService.shared.setUserProperty(Person.billingTerm, value: Self.billingTerm(for: productId))
+
+        // Trial length varies by SKU and Remote Config points the paywall at
+        // different ones, so 3-day and 7-day trials convert at different rates
+        // and belong in different cohorts. The call site has always computed
+        // this and passed it in; nothing recorded it until now. Zero means the
+        // length could not be read from the product, which is not a real
+        // trial length and would read as a legitimate cohort of its own.
+        if trialDays > 0 {
+            AnalyticsService.shared.setUserProperty(Person.trialDays, value: trialDays)
+        }
+
         // `trial_converted` is deliberately not written. It used to be set
         // false here and had no reachable path to true — the conversion happens
         // server-side — so it read as zero conversions for every person who

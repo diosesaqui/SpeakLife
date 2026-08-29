@@ -216,23 +216,26 @@ final class AppDelegate: NSObject, MessagingDelegate {
         )
 
         // Branch (MMP): resolve the deferred deep link at launch (no ATT wait) so
-        // ad-matched onboarding is known before onboarding renders. No-op until the
-        // BranchSDK Swift Package is added in Xcode.
+        // ad-matched onboarding is known before onboarding renders. Live — the
+        // package is added and `branch_key` is set.
         BranchAttribution.initSession(launchOptions: launchOptions)
 
-        // AppsFlyer (MMP): same job as Branch above, and the alternative to it
-        // rather than an addition — running two MMPs double-counts every
-        // install. Also no-ops until the Swift Package is added AND the
-        // AppsFlyerDevKey / AppsFlyerAppleAppID Info.plist keys are set.
+        // AppsFlyer (MMP): the same job as Branch, and the ALTERNATIVE to it,
+        // never an addition — two MMPs double-count every install. Branch is
+        // the one chosen (see docs/ATTRIBUTION_MMP.md §6), so this stays dead:
+        // its package is not added, and it would additionally need
+        // AppsFlyerDevKey / AppsFlyerAppleAppID in Info.plist. If AppsFlyer is
+        // ever adopted, delete the Branch call above in the same change.
         AppsFlyerAttribution.configure()
 
         // Per-person acquisition channel. Starts the Apple Search Ads token
         // exchange and schedules the organic fallback, so every person ends up
         // with a channel and CAC can be set against LTV per channel.
         //
-        // Runs regardless of Branch: that SDK is not in Package.resolved, so the
-        // whole BranchAttribution enum above is currently compiled out and
-        // contributes no attribution at all.
+        // Runs alongside Branch rather than instead of it. Branch reports the
+        // click that produced the install; this owns Apple Search Ads, which
+        // Branch does not, and the priority ladder that decides which source
+        // wins when both speak.
         AcquisitionAttribution.shared.start()
 
         Messaging.messaging().delegate = self
@@ -588,9 +591,10 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
 
 // MARK: - Branch (MMP) ad-matched onboarding
 //
-// Thin wrapper around the Branch SDK. Guarded by `canImport(BranchSDK)` so the
-// app builds before the Swift Package is added in Xcode; it activates the moment
-// the package is added. Unlike Meta's deferred app link (gated by the ATT
+// Thin wrapper around the Branch SDK. The `canImport(BranchSDK)` guards are
+// kept so the file still compiles if the package is ever removed, but the
+// package IS added and the key IS set, so this is live code. Unlike Meta's
+// deferred app link (gated by the ATT
 // response), Branch resolves the deferred link AT LAUNCH without waiting on ATT,
 // so the ad's `ob=<variant>` is known before onboarding renders.
 enum BranchAttribution {
