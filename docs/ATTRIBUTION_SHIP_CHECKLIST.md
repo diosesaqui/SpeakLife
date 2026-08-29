@@ -25,7 +25,15 @@ but belongs only to the test target — do not use it anywhere here.
       produces a valid-looking file that does not list this app, and every link
       falls back to Safari with no error anywhere.
 - [ ] **Bundle ID = `com.Franchiz.SpeakLife`.** Case-sensitive. Note the
-      capital F.
+      capital F. The widget's id is not needed — universal links target the app.
+- [ ] **Leave NativeLink™ off.** It is a fallback for iCloud Private Relay
+      users, where Branch's IP-based match fails: it passes the link through
+      the device clipboard instead. The cost is an iOS 16+ system paste prompt
+      on first launch, landing in the same few seconds as the ATT prompt and
+      the landing animation, and it needs a `checkPasteboardOnInstall()` call
+      that is not in this app. Not worth a second permission dialog during
+      onboarding unless deferred-link match rates turn out to be genuinely bad.
+      Revisit with real numbers, not before.
 - [ ] **Decide the subdomain now, not later.** Branch assigned the random
       `vqdga`. It can be changed exactly **once, ever**. If it should read
       `speaklife.app.link`, change it before any link ships: afterwards every
