@@ -39,9 +39,6 @@ final class GrowthMetrics {
         static let lastDayStarted = "growth_last_day_started"
         static let lastOpenAt = "growth_last_open_at"
         static let featuresUsed = "growth_features_used"
-        static let lifetimeRevenue = "growth_lifetime_revenue_usd"
-        static let purchaseCount = "growth_purchase_count"
-        static let firstPurchaseAt = "growth_first_purchase_at"
         static let trialStartedAt = "growth_trial_started_at"
         static let maxStreak = "growth_max_streak"
         static let aliasedRevenueID = "growth_aliased_revenue_id"
@@ -50,14 +47,12 @@ final class GrowthMetrics {
     /// Person-property names. Referenced rather than typed at call sites so a
     /// rename is a compile error instead of a cohort that silently splits.
     enum Person {
-        static let lifetimeRevenue = "lifetime_revenue_usd"
-        static let purchaseCount = "purchase_count"
-        static let firstPurchaseAt = "first_purchase_at"
-        static let lastPurchaseAt = "last_purchase_at"
+        // Revenue properties deliberately absent: RevenueCat owns revenue and
+        // posts it to PostHog itself, with real USD amounts and with the
+        // renewals this process never sees. See `recordPurchaseDimensions`.
         static let plan = "plan"
         static let billingTerm = "billing_term"
         static let trialStartedAt = "trial_started_at"
-        static let trialConverted = "trial_converted"
         static let activatedAt = "activated_at"
         static let hoursToActivate = "hours_to_activate"
         static let maxStreak = "max_streak"
@@ -92,6 +87,17 @@ final class GrowthMetrics {
 
     func linkRevenueIdentity(appUserID: String) {
         guard !appUserID.isEmpty else { return }
+
+        // Outbound half, and the one that makes server-side revenue land on the
+        // right person. RevenueCat's PostHog integration runs while the app is
+        // shut, so it cannot consult anything the app knows at that moment — it
+        // reads the `$posthogUserId` attribute the app pushed in earlier.
+        // Aliasing alone only joins what the client itself sends. Re-sent every
+        // launch because the distinct id changes on identify/reset, and RC only
+        // writes an attribute that actually changed.
+        if let distinctId = AnalyticsService.shared.postHogDistinctId {
+            RevenueCatManager.shared.setPostHogUserID(distinctId)
+        }
 
         lock.lock()
         let alreadyLinked = defaults.string(forKey: Key.aliasedRevenueID) == appUserID
@@ -213,13 +219,21 @@ final class GrowthMetrics {
         AnalyticsService.shared.setUserProperty(Person.maxStreak, value: streak)
     }
 
-    // MARK: - Metric: LTV
+    // MARK: - Subscription dimensions
     //
-    // LTV needs cumulative revenue per person, and no destination computes that
-    // for us — RevenueCat reports each transaction in isolation, so a person who
-    // renewed four times looks identical to one who paid once until you sum the
-    // stream yourself. Accumulated locally and mirrored onto the person so
-    // "average LTV by onboarding variant" is a breakdown, not a data export.
+    // Revenue itself is NOT computed here. It used to be: `recordPurchase`
+    // accumulated `product.price` — StoreKit's price in the buyer's LOCAL
+    // currency — into a person property named `lifetime_revenue_usd`, so a
+    // subscriber paying ¥5,800 added 5,800 to it. It also only ever ran from
+    // the in-app purchase flow, so renewals and trial conversions, which happen
+    // on Apple's servers while the app is shut, were never counted at all —
+    // leaving "lifetime" revenue permanently equal to the first purchase.
+    //
+    // RevenueCat owns revenue now. Its PostHog integration posts trials,
+    // conversions, renewals and refunds with real USD amounts, keyed to this
+    // app's PostHog person through the `$posthogUserId` attribute pushed in
+    // `linkRevenueIdentity`. What stays here is the part RevenueCat's payload
+    // does not carry: the app's own view of which plan the person is on.
 
     func recordTrialStarted(productId: String, plan: String, trialDays: Int) {
         let now = Date()
@@ -228,49 +242,17 @@ final class GrowthMetrics {
         AnalyticsService.shared.setUserProperty(Person.trialStartedAt, value: now.analyticsISO8601String)
         AnalyticsService.shared.setUserProperty(Person.plan, value: plan)
         AnalyticsService.shared.setUserProperty(Person.billingTerm, value: Self.billingTerm(for: productId))
-        AnalyticsService.shared.setUserProperty(Person.trialConverted, value: false)
+        // `trial_converted` is deliberately not written. It used to be set
+        // false here and had no reachable path to true — the conversion happens
+        // server-side — so it read as zero conversions for every person who
+        // ever started a trial. RevenueCat reports the conversion.
     }
 
-    /// Call for every paid transaction — first purchase, conversion and renewal
-    /// alike. Renewals are the whole point: without them LTV collapses to first
-    /// purchase price and every payback calculation is wrong.
-    func recordPurchase(productId: String, plan: String, revenueUSD: Double, isRenewal: Bool) {
-        let now = Date()
-
-        lock.lock()
-        let total = defaults.double(forKey: Key.lifetimeRevenue) + max(0, revenueUSD)
-        let count = defaults.integer(forKey: Key.purchaseCount) + 1
-        defaults.set(total, forKey: Key.lifetimeRevenue)
-        defaults.set(count, forKey: Key.purchaseCount)
-
-        let isFirst = defaults.object(forKey: Key.firstPurchaseAt) == nil
-        if isFirst { defaults.set(now, forKey: Key.firstPurchaseAt) }
-        let trialStartedAt = defaults.object(forKey: Key.trialStartedAt) as? Date
-        lock.unlock()
-
-        AnalyticsService.shared.track("revenue_recorded", parameters: [
-            "product_id": productId,
-            "plan": plan,
-            "billing_term": Self.billingTerm(for: productId),
-            "revenue_usd": revenueUSD,
-            "is_renewal": isRenewal,
-            "is_first_purchase": isFirst,
-            "lifetime_revenue_usd": total,
-            "purchase_number": count,
-            "days_since_install": AnalyticsContext.shared.daysSinceInstall
-        ])
-
-        AnalyticsService.shared.setUserProperty(Person.lifetimeRevenue, value: total)
-        AnalyticsService.shared.setUserProperty(Person.purchaseCount, value: count)
-        AnalyticsService.shared.setUserProperty(Person.lastPurchaseAt, value: now.analyticsISO8601String)
+    /// Records which plan a person just bought. Non-revenue only: the amount,
+    /// the renewal and the trial conversion all come from RevenueCat.
+    func recordPurchaseDimensions(productId: String, plan: String) {
         AnalyticsService.shared.setUserProperty(Person.plan, value: plan)
-
-        if isFirst {
-            AnalyticsService.shared.setUserProperty(Person.firstPurchaseAt, value: now.analyticsISO8601String)
-        }
-        if trialStartedAt != nil && !isRenewal {
-            AnalyticsService.shared.setUserProperty(Person.trialConverted, value: true)
-        }
+        AnalyticsService.shared.setUserProperty(Person.billingTerm, value: Self.billingTerm(for: productId))
     }
 
     func recordChurn(reason: String) {

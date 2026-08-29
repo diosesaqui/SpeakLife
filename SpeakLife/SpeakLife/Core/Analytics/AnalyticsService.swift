@@ -162,10 +162,20 @@ protocol AnalyticsProvider: AnyObject {
     /// Merge another identity into the current person, without changing which
     /// id subsequent events are attributed to.
     func aliasUser(_ alias: String)
+
+    /// The id this destination currently files events under, when it has one.
+    ///
+    /// Needed in the outbound direction: RevenueCat's PostHog integration
+    /// decides server-side which PostHog person a renewal belongs to, and it
+    /// picks that person by the `$posthogUserId` attribute the app has pushed
+    /// into RevenueCat. Aliasing in the app cannot do it — by the time a
+    /// renewal fires the app is not running.
+    var distinctId: String? { get }
 }
 
 extension AnalyticsProvider {
     var isEnabled: Bool { true }
+    var distinctId: String? { nil }
     func configure() {}
     func setUserProperty(_ value: Any, forName name: String) {}
     func setUserId(_ id: String?) {}
@@ -574,6 +584,12 @@ final class AnalyticsService: AnalyticsTracking {
         }
     }
 
+    /// The PostHog distinct id, when PostHog is a registered destination.
+    /// `nil` on simulator builds, where PostHog is deliberately not registered.
+    var postHogDistinctId: String? {
+        snapshotProviders().first { $0.id == "posthog" }?.distinctId
+    }
+
     /// Generic passthrough for events that don't have a dedicated typed method.
     /// Fans out to every registered provider (Firebase, PostHog, …). Prefer this
     /// over calling `Analytics.logEvent` directly so new destinations — and the
@@ -902,6 +918,15 @@ final class PostHogAnalyticsProvider: AnalyticsProvider {
     func aliasUser(_ alias: String) {
         #if canImport(PostHog)
         PostHogSDK.shared.alias(alias)
+        #endif
+    }
+
+    var distinctId: String? {
+        #if canImport(PostHog)
+        let id = PostHogSDK.shared.getDistinctId()
+        return id.isEmpty ? nil : id
+        #else
+        return nil
         #endif
     }
 }

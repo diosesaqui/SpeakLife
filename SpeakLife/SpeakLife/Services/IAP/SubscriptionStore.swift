@@ -945,11 +945,11 @@ final class SubscriptionStore: ObservableObject {
             "variant": onboardingVariantName
         ])
 
-        // LTV. Nothing accumulated revenue per person before this, so a person
-        // who renewed four times was indistinguishable from one who paid once
-        // and every payback number was first-purchase price. A trial start is
-        // worth 0 until it converts — booking the price here would inflate LTV
-        // by the whole cancelled-trial population.
+        // Plan dimensions only. Revenue is RevenueCat's: it reports amounts in
+        // real USD and it sees the renewals and trial conversions that happen
+        // server-side while this app is shut, neither of which this process can
+        // observe. Booking `priceValue` here would be the buyer's LOCAL
+        // currency filed as USD, and would still miss every renewal.
         if willStartTrial {
             GrowthMetrics.shared.recordTrialStarted(
                 productId: product.id,
@@ -957,11 +957,9 @@ final class SubscriptionStore: ObservableObject {
                 trialDays: TrialExperienceService.introTrialDays(for: product) ?? 0
             )
         } else {
-            GrowthMetrics.shared.recordPurchase(
+            GrowthMetrics.shared.recordPurchaseDimensions(
                 productId: product.id,
-                plan: planLabel(for: product),
-                revenueUSD: priceValue,
-                isRenewal: false
+                plan: planLabel(for: product)
             )
         }
 

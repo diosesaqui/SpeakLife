@@ -206,71 +206,69 @@ Security app-wide. Not an attribution problem, but worth a look on its own.
 
 ## 5. Review findings: downloads, purchases, attribution
 
-Four faults found reviewing these paths are fixed in code. Two are recorded
-here instead, because the fix changes what existing dashboards mean and that is
-a decision, not a patch.
+Six faults were found reviewing these paths. All six are now fixed.
 
-### Open: lifetime revenue is not in USD
+### Fixed in code
 
-`SubscriptionStore.purchase` computes `priceValue` from `product.price` —
-StoreKit's price in **the user's local currency** — and passes it straight into
-`GrowthMetrics.recordPurchase(revenueUSD:)`. The currency is read two lines
-later (`product.priceFormatStyle.currencyCode`) and correctly attached to the
-Meta and TikTok events, but it never reaches `GrowthMetrics`.
+- **Cancellations from RevenueCat were never reported.** `applyCustomerInfo`
+  set `subscriptionGroupStatus = premiumActive ? .subscribed : nil` and then
+  tested `!premiumActive && subscriptionGroupStatus != nil` — the branch it was
+  testing for had just set that value to nil. Previous state is captured first
+  now.
+- **The install event and the first-launch background-music default shared the
+  `hasLaunchedBefore` key.** `didFinishLaunching` runs before the view's
+  `.onAppear`, so the install dedupe consumed the flag and the music default
+  never applied. Separate keys, the new one seeded from the old so the existing
+  base does not re-fire an install.
+- **`userProperties` was mutated across threads with no lock**, and read
+  unsynchronized when replaying into a newly registered provider.
+- **`sessionStartTime` was guarded by `providersLock`**, which guards an
+  unrelated array, and written under no lock at all in `startSession`.
 
-So a subscriber in Japan paying ¥5,800 adds 5,800 to `lifetime_revenue_usd`,
-and one in Mexico paying MX$399 adds 399. Every number built on that field —
-person-level LTV, the `revenue_usd` property on `revenue_recorded`, LTV by
-onboarding variant, any CAC payback — is inflated by an unknown amount that
-scales with how international the base is. A US-only base is unaffected, which
-is exactly why this can sit undetected.
+### Fixed by handing revenue to RevenueCat
 
-Three ways out, in order of preference:
+Two faults had the same root and the same fix. Decided: **RevenueCat and
+PostHog own revenue; the app stops computing it.**
 
-1. **Stop computing LTV in the app.** RevenueCat already normalises revenue to
-   USD server-side. Let its PostHog integration own revenue, and keep
-   `GrowthMetrics` for behavioural person properties only. Removes the whole
-   class of problem, and fixes the renewal gap below at the same time.
-2. **Record honestly and segment.** Pass `currency` through, keep
-   `lifetime_revenue_usd` accumulating only USD transactions, and add a
-   `has_non_usd_revenue` person flag so a mixed-currency person is filterable
-   rather than silently wrong.
-3. **Rename the field** to `lifetime_revenue_local` and carry `currency`
-   alongside. Honest, but every existing dashboard keyed on the old name breaks
-   on the same day.
+- **Lifetime revenue was not in USD.** `product.price` is StoreKit's price in
+  the buyer's local currency, and it went straight into
+  `recordPurchase(revenueUSD:)`. A subscriber paying ¥5,800 added 5,800 to
+  `lifetime_revenue_usd`. Historical values in that field are contaminated and
+  cannot be repaired from the client.
+- **Renewals and trial conversions were never recorded.** `recordPurchase` had
+  one call site, the in-app flow, always `isRenewal: false`. Renewals happen on
+  Apple's servers while the app is shut. So lifetime revenue was permanently
+  first-purchase price, and `trial_converted` — written `false` at trial start
+  with no reachable path to `true` — read as zero conversions for everyone.
 
-Whichever is chosen, historical values in the field are already contaminated
-and cannot be repaired from the client.
+What changed: `GrowthMetrics` no longer accumulates revenue, no longer emits
+`revenue_recorded`, and no longer writes `lifetime_revenue_usd`,
+`purchase_count`, `first_purchase_at`, `last_purchase_at` or `trial_converted`.
+`recordPurchase` is replaced by `recordPurchaseDimensions`, which sets `plan`
+and `billing_term` only — the part RevenueCat's payload does not carry.
 
-### Open: renewals and trial conversions are never recorded
+**The load-bearing detail.** RevenueCat's PostHog integration runs server-side
+and chooses which PostHog person a renewal belongs to by reading the
+`$posthogUserId` subscriber attribute. The app's existing `aliasUser` call runs
+on the client and joins only what the client itself sends — it cannot help a
+renewal that fires while the app is shut. Without the attribute, RevenueCat's
+revenue keeps landing on RC-keyed person records with no behaviour on them,
+which is exactly the 78-versus-3,914 zero-overlap split `GrowthMetrics`
+documents. `linkRevenueIdentity` now pushes PostHog's distinct id into
+RevenueCat on every launch, so the link runs in both directions.
 
-`GrowthMetrics.recordPurchase` documents itself as "call for every paid
-transaction — first purchase, conversion and renewal alike. Renewals are the
-whole point." It has exactly one call site: the in-app purchase flow, always
-`isRenewal: false`.
+### Still required, in the RevenueCat dashboard
 
-Renewals and trial conversions happen on Apple's servers while the app is shut,
-so the client never sees them. Consequences:
+Handing revenue to RevenueCat is only half done in code. **Turn on the PostHog
+integration in the RevenueCat dashboard** (Integrations → PostHog, with the
+PostHog project API key). Confirm the RevenueCat plan includes third-party
+integrations. Until that is on, revenue is now reported by nobody: the app has
+stopped and RevenueCat has not started.
 
-- `lifetime_revenue_usd` is first-purchase price, permanently. The condition
-  the comment says was fixed is still live.
-- `trial_converted` is set `false` at trial start and has no reachable path to
-  `true`, so trial conversion rate read off the person property is zero for
-  everyone.
-
-`SubscriptionStore.setupRCCustomerInfoListener` already receives every
-`CustomerInfo` update, including background renewals — it is documented as
-existing for exactly that — but `applyCustomerInfo` only mirrors entitlement
-state. It is tempting to record revenue there, and it should not be done
-without care: `CustomerInfo` carries no transaction price, so the amount would
-have to be guessed from the last known product, and the delegate fires on
-every refresh, so a naive hook would double-count.
-
-The clean fix is server-side: RevenueCat's own integration posts trials,
-conversions, renewals and refunds with real amounts. That is the same
-recommendation as option 1 above, which is why they should be decided together.
-
----
+Dashboards keyed on `lifetime_revenue_usd`, `purchase_count`, `first_purchase_at`,
+`last_purchase_at` or `trial_converted` will stop updating and must be rebuilt
+on RevenueCat's PostHog events. That is the accepted cost of the decision — the
+old numbers were wrong in a way that could not be corrected in place.
 
 ## 6. Branch vs AppsFlyer: pricing and trade-offs
 
