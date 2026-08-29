@@ -39,7 +39,7 @@ of them per hour spent.
 
 | | AppsFlyer | Branch | Adjust | Tenjin / Singular |
 |---|---|---|---|---|
-| Free tier | Zero plan, free forever, first 12,000 **attributed** conversions free — organic installs don't count | Free to 10,000 MAU, but the free tier is deep-linking; attribution is paid | None, annual contract | Free/cheap tiers, thinner support |
+| Free tier | Zero plan: 12,000 **attributed** conversions as a ONE-TIME welcome package, spent once and gone (12-month expiry). Organic installs are never billed. Not a monthly allowance. | Free to 10,000 **MAU**, standard attribution included. A recurring ceiling, not a one-time grant. | None, annual contract | Free/cheap tiers, thinner support |
 | Paid | ~$0.07/conversion (Growth), $0.03–0.05 negotiated | Subscription by MAU | Enterprise | Usage |
 | Meta / TikTok / Google as MMP partner | All three, first-class, cost + SKAN postbacks | Weaker on ad-network attribution; the product has drifted toward linking | All three | Yes |
 | SKAN conversion-value management | Yes, and it becomes the single writer | Limited | Yes | Yes |
@@ -55,7 +55,8 @@ Why it wins here specifically:
   `ob=` routing problem and leaves TikTok/Google CAC exactly where it is.
 - The free tier fits the shape of this app. Organic installs are free, so a
   devotional app with a large organic tail only pays for the paid installs it
-  actually bought. 12,000 attributed conversions/month is a lot of Meta budget.
+  actually bought. But the 12,000 is a ONE-TIME welcome package, not a monthly
+  allowance — see the correction in §6.
 - RevenueCat already carries the attribution plumbing. One line
   (`setAppsflyerID`) makes trials, conversions and *renewals that happen while
   the app is closed* land on the right channel. That is the half of LTV the
@@ -268,3 +269,93 @@ every refresh, so a naive hook would double-count.
 The clean fix is server-side: RevenueCat's own integration posts trials,
 conversions, renewals and refunds with real amounts. That is the same
 recommendation as option 1 above, which is why they should be decided together.
+
+---
+
+## 6. Branch vs AppsFlyer: pricing and trade-offs
+
+**Confidence note.** Both vendors' own pricing pages are unreachable from this
+environment, so every figure below comes from third-party summaries and should
+be confirmed on the vendor page before signing anything. The *shape* of each
+model is consistent across sources and is what the recommendation rests on; the
+exact dollar figures are the part to verify.
+
+### Correction to §2
+
+An earlier version of the table read the AppsFlyer free tier as ~12,000
+attributed conversions **per month**. It is not. It is a **one-time welcome
+package** of 12,000 measured conversions, usable until spent or until 12 months
+pass, whichever comes first. After that, Growth is ~$0.07 per conversion with
+no recurring free allowance. Organic installs are still never billed.
+
+That inverts the earlier reasoning. AppsFlyer is not "free for a long time at
+this spend" — it is free until you have bought 12,000 installs, once, ever.
+
+### The two pricing models are not comparable in shape
+
+| | AppsFlyer | Branch |
+|---|---|---|
+| Free | 12,000 attributed conversions, one-time, 12-month expiry | Up to 10,000 MAU, recurring, standard attribution included |
+| Meter | Per attributed conversion (~$0.07 Growth; ~$0.03–0.05 negotiated Enterprise) | Per MAU, contracted |
+| Paid entry | Usage-based, scales smoothly from $0 | Reported ~$199/mo (Activation) to ~$499/mo (Engagement), enterprise-contracted |
+| Cost driver | How much you **buy** | How many people **use the app** |
+| Organic tail | Free | Counts against the cap |
+
+The distinction matters for SpeakLife specifically: it is a devotional app with
+a large organic base and (so far) modest paid spend. AppsFlyer bills the small
+number; Branch bills the large one.
+
+### Where each one is actually better
+
+**AppsFlyer**
+- Broadest and best-maintained ad-network integrations. Meta, TikTok and Google
+  all treat it as a first-class MMP, so cost data flows back and ROAS is a
+  report rather than a spreadsheet join.
+- Best-in-class SKAN handling, and it becomes the single conversion-value owner
+  — which is the fault §4 just worked around by hand.
+- Mature RevenueCat integration: trials, conversions, renewals and refunds
+  arrive with real USD amounts, which also fixes both open findings in §5.
+- Cost scales with spend, so a month with no ad budget costs nothing.
+- Against it: the free grant is finite and non-renewing. Once spent, every
+  attributed install is a line item forever.
+
+**Branch**
+- Best deep linking on the market, and that is the half of the problem
+  `docs/AD_ONBOARDING_ROUTING.md` was actually written for. The `ob=` variant
+  needs to resolve before onboarding renders, and Branch does that at launch
+  without waiting on ATT.
+- Free tier is *recurring* and includes standard attribution, so at current
+  scale it may genuinely cost nothing indefinitely.
+- Already integrated in this repo. The package is added, the wrapper is
+  written, and it needs a key and a domain rather than a week of work.
+- Against it: weaker ad-network attribution than AppsFlyer — it will not close
+  the TikTok/Google CAC gap as cleanly — and the paid cliff is a step, not a
+  slope. Crossing 10,000 MAU moves you from $0 to a contracted plan reported in
+  the hundreds per month, negotiated rather than self-serve.
+
+### Which one for SpeakLife
+
+**Branch, for now.** Three reasons, in order of weight:
+
+1. It is nearly free at this scale and the work is nearly done. The only
+   remaining inputs are a key and an Associated Domains entry.
+2. The problem that actually has a written spec in this repo is ad-matched
+   onboarding, and that is deep linking — Branch's strength, not AppsFlyer's.
+3. The scale signal points below the free ceiling. `GrowthMetrics` records
+   3,914 person records carrying behaviour over a 90-day window, and
+   `AnalyticsService` records 32,444 `session_started` events over the same
+   window — both consistent with an MAU in the low thousands, under Branch's
+   10,000. **Verify this against a real PostHog MAU number before relying on
+   it**; the 90-day person count is a proxy, and simulator traffic has polluted
+   this app's counts before (see `ANALYTICS_DATA_QUALITY.md`).
+
+**Switch to AppsFlyer when either of these becomes true:**
+
+- MAU crosses ~10,000 and Branch's quote lands above what AppsFlyer's
+  per-conversion meter would cost at your actual paid volume. Do the
+  arithmetic then, not now: at $0.07/conversion, 2,000 paid installs a month is
+  ~$140 — cheaper than a $499 Branch tier; 10,000 is ~$700 — more expensive.
+- Paid spend on TikTok and Google becomes material enough that "no CAC for
+  these channels" costs more than the migration does.
+
+Running both is never the answer: two MMPs double-count every install.
