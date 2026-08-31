@@ -244,3 +244,63 @@ struct BurstsPerDayStepper: View {
         )
     }
 }
+
+/// The Daily Burst's own settings page, reached from Settings → Daily Burst.
+///
+/// The same card the Reminders screen shows, given its own destination. The
+/// burst is the app's anchor habit and how often someone is invited into it is
+/// the single most consequential notification choice they make, so it gets a
+/// row of its own rather than living only three taps down inside Reminders.
+struct DailyBurstRemindersView: View {
+    @ObservedObject private var burstService = DailyDeclarationReminderService.shared
+    @State private var showConfirmation = false
+
+    var body: some View {
+        ZStack {
+            Gradients().speakLifeCYOCell
+                .ignoresSafeArea()
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: DS.Spacing.md) {
+                    Text("A burst is seven declarations, spoken out loud, in about a minute. Choose how often you want to be called in to speak them.")
+                        .font(.callout)
+                        .foregroundColor(.white.opacity(0.85))
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.horizontal)
+                        .padding(.top)
+
+                    DailyBurstReminderSettings(showConfirmation: $showConfirmation)
+                        .cornerRadius(DS.Radius.md)
+                        .padding(.horizontal)
+
+                    Text("The more you speak, the more you reap. Each invitation opens straight into your burst.")
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.6))
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.horizontal)
+                }
+                .padding(.bottom)
+            }
+        }
+        .navigationTitle("Daily Burst")
+        .overlay(
+            Group {
+                if showConfirmation {
+                    VStack {
+                        Spacer()
+                        ToastView(message: "✅ Preferences saved")
+                    }
+                    .transition(.opacity)
+                    .animation(.easeInOut(duration: 0.3), value: showConfirmation)
+                    .padding()
+                }
+            }
+        )
+        .onAppear {
+            AnalyticsService.shared.track("daily_burst_reminder_settings_viewed", parameters: [
+                "enabled": burstService.isEnabled,
+                "bursts_per_day": burstService.burstsPerDay
+            ])
+        }
+    }
+}
