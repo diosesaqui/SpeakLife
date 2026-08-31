@@ -103,6 +103,10 @@ struct DailyDeclarationBurstView: View {
     @State private var confettiOpacity: Double = 0.0
     @State private var statsScale: CGFloat = 0.0
     @State private var shareButtonOpacity: Double = 0.0
+    /// Drives the share preview. Holds the composed deck rather than a bool so
+    /// the sheet can never open on a burst whose lines are not ready yet.
+    @State private var shareDeck: BurstShareDeck?
+
     
     // Configuration for burst session
     private let burstDeclarationCount = 7
@@ -698,6 +702,9 @@ struct DailyDeclarationBurstView: View {
         .sheet(isPresented: $showSpiritualGraph) {
             SpiritualStrengthGraph(tracker: burstTracker)
         }
+        .sheet(item: $shareDeck) { deck in
+            BurstVictorySharePreview(cards: deck.cards)
+        }
     }
     
     // MARK: - Completion Helper Views
@@ -834,46 +841,64 @@ struct DailyDeclarationBurstView: View {
         }
     }
     
+    /// Opens the share preview with one card per line spoken.
+    ///
+    /// This used to build a block of plain text and push it straight into the
+    /// system tray. A stranger who received that saw a stat line from an app
+    /// they had never heard of. What the burst actually produced worth passing
+    /// on is the truth the user just spoke over their life, so each line
+    /// becomes a card and the user picks the one that hit them.
     private func shareVictory() {
-        // Haptic feedback
         Juice.play(.tapLight)
 
-        let message = "I just completed my Daily Victory Burst on SpeakLife! 🔥\n\n✅ \(morningDeclarations.count) Declarations Spoken\n🔥 \(streakViewModel.displayStreak) Day Streak\n💪 \(burstTracker.currentStrengthScore)% Spiritual Strength\n\nJoin me in speaking life daily!"
-        
-        // Get the active window scene
-        guard let windowScene = UIApplication.shared.connectedScenes
-            .first(where: { $0.activationState == .foregroundActive || $0.activationState == .foregroundInactive }) as? UIWindowScene,
-              let rootViewController = windowScene.windows.first?.rootViewController else {
-            print("Could not find root view controller for sharing")
-            return
-        }
-        
-        // Find the topmost view controller
-        var topController = rootViewController
-        while let presentedController = topController.presentedViewController {
-            topController = presentedController
-        }
-        
-        let activityVC = UIActivityViewController(
-            activityItems: [message],
-            applicationActivities: nil
-        )
-        
-        // For iPad
-        if let popover = activityVC.popoverPresentationController {
-            popover.sourceView = topController.view
-            popover.sourceRect = CGRect(x: topController.view.bounds.midX, y: topController.view.bounds.midY, width: 0, height: 0)
-            popover.permittedArrowDirections = []
-        }
-        
-        topController.present(activityVC, animated: true)
-        
+        guard let deck = BurstShareDeck(cards: composeShareCards()) else { return }
+        shareDeck = deck
+
         AnalyticsService.shared.track("daily_burst_shared", parameters: [
             "streak": streakViewModel.displayStreak,
-            "strength_score": burstTracker.currentStrengthScore
+            "strength_score": burstTracker.currentStrengthScore,
+            "card_count": deck.cards.count
         ])
     }
-    
+
+    /// Turns the burst into shareable cards.
+    ///
+    /// Cards follow the mode the burst was actually spoken in: someone who ran
+    /// the whole thing in scripture posts the verse, not the declaration they
+    /// never said. A line that fell back to its declaration is carried as a
+    /// declaration, which is what `resolvedMode` already settles.
+    ///
+    /// When a burst somehow produced no lines the streak still deserves a card,
+    /// so the fallback is one branded card rather than a dead button.
+    private func composeShareCards() -> [BurstShareCard] {
+        let mode = speakMode.wrappedValue
+        let streak = streakViewModel.displayStreak
+        let spoken = morningDeclarations.count
+
+        let cards: [BurstShareCard] = morningDeclarations.map { declaration in
+            let resolved = declaration.resolvedMode(mode)
+            return BurstShareCard(
+                declaration: declaration.spokenLine(resolved),
+                verseReference: declaration.verse,
+                themeLabel: declaration.categoryLabel.isEmpty ? burstTheme.name : declaration.categoryLabel,
+                streak: streak,
+                declarationsSpoken: spoken
+            )
+        }
+
+        if !cards.isEmpty { return cards }
+
+        return [
+            BurstShareCard(
+                declaration: "I speak life over my life, and my words agree with God.",
+                verseReference: "Proverbs 18:21",
+                themeLabel: burstTheme.name,
+                streak: streak,
+                declarationsSpoken: max(spoken, 1)
+            )
+        ]
+    }
+
     // MARK: - Actions
     
     /// The mode picked on the intro, before there is a card to speak.
