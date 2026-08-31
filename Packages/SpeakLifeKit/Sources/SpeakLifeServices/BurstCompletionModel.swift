@@ -214,6 +214,17 @@ public final class BurstCompletionTracker: ObservableObject {
         return getTodaysCompletion() != nil
     }
 
+    /// How many bursts have been spoken today.
+    ///
+    /// The streak only ever asked whether the day was touched at all, which was
+    /// the right question when the burst was a once-a-day event. Now that the
+    /// user is invited in several times a day, the count is what the completion
+    /// screen shows them and what tells them there is another one waiting.
+    public var todaysCompletionCount: Int {
+        let today = calendar.startOfDay(for: Date())
+        return completions.filter { calendar.startOfDay(for: $0.date) == today }.count
+    }
+
     public func getCompletionsForWeek() -> [BurstCompletion] {
         let weekAgo = calendar.date(byAdding: .day, value: -7, to: Date())!
         return completions.filter { $0.date >= weekAgo }

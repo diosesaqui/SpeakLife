@@ -608,6 +608,18 @@ struct DailyDeclarationBurstView: View {
                             .opacity(starOpacity)
                         }
 
+                        // Today's rhythm. The burst is invited several times a
+                        // day now, so finishing one is a beat in the day, not
+                        // the end of it — this is the line that says so.
+                        Text(dailyRhythmMessage)
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.85))
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, DS.Spacing.md)
+                            .padding(.vertical, DS.Spacing.xs)
+                            .background(Capsule().fill(Color.white.opacity(0.10)))
+                            .opacity(starOpacity)
+
                         // Milestone callout
                         if streakViewModel.displayStreak % 7 == 0 && streakViewModel.displayStreak > 0 {
                             Text("🎉 \(streakViewModel.displayStreak / 7) WEEK\(streakViewModel.displayStreak == 7 ? "" : "S") STRONG!")
@@ -622,6 +634,30 @@ struct DailyDeclarationBurstView: View {
                 Spacer()
                 
                 VStack(spacing: DS.Spacing.md) {
+                    // The whole point of the rhythm: the next burst is one tap
+                    // away, right here, while they are still warm. Shown only
+                    // while the day still has one left in it, so it reads as an
+                    // invitation and never as a quota.
+                    if burstsRemainingToday > 0 {
+                        Button(action: startAnotherBurst) {
+                            HStack(spacing: 10) {
+                                Image(systemName: "bolt.fill")
+                                    .font(.system(size: 17, weight: .semibold))
+                                Text("Speak Another Burst")
+                                    .font(.system(size: 17, weight: .semibold))
+                            }
+                            .foregroundColor(Color(red: 1.0, green: 0.85, blue: 0.5))
+                            .frame(width: geometry.size.width * 0.85, height: 50)
+                            .background(
+                                RoundedRectangle(cornerRadius: 25)
+                                    .stroke(Color(red: 1.0, green: 0.85, blue: 0.5).opacity(0.7), lineWidth: 1.5)
+                            )
+                        }
+                        .buttonStyle(.dsPressable(feel: .tapSolid))
+                        .scaleEffect(shareButtonOpacity)
+                        .opacity(shareButtonOpacity)
+                    }
+
                     // Share Victory Button
                     Button(action: shareVictory) {
                         HStack(spacing: 10) {
@@ -903,6 +939,84 @@ struct DailyDeclarationBurstView: View {
             "position": currentDeclarationIndex + 1,
             "source": source.rawValue
         ])
+    }
+
+    // MARK: - Today's Rhythm
+
+    /// How many bursts the user has asked to be invited into each day. The same
+    /// number the reminder service schedules against, so the screen and the
+    /// pushes never disagree about what the day looks like.
+    private var burstGoalToday: Int {
+        DailyDeclarationReminderService.shared.burstsPerDay
+    }
+
+    /// How many are left in the day. Reads the tracker, which `finishBurst` has
+    /// already written to by the time the completion screen appears.
+    private var burstsRemainingToday: Int {
+        max(burstGoalToday - burstTracker.todaysCompletionCount, 0)
+    }
+
+    /// The line under the streak. Names where they are in the day and, when
+    /// there is another one waiting, what it is worth.
+    private var dailyRhythmMessage: String {
+        let done = burstTracker.todaysCompletionCount
+        let goal = burstGoalToday
+
+        if goal <= 1 {
+            return done > 1
+                ? "\(done) bursts spoken today 🔥"
+                : "Today's burst is spoken 🔥"
+        }
+        switch burstsRemainingToday {
+        case 0:
+            return "\(done) of \(goal) today. You spoke life over your whole day 🔥"
+        case 1:
+            return "\(done) of \(goal) today. One more and the day is covered."
+        default:
+            return "\(done) of \(goal) today. Keep going — the more you speak, the more you reap."
+        }
+    }
+
+    /// Runs the burst again from the top, in place.
+    ///
+    /// Everything that counts was already written in `finishBurst`, so a second
+    /// burst is a clean session: a fresh composition, a fresh timer, and a fresh
+    /// action commitment. `session` is cleared first so the loading state shows
+    /// rather than the previous seven flashing up under the new intro.
+    private func startAnotherBurst() {
+        Juice.play(.tapSolid)
+
+        AnalyticsService.shared.track("daily_burst_repeat_started", parameters: [
+            "completed_today": burstTracker.todaysCompletionCount,
+            "goal": burstGoalToday,
+            "source": source.rawValue
+        ])
+
+        session = nil
+        currentDeclarationIndex = 0
+        surgeCount = 0
+        isTransitioning = false
+        faithAction = nil
+        committedAction = nil
+        startTime = Date()
+
+        // The completion screen animates in from zero every time it appears;
+        // leaving these at their finished values would show the next one
+        // fully-drawn with no entrance.
+        checkmarkScale = 0
+        checkmarkRotation = 0
+        starOpacity = 0
+        confettiOpacity = 0
+        statsScale = 0
+        shareButtonOpacity = 0
+
+        loadDynamicDeclarations()
+
+        withAnimation(DS.Motion.smooth) {
+            showCompletionView = false
+            showActionSlide = false
+            showIntroScreen = true
+        }
     }
 
     private func startBurst() {

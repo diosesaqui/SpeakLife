@@ -46,7 +46,15 @@ struct ReminderView: View {
                                     .cornerRadius(DS.Radius.md)
                                     .padding(.horizontal)
                             }
-                            
+
+                            // How often we invite the user in to speak their
+                            // seven. Its own card because it is its own habit:
+                            // the cell above schedules declarations to READ,
+                            // this one schedules the moments to SPEAK.
+                            DailyBurstReminderSettings(showConfirmation: $showConfirmation)
+                                .cornerRadius(DS.Radius.md)
+                                .padding(.horizontal)
+
 //                            // Checklist Notifications Section
 //                            ChecklistNotificationSettings(showConfirmation: $showConfirmation)
 //                                .cornerRadius(16)
