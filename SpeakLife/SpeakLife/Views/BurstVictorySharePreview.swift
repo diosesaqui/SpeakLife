@@ -246,8 +246,7 @@ struct BurstVictorySharePreview: View {
         AnalyticsService.shared.track("burst_share_card_shared", parameters: [
             "streak": card.streak,
             "declarations": card.declarationsSpoken,
-            "card_index": selection,
-            "theme": card.themeLabel
+            "card_index": selection
         ])
     }
 

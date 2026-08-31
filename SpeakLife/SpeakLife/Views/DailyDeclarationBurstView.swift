@@ -227,6 +227,18 @@ struct DailyDeclarationBurstView: View {
         }
     }
 
+    /// The same artwork `themeImage` draws, as a `UIImage` for the share card.
+    ///
+    /// The card takes a `UIImage` rather than an `Image` so it can render
+    /// outside this view — the SwiftUI `Image(_ name:)` the background uses
+    /// carries no pixels a renderer can reach when the card is built elsewhere.
+    private var shareBackgroundImage: UIImage? {
+        if themeViewModel.showUserSelectedImage, let image = themeViewModel.selectedImage {
+            return image
+        }
+        return UIImage(named: themeViewModel.selectedTheme.backgroundImageString)
+    }
+
     // MARK: - Composition
 
     /// Hands the builder everything it needs and keeps the result.
@@ -857,7 +869,8 @@ struct DailyDeclarationBurstView: View {
         AnalyticsService.shared.track("daily_burst_shared", parameters: [
             "streak": streakViewModel.displayStreak,
             "strength_score": burstTracker.currentStrengthScore,
-            "card_count": deck.cards.count
+            "card_count": deck.cards.count,
+            "theme": burstTheme.name
         ])
     }
 
@@ -874,15 +887,16 @@ struct DailyDeclarationBurstView: View {
         let mode = speakMode.wrappedValue
         let streak = streakViewModel.displayStreak
         let spoken = morningDeclarations.count
+        let backgroundImage = shareBackgroundImage
 
         let cards: [BurstShareCard] = morningDeclarations.map { declaration in
             let resolved = declaration.resolvedMode(mode)
             return BurstShareCard(
                 declaration: declaration.spokenLine(resolved),
                 verseReference: declaration.verse,
-                themeLabel: declaration.categoryLabel.isEmpty ? burstTheme.name : declaration.categoryLabel,
                 streak: streak,
-                declarationsSpoken: spoken
+                declarationsSpoken: spoken,
+                themeImage: backgroundImage
             )
         }
 
@@ -892,9 +906,9 @@ struct DailyDeclarationBurstView: View {
             BurstShareCard(
                 declaration: "I speak life over my life, and my words agree with God.",
                 verseReference: "Proverbs 18:21",
-                themeLabel: burstTheme.name,
                 streak: streak,
-                declarationsSpoken: max(spoken, 1)
+                declarationsSpoken: max(spoken, 1),
+                themeImage: backgroundImage
             )
         ]
     }
