@@ -172,6 +172,10 @@ class MockAudioFavoriteRepository: AudioFavoriteRepositoryProtocol {
         entry.id = UUID()
         entry.createdAt = Date()
         entry.lastModified = Date()
+        // Mirrors AudioFavoriteRepository: the caller's own timestamp wins.
+        // Without this the mock stamped three inserts with the same instant and
+        // sorting by date came out in whatever order the writes happened to land.
+        entry.dateFavorited = audio.dateFavorited ?? Date()
         try await create(entry)
         return entry
     }
@@ -189,7 +193,7 @@ class MockAudioFavoriteRepository: AudioFavoriteRepositoryProtocol {
             episode: Int(entry.episode),
             isFavorite: true,
             favoriteId: entry.id?.uuidString,
-            dateFavorited: entry.createdAt
+            dateFavorited: entry.dateFavorited ?? entry.createdAt
         )
     }
     

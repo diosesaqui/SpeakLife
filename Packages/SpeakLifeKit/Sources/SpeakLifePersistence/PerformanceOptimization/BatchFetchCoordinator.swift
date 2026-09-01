@@ -78,7 +78,9 @@ public final class BatchFetchCoordinator {
                             episode: Int(entry.episode),
                             isFavorite: true,
                             favoriteId: entry.id?.uuidString,
-                            dateFavorited: entry.dateFavorited
+                            // Same fallback as AudioFavoriteRepository.toAudioDeclaration,
+                            // or the batch path sorts pre-existing rows as distantPast.
+                            dateFavorited: entry.dateFavorited ?? entry.createdAt
                         )
                         audioDeclarations.append(audioDeclaration)
                     }
