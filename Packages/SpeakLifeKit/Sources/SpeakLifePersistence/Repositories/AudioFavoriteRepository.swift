@@ -213,6 +213,10 @@ public final class AudioFavoriteRepository: AudioFavoriteRepositoryProtocol {
             entity.tag = audio.tag
             entity.season = Int32(audio.season ?? 0)
             entity.episode = Int32(audio.episode ?? 0)
+            // When the caller knows when this was favorited — a restore, a sync,
+            // a replay of history — that is the truth. Only fall back to now.
+            // Dropping it made every favorite sort by row-insert time instead.
+            entity.dateFavorited = audio.dateFavorited ?? Date()
             return entity
         }
 
@@ -234,7 +238,9 @@ public final class AudioFavoriteRepository: AudioFavoriteRepositoryProtocol {
             episode: entry.episode > 0 ? Int(entry.episode) : nil,
             isFavorite: true,
             favoriteId: entry.id?.uuidString,
-            dateFavorited: entry.createdAt
+            // Rows written before dateFavorited was persisted carry nil, so
+            // createdAt stays the fallback rather than sorting them to the bottom.
+            dateFavorited: entry.dateFavorited ?? entry.createdAt
         )
     }
 }
