@@ -1844,9 +1844,9 @@ struct SurveyPlanRevealScreen: View {
         return burden.dreamOutcome
     }
 
-    /// Minutes a day, from the extended quiz. Nil when the arm never asked
-    /// (quiz v1), which keeps the generic final-day line.
-    private var minutesPerDay: Int? {
+    /// Minutes per SESSION, from the extended quiz. Nil when the arm never
+    /// asked (quiz v1), which keeps the generic final-day line.
+    private var minutesPerSession: Int? {
         switch dailyMinutes {
         case "one":   return 1
         case "three": return 3
@@ -1855,9 +1855,27 @@ struct SurveyPlanRevealScreen: View {
         }
     }
 
-    /// The arc's middle beat. Half way, never day 1 and never the last day, so
-    /// a short trial still reads as three distinct moments.
-    private var midDay: Int { max(2, min(trialDays - 1, trialDays / 2)) }
+    /// Two sessions a day. Every rhythm option is a per-session number spoken
+    /// twice: the quiz option reads "3 minutes morning and night" and the plan
+    /// card's own `dailyRhythmDetail` row directly above says "3 minutes,
+    /// morning and evening". Multiplying the raw answer by trial days alone
+    /// printed half the real figure and contradicted the row 15pt above it, on
+    /// the one screen whose entire purpose is to stop stating things the
+    /// product cannot back.
+    private var minutesPerDay: Int? { minutesPerSession.map { $0 * 2 } }
+
+    /// The arc's middle beat, when the trial is long enough to have one.
+    ///
+    /// Two beats need two distinct days between day 1 and the last day, so a
+    /// 1- or 2-day trial gets a two-line arc instead of a forced middle that
+    /// duplicates a day or lands past the end. `introTrialDays` returns
+    /// `offer.period.value` verbatim for `.day`, so 1 and 2 are both reachable
+    /// from a repointed SKU — which is the whole reason `trialDays` is threaded
+    /// through rather than hardcoded.
+    private var midDay: Int? {
+        guard trialDays >= 3 else { return nil }
+        return max(2, min(trialDays - 1, trialDays / 2))
+    }
 
     /// The line the whole arc now climbs to, and the reason the arc changed.
     ///
@@ -1927,7 +1945,9 @@ struct SurveyPlanRevealScreen: View {
                     // before the card is charged.
                     VStack(alignment: .leading, spacing: 10) {
                         weekLine("DAY 1", "You speak it out loud. Out loud is the part that works.")
-                        weekLine("DAY \(midDay)", "You reach for the Word before you reach for the worry.")
+                        if let mid = midDay {
+                            weekLine("DAY \(mid)", "You reach for the Word before you reach for the worry.")
+                        }
                         weekLine("DAY \(trialDays)", finalDayLine)
                     }
                     .padding(.horizontal, 32)

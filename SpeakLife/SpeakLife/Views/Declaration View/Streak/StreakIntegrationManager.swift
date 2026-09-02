@@ -47,6 +47,20 @@ final class StreakIntegrationManager: ObservableObject {
         streakViewModel?.completeTask(taskId: "listen_audio")
         logAction("Audio affirmation listened", taskId: "listen_audio")
     }
+
+    /// Call when the user asks Bible Chat a question.
+    ///
+    /// The row exists to put a fast, visible win early in the trial, and a win
+    /// nothing records is not visible. Without this the only way to tick it was
+    /// the manual checkbox — the shape `gratitude_moment` had, which completed
+    /// 58 times against 238 unlocks.
+    ///
+    /// Asking is the completion, not receiving an answer: the user did their
+    /// part at send, and a network failure should not cost them the row.
+    func trackBibleChatAsked() {
+        streakViewModel?.completeTask(taskId: "ask_the_bible")
+        logAction("Bible chat asked", taskId: "ask_the_bible")
+    }
     
     // MARK: - Notification Observers
     
@@ -75,6 +89,12 @@ final class StreakIntegrationManager: ObservableObject {
                 self?.trackAudioListened()
             }
             .store(in: &cancellables)
+
+        NotificationCenter.default.publisher(for: .bibleChatAsked)
+            .sink { [weak self] _ in
+                self?.trackBibleChatAsked()
+            }
+            .store(in: &cancellables)
     }
     
     /// These four event names are display-cased with spaces rather than
@@ -96,6 +116,7 @@ extension Notification.Name {
     static let affirmationShared = Notification.Name("affirmationShared")
     static let devotionalCompleted = Notification.Name("devotionalCompleted")
     static let audioAffirmationCompleted = Notification.Name("audioAffirmationCompleted")
+    static let bibleChatAsked = Notification.Name("bibleChatAsked")
 }
 
 // MARK: - Easy Integration Helpers

@@ -1182,21 +1182,26 @@ public struct TaskLibrary {
     /// Ordering only. Nothing is removed: the rows a user gets are decided by
     /// their phase and their streak, exactly as before.
     ///
-    /// - Parameter streakDay: only used to keep the injected journaling row out
-    ///   of days where `journal_insight` would have been offered anyway.
+    /// - Parameter streakDay: unused. It kept the injected journaling row out of
+    ///   days where `gratitude_moment` already supplied a reflection row; that
+    ///   row is retired, and the `.reflect` membership check below covers the
+    ///   same ground. Kept in the signature so the six call sites and their
+    ///   tests are untouched.
     static func leadWithPreferredModality(_ tasks: [DailyTask],
                                           style: ConnectStyle?,
                                           streakDay: Int) -> [DailyTask] {
         guard let style else { return tasks }
         var result = tasks
 
-        // Journaling is the one answer with no matching row in the foundation
-        // week at all: `journal_insight` is a growth task gated to day 8, and
+        // Journaling is the one answer with no matching row of its own:
+        // `journal_insight` is a growth task gated to day 8, and
         // `gratitude_moment`, the only other reflection row, has been retired.
-        // So the 11% who said journaling would otherwise spend their whole
-        // first week with nothing that looks like what they asked for. Pull the
-        // row forward for them, and only for them. This used to cover day 1
-        // alone; it now covers days 1-7, which is what the answer deserved.
+        // So the 11% who said journaling would otherwise get nothing that looks
+        // like what they asked for. Pull the row in for them, and only for them.
+        //
+        // The guard is on membership, not on the day: it fires whenever the
+        // mix has no `.reflect` row, which since the retirement is every day
+        // before 8, and no day after. `streakDay` is no longer read.
         if style == .journaling,
            !result.contains(where: { $0.type == .reflect }),
            let journal = growthTasks.first(where: { $0.id == "journal_insight" }) {
@@ -1653,8 +1658,13 @@ public struct TaskLibrary {
         // AI-enhanced growth task selection
         let baseGrowthTasks = availableTasks.filter { $0.category == .growth }
 
-        // AI determines optimal mix based on user progress
-        var tasks = keepers(["complete_daily_burst", "read_devotional", "listen_audio"])
+        // AI determines optimal mix based on user progress. Keeper list must
+        // stay in step with the standard path's `.growth` mix — `ask_the_bible`
+        // was once missing here, which dropped the row from day 8 for exactly
+        // the cohort `enableAIFeatures` also promotes Bible Chat into the tab
+        // bar for.
+        var tasks = keepers(["complete_daily_burst", "read_devotional",
+                             "listen_audio", "ask_the_bible"])
         tasks.append(contentsOf: Array(baseGrowthTasks.prefix(1)))
 
         return tasks
@@ -1666,7 +1676,7 @@ public struct TaskLibrary {
         let growthTasks = availableTasks.filter { $0.category == .growth }
 
         // AI balances challenge and foundation
-        var tasks = keepers(["complete_daily_burst", "listen_audio"])
+        var tasks = keepers(["complete_daily_burst", "listen_audio", "ask_the_bible"])
         tasks.append(contentsOf: Array(growthTasks.prefix(1)))
         tasks.append(contentsOf: Array(impactTasks.prefix(1)))
 
@@ -1674,15 +1684,19 @@ public struct TaskLibrary {
     }
 
     private static func selectMasteryTasksWithAI(availableTasks: [DailyTask], userBehavior: [String: Any], streakDay: Int) -> [DailyTask] {
-        // AI-enhanced mastery task selection
-        let masteryTasks = availableTasks.filter { $0.category == .mastery }
+        // AI-enhanced mastery task selection. Mirrors the standard path: the
+        // `.mastery` category is empty since the four off-app rows were retired,
+        // so the third row comes from growth. Filtering on `.mastery` here would
+        // return nothing and serve a narrower board to the longest streaks in
+        // the product than the growth phase gets.
         let impactTasks = availableTasks.filter { $0.category == .impact }
+        let growthTasks = availableTasks.filter { $0.category == .growth }
 
-        // AI creates advanced spiritual practice combinations. Burst and audio
-        // ride along — a 100-day streak still needs the task that earns it.
-        var tasks = keepers(["complete_daily_burst", "listen_audio"])
+        // Burst and audio ride along — a 100-day streak still needs the task
+        // that earns it.
+        var tasks = keepers(["complete_daily_burst", "listen_audio", "ask_the_bible"])
+        tasks.append(contentsOf: Array(growthTasks.prefix(1)))
         tasks.append(contentsOf: Array(impactTasks.prefix(1)))
-        tasks.append(contentsOf: Array(masteryTasks.prefix(1)))
 
         return tasks
     }

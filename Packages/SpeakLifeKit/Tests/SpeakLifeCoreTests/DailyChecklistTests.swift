@@ -554,9 +554,15 @@ final class DailyChecklistTests: XCTestCase {
     /// they woke up, and it is the one surface that pays off in seconds. The
     /// plan sold in onboarding now promises its payoff at day 7, so this row
     /// has to be live well inside the trial window and has to stay live after
-    /// it. Pinned because "day 3" looks arbitrary until you know why.
+    /// it. Pinned because "day 2" looks arbitrary until you know why.
+    ///
+    /// Runs under both task-selection paths. The AI path keeps its own keeper
+    /// lists, and they were once out of step with the standard ones — which
+    /// dropped this row from day 8 for exactly the cohort `enableAIFeatures`
+    /// also promotes Bible Chat into the tab bar for. A test pinned only to the
+    /// standard path would not have caught that.
     func testAskTheBible_ArrivesInsideTheTrialAndNeverLeaves() {
-        withStandardTasks {
+        withBothTaskPaths {
             let dayOne = TaskLibrary.getCoreTasksForStreak(1).map(\.id)
             XCTAssertFalse(dayOne.contains("ask_the_bible"),
                            "day 1 is meant to stay light: \(dayOne)")
@@ -571,7 +577,7 @@ final class DailyChecklistTests: XCTestCase {
     /// The board must never get narrower as the user goes deeper. A
     /// foundation-only row would have made day 7 wider than day 30.
     func testBoardWidthNeverShrinksWithProgress() {
-        withStandardTasks {
+        withBothTaskPaths {
             let days = [1, 3, 7, 8, 30, 31, 100, 365]
             let counts = days.map { TaskLibrary.getCoreTasksForStreak($0).count }
             for (i, count) in counts.enumerated().dropFirst() {
@@ -649,6 +655,23 @@ final class DailyChecklistTests: XCTestCase {
 
     /// The AI path builds a different task set. These tests are about the
     /// standard one, so pin the flag rather than inherit whatever ran before.
+    /// The AI task-selection path, which keeps its own keeper lists. Every
+    /// board invariant has to hold under both paths — the flag is live Remote
+    /// Config, so real users are on each.
+    private func withAITasks(_ body: () -> Void) {
+        let key = "enableAIFeatures"
+        let previous = UserDefaults.standard.bool(forKey: key)
+        UserDefaults.standard.set(true, forKey: key)
+        defer { UserDefaults.standard.set(previous, forKey: key) }
+        body()
+    }
+
+    /// Runs `body` under both task-selection paths.
+    private func withBothTaskPaths(_ body: () -> Void) {
+        withStandardTasks(body)
+        withAITasks(body)
+    }
+
     private func withStandardTasks(_ body: () -> Void) {
         let key = "enableAIFeatures"
         let previous = UserDefaults.standard.bool(forKey: key)

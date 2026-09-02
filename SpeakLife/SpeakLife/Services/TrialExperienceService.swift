@@ -45,6 +45,23 @@ final class TrialExperienceService: ObservableObject {
         return stored > 0 ? stored : 3
     }
 
+    /// Declarations spoken since the trial began.
+    ///
+    /// **Do not use this in push copy.** Notification bodies are baked into a
+    /// `UNMutableNotificationContent` at SCHEDULE time, and every scheduling
+    /// path runs before the user can have spoken anything: `onTrialStarted`
+    /// zeroes this counter three lines before it calls `scheduleTrialPushes`,
+    /// and `reschedulePendingTrialPushesIfNeeded` is only ever called from the
+    /// onboarding notification-permission callbacks, still ahead of the feed.
+    /// `onDeclarationSpoken` is called from the declaration feed, which the user
+    /// reaches afterwards. So this reads 0 in any copy builder, always.
+    ///
+    /// It is still valid at `onTrialConverted`, which runs long after, and that
+    /// is the one place it is read for real.
+    ///
+    /// Making it usable in a push needs render-at-delivery (a notification
+    /// service extension) or a re-schedule from a foreground hook late in the
+    /// trial. Neither exists today.
     var declarationCountDuringTrial: Int {
         UserDefaults.standard.integer(forKey: kTrialDeclarationCount)
     }
@@ -220,115 +237,81 @@ final class TrialExperienceService: ObservableObject {
     /// moment they were deciding whether to pay for it. It argued the case for
     /// cancelling in the product's own voice.
     ///
-    /// What replaces it is the evidence the user actually generated this week,
-    /// which `day3Copy` was already doing one day later. Nothing here claims an
-    /// outcome and nothing borrows someone else's clock.
-    ///
-    /// The zero-declaration branch matters as much as the rest: a user who has
-    /// spoken nothing is both the likeliest to cancel and the likeliest to
-    /// notice being congratulated for a week they did not have. They get an
-    /// invitation instead of a receipt.
+    /// What replaces it names what they came for and the decision in front of
+    /// them, and claims nothing about a result. **It deliberately does not
+    /// mention how much they have spoken** — see `declarationCountDuringTrial`
+    /// for why that number is unavailable here.
     private func day2Copy(for category: UserPreferencesTracker.CategoryType, onDay day: Int) -> (String, String) {
-        let daysText = day == 1 ? "a day" : "\(day) days"
-        let count = declarationCountDuringTrial
-
-        guard count > 0 else {
-            let (title, opening) = day2EmptyCopy(for: category)
-            return (title, "\(opening) Your trial ends tomorrow, and one declaration is all today asks.")
-        }
-
-        let spoken = "You've spoken \(count) \(count == 1 ? "declaration" : "declarations") in \(daysText). "
         switch category {
         case .anxiety:
             return (
-                "Day \(day) of your free trial ✨",
-                "\(spoken)That's \(daysText) of answering your mind with God's Word instead of arguing with it. Your trial ends tomorrow."
+                "Day \(day) — speak over your mind ✨",
+                "Your trial ends tomorrow. Your mind does not have to carry this on its own, and God's Word said so first."
             )
         case .fear:
             return (
-                "Day \(day) — keep going 💪",
-                "\(spoken)That's \(daysText) of speaking to the thing instead of listening to it. Your trial ends tomorrow."
+                "Day \(day) — speak to it 💪",
+                "Your trial ends tomorrow. You came here to speak to the thing instead of listening to it. Today still counts."
             )
         case .marriage:
             return (
-                "Day \(day) of your trial ❤️",
-                "\(spoken)That's \(daysText) of speaking peace over your home. Your trial ends tomorrow."
+                "Day \(day) — speak peace over your home ❤️",
+                "Your trial ends tomorrow. Speak God's peace over your marriage while today is still in front of you."
             )
         case .health:
             return (
-                "Day \(day) — speaking over your body 🙏",
-                "\(spoken)That's \(daysText) of God's Word spoken over your body. Your trial ends tomorrow."
+                "Day \(day) — speak over your body 🙏",
+                "Your trial ends tomorrow. Speak God's Word over your body today, out loud, the way Jesus did."
             )
         case .faith:
             return (
-                "Day \(day) of building unshakeable faith ⚡",
-                "\(spoken)Faith is built declaration by declaration, and you've been building for \(daysText). Your trial ends tomorrow."
+                "Day \(day) — faith comes by hearing ⚡",
+                "Your trial ends tomorrow. Faith is built declaration by declaration, and there is still one to speak today."
             )
         case .confidence:
             return (
-                "Day \(day) — you're becoming someone new 👑",
-                "\(spoken)That's \(daysText) of speaking who God says you are. Your trial ends tomorrow."
+                "Day \(day) — who God says you are 👑",
+                "Your trial ends tomorrow. Speak who God already says you are before you decide anything else."
             )
         case .hope:
             return (
-                "Day \(day) — hope is being restored 🌅",
-                "\(spoken)That's \(daysText) of God's Word over what's ahead of you. Your trial ends tomorrow."
+                "Day \(day) — speak over what's ahead 🌅",
+                "Your trial ends tomorrow. Speak God's Word over what is coming while today is still yours."
             )
         default:
             return (
-                "Day \(day) of your free trial 🔥",
-                "\(spoken)That's \(daysText) of God's Word out loud over your own life. Your trial ends tomorrow."
+                "Day \(day) — one declaration today 🔥",
+                "Your trial ends tomorrow. One declaration, out loud, over your own life. That is the whole practice."
             )
         }
     }
 
-    /// Opening line for a trial with no declarations spoken yet. Names the thing
-    /// they came in for and asks for one, rather than reporting a week back to
-    /// them that did not happen.
-    private func day2EmptyCopy(for category: UserPreferencesTracker.CategoryType) -> (String, String) {
-        switch category {
-        case .anxiety:
-            return ("Speak one over your mind today ✨", "Your mind has been carrying this on its own.")
-        case .fear:
-            return ("Speak to it today 💪", "You came here to stop listening to it.")
-        case .marriage:
-            return ("Speak peace over your home ❤️", "You came here for your marriage.")
-        case .health:
-            return ("Speak over your body today 🙏", "You came here for your body.")
-        case .faith:
-            return ("One declaration today ⚡", "Faith is built declaration by declaration.")
-        case .confidence:
-            return ("Speak who God says you are 👑", "You came here to hear who you actually are.")
-        case .hope:
-            return ("Speak over what's ahead 🌅", "You came here for what's ahead of you.")
-        default:
-            return ("One declaration today 🔥", "You came here to speak God's Word over your life.")
-        }
-    }
-
+    /// Last-day push. Like `day2Copy`, it cannot report a declaration count —
+    /// this function used to build a `countText` prefix that has rendered as the
+    /// empty string on every delivery since it was written, for the reason
+    /// documented on `declarationCountDuringTrial`. Removed rather than left in
+    /// place looking like a working feature.
     private func day3Copy(for category: UserPreferencesTracker.CategoryType) -> (String, String) {
-        let count = declarationCountDuringTrial
-        let countText = count > 0 ? "You've already spoken \(count) declarations. " : ""
         switch category {
         case .anxiety:
             return (
                 "Your free trial ends today 🙏",
-                "\(countText)Your mind has started shifting from worry to worship. That doesn't stop if you don't let it. Open SpeakLife to continue."
+                "Your mind has started shifting from worry to worship. That doesn't stop if you don't let it. Open SpeakLife to continue."
             )
         case .fear:
             return (
                 "Trial ending today — don't lose this 💙",
-                "\(countText)Fear shrinks when you speak truth over it daily. You've started that process. Open SpeakLife and keep the momentum."
+                "Fear shrinks when you speak truth over it daily. You've started that process. Open SpeakLife and keep the momentum."
             )
         case .marriage:
             return (
                 "Your trial ends today ❤️",
-                "\(countText)You've started speaking life over your relationship. That matters. Don't let it stop today. Open SpeakLife to continue."
+                "You've started speaking life over your relationship. That matters. Don't let it stop today. Open SpeakLife to continue."
             )
         default:
             return (
                 "Last day of your free trial ⚡",
-                "\(countText)You're becoming someone who speaks God's truth over their life daily. Don't quit on that person. Open SpeakLife to continue your journey."
+                "You're becoming someone who speaks God's truth over their life daily. Don't quit on that person. Open SpeakLife to continue your journey."
             )
         }
     }
