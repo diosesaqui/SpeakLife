@@ -108,7 +108,7 @@ enum QuizSegment: String, CaseIterable {
         case .believerAuthority: return "Speak God's Word with authority, every day."
         case .alreadyYours:      return "Everything He's already given, claimed daily."
         case .hisHeart:          return "Receive His love every single morning."
-        case .unsegmented:       return "Join \(SocialProof.believersCount) believers who do this daily."
+        case .unsegmented:       return "Join believers who do this daily."
         }
     }
 

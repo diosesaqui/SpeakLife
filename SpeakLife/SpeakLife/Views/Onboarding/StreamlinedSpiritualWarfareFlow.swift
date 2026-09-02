@@ -705,7 +705,7 @@ struct PrePaywallCloseScreen: View {
                         .multilineTextAlignment(.center)
                     
                     VStack(spacing: 20) {
-                        Text("100,000+ believers have taken their\npeace back — one declaration at a time.")
+                        Text("Believers are taking their\npeace back — one declaration at a time.")
                             .font(.system(size: 18))
                             .foregroundColor(.white.opacity(0.9))
                             .multilineTextAlignment(.center)

@@ -172,10 +172,10 @@ struct TransformationSocialProofScreen: View {
                 Spacer()
                 VStack(spacing: 28) {
                     VStack(spacing: 6) {
-                        Text("100,000+")
+                        Text("4.9")
                             .font(.system(size: 48, weight: .black, design: .rounded))
                             .foregroundColor(.white)
-                        Text("believers have made this shift")
+                        Text("rated by believers who made this shift")
                             .font(.system(size: 17, weight: .medium, design: .rounded))
                             .foregroundColor(.white.opacity(0.75))
                         HStack(spacing: 3) {
@@ -184,7 +184,7 @@ struct TransformationSocialProofScreen: View {
                                     .font(.system(size: 13))
                                     .foregroundColor(.yellow)
                             }
-                            Text("Rated 4.9 on App Store")
+                            Text("Rated on the App Store")
                                 .font(.system(size: 13, weight: .medium))
                                 .foregroundColor(.white.opacity(0.65))
                                 .padding(.leading, 4)

@@ -462,7 +462,7 @@ struct SurveyInterstitialBScreen: View {
                         .multilineTextAlignment(.center)
                         .lineSpacing(4)
 
-                    Text("But here's what 100,000 believers have discovered:")
+                    Text("But here's what believers have discovered:")
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundColor(.white.opacity(0.85))
                         .multilineTextAlignment(.center)
@@ -1688,7 +1688,7 @@ struct SurveyPlanBuildingScreen: View {
             matching,
             "Choosing your verses",
             "Setting your daily rhythm",
-            "Trusted by \(SocialProof.believersCount) believers"
+            "Trusted by believers worldwide"
         ]
     }
 

@@ -49,7 +49,7 @@ struct CombinedPersonalizationScene: View {
                                     .opacity(titleOpacity)
                                     .animation(.easeIn(duration: 0.8), value: titleOpacity)
                                 
-                                Text("Join 100,000+ believers who've found breakthrough")
+                                Text("Join believers who've found breakthrough")
                                     .font(.system(size: proxy.size.height < 700 ? 15 : 17, weight: .medium))
                                     .foregroundColor(.white.opacity(0.9))
                                     .multilineTextAlignment(.center)

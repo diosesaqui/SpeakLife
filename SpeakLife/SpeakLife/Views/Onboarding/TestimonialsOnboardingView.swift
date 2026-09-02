@@ -107,7 +107,7 @@ struct TestimonialsOnboardingView: View {
                 VStack(spacing: 32) {
                     // Title
                     VStack(spacing: 8) {
-                        Text("Join 100K+ Believers")
+                        Text("Join Believers Worldwide")
                             .font(.system(size: 34, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
                         
@@ -120,22 +120,6 @@ struct TestimonialsOnboardingView: View {
 
                     // Stats section
                     HStack(spacing: 40) {
-                        // Worshippers stat
-                        VStack(spacing: 8) {
-                            HStack(spacing: 4) {
-                                Image(systemName: "leaf.fill")
-                                    .font(.system(size: 20))
-                                    .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.4))
-                                
-                                Text("100K+")
-                                    .font(.system(size: 28, weight: .bold, design: .rounded))
-                                    .foregroundColor(.white)
-                            }
-                            Text("Believers")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.white.opacity(0.7))
-                        }
-                        
                         // Rating stat
                         VStack(spacing: 8) {
                             Text("4.9")

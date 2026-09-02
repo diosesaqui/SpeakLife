@@ -174,8 +174,6 @@ struct OfferPageView: View {
                             VStack(spacing: 4) {
                                 Text("Claim My Discount")
                                     .font(.system(size: 18, weight: .bold))
-                                //Text("Join 50,000+ believers transforming daily")
-                                 //   .font(.system(size: 12, weight: .regular))
                             }
                             .padding()
                             .frame(maxWidth: .infinity, maxHeight: 60)

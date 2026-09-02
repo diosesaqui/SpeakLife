@@ -562,7 +562,7 @@ struct OnboardingContentProvider {
         features.append("Based on what you shared, this is designed for you.")
         features.append("Personalized daily reminders")
         features.append("Faith-Renewing Audio")
-        features.append("100,000+ believers growing together")
+        features.append("Believers growing together")
         
         return features
     }

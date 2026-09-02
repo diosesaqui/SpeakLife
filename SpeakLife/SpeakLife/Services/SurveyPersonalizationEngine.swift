@@ -51,7 +51,7 @@ struct SurveyPersonalizationEngine {
                     SurveyValueProp(icon: "wind", title: "Quiet the 3am thoughts", description: "Daily declarations rewire your mind until God's peace is your first response."),
                     SurveyValueProp(icon: "moon.stars.fill", title: "Speak peace over every storm", description: "Jesus spoke to storms and they obeyed. Learn to speak His Word over yours."),
                     SurveyValueProp(icon: "brain.head.profile", title: "Scripture in your ears daily", description: "Audio devotionals soak your mind in God's promises, morning and night."),
-                    SurveyValueProp(icon: "person.2.fill", title: "Anchored, not anxious", description: "Join \(SocialProof.believersCount) believers trading worry for an unshakeable identity in Christ.")
+                    SurveyValueProp(icon: "person.2.fill", title: "Anchored, not anxious", description: "Join believers trading worry for an unshakeable identity in Christ.")
                 ],
                 ctaText: "Start My 30-Day SpeakLife Challenge",
                 urgencyText: "3 Days Free • Cancel Anytime",
@@ -65,7 +65,7 @@ struct SurveyPersonalizationEngine {
                     SurveyValueProp(icon: "sparkles", title: "Silence the 'not enough' lie", description: "Daily declarations replace the old story with what God actually says about you."),
                     SurveyValueProp(icon: "book.fill", title: "Speak who you are", description: "Your identity gets sealed when your own voice agrees with God's Word."),
                     SurveyValueProp(icon: "repeat.circle.fill", title: "Hear His truth every morning", description: "Audio devotionals keep God's voice louder than every label you've carried."),
-                    SurveyValueProp(icon: "person.2.fill", title: "Never walk this alone", description: "Join \(SocialProof.believersCount) believers discovering who God says they are.")
+                    SurveyValueProp(icon: "person.2.fill", title: "Never walk this alone", description: "Join believers discovering who God says they are.")
                 ],
                 ctaText: "Start My 30-Day SpeakLife Challenge",
                 urgencyText: "3 Days Free • Cancel Anytime",
@@ -79,7 +79,7 @@ struct SurveyPersonalizationEngine {
                     SurveyValueProp(icon: "flame.fill", title: "Walk into your calling", description: "Daily declarations align your steps with the destiny God wrote for you."),
                     SurveyValueProp(icon: "map.fill", title: "Speak direction over confusion", description: "Declare God's plans out loud until clarity replaces second-guessing."),
                     SurveyValueProp(icon: "arrow.up.forward.circle.fill", title: "Vision in your ears daily", description: "Audio devotionals fill your mornings with purpose before the noise gets in."),
-                    SurveyValueProp(icon: "person.2.fill", title: "Called and commissioned", description: "Join \(SocialProof.believersCount) believers stepping into their God-given assignment.")
+                    SurveyValueProp(icon: "person.2.fill", title: "Called and commissioned", description: "Join believers stepping into their God-given assignment.")
                 ],
                 ctaText: "Start My 30-Day SpeakLife Challenge",
                 urgencyText: "3 Days Free • Cancel Anytime",
@@ -93,7 +93,7 @@ struct SurveyPersonalizationEngine {
                     SurveyValueProp(icon: "sun.max.fill", title: "Joy that outlasts circumstances", description: "God's Word planted daily grows a gladness the world cannot take."),
                     SurveyValueProp(icon: "music.note", title: "Speak gladness over heaviness", description: "Declaring God's promises out loud lifts what the day tries to put on you."),
                     SurveyValueProp(icon: "arrow.counterclockwise.circle.fill", title: "Start mornings with His delight", description: "Audio devotionals tune your heart to God's joy before anything else speaks."),
-                    SurveyValueProp(icon: "person.2.fill", title: "Rooted in the God of joy", description: "Join \(SocialProof.believersCount) believers whose joy is anchored in Christ, not circumstances.")
+                    SurveyValueProp(icon: "person.2.fill", title: "Rooted in the God of joy", description: "Join believers whose joy is anchored in Christ, not circumstances.")
                 ],
                 ctaText: "Start My 30-Day SpeakLife Challenge",
                 urgencyText: "3 Days Free • Cancel Anytime",
@@ -107,7 +107,7 @@ struct SurveyPersonalizationEngine {
                     SurveyValueProp(icon: "bolt.fill", title: "Bold in every room", description: "Daily declarations build confidence anchored in who made you, not how you feel."),
                     SurveyValueProp(icon: "crown.fill", title: "Speak boldness until it sticks", description: "Your voice agreeing with God's Word dismantles timidity at the root."),
                     SurveyValueProp(icon: "figure.stand", title: "Courage in your ears daily", description: "Audio devotionals remind you whose you are before doubt gets a word in."),
-                    SurveyValueProp(icon: "person.2.fill", title: "Fearless in your identity", description: "Join \(SocialProof.believersCount) believers walking in God-given boldness every day.")
+                    SurveyValueProp(icon: "person.2.fill", title: "Fearless in your identity", description: "Join believers walking in God-given boldness every day.")
                 ],
                 ctaText: "Start My 30-Day SpeakLife Challenge",
                 urgencyText: "3 Days Free • Cancel Anytime",
@@ -121,7 +121,7 @@ struct SurveyPersonalizationEngine {
                     SurveyValueProp(icon: "leaf.fill", title: "Speak life over your body", description: "Daily healing declarations put God's promises over every diagnosis and pain."),
                     SurveyValueProp(icon: "heart.fill", title: "Faith stronger than fear", description: "Renew your mind daily until God's promises outweigh every report."),
                     SurveyValueProp(icon: "waveform.path.ecg", title: "Healing promises in your ears", description: "Audio devotionals soak your mind in God's restoring Word, morning and night."),
-                    SurveyValueProp(icon: "person.2.fill", title: "Whole in body and soul", description: "Join \(SocialProof.believersCount) believers speaking God's healing over their lives.")
+                    SurveyValueProp(icon: "person.2.fill", title: "Whole in body and soul", description: "Join believers speaking God's healing over their lives.")
                 ],
                 ctaText: "Start My 30-Day SpeakLife Challenge",
                 urgencyText: "3 Days Free • Cancel Anytime",
@@ -135,7 +135,7 @@ struct SurveyPersonalizationEngine {
                     SurveyValueProp(icon: "star.fill", title: "Break the scarcity mindset", description: "Daily abundance declarations renew how you see provision, money, and overflow."),
                     SurveyValueProp(icon: "briefcase.fill", title: "Speak increase over your finances", description: "Declaring God's promises out loud shifts your beliefs, then your decisions."),
                     SurveyValueProp(icon: "arrow.up.forward.circle.fill", title: "Provision promises every morning", description: "Audio devotionals fill your ears with God's abundance before the world preaches lack."),
-                    SurveyValueProp(icon: "person.2.fill", title: "An heir, not a beggar", description: "Join \(SocialProof.believersCount) believers walking in God's overflow together.")
+                    SurveyValueProp(icon: "person.2.fill", title: "An heir, not a beggar", description: "Join believers walking in God's overflow together.")
                 ],
                 ctaText: "Start My 30-Day SpeakLife Challenge",
                 urgencyText: "3 Days Free • Cancel Anytime",
@@ -202,12 +202,12 @@ struct SurveyPersonalizationEngine {
     private var defaultPaywallCopy: SurveyPaywallCopy {
         SurveyPaywallCopy(
             headline: "Become Unshakable — One Declaration at a Time",
-            subheadline: "Join \(SocialProof.believersCount) believers who chose God's truth over their feelings.",
+            subheadline: "Join believers who chose God's truth over their feelings.",
             valueProps: [
                 SurveyValueProp(icon: "book.fill", title: "Declarations made for you", description: "God's Word spoken over your exact situation, every single morning."),
                 SurveyValueProp(icon: "bolt.fill", title: "Speak truth, take ground", description: "Spoken Scripture is your greatest weapon. It is how Jesus won every battle."),
                 SurveyValueProp(icon: "headphones", title: "Faith comes by hearing", description: "Audio devotionals put God's promises in your ears morning and night."),
-                SurveyValueProp(icon: "person.2.fill", title: "Unshakeable identity in Christ", description: "Join \(SocialProof.believersCount) believers who know who they are in Him.")
+                SurveyValueProp(icon: "person.2.fill", title: "Unshakeable identity in Christ", description: "Join believers who know who they are in Him.")
             ],
             ctaText: "Begin My Faith Reset",
             urgencyText: "3 Days Free • Cancel Anytime",

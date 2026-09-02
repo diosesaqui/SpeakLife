@@ -226,7 +226,7 @@ struct OptimizedSubscriptionViewV2: View {
     
     private var socialProofSection: some View {
         VStack(spacing: DS.Spacing.sm) {
-            Text("Join 100,000+ believers transforming their minds in Christ")
+            Text("Join believers transforming their minds in Christ")
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white.opacity(0.9))
                 .multilineTextAlignment(.center)
