@@ -99,6 +99,13 @@ final class GrowthMetrics {
             RevenueCatManager.shared.setPostHogUserID(distinctId)
         }
 
+        // Same join, third destination. RevenueCat's Branch integration keys
+        // its events off the App User Id, so handing Branch that id as its
+        // developer identity is what lets a renewal RevenueCat reports land on
+        // the same Branch person as the ad click that produced the install —
+        // which is how revenue ends up next to campaign spend in Branch.
+        BranchAttribution.setIdentity(appUserID)
+
         lock.lock()
         let alreadyLinked = defaults.string(forKey: Key.aliasedRevenueID) == appUserID
         if !alreadyLinked { defaults.set(appUserID, forKey: Key.aliasedRevenueID) }

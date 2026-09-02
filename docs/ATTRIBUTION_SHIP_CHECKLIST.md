@@ -11,6 +11,8 @@ Values you will need repeatedly:
 | Bundle ID | `com.Franchiz.SpeakLife` |
 | Branch key | `key_live_pAyTGgj5uXAKKXaaKyPRWefkrEb34NYf` (in `Info.plist`) |
 | Deep linking domains | `speaklife.app.link`, `speaklife-alternate.app.link` |
+| iOS URI scheme | `speaklife://` (from `CFBundleURLSchemes`; the `fb904572920975437` entry alongside it belongs to the Facebook SDK, never use it here) |
+| App Store ID | `1617492998` |
 
 The Team ID above is the app target's. `652R6A63L8` also appears in the project
 but belongs only to the test target — do not use it anywhere here.
@@ -26,6 +28,10 @@ but belongs only to the test target — do not use it anywhere here.
       falls back to Safari with no error anywhere.
 - [ ] **Bundle ID = `com.Franchiz.SpeakLife`.** Case-sensitive. Note the
       capital F. The widget's id is not needed — universal links target the app.
+- [ ] **iOS URI Scheme = `speaklife://`, App Store ID = `1617492998`.** The URI
+      scheme is the fallback for contexts where universal links do not fire —
+      in-app browsers, chiefly. Blank means those people are sent to the App
+      Store for an app they already have installed.
 - [ ] **Leave NativeLink™ off.** It is a fallback for iCloud Private Relay
       users, where Branch's IP-based match fails: it passes the link through
       the device clipboard instead. The cost is an iOS 16+ system paste prompt
@@ -39,6 +45,35 @@ but belongs only to the test target — do not use it anywhere here.
       in which it was free to do. Branch allows this change **once, ever**, so
       it is now fixed: `speaklife.app.link` cannot be changed again without
       creating a new Branch app, and the entitlement is pinned to it.
+- [ ] **Connect the ad partners** under `Configuration -> Integrations`. Meta
+      additionally needs Branch set as the MMP on Meta's side, in Events
+      Manager — connecting it in Branch alone does nothing.
+
+      (An earlier version of this file said `Ads -> Partner Management`. That
+      menu does not exist in this account's dashboard; it came from
+      third-party write-ups of an older Branch UI, since Branch's own docs are
+      unreachable from the environment this was written in. The current left
+      nav is Home / Analysis / Campaigns / Configuration, and everything below
+      Configuration: App Settings, Security & Access, Integrations, Link
+      Controls, Attribution, Exports, Testing & Monitoring.)
+
+      **Do not enable purchase postbacks to Meta or TikTok.** Both already
+      receive purchase events directly from their own SDKs in this app — the
+      Facebook SDK sends Subscribe / StartTrial / logPurchase from
+      `SubscriptionStore.purchase`, and `Events.swift` sends TikTok's. Adding
+      Branch postbacks on top means each network counts the same purchase from
+      two sources. Enable those two for install attribution only. Google is the
+      exception and should get event postbacks: there is no Google SDK in the
+      app, so Branch is the only thing that can tell it anything.
+
+      Same rule as the SKAdNetwork conversion value: one writer per signal.
+- [ ] **Ignore `Configuration -> Exports`** (the section formerly called Data
+      Feeds: webhooks, data integrations, the export and query APIs). That
+      pushes Branch's own data out to third-party tools, and PostHog already
+      receives everything from the app and from RevenueCat. Pointing Branch at
+      it as well only duplicates. This is also the only place that asks for a
+      URL and an auth header, so needing those two fields is a sign of being
+      on the wrong screen for this integration.
 - [ ] **Create one Quick Link per onboarding angle**, each with custom data
       `ob=<variant>`. Valid values, from `SubscriptionStore.OnboardingVariant`:
       `quiz`, `product`, `identity`, `outcomes`, `warfare`, `promises`,
@@ -101,6 +136,66 @@ the device. That is a debugging aid only and must not ship.
 - [ ] **Verify it is still on** before relying on it: in PostHog, confirm
       `rc_renewal_event` or `rc_trial_converted_event` has landed in the last
       few days. If the series stops, that is the integration, not the app.
+- [ ] **Turn on the Branch integration too** (RevenueCat -> Integrations ->
+      Branch) if the marketing team wants revenue beside campaign spend in
+      Branch. The app already hands Branch the RevenueCat App User Id as its
+      identity (`BranchAttribution.setIdentity`), which is the id RevenueCat's
+      Branch integration keys off by default — so no `$branchId` attribute is
+      needed, and nothing else in code has to change.
+- [ ] **Use these event names.** The setup form asks for one per RevenueCat
+      event type, and the choice is probably not cosmetic: Branch's docs say
+      revenue metadata cannot be attached to custom events, and that only
+      standard commerce events forward revenue to ad partners. If that holds,
+      naming a renewal anything custom means it arrives with no money attached
+      and Branch's revenue per campaign becomes first-purchase-only — the same
+      fault this branch just fixed on the app side, reintroduced one layer out.
+      See the confidence note below: the claim is not fully verified, but the
+      mapping is the safe side of it either way.
+
+      **Confidence, stated honestly.** The three uppercase names are verified:
+      they are the literal constants in Branch's own SDK, checked in both the
+      macOS and the iOS 3.9.1 sources. The *reason* below is not equally
+      verified. Branch's documentation says revenue metadata "can't be attached
+      to Custom Events", but the iOS SDK header declares `revenue` and
+      `currency` on `BranchEvent` itself, reachable from `customEventWithName:`
+      as much as from `standardEvent:` — the two disagree. And this is the
+      RevenueCat *server-side* integration, which POSTs to Branch's API rather
+      than going through that SDK, so neither source strictly governs it.
+      Branch's and RevenueCat's own docs are unreachable from the environment
+      this was written in.
+
+      Standard names remain the right bet either way: worst case neutral, best
+      case necessary. But **verify one renewal in Branch after a few days and
+      confirm revenue is attached** rather than assuming. If it is missing, that
+      is a support question for Branch or RevenueCat, not a naming tweak.
+
+      Also unverified: whether the form accepts the same name in two fields. If
+      it rejects duplicates, give renewal and non-subscription purchase their
+      own `rc_*_event` names and accept the loss on renewal revenue.
+
+      | RevenueCat field | Value | |
+      |---|---|---|
+      | Initial purchase | `SUBSCRIBE` | standard, carries revenue |
+      | Trial started | `START_TRIAL` | standard |
+      | Trial converted | `SUBSCRIBE` | standard, carries revenue |
+      | Trial cancelled | `rc_trial_cancelled_event` | no revenue to carry |
+      | Renewal | `PURCHASE` | standard — the one that must not be custom |
+      | Cancellation | `rc_cancellation_event` | no revenue to carry |
+      | Non subscription purchase | `PURCHASE` | standard, carries revenue |
+      | Expiration | `rc_expiration_event` | no revenue to carry |
+      | Product change | `rc_product_change_event` | no revenue to carry |
+
+      Standard names are case-sensitive and exact: `PURCHASE`, `SUBSCRIBE`,
+      `START_TRIAL` are the literal strings Branch's SDK defines. A typo makes
+      it a custom event silently, with the revenue loss above and no error.
+
+      Initial purchase and trial converted deliberately share `SUBSCRIBE`: a
+      person arrives one way or the other, never both, so that event reads as
+      "became a paying subscriber" with no double-count. Renewal and
+      non-subscription purchase share `PURCHASE`, which then reads as recurring
+      and one-off revenue. The `rc_*_event` names match the convention already
+      in use for the PostHog integration (`ANALYTICS_DATA_QUALITY.md` Rule 8),
+      so the same event is recognisable in both tools.
 - [ ] After the first purchase on a real build, confirm the subscriber in
       RevenueCat carries a **`$posthogUserId`** attribute. **This is the part
       that was actually missing** — the integration was sending revenue all
