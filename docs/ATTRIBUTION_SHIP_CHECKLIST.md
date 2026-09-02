@@ -136,6 +136,12 @@ the device. That is a debugging aid only and must not ship.
 - [ ] **Verify it is still on** before relying on it: in PostHog, confirm
       `rc_renewal_event` or `rc_trial_converted_event` has landed in the last
       few days. If the series stops, that is the integration, not the app.
+- [ ] **Turn on the Branch integration too** (RevenueCat -> Integrations ->
+      Branch) if the marketing team wants revenue beside campaign spend in
+      Branch. The app already hands Branch the RevenueCat App User Id as its
+      identity (`BranchAttribution.setIdentity`), which is the id RevenueCat's
+      Branch integration keys off by default — so no `$branchId` attribute is
+      needed, and nothing else in code has to change.
 - [ ] After the first purchase on a real build, confirm the subscriber in
       RevenueCat carries a **`$posthogUserId`** attribute. **This is the part
       that was actually missing** — the integration was sending revenue all

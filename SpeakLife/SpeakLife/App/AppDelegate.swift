@@ -765,6 +765,36 @@ enum AppsFlyerAttribution {
         #endif
     }
 
+    /// Gives Branch the same identity RevenueCat already uses for this person.
+    ///
+    /// RevenueCat's Branch integration keys its events off the RevenueCat App
+    /// User Id by default, so making that id Branch's developer identity is
+    /// what lets a trial, conversion or renewal reported by RevenueCat land on
+    /// the same Branch person as the ad click that produced the install. That
+    /// is the join that puts revenue next to campaign spend in Branch.
+    ///
+    /// Deliberately NOT done by calling `Purchases.shared.logIn(...)`, which is
+    /// the more commonly suggested fix. Two reasons it is wrong here:
+    ///
+    ///  * There is no app-level user id to pass. Apple sign-in exists but is
+    ///    scoped to the Community/Prayer Wall feature and `uid` is "" for
+    ///    everyone else, so a `logIn` would cover a minority of people and
+    ///    leave the rest exactly as split as before.
+    ///  * `logIn` CHANGES `Purchases.shared.appUserID`, and that id is load
+    ///    bearing: `BibleChatService` sends it to the chat proxy, which keys
+    ///    server-side entitlement checks and usage metering off it. Changing
+    ///    it orphans every existing subscriber's record there.
+    ///
+    /// Setting Branch's identity to RevenueCat's id achieves the same join from
+    /// the other direction, covers everyone rather than sign-ins only, and
+    /// changes nothing RevenueCat-side.
+    static func setIdentity(_ appUserID: String) {
+        #if canImport(BranchSDK)
+        guard isConfigured, !appUserID.isEmpty else { return }
+        Branch.getInstance().setIdentity(appUserID)
+        #endif
+    }
+
     /// Forward custom-scheme opens (`speaklife://…`).
     static func handleOpen(_ app: UIApplication, _ url: URL, _ options: [UIApplication.OpenURLOptionsKey: Any]) {
         #if canImport(AppsFlyerLib)
