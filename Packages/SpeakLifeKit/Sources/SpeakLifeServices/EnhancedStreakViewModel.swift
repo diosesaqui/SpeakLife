@@ -778,8 +778,24 @@ public final class EnhancedStreakViewModel: ObservableObject {
         )
     }
 
+    /// The next few tasks the user has not unlocked yet, for the checklist's
+    /// "Unlock tomorrow" teaser.
+    ///
+    /// The floor is the whole point. Every path that BUILDS the board raises a
+    /// zero streak to 1 (`refreshTasksWithUserCategories`,
+    /// `refreshTasksForCampaignChange`, `updateChecklistForNewDay`), so a user
+    /// with no completed burst is already looking at the day-1 tasks. This
+    /// method took the raw streak, so at 0 it asked what unlocks on day 1 that
+    /// was not available on day 0 — and day 0 has nothing, so the answer was
+    /// every day-1 task. The teaser then advertised the Daily Burst, the hero
+    /// row sitting on screen right above it, as tomorrow's unlock.
+    ///
+    /// That hit every brand-new user on their first session and everyone whose
+    /// streak had just reset: the first thing the product said to them was that
+    /// its core action is locked until tomorrow.
     public func getUpcomingUnlocks(for streakDay: Int) -> [DailyTask] {
-        let nextFewDays = (streakDay + 1)...(streakDay + 10)
+        let base = max(streakDay, 1)
+        let nextFewDays = (base + 1)...(base + 10)
         var upcomingTasks: [DailyTask] = []
 
         for day in nextFewDays {

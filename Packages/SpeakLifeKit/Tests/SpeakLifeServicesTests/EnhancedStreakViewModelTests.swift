@@ -547,6 +547,38 @@ final class EnhancedStreakViewModelTests: XCTestCase {
         wait(for: [deleted], timeout: 60)
     }
 
+    // MARK: - Upcoming unlocks
+
+    /// The "Unlock tomorrow" teaser must never advertise a row the user is
+    /// already looking at.
+    ///
+    /// A streak-0 user gets the day-1 board, because every path that builds it
+    /// floors the streak at 1. This method did not, so it answered "what unlocks
+    /// on day 1 that day 0 did not have" — which is every day-1 task, the Daily
+    /// Burst first. New users were told the product's core action was locked
+    /// until tomorrow while it sat on screen above the teaser.
+    func testUpcomingUnlocks_AtZeroStreak_ExcludesEveryDayOneTask() {
+        let dayOneIDs = Set(TaskLibrary.getAvailableTasks(for: 1).map(\.id))
+        XCTAssertTrue(dayOneIDs.contains("complete_daily_burst"),
+                      "precondition: the Burst is a day-1 task")
+
+        for streak in [0, 1] {
+            let upcoming = Set(viewModel.getUpcomingUnlocks(for: streak).map(\.id))
+            XCTAssertTrue(upcoming.isDisjoint(with: dayOneIDs),
+                          "streak \(streak) teased day-1 rows: \(upcoming.intersection(dayOneIDs))")
+        }
+    }
+
+    /// Streak 0 and streak 1 both render the day-1 board, so they must tease the
+    /// same thing. Pinned separately because the floor is easy to remove while
+    /// leaving the test above passing for the wrong reason (an empty result).
+    func testUpcomingUnlocks_ZeroAndOneStreakAgree() {
+        let atZero = viewModel.getUpcomingUnlocks(for: 0).map(\.id)
+        let atOne = viewModel.getUpcomingUnlocks(for: 1).map(\.id)
+        XCTAssertEqual(atZero, atOne, "streak 0 must tease what streak 1 teases")
+        XCTAssertFalse(atZero.isEmpty, "the teaser has nothing to show at all")
+    }
+
     private var firstCompletableTask: DailyTask {
         // The Burst is on every checklist, so this always finds something.
         viewModel.todayChecklist.tasks.first {
