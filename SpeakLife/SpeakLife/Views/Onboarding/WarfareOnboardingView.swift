@@ -167,7 +167,12 @@ struct WarfareOnboardingView: View {
                 flow: "warfare",
                 personalDeclaration: savedDeclaration?.declarationText,
                 dailyMinutes: responses.dailyMinutes,
-                victoryEcho: responses.victoryEcho  // nil in quiz v1
+                victoryEcho: responses.victoryEcho,  // nil in quiz v1
+                // The arc's last beat has to land on the day the card is
+                // charged, and the SKU is Remote Config resolved. Fall back to
+                // the default only if products have not loaded.
+                trialDays: subscriptionStore.currentOfferedPremium
+                    .flatMap(TrialExperienceService.introTrialDays) ?? 7
             ) { advance() }
         case .testimonials:
             TestimonialWallView(size: size, flow: "warfare") { advance() }

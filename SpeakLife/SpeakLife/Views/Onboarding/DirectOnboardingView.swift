@@ -298,7 +298,12 @@ struct DirectOnboardingView: View {
                 flow: "direct",
                 personalDeclaration: savedDeclaration?.declarationText,
                 dailyMinutes: responses.dailyMinutes,
-                victoryEcho: victoryEcho
+                victoryEcho: victoryEcho,
+                // The arc's last beat has to land on the day the card is
+                // charged, and the SKU is Remote Config resolved. Fall back to
+                // the default only if products have not loaded.
+                trialDays: subscriptionStore.currentOfferedPremium
+                    .flatMap(TrialExperienceService.introTrialDays) ?? 7
             ) { advance() }
         case .pledge:
             // The behaviour committed to before the price appears. Everything
