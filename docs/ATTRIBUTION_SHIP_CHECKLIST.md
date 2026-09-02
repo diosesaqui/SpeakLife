@@ -11,6 +11,8 @@ Values you will need repeatedly:
 | Bundle ID | `com.Franchiz.SpeakLife` |
 | Branch key | `key_live_pAyTGgj5uXAKKXaaKyPRWefkrEb34NYf` (in `Info.plist`) |
 | Deep linking domains | `speaklife.app.link`, `speaklife-alternate.app.link` |
+| iOS URI scheme | `speaklife://` (from `CFBundleURLSchemes`; the `fb904572920975437` entry alongside it belongs to the Facebook SDK, never use it here) |
+| App Store ID | `1617492998` |
 
 The Team ID above is the app target's. `652R6A63L8` also appears in the project
 but belongs only to the test target — do not use it anywhere here.
@@ -26,6 +28,10 @@ but belongs only to the test target — do not use it anywhere here.
       falls back to Safari with no error anywhere.
 - [ ] **Bundle ID = `com.Franchiz.SpeakLife`.** Case-sensitive. Note the
       capital F. The widget's id is not needed — universal links target the app.
+- [ ] **iOS URI Scheme = `speaklife://`, App Store ID = `1617492998`.** The URI
+      scheme is the fallback for contexts where universal links do not fire —
+      in-app browsers, chiefly. Blank means those people are sent to the App
+      Store for an app they already have installed.
 - [ ] **Leave NativeLink™ off.** It is a fallback for iCloud Private Relay
       users, where Branch's IP-based match fails: it passes the link through
       the device clipboard instead. The cost is an iOS 16+ system paste prompt
