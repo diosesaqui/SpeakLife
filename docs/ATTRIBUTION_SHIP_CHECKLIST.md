@@ -45,11 +45,17 @@ but belongs only to the test target — do not use it anywhere here.
       in which it was free to do. Branch allows this change **once, ever**, so
       it is now fixed: `speaklife.app.link` cannot be changed again without
       creating a new Branch app, and the entitlement is pinned to it.
-- [ ] **Connect the ad partners** under `Ads -> Partner Management` (left nav,
-      under Channels & Links): search the partner, Save & Enable, then use the
-      POSTBACK CONFIG tab. Meta additionally needs Branch set as the MMP on
-      Meta's side, in Events Manager — connecting it in Branch alone does
-      nothing.
+- [ ] **Connect the ad partners** under `Configuration -> Integrations`. Meta
+      additionally needs Branch set as the MMP on Meta's side, in Events
+      Manager — connecting it in Branch alone does nothing.
+
+      (An earlier version of this file said `Ads -> Partner Management`. That
+      menu does not exist in this account's dashboard; it came from
+      third-party write-ups of an older Branch UI, since Branch's own docs are
+      unreachable from the environment this was written in. The current left
+      nav is Home / Analysis / Campaigns / Configuration, and everything below
+      Configuration: App Settings, Security & Access, Integrations, Link
+      Controls, Attribution, Exports, Testing & Monitoring.)
 
       **Do not enable purchase postbacks to Meta or TikTok.** Both already
       receive purchase events directly from their own SDKs in this app — the
@@ -61,10 +67,13 @@ but belongs only to the test target — do not use it anywhere here.
       app, so Branch is the only thing that can tell it anything.
 
       Same rule as the SKAdNetwork conversion value: one writer per signal.
-- [ ] **Ignore Data Feeds** (Webhooks, Data Integrations, Data Export API,
-      Query API). That exports Branch's own data to third-party tools, and
-      PostHog already receives everything from the app and from RevenueCat.
-      Pointing Branch at it as well only duplicates.
+- [ ] **Ignore `Configuration -> Exports`** (the section formerly called Data
+      Feeds: webhooks, data integrations, the export and query APIs). That
+      pushes Branch's own data out to third-party tools, and PostHog already
+      receives everything from the app and from RevenueCat. Pointing Branch at
+      it as well only duplicates. This is also the only place that asks for a
+      URL and an auth header, so needing those two fields is a sign of being
+      on the wrong screen for this integration.
 - [ ] **Create one Quick Link per onboarding angle**, each with custom data
       `ob=<variant>`. Valid values, from `SubscriptionStore.OnboardingVariant`:
       `quiz`, `product`, `identity`, `outcomes`, `warfare`, `promises`,
