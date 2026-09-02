@@ -142,6 +142,37 @@ the device. That is a debugging aid only and must not ship.
       identity (`BranchAttribution.setIdentity`), which is the id RevenueCat's
       Branch integration keys off by default — so no `$branchId` attribute is
       needed, and nothing else in code has to change.
+- [ ] **Use these event names.** The setup form asks for one per RevenueCat
+      event type, and the choice is not cosmetic: **Branch custom events cannot
+      carry revenue metadata — only standard commerce events can.** Name a
+      renewal anything custom and it arrives with no money attached, so
+      Branch's revenue per campaign becomes first-purchase-only. That is the
+      same fault this branch just fixed on the app side; do not reintroduce it
+      in the dashboard.
+
+      | RevenueCat field | Value | |
+      |---|---|---|
+      | Initial purchase | `SUBSCRIBE` | standard, carries revenue |
+      | Trial started | `START_TRIAL` | standard |
+      | Trial converted | `SUBSCRIBE` | standard, carries revenue |
+      | Trial cancelled | `rc_trial_cancelled_event` | no revenue to carry |
+      | Renewal | `PURCHASE` | standard — the one that must not be custom |
+      | Cancellation | `rc_cancellation_event` | no revenue to carry |
+      | Non subscription purchase | `PURCHASE` | standard, carries revenue |
+      | Expiration | `rc_expiration_event` | no revenue to carry |
+      | Product change | `rc_product_change_event` | no revenue to carry |
+
+      Standard names are case-sensitive and exact: `PURCHASE`, `SUBSCRIBE`,
+      `START_TRIAL` are the literal strings Branch's SDK defines. A typo makes
+      it a custom event silently, with the revenue loss above and no error.
+
+      Initial purchase and trial converted deliberately share `SUBSCRIBE`: a
+      person arrives one way or the other, never both, so that event reads as
+      "became a paying subscriber" with no double-count. Renewal and
+      non-subscription purchase share `PURCHASE`, which then reads as recurring
+      and one-off revenue. The `rc_*_event` names match the convention already
+      in use for the PostHog integration (`ANALYTICS_DATA_QUALITY.md` Rule 8),
+      so the same event is recognisable in both tools.
 - [ ] After the first purchase on a real build, confirm the subscriber in
       RevenueCat carries a **`$posthogUserId`** attribute. **This is the part
       that was actually missing** — the integration was sending revenue all
