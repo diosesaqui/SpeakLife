@@ -510,9 +510,9 @@ final class DailyChecklistTests: XCTestCase {
     }
 
     /// Journaling is the only answer with no matching row in the foundation
-    /// week — `journal_insight` is gated to day 8 and `gratitude_moment` to
-    /// day 2 — so those users would spend week one with nothing resembling what
-    /// they asked for.
+    /// week — `journal_insight` is gated to day 8 and `gratitude_moment` has
+    /// been retired — so those users would spend week one with nothing
+    /// resembling what they asked for.
     func testConnectStyle_JournalingGetsAJournalRowOnDayOne() {
         withStandardTasks {
             let ids = TaskLibrary.getCoreTasksForStreak(1, connectStyle: .journaling).map(\.id)
@@ -544,7 +544,7 @@ final class DailyChecklistTests: XCTestCase {
         withStandardTasks {
             let ids = TaskLibrary.getCoreTasksForStreak(3, connectStyle: nil).map(\.id)
             XCTAssertEqual(ids, ["complete_daily_burst", "read_devotional",
-                                 "listen_audio", "gratitude_moment", "ask_the_bible"],
+                                 "listen_audio", "ask_the_bible"],
                            "unstyled day 3 ordered as \(ids)")
         }
     }
@@ -557,12 +557,10 @@ final class DailyChecklistTests: XCTestCase {
     /// it. Pinned because "day 3" looks arbitrary until you know why.
     func testAskTheBible_ArrivesInsideTheTrialAndNeverLeaves() {
         withStandardTasks {
-            for day in [1, 2] {
-                let ids = TaskLibrary.getCoreTasksForStreak(day).map(\.id)
-                XCTAssertFalse(ids.contains("ask_the_bible"),
-                               "day \(day) is meant to stay light: \(ids)")
-            }
-            for day in [3, 5, 7, 8, 20, 31, 60, 100, 365] {
+            let dayOne = TaskLibrary.getCoreTasksForStreak(1).map(\.id)
+            XCTAssertFalse(dayOne.contains("ask_the_bible"),
+                           "day 1 is meant to stay light: \(dayOne)")
+            for day in [2, 3, 5, 7, 8, 20, 31, 60, 100, 365] {
                 let ids = TaskLibrary.getCoreTasksForStreak(day).map(\.id)
                 XCTAssertTrue(ids.contains("ask_the_bible"),
                               "day \(day) lost the Bible chat row: \(ids)")
@@ -610,7 +608,14 @@ final class DailyChecklistTests: XCTestCase {
             "encourage_someone", "pray_for_others", "serve_someone", "testimony_share",
             // The four mastery rows, retired for the same reason: off-app
             // instructions with no navigationDestination.
-            "mentor_someone", "fast_and_pray", "teach_truth", "create_content"
+            "mentor_someone", "fast_and_pray", "teach_truth", "create_content",
+            // `gratitude_moment` is retired for a DIFFERENT reason and should
+            // not be cited as a dead row: it was completed 58 times out of 238
+            // unlocks. It went because the board could not afford a fifth
+            // foundation slot, and because its `.journal` destination duplicated
+            // `journal_insight` — which now covers the journaling cohort for the
+            // whole foundation week instead of only day 1.
+            "gratitude_moment"
         ]
         XCTAssertTrue(TaskLibrary.allTasks.filter { retired.contains($0.id) }.isEmpty,
                       "Retired tasks are back in the library.")

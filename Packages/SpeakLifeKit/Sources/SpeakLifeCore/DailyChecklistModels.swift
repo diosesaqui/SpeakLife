@@ -959,18 +959,6 @@ public struct TaskLibrary {
             estimatedMinutes: 4,
             navigationDestination: .audioTab
         ),
-        DailyTask(
-            id: "gratitude_moment",
-            title: "Express Gratitude",
-            description: "Thank God for one specific blessing today",
-            icon: "heart.fill",
-            category: .foundation,
-            type: .reflect,
-            difficulty: .beginner,
-            minimumStreakDay: 2,
-            estimatedMinutes: 2,
-            navigationDestination: .journal
-        ),
         // The only row on the board that answers TODAY's specific thing. Every
         // other task serves prepared content: the Burst, the devotional and the
         // audio are all written before the user wakes up. This one takes what
@@ -978,14 +966,12 @@ public struct TaskLibrary {
         // it is the one surface in the product that pays off in ten seconds
         // rather than over weeks.
         //
-        // That speed is why it sits at day 3. The whole plan the user was sold
-        // in onboarding now promises its payoff at day 7, inside the trial, and
-        // a fast visible win partway through that window is what keeps the
-        // promise from resting entirely on the practice compounding. Day 1 stays
-        // deliberately light (Burst, devotional, audio) to protect the streak,
-        // gratitude arrives day 2, and this lands day 3 as the fifth and last
-        // foundation slot — `prefix(5)` in the phase mix already accounted for
-        // it before the row existed.
+        // That speed is why it arrives on day 2. The whole plan the user was
+        // sold in onboarding now promises its payoff at day 7, inside the
+        // trial, and a fast visible win early in that window is what keeps the
+        // promise from resting entirely on the practice compounding. Day 1
+        // stays deliberately light (Burst, devotional, audio) to protect the
+        // streak; this is the first thing added to it.
         //
         // Named for what the user brings, not for what the feature is. "Bible
         // Study" is a homework word that collides with the devotional row and
@@ -1003,7 +989,7 @@ public struct TaskLibrary {
             category: .foundation,
             type: .study,
             difficulty: .beginner,
-            minimumStreakDay: 3,
+            minimumStreakDay: 2,
             estimatedMinutes: 3,
             navigationDestination: .bibleChat
         )
@@ -1053,12 +1039,6 @@ public struct TaskLibrary {
         case "journal_insight":
             if let primaryCategory = topCategories.first {
                 personalizedTask.description = "Write about how God is working in your \(formatCategoryName(primaryCategory)) journey"
-            }
-
-        case "gratitude_moment":
-            if let primaryCategory = topCategories.first {
-                personalizedTask.title = "Reflect on \(formatCategoryName(primaryCategory))"
-                personalizedTask.description = "Write one honest line about where you need God in your \(formatCategoryName(primaryCategory)) right now"
             }
 
         case "ask_the_bible":
@@ -1211,11 +1191,12 @@ public struct TaskLibrary {
         var result = tasks
 
         // Journaling is the one answer with no matching row in the foundation
-        // week: `journal_insight` is a growth task gated to day 8, and
-        // `gratitude_moment` (the only other reflection row) does not arrive
-        // until day 2. So the 11% who said journaling spend their first week
-        // with nothing that looks like what they asked for. Pull the row
-        // forward for them, and only for them.
+        // week at all: `journal_insight` is a growth task gated to day 8, and
+        // `gratitude_moment`, the only other reflection row, has been retired.
+        // So the 11% who said journaling would otherwise spend their whole
+        // first week with nothing that looks like what they asked for. Pull the
+        // row forward for them, and only for them. This used to cover day 1
+        // alone; it now covers days 1-7, which is what the answer deserved.
         if style == .journaling,
            !result.contains(where: { $0.type == .reflect }),
            let journal = growthTasks.first(where: { $0.id == "journal_insight" }) {
@@ -1303,9 +1284,9 @@ public struct TaskLibrary {
         
         switch phase {
         case .foundation:
-            // Light on day 1 (burst + devotional + audio) to protect the streak,
-            // then progressively reveal gratitude, Ask the Bible, etc. as the
-            // habit takes hold. Gated by each task's minimumStreakDay.
+            // Light on day 1 (burst + devotional + audio) to protect the
+            // streak, then Ask the Bible from day 2 as the habit takes hold.
+            // Gated by each task's minimumStreakDay.
             tasks = Array(foundationTasks.filter { $0.minimumStreakDay <= streakDay }.prefix(5))
             
         case .growth:
