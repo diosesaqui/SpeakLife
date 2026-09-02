@@ -210,49 +210,99 @@ final class TrialExperienceService: ObservableObject {
 
     // MARK: - Personalized Copy
 
+    /// The push that lands the day before the card is charged.
+    ///
+    /// Every branch here used to close with a testimonial whose timeline ran
+    /// longer than the trial: 14 days for anxiety, one month for fear, 60 days
+    /// for marriage, 21 for confidence, 30 for faith and the default. Sent on
+    /// day 6 of a 7-day trial, that told a user the result arrives somewhere
+    /// between a week and seven weeks AFTER their trial ends, at the exact
+    /// moment they were deciding whether to pay for it. It argued the case for
+    /// cancelling in the product's own voice.
+    ///
+    /// What replaces it is the evidence the user actually generated this week,
+    /// which `day3Copy` was already doing one day later. Nothing here claims an
+    /// outcome and nothing borrows someone else's clock.
+    ///
+    /// The zero-declaration branch matters as much as the rest: a user who has
+    /// spoken nothing is both the likeliest to cancel and the likeliest to
+    /// notice being congratulated for a week they did not have. They get an
+    /// invitation instead of a receipt.
     private func day2Copy(for category: UserPreferencesTracker.CategoryType, onDay day: Int) -> (String, String) {
         let daysText = day == 1 ? "a day" : "\(day) days"
+        let count = declarationCountDuringTrial
+
+        guard count > 0 else {
+            let (title, opening) = day2EmptyCopy(for: category)
+            return (title, "\(opening) Your trial ends tomorrow, and one declaration is all today asks.")
+        }
+
+        let spoken = "You've spoken \(count) \(count == 1 ? "declaration" : "declarations") in \(daysText). "
         switch category {
         case .anxiety:
             return (
                 "Day \(day) of your free trial ✨",
-                "Priya was having panic attacks at work every week. After 14 days of anxiety declarations she hasn't had one since. Your trial ends tomorrow — don't stop here."
+                "\(spoken)That's \(daysText) of answering your mind with God's Word instead of arguing with it. Your trial ends tomorrow."
             )
         case .fear:
             return (
                 "Day \(day) — keep going 💪",
-                "Marcus was paralyzed by fear of failure for 3 years. One month of declarations later, he launched his business. You're on day \(day). Don't quit on yourself now."
+                "\(spoken)That's \(daysText) of speaking to the thing instead of listening to it. Your trial ends tomorrow."
             )
         case .marriage:
             return (
                 "Day \(day) of your trial ❤️",
-                "Samantha and her husband were on the verge of separation. They started declaring together every morning. 60 days later, completely different marriage. Your trial ends tomorrow."
+                "\(spoken)That's \(daysText) of speaking peace over your home. Your trial ends tomorrow."
             )
         case .health:
             return (
-                "Day \(day) — your healing is activating 🙏",
-                "David was told his diagnosis was permanent. He started declaring healing scriptures daily. His doctors called his recovery remarkable. Don't stop speaking life over your body."
+                "Day \(day) — speaking over your body 🙏",
+                "\(spoken)That's \(daysText) of God's Word spoken over your body. Your trial ends tomorrow."
             )
         case .faith:
             return (
                 "Day \(day) of building unshakeable faith ⚡",
-                "Faith isn't built in a day — it's built declaration by declaration. You've been at it for \(daysText). The people who keep going for 30 days say their entire outlook changes. Trial ends tomorrow."
+                "\(spoken)Faith is built declaration by declaration, and you've been building for \(daysText). Your trial ends tomorrow."
             )
         case .confidence:
             return (
                 "Day \(day) — you're becoming someone new 👑",
-                "Jordan couldn't speak up in meetings for years. 21 days of identity declarations later, she got promoted. You're on day \(day) of that same transformation. Keep going."
+                "\(spoken)That's \(daysText) of speaking who God says you are. Your trial ends tomorrow."
             )
         case .hope:
             return (
                 "Day \(day) — hope is being restored 🌅",
-                "After losing his job, Michael felt hopeless for months. Daily declarations rebuilt his expectation. Within 60 days he had two offers. Your trial ends tomorrow — stay the course."
+                "\(spoken)That's \(daysText) of God's Word over what's ahead of you. Your trial ends tomorrow."
             )
         default:
             return (
                 "Day \(day) of your free trial 🔥",
-                "You've already spoken declarations that are rewiring how you think. The people who make it to day 30 say the change is undeniable. Your trial ends tomorrow — don't stop now."
+                "\(spoken)That's \(daysText) of God's Word out loud over your own life. Your trial ends tomorrow."
             )
+        }
+    }
+
+    /// Opening line for a trial with no declarations spoken yet. Names the thing
+    /// they came in for and asks for one, rather than reporting a week back to
+    /// them that did not happen.
+    private func day2EmptyCopy(for category: UserPreferencesTracker.CategoryType) -> (String, String) {
+        switch category {
+        case .anxiety:
+            return ("Speak one over your mind today ✨", "Your mind has been carrying this on its own.")
+        case .fear:
+            return ("Speak to it today 💪", "You came here to stop listening to it.")
+        case .marriage:
+            return ("Speak peace over your home ❤️", "You came here for your marriage.")
+        case .health:
+            return ("Speak over your body today 🙏", "You came here for your body.")
+        case .faith:
+            return ("One declaration today ⚡", "Faith is built declaration by declaration.")
+        case .confidence:
+            return ("Speak who God says you are 👑", "You came here to hear who you actually are.")
+        case .hope:
+            return ("Speak over what's ahead 🌅", "You came here for what's ahead of you.")
+        default:
+            return ("One declaration today 🔥", "You came here to speak God's Word over your life.")
         }
     }
 

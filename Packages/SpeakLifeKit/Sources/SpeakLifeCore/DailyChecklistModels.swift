@@ -970,6 +970,42 @@ public struct TaskLibrary {
             minimumStreakDay: 2,
             estimatedMinutes: 2,
             navigationDestination: .journal
+        ),
+        // The only row on the board that answers TODAY's specific thing. Every
+        // other task serves prepared content: the Burst, the devotional and the
+        // audio are all written before the user wakes up. This one takes what
+        // they are actually carrying this morning and puts Scripture on it, and
+        // it is the one surface in the product that pays off in ten seconds
+        // rather than over weeks.
+        //
+        // That speed is why it sits at day 3. The whole plan the user was sold
+        // in onboarding now promises its payoff at day 7, inside the trial, and
+        // a fast visible win partway through that window is what keeps the
+        // promise from resting entirely on the practice compounding. Day 1 stays
+        // deliberately light (Burst, devotional, audio) to protect the streak,
+        // gratitude arrives day 2, and this lands day 3 as the fifth and last
+        // foundation slot — `prefix(5)` in the phase mix already accounted for
+        // it before the row existed.
+        //
+        // Named for what the user brings, not for what the feature is. "Bible
+        // Study" is a homework word that collides with the devotional row and
+        // promises a depth the rolling eight-message window does not deliver;
+        // "Get Answers" reads as a search box and over-promises against the
+        // system prompt's own fence (it declines off-topic questions and gives
+        // no medical, legal or financial advice). The destination's CTA already
+        // reads "Ask the Bible →", so the row states the invitation and the
+        // button states where it goes.
+        DailyTask(
+            id: "ask_the_bible",
+            title: "Ask What You're Carrying",
+            description: "Bring today's real question. Get God's Word on it.",
+            icon: "text.bubble.fill",
+            category: .foundation,
+            type: .study,
+            difficulty: .beginner,
+            minimumStreakDay: 3,
+            estimatedMinutes: 3,
+            navigationDestination: .bibleChat
         )
     ]
     
@@ -1028,7 +1064,7 @@ public struct TaskLibrary {
         case "ask_the_bible":
             if let primaryCategory = topCategories.first {
                 personalizedTask.title = "Ask the Bible about \(formatCategoryName(primaryCategory))"
-                personalizedTask.description = "Bring a \(formatCategoryName(primaryCategory)) question to Scripture and let the Word answer"
+                personalizedTask.description = "Bring today's real \(formatCategoryName(primaryCategory)) question. Get God's Word on it."
             }
             
         case "memorize_verse":
@@ -1130,53 +1166,21 @@ public struct TaskLibrary {
     ]
     
     // MARK: - Mastery Phase Tasks (Days 100+)
-    public static let masteryTasks: [DailyTask] = [
-        DailyTask(
-            id: "mentor_someone",
-            title: "Mentor Someone",
-            description: "Guide someone younger in faith",
-            icon: "person.2.fill",
-            category: .mastery,
-            type: .teach,
-            difficulty: .expert,
-            minimumStreakDay: 100,
-            estimatedMinutes: 20
-        ),
-        DailyTask(
-            id: "fast_and_pray",
-            title: "Fast and Pray",
-            description: "Skip a meal and spend time in prayer",
-            icon: "leaf.fill",
-            category: .mastery,
-            type: .worship,
-            difficulty: .expert,
-            minimumStreakDay: 120,
-            estimatedMinutes: 30
-        ),
-        DailyTask(
-            id: "teach_truth",
-            title: "Teach God's Truth",
-            description: "Teach or explain biblical truth to others",
-            icon: "person.crop.circle.fill.badge.plus",
-            category: .mastery,
-            type: .teach,
-            difficulty: .expert,
-            minimumStreakDay: 150,
-            estimatedMinutes: 25
-        ),
-        DailyTask(
-            id: "create_content",
-            title: "Create Spiritual Content",
-            description: "Write, record, or create content that encourages others",
-            icon: "video.fill",
-            category: .mastery,
-            type: .share,
-            difficulty: .expert,
-            minimumStreakDay: 200,
-            estimatedMinutes: 30
-        )
-    ]
-    
+    /// Empty, and pinned empty by `testRetiredTasks_AreGoneFromEveryPhase`.
+    ///
+    /// Held `mentor_someone`, `fast_and_pray`, `teach_truth` and
+    /// `create_content`. All four were off-app instructions with no
+    /// `navigationDestination` — the exact shape of the seven tasks retired
+    /// before them, which were unlocked 146 times across 30 days and completed
+    /// zero times. Tapping them did call `completeTask`, so this was refusal
+    /// rather than breakage, and there is no reason to expect a different answer
+    /// from "skip a meal and spend time in prayer" at day 120 than from "pray
+    /// while walking" at day 35.
+    ///
+    /// The mix below now draws the mastery board's third row from `growthTasks`
+    /// instead, so retiring these thins nothing.
+    public static let masteryTasks: [DailyTask] = []
+
     // MARK: - All Tasks Combined
     public static let allTasks: [DailyTask] = foundationTasks + growthTasks + impactTasks + masteryTasks
 
@@ -1237,10 +1241,16 @@ public struct TaskLibrary {
         return reordered
     }
 
-    /// The foundation habits that never graduate. Past the foundation week the
-    /// phase mixes narrow down to make room for growth/impact/mastery work, but
-    /// speaking (burst) and hearing (audio) are lifelong daily habits, not
-    /// first-week exercises — they stay on the checklist forever.
+    /// The foundation habits that never graduate. `ask_the_bible` is one of
+    /// them: a row that answers whatever the user is carrying today does not
+    /// become a beginner's row on day 8. Keeping it also holds the board
+    /// monotonic — a foundation-only row would have made the day-7 checklist
+    /// wider than the day-30 one.
+    ///
+    /// Past the foundation week the phase mixes narrow down to make room for
+    /// growth and impact work, but speaking (burst) and hearing (audio) are
+    /// lifelong daily habits, not first-week exercises — they stay on the
+    /// checklist forever.
     /// Order follows `foundationTasks`, not the id list.
     private static func keepers(_ ids: [String]) -> [DailyTask] {
         foundationTasks.filter { ids.contains($0.id) }
@@ -1300,24 +1310,26 @@ public struct TaskLibrary {
             
         case .growth:
             // Mix foundation and growth tasks
-            let foundation = keepers(["complete_daily_burst", "read_devotional", "listen_audio"])
+            let foundation = keepers(["complete_daily_burst", "read_devotional",
+                                      "listen_audio", "ask_the_bible"])
             let growth = availableTasks.filter { $0.category == .growth }
             tasks = foundation + Array(growth.prefix(1))
 
         case .impact:
             // Mix foundation, growth, and impact tasks
-            let foundation = keepers(["complete_daily_burst", "listen_audio"])
+            let foundation = keepers(["complete_daily_burst", "listen_audio", "ask_the_bible"])
             let growth = Array(growthTasks.filter { $0.minimumStreakDay <= streakDay }.prefix(1))
             let impact = availableTasks.filter { $0.category == .impact }
             tasks = foundation + growth + Array(impact.prefix(1))
 
         case .mastery:
-            // Advanced combination with all categories
-            let foundation = keepers(["complete_daily_burst", "listen_audio"])
+            // `masteryTasks` is empty since the four off-app rows were retired,
+            // so this mirrors the impact mix rather than serving a three-row
+            // board to the users with the longest streaks in the product.
+            let foundation = keepers(["complete_daily_burst", "listen_audio", "ask_the_bible"])
+            let growth = Array(growthTasks.filter { $0.minimumStreakDay <= streakDay }.prefix(1))
             let impact = Array(impactTasks.filter { $0.minimumStreakDay <= streakDay }.prefix(1))
-            let mastery = availableTasks.filter { $0.category == .mastery }
-
-            tasks = foundation + impact + Array(mastery.prefix(1))
+            tasks = foundation + growth + impact
         }
         
         // Personalize tasks based on user categories

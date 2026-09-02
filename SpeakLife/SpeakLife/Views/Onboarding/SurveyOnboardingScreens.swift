@@ -1825,11 +1825,38 @@ struct SurveyPlanRevealScreen: View {
         return burden.previewDeclaration.text
     }
 
-    private var weekFourLine: String {
-        if let echo = victoryEcho, !echo.isEmpty {
-            return "\(echo). Standing on promises."
+    /// Week four in the user's own words when the arm asked what winning looks
+    /// like, and the burden's curated outcome when it did not. This is the only
+    /// remaining reader of `victoryEcho` now that the arc stops at Day 7.
+    private var weekFourHorizon: String {
+        if let echo = victoryEcho, !echo.isEmpty { return "\(echo)." }
+        return burden.dreamOutcome
+    }
+
+    /// The plan's arithmetic, in the user's own chosen rhythm. Nil when the arm
+    /// never asked (quiz v1), which keeps the generic Day 7 line.
+    private var minutesOverSevenDays: String? {
+        switch dailyMinutes {
+        case "one":   return "seven"
+        case "three": return "twenty-one"
+        case "ten":   return "seventy"
+        default:      return nil
         }
-        return "Standing on promises, not fighting for footing."
+    }
+
+    /// The line the whole arc now climbs to, and the reason the arc changed.
+    ///
+    /// This screen used to top out at WEEK 4, which put the plan's climax three
+    /// weeks past the day the card is charged: on day 7 the screen's own
+    /// timeline said nothing should have happened yet, at the exact moment the
+    /// user decides whether to pay. Day 7 is what this product can actually
+    /// guarantee, and it is a practice rather than a circumstance. The outcome
+    /// is still named one line below, as a horizon instead of a deadline.
+    private var daySevenLine: String {
+        if let minutes = minutesOverSevenDays {
+            return "Seven days, \(minutes) minutes, spoken over \(burden.planDomain)."
+        }
+        return "Seven days spoken over \(burden.planDomain). You hear the difference."
     }
 
     var body: some View {
@@ -1879,29 +1906,33 @@ struct SurveyPlanRevealScreen: View {
                     .padding(.horizontal, 24)
                     .planRevealStagger(v, delay: 0.18)
 
-                    // Realistic 3-line arc
+                    // The arc runs inside the trial on purpose. Every beat
+                    // here is something the user can check for themselves
+                    // before the card is charged.
                     VStack(alignment: .leading, spacing: 10) {
-                        weekLine("WEEK 1", "Speak truth before the spiral starts.")
-                        weekLine("WEEK 2", "God's Word becomes your first response.")
-                        weekLine("WEEK 4", weekFourLine)
+                        weekLine("DAY 1", "You speak it out loud. Out loud is the part that works.")
+                        weekLine("DAY 3", "You reach for the Word before you reach for the worry.")
+                        weekLine("DAY 7", daySevenLine)
                     }
                     .padding(.horizontal, 32)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .planRevealStagger(v, delay: 0.3)
 
-                    // Destination: the vivid won life this plan (and the unlock)
-                    // is building toward — the bridge from product to the user's
-                    // dream reality, landed right before the ask.
-                    VStack(spacing: 6) {
-                        Text("WHERE THIS TAKES YOU")
-                            .font(.system(size: 11, weight: .bold, design: .rounded))
-                            .foregroundColor(DS.Palette.gold.opacity(0.9))
+                    // The horizon, deliberately demoted. It used to be this
+                    // screen's climax in gold at 18pt, directly above the price,
+                    // which made a four-week outcome read as the thing being
+                    // bought on a seven-day trial. It is still true and still
+                    // here; it is no longer what the eye lands on.
+                    VStack(spacing: 4) {
+                        Text("AND BY WEEK FOUR")
+                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                            .foregroundColor(.white.opacity(0.45))
                             .kerning(1.2)
-                        Text(burden.dreamOutcome)
-                            .font(.system(size: 18, weight: .semibold, design: .rounded))
-                            .foregroundColor(.white)
+                        Text(weekFourHorizon)
+                            .font(.system(size: 14, weight: .medium, design: .rounded))
+                            .foregroundColor(.white.opacity(0.6))
                             .multilineTextAlignment(.center)
-                            .lineSpacing(3)
+                            .lineSpacing(2)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     .padding(.horizontal, 28)

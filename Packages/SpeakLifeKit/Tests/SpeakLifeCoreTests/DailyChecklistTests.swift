@@ -544,8 +544,42 @@ final class DailyChecklistTests: XCTestCase {
         withStandardTasks {
             let ids = TaskLibrary.getCoreTasksForStreak(3, connectStyle: nil).map(\.id)
             XCTAssertEqual(ids, ["complete_daily_burst", "read_devotional",
-                                 "listen_audio", "gratitude_moment"],
+                                 "listen_audio", "gratitude_moment", "ask_the_bible"],
                            "unstyled day 3 ordered as \(ids)")
+        }
+    }
+
+    /// The Bible chat row is the only task on the board that responds to what
+    /// the user is carrying today rather than serving content written before
+    /// they woke up, and it is the one surface that pays off in seconds. The
+    /// plan sold in onboarding now promises its payoff at day 7, so this row
+    /// has to be live well inside the trial window and has to stay live after
+    /// it. Pinned because "day 3" looks arbitrary until you know why.
+    func testAskTheBible_ArrivesInsideTheTrialAndNeverLeaves() {
+        withStandardTasks {
+            for day in [1, 2] {
+                let ids = TaskLibrary.getCoreTasksForStreak(day).map(\.id)
+                XCTAssertFalse(ids.contains("ask_the_bible"),
+                               "day \(day) is meant to stay light: \(ids)")
+            }
+            for day in [3, 5, 7, 8, 20, 31, 60, 100, 365] {
+                let ids = TaskLibrary.getCoreTasksForStreak(day).map(\.id)
+                XCTAssertTrue(ids.contains("ask_the_bible"),
+                              "day \(day) lost the Bible chat row: \(ids)")
+            }
+        }
+    }
+
+    /// The board must never get narrower as the user goes deeper. A
+    /// foundation-only row would have made day 7 wider than day 30.
+    func testBoardWidthNeverShrinksWithProgress() {
+        withStandardTasks {
+            let days = [1, 3, 7, 8, 30, 31, 100, 365]
+            let counts = days.map { TaskLibrary.getCoreTasksForStreak($0).count }
+            for (i, count) in counts.enumerated().dropFirst() {
+                XCTAssertGreaterThanOrEqual(count, counts[i - 1],
+                    "day \(days[i]) serves \(count) rows, fewer than day \(days[i - 1])'s \(counts[i - 1])")
+            }
         }
     }
 
@@ -573,7 +607,10 @@ final class DailyChecklistTests: XCTestCase {
     func testRetiredTasks_AreGoneFromEveryPhase() {
         let retired: Set<String> = [
             "worship_song", "study_deeper", "prayer_walk",
-            "encourage_someone", "pray_for_others", "serve_someone", "testimony_share"
+            "encourage_someone", "pray_for_others", "serve_someone", "testimony_share",
+            // The four mastery rows, retired for the same reason: off-app
+            // instructions with no navigationDestination.
+            "mentor_someone", "fast_and_pray", "teach_truth", "create_content"
         ]
         XCTAssertTrue(TaskLibrary.allTasks.filter { retired.contains($0.id) }.isEmpty,
                       "Retired tasks are back in the library.")
@@ -598,6 +635,8 @@ final class DailyChecklistTests: XCTestCase {
             }
         }
         XCTAssertFalse(TaskLibrary.impactTasks.isEmpty)
+        XCTAssertTrue(TaskLibrary.masteryTasks.isEmpty,
+                      "Mastery tasks are back; the phase mix draws from growth now.")
         XCTAssertFalse(TaskLibrary.growthTasks.isEmpty)
     }
 
