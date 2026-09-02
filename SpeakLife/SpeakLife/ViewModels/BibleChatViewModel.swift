@@ -93,11 +93,6 @@ final class BibleChatConversationViewModel: ObservableObject {
         AnalyticsService.shared.trackUserAction("bible_chat_message_sent", category: "bible_chat")
         GrowthMetrics.shared.trackActivation(action: "bible_chat_message_sent")
         GrowthMetrics.shared.trackFeatureFirstUse("bible_chat")
-        // Ticks the `ask_the_bible` checklist row. Posted here rather than on a
-        // successful response so a network failure does not cost the user a row
-        // they earned by asking. Deliberately not in `retryLastMessage`, for the
-        // same reason the metrics above are not.
-        NotificationCenter.default.post(name: .bibleChatAsked, object: nil)
         dispatchSend(text, isPremium: isPremium)
     }
 
@@ -146,12 +141,17 @@ final class BibleChatConversationViewModel: ObservableObject {
                     currentConversationID = ChatHistoryStore.shared.record(
                         userText: text, assistantText: reply, into: currentConversationID
                     ).id
+                    StreakIntegrationManager.notifyBibleChatAsked()
                 }
             } catch {
                 guard gen == generation else { return }
                 // Leave the user's message in the transcript and surface an error
                 // so nothing they typed is lost; they can resend.
                 errorMessage = "Something went wrong. Please try again."
+                // The question stands, so it still earns the checklist row. The
+                // paywall branch above deliberately does not: it removes the
+                // message again, so there is no question left to credit.
+                StreakIntegrationManager.notifyBibleChatAsked()
             }
         }
     }

@@ -1866,6 +1866,10 @@ struct SurveyPlanRevealScreen: View {
 
     /// The arc's middle beat, when the trial is long enough to have one.
     ///
+    /// Arc shape by trial length: 1 day is a single line (day 1 IS the last day,
+    /// so an opener would carry the same label as the closer), 2 days is DAY 1 /
+    /// DAY 2, and 3+ gets all three beats.
+    ///
     /// Two beats need two distinct days between day 1 and the last day, so a
     /// 1- or 2-day trial gets a two-line arc instead of a forced middle that
     /// duplicates a day or lands past the end. `introTrialDays` returns
@@ -1887,10 +1891,13 @@ struct SurveyPlanRevealScreen: View {
     /// circumstance. The outcome is still named one line below, as a horizon
     /// instead of a deadline.
     private var finalDayLine: String {
+        // "1 days" on a repointed one-day SKU is the kind of detail that makes a
+        // careful screen look careless.
+        let dayWord = trialDays == 1 ? "day" : "days"
         if let minutes = minutesPerDay {
-            return "\(trialDays) days, \(minutes * trialDays) minutes, spoken over \(burden.planDomain)."
+            return "\(trialDays) \(dayWord), \(minutes * trialDays) minutes, spoken over \(burden.planDomain)."
         }
-        return "\(trialDays) days spoken over \(burden.planDomain). You hear the difference."
+        return "\(trialDays) \(dayWord) spoken over \(burden.planDomain). You hear the difference."
     }
 
     var body: some View {
@@ -1944,7 +1951,9 @@ struct SurveyPlanRevealScreen: View {
                     // here is something the user can check for themselves
                     // before the card is charged.
                     VStack(alignment: .leading, spacing: 10) {
-                        weekLine("DAY 1", "You speak it out loud. Out loud is the part that works.")
+                        if trialDays > 1 {
+                            weekLine("DAY 1", "You speak it out loud. Out loud is the part that works.")
+                        }
                         if let mid = midDay {
                             weekLine("DAY \(mid)", "You reach for the Word before you reach for the worry.")
                         }

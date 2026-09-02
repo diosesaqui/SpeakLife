@@ -1647,8 +1647,13 @@ public struct TaskLibrary {
         
         // Prioritize based on user's spiritual maturity and completion patterns
         let prioritizedTasks = foundationTasks.sorted { task1, task2 in
-            // AI scoring logic would go here
-            return task1.minimumStreakDay <= task2.minimumStreakDay
+            // AI scoring logic would go here. Strict `<`: `sorted(by:)` requires
+            // a strict weak ordering, and `<=` returns true for both (a,b) and
+            // (b,a) on the ties this array is full of — every foundation task
+            // shares a handful of minimumStreakDay values. It has survived at
+            // n <= 5 by staying in the insertion-sort path, but `withAITasks`
+            // makes it test-reachable for the first time.
+            return task1.minimumStreakDay < task2.minimumStreakDay
         }
         
         return Array(prioritizedTasks.prefix(5))

@@ -653,11 +653,10 @@ final class DailyChecklistTests: XCTestCase {
 
     // MARK: - Campaign-refreshed tasks
 
-    /// The AI path builds a different task set. These tests are about the
-    /// standard one, so pin the flag rather than inherit whatever ran before.
-    /// The AI task-selection path, which keeps its own keeper lists. Every
-    /// board invariant has to hold under both paths — the flag is live Remote
-    /// Config, so real users are on each.
+    /// The AI task-selection path, which keeps its own keeper lists. Every board
+    /// invariant has to hold under both paths — the flag is live Remote Config,
+    /// so real users are on each, and the two keeper sets have drifted apart
+    /// before.
     private func withAITasks(_ body: () -> Void) {
         let key = "enableAIFeatures"
         let previous = UserDefaults.standard.bool(forKey: key)
@@ -672,6 +671,8 @@ final class DailyChecklistTests: XCTestCase {
         withAITasks(body)
     }
 
+    /// The AI path builds a different task set. Tests about the standard one
+    /// pin the flag rather than inherit whatever ran before.
     private func withStandardTasks(_ body: () -> Void) {
         let key = "enableAIFeatures"
         let previous = UserDefaults.standard.bool(forKey: key)

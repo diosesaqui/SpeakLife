@@ -48,18 +48,26 @@ final class StreakIntegrationManager: ObservableObject {
         logAction("Audio affirmation listened", taskId: "listen_audio")
     }
 
-    /// Call when the user asks Bible Chat a question.
+    /// Call when the user asks Bible Chat a question that stands.
     ///
     /// The row exists to put a fast, visible win early in the trial, and a win
     /// nothing records is not visible. Without this the only way to tick it was
     /// the manual checkbox — the shape `gratitude_moment` had, which completed
     /// 58 times against 238 unlocks.
     ///
-    /// Asking is the completion, not receiving an answer: the user did their
-    /// part at send, and a network failure should not cost them the row.
+    /// Unlike its four siblings, the posting side fires per message rather than
+    /// once per day, so the completion check has to happen BEFORE `logAction`
+    /// rather than inside `completeTask`. Otherwise the event would count
+    /// messages while carrying a `task_id` whose whole purpose is to be joinable
+    /// to the task it completed — precisely the class of defect
+    /// `docs/ANALYTICS_DATA_QUALITY.md` exists to document.
     func trackBibleChatAsked() {
-        streakViewModel?.completeTask(taskId: "ask_the_bible")
-        logAction("Bible chat asked", taskId: "ask_the_bible")
+        let taskId = "ask_the_bible"
+        guard let viewModel = streakViewModel,
+              let task = viewModel.todayChecklist.tasks.first(where: { $0.id == taskId }),
+              !task.isCompleted else { return }
+        viewModel.completeTask(taskId: taskId)
+        logAction("Bible chat asked", taskId: taskId)
     }
     
     // MARK: - Notification Observers
@@ -97,7 +105,7 @@ final class StreakIntegrationManager: ObservableObject {
             .store(in: &cancellables)
     }
     
-    /// These four event names are display-cased with spaces rather than
+    /// These five event names are display-cased with spaces rather than
     /// snake_case. They are kept verbatim so the existing series stay
     /// continuous, but they used to carry no properties at all — every one of
     /// them was an undifferentiated count. `task_id` makes them joinable to the
@@ -141,6 +149,14 @@ extension StreakIntegrationManager {
     static func notifyAudioCompleted() {
         NotificationCenter.default.post(name: .audioAffirmationCompleted, object: nil)
     }
+
+    /// Helper method to post notification for a Bible Chat question that stands.
+    ///
+    /// Post this only where the question survives: not on the paywall branch,
+    /// which retracts the user's message from the transcript.
+    static func notifyBibleChatAsked() {
+        NotificationCenter.default.post(name: .bibleChatAsked, object: nil)
+    }
 }
 
 // MARK: - Where these are posted from
@@ -159,6 +175,9 @@ extension StreakIntegrationManager {
 //                               at the 85% threshold, alongside markPlayed
 //   notifyDevotionalCompleted → DevotionalView
 //   notifyAffirmationShared   → DeclarationContentView
+//   notifyBibleChatAsked      → BibleChatConversationViewModel.dispatchSend(), on
+//                               the answered and the failed branches but NOT the
+//                               paywall branch, which removes the question again
 //   notifyAffirmationSpoken   → NOT POSTED. Its task id `speak_affirmation` is
 //                               not in TaskLibrary either, so the handler is
 //                               inert on both ends. Left in place rather than
