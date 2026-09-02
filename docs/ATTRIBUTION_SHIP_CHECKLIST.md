@@ -143,12 +143,35 @@ the device. That is a debugging aid only and must not ship.
       Branch integration keys off by default — so no `$branchId` attribute is
       needed, and nothing else in code has to change.
 - [ ] **Use these event names.** The setup form asks for one per RevenueCat
-      event type, and the choice is not cosmetic: **Branch custom events cannot
-      carry revenue metadata — only standard commerce events can.** Name a
-      renewal anything custom and it arrives with no money attached, so
-      Branch's revenue per campaign becomes first-purchase-only. That is the
-      same fault this branch just fixed on the app side; do not reintroduce it
-      in the dashboard.
+      event type, and the choice is probably not cosmetic: Branch's docs say
+      revenue metadata cannot be attached to custom events, and that only
+      standard commerce events forward revenue to ad partners. If that holds,
+      naming a renewal anything custom means it arrives with no money attached
+      and Branch's revenue per campaign becomes first-purchase-only — the same
+      fault this branch just fixed on the app side, reintroduced one layer out.
+      See the confidence note below: the claim is not fully verified, but the
+      mapping is the safe side of it either way.
+
+      **Confidence, stated honestly.** The three uppercase names are verified:
+      they are the literal constants in Branch's own SDK, checked in both the
+      macOS and the iOS 3.9.1 sources. The *reason* below is not equally
+      verified. Branch's documentation says revenue metadata "can't be attached
+      to Custom Events", but the iOS SDK header declares `revenue` and
+      `currency` on `BranchEvent` itself, reachable from `customEventWithName:`
+      as much as from `standardEvent:` — the two disagree. And this is the
+      RevenueCat *server-side* integration, which POSTs to Branch's API rather
+      than going through that SDK, so neither source strictly governs it.
+      Branch's and RevenueCat's own docs are unreachable from the environment
+      this was written in.
+
+      Standard names remain the right bet either way: worst case neutral, best
+      case necessary. But **verify one renewal in Branch after a few days and
+      confirm revenue is attached** rather than assuming. If it is missing, that
+      is a support question for Branch or RevenueCat, not a naming tweak.
+
+      Also unverified: whether the form accepts the same name in two fields. If
+      it rejects duplicates, give renewal and non-subscription purchase their
+      own `rc_*_event` names and accept the loss on renewal revenue.
 
       | RevenueCat field | Value | |
       |---|---|---|
