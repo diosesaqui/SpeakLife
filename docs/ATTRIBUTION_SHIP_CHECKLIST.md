@@ -45,6 +45,26 @@ but belongs only to the test target — do not use it anywhere here.
       in which it was free to do. Branch allows this change **once, ever**, so
       it is now fixed: `speaklife.app.link` cannot be changed again without
       creating a new Branch app, and the entitlement is pinned to it.
+- [ ] **Connect the ad partners** under `Ads -> Partner Management` (left nav,
+      under Channels & Links): search the partner, Save & Enable, then use the
+      POSTBACK CONFIG tab. Meta additionally needs Branch set as the MMP on
+      Meta's side, in Events Manager — connecting it in Branch alone does
+      nothing.
+
+      **Do not enable purchase postbacks to Meta or TikTok.** Both already
+      receive purchase events directly from their own SDKs in this app — the
+      Facebook SDK sends Subscribe / StartTrial / logPurchase from
+      `SubscriptionStore.purchase`, and `Events.swift` sends TikTok's. Adding
+      Branch postbacks on top means each network counts the same purchase from
+      two sources. Enable those two for install attribution only. Google is the
+      exception and should get event postbacks: there is no Google SDK in the
+      app, so Branch is the only thing that can tell it anything.
+
+      Same rule as the SKAdNetwork conversion value: one writer per signal.
+- [ ] **Ignore Data Feeds** (Webhooks, Data Integrations, Data Export API,
+      Query API). That exports Branch's own data to third-party tools, and
+      PostHog already receives everything from the app and from RevenueCat.
+      Pointing Branch at it as well only duplicates.
 - [ ] **Create one Quick Link per onboarding angle**, each with custom data
       `ob=<variant>`. Valid values, from `SubscriptionStore.OnboardingVariant`:
       `quiz`, `product`, `identity`, `outcomes`, `warfare`, `promises`,
