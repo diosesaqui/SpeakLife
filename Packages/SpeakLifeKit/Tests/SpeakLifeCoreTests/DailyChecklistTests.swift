@@ -510,9 +510,9 @@ final class DailyChecklistTests: XCTestCase {
     }
 
     /// Journaling is the only answer with no matching row in the foundation
-    /// week — `journal_insight` is gated to day 8 and `gratitude_moment` to
-    /// day 2 — so those users would spend week one with nothing resembling what
-    /// they asked for.
+    /// week — `journal_insight` is gated to day 8 and `gratitude_moment` has
+    /// been retired — so those users would spend week one with nothing
+    /// resembling what they asked for.
     func testConnectStyle_JournalingGetsAJournalRowOnDayOne() {
         withStandardTasks {
             let ids = TaskLibrary.getCoreTasksForStreak(1, connectStyle: .journaling).map(\.id)
@@ -544,8 +544,46 @@ final class DailyChecklistTests: XCTestCase {
         withStandardTasks {
             let ids = TaskLibrary.getCoreTasksForStreak(3, connectStyle: nil).map(\.id)
             XCTAssertEqual(ids, ["complete_daily_burst", "read_devotional",
-                                 "listen_audio", "gratitude_moment"],
+                                 "listen_audio", "ask_the_bible"],
                            "unstyled day 3 ordered as \(ids)")
+        }
+    }
+
+    /// The Bible chat row is the only task on the board that responds to what
+    /// the user is carrying today rather than serving content written before
+    /// they woke up, and it is the one surface that pays off in seconds. The
+    /// plan sold in onboarding now promises its payoff at day 7, so this row
+    /// has to be live well inside the trial window and has to stay live after
+    /// it. Pinned because "day 2" looks arbitrary until you know why.
+    ///
+    /// Runs under both task-selection paths. The AI path keeps its own keeper
+    /// lists, and they were once out of step with the standard ones — which
+    /// dropped this row from day 8 for exactly the cohort `enableAIFeatures`
+    /// also promotes Bible Chat into the tab bar for. A test pinned only to the
+    /// standard path would not have caught that.
+    func testAskTheBible_ArrivesInsideTheTrialAndNeverLeaves() {
+        withBothTaskPaths {
+            let dayOne = TaskLibrary.getCoreTasksForStreak(1).map(\.id)
+            XCTAssertFalse(dayOne.contains("ask_the_bible"),
+                           "day 1 is meant to stay light: \(dayOne)")
+            for day in [2, 3, 5, 7, 8, 20, 31, 60, 100, 365] {
+                let ids = TaskLibrary.getCoreTasksForStreak(day).map(\.id)
+                XCTAssertTrue(ids.contains("ask_the_bible"),
+                              "day \(day) lost the Bible chat row: \(ids)")
+            }
+        }
+    }
+
+    /// The board must never get narrower as the user goes deeper. A
+    /// foundation-only row would have made day 7 wider than day 30.
+    func testBoardWidthNeverShrinksWithProgress() {
+        withBothTaskPaths {
+            let days = [1, 3, 7, 8, 30, 31, 100, 365]
+            let counts = days.map { TaskLibrary.getCoreTasksForStreak($0).count }
+            for (i, count) in counts.enumerated().dropFirst() {
+                XCTAssertGreaterThanOrEqual(count, counts[i - 1],
+                    "day \(days[i]) serves \(count) rows, fewer than day \(days[i - 1])'s \(counts[i - 1])")
+            }
         }
     }
 
@@ -573,7 +611,17 @@ final class DailyChecklistTests: XCTestCase {
     func testRetiredTasks_AreGoneFromEveryPhase() {
         let retired: Set<String> = [
             "worship_song", "study_deeper", "prayer_walk",
-            "encourage_someone", "pray_for_others", "serve_someone", "testimony_share"
+            "encourage_someone", "pray_for_others", "serve_someone", "testimony_share",
+            // The four mastery rows, retired for the same reason: off-app
+            // instructions with no navigationDestination.
+            "mentor_someone", "fast_and_pray", "teach_truth", "create_content",
+            // `gratitude_moment` is retired for a DIFFERENT reason and should
+            // not be cited as a dead row: it was completed 58 times out of 238
+            // unlocks. It went because the board could not afford a fifth
+            // foundation slot, and because its `.journal` destination duplicated
+            // `journal_insight` — which now covers the journaling cohort for the
+            // whole foundation week instead of only day 1.
+            "gratitude_moment"
         ]
         XCTAssertTrue(TaskLibrary.allTasks.filter { retired.contains($0.id) }.isEmpty,
                       "Retired tasks are back in the library.")
@@ -598,13 +646,33 @@ final class DailyChecklistTests: XCTestCase {
             }
         }
         XCTAssertFalse(TaskLibrary.impactTasks.isEmpty)
+        XCTAssertTrue(TaskLibrary.masteryTasks.isEmpty,
+                      "Mastery tasks are back; the phase mix draws from growth now.")
         XCTAssertFalse(TaskLibrary.growthTasks.isEmpty)
     }
 
     // MARK: - Campaign-refreshed tasks
 
-    /// The AI path builds a different task set. These tests are about the
-    /// standard one, so pin the flag rather than inherit whatever ran before.
+    /// The AI task-selection path, which keeps its own keeper lists. Every board
+    /// invariant has to hold under both paths — the flag is live Remote Config,
+    /// so real users are on each, and the two keeper sets have drifted apart
+    /// before.
+    private func withAITasks(_ body: () -> Void) {
+        let key = "enableAIFeatures"
+        let previous = UserDefaults.standard.bool(forKey: key)
+        UserDefaults.standard.set(true, forKey: key)
+        defer { UserDefaults.standard.set(previous, forKey: key) }
+        body()
+    }
+
+    /// Runs `body` under both task-selection paths.
+    private func withBothTaskPaths(_ body: () -> Void) {
+        withStandardTasks(body)
+        withAITasks(body)
+    }
+
+    /// The AI path builds a different task set. Tests about the standard one
+    /// pin the flag rather than inherit whatever ran before.
     private func withStandardTasks(_ body: () -> Void) {
         let key = "enableAIFeatures"
         let previous = UserDefaults.standard.bool(forKey: key)

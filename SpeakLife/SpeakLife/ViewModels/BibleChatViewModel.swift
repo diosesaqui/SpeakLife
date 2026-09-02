@@ -141,12 +141,17 @@ final class BibleChatConversationViewModel: ObservableObject {
                     currentConversationID = ChatHistoryStore.shared.record(
                         userText: text, assistantText: reply, into: currentConversationID
                     ).id
+                    StreakIntegrationManager.notifyBibleChatAsked()
                 }
             } catch {
                 guard gen == generation else { return }
                 // Leave the user's message in the transcript and surface an error
                 // so nothing they typed is lost; they can resend.
                 errorMessage = "Something went wrong. Please try again."
+                // The question stands, so it still earns the checklist row. The
+                // paywall branch above deliberately does not: it removes the
+                // message again, so there is no question left to credit.
+                StreakIntegrationManager.notifyBibleChatAsked()
             }
         }
     }

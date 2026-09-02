@@ -222,7 +222,12 @@ struct CloserOnboardingView: View {
                 flow: "closer",
                 personalDeclaration: savedDeclaration?.declarationText,
                 dailyMinutes: responses.dailyMinutes,
-                victoryEcho: responses.victoryEcho  // nil in quiz v1
+                victoryEcho: responses.victoryEcho,  // nil in quiz v1
+                // The arc's last beat has to land on the day the card is
+                // charged, and the SKU is Remote Config resolved. Fall back to
+                // the default only if products have not loaded.
+                trialDays: subscriptionStore.currentOfferedPremium
+                    .flatMap(TrialExperienceService.introTrialDays) ?? 7
             ) { advance() }
         case .pledge:
             // Unique to this arm: an explicit "I'm In" commitment immediately

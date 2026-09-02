@@ -1802,6 +1802,17 @@ struct SurveyPlanRevealScreen: View {
     /// Quiz v2 only: the user's victory-outcome echo phrase. When present the
     /// week-4 arc line replays it in their own words; nil keeps the static line.
     var victoryEcho: String? = nil
+    /// Length of the free trial this plan is about to be sold against, in days.
+    ///
+    /// The whole point of the arc below is that its last beat lands on or before
+    /// the day the card is charged. That only holds if this matches the intro
+    /// offer on the SKU actually being sold, and the SKU is Remote Config
+    /// resolved — so a hardcoded 7 here would silently start lying the moment
+    /// `currentPremiumID` is repointed at a 3-day product, recreating exactly
+    /// the defect this screen was changed to fix. Callers pass the real
+    /// StoreKit value; the default is the current SKUs' 7 days and is only a
+    /// fallback for a caller whose products have not loaded yet.
+    var trialDays: Int = 7
     let onContinue: () -> Void
 
     @State private var v = false
@@ -1825,11 +1836,68 @@ struct SurveyPlanRevealScreen: View {
         return burden.previewDeclaration.text
     }
 
-    private var weekFourLine: String {
-        if let echo = victoryEcho, !echo.isEmpty {
-            return "\(echo). Standing on promises."
+    /// Week four in the user's own words when the arm asked what winning looks
+    /// like, and the burden's curated outcome when it did not. This is the only
+    /// remaining reader of `victoryEcho` now that the arc stops at Day 7.
+    private var weekFourHorizon: String {
+        if let echo = victoryEcho, !echo.isEmpty { return "\(echo)." }
+        return burden.dreamOutcome
+    }
+
+    /// Minutes per SESSION, from the extended quiz. Nil when the arm never
+    /// asked (quiz v1), which keeps the generic final-day line.
+    private var minutesPerSession: Int? {
+        switch dailyMinutes {
+        case "one":   return 1
+        case "three": return 3
+        case "ten":   return 10
+        default:      return nil
         }
-        return "Standing on promises, not fighting for footing."
+    }
+
+    /// Two sessions a day. Every rhythm option is a per-session number spoken
+    /// twice: the quiz option reads "3 minutes morning and night" and the plan
+    /// card's own `dailyRhythmDetail` row directly above says "3 minutes,
+    /// morning and evening". Multiplying the raw answer by trial days alone
+    /// printed half the real figure and contradicted the row 15pt above it, on
+    /// the one screen whose entire purpose is to stop stating things the
+    /// product cannot back.
+    private var minutesPerDay: Int? { minutesPerSession.map { $0 * 2 } }
+
+    /// The arc's middle beat, when the trial is long enough to have one.
+    ///
+    /// Arc shape by trial length: 1 day is a single line (day 1 IS the last day,
+    /// so an opener would carry the same label as the closer), 2 days is DAY 1 /
+    /// DAY 2, and 3+ gets all three beats.
+    ///
+    /// Two beats need two distinct days between day 1 and the last day, so a
+    /// 1- or 2-day trial gets a two-line arc instead of a forced middle that
+    /// duplicates a day or lands past the end. `introTrialDays` returns
+    /// `offer.period.value` verbatim for `.day`, so 1 and 2 are both reachable
+    /// from a repointed SKU — which is the whole reason `trialDays` is threaded
+    /// through rather than hardcoded.
+    private var midDay: Int? {
+        guard trialDays >= 3 else { return nil }
+        return max(2, min(trialDays - 1, trialDays / 2))
+    }
+
+    /// The line the whole arc now climbs to, and the reason the arc changed.
+    ///
+    /// This screen used to top out at WEEK 4, which put the plan's climax three
+    /// weeks past the day the card is charged: on the day the trial ended, the
+    /// screen's own timeline said nothing should have happened yet, at the exact
+    /// moment the user decides whether to pay. The last trial day is what this
+    /// product can actually guarantee, and it is a practice rather than a
+    /// circumstance. The outcome is still named one line below, as a horizon
+    /// instead of a deadline.
+    private var finalDayLine: String {
+        // "1 days" on a repointed one-day SKU is the kind of detail that makes a
+        // careful screen look careless.
+        let dayWord = trialDays == 1 ? "day" : "days"
+        if let minutes = minutesPerDay {
+            return "\(trialDays) \(dayWord), \(minutes * trialDays) minutes, spoken over \(burden.planDomain)."
+        }
+        return "\(trialDays) \(dayWord) spoken over \(burden.planDomain). You hear the difference."
     }
 
     var body: some View {
@@ -1879,29 +1947,37 @@ struct SurveyPlanRevealScreen: View {
                     .padding(.horizontal, 24)
                     .planRevealStagger(v, delay: 0.18)
 
-                    // Realistic 3-line arc
+                    // The arc runs inside the trial on purpose. Every beat
+                    // here is something the user can check for themselves
+                    // before the card is charged.
                     VStack(alignment: .leading, spacing: 10) {
-                        weekLine("WEEK 1", "Speak truth before the spiral starts.")
-                        weekLine("WEEK 2", "God's Word becomes your first response.")
-                        weekLine("WEEK 4", weekFourLine)
+                        if trialDays > 1 {
+                            weekLine("DAY 1", "You speak it out loud. Out loud is the part that works.")
+                        }
+                        if let mid = midDay {
+                            weekLine("DAY \(mid)", "You reach for the Word before you reach for the worry.")
+                        }
+                        weekLine("DAY \(trialDays)", finalDayLine)
                     }
                     .padding(.horizontal, 32)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .planRevealStagger(v, delay: 0.3)
 
-                    // Destination: the vivid won life this plan (and the unlock)
-                    // is building toward — the bridge from product to the user's
-                    // dream reality, landed right before the ask.
-                    VStack(spacing: 6) {
-                        Text("WHERE THIS TAKES YOU")
-                            .font(.system(size: 11, weight: .bold, design: .rounded))
-                            .foregroundColor(DS.Palette.gold.opacity(0.9))
+                    // The horizon, deliberately demoted. It used to be this
+                    // screen's climax in gold at 18pt, directly above the price,
+                    // which made a four-week outcome read as the thing being
+                    // bought on a seven-day trial. It is still true and still
+                    // here; it is no longer what the eye lands on.
+                    VStack(spacing: 4) {
+                        Text("AND BY WEEK FOUR")
+                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                            .foregroundColor(.white.opacity(0.45))
                             .kerning(1.2)
-                        Text(burden.dreamOutcome)
-                            .font(.system(size: 18, weight: .semibold, design: .rounded))
-                            .foregroundColor(.white)
+                        Text(weekFourHorizon)
+                            .font(.system(size: 14, weight: .medium, design: .rounded))
+                            .foregroundColor(.white.opacity(0.6))
                             .multilineTextAlignment(.center)
-                            .lineSpacing(3)
+                            .lineSpacing(2)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     .padding(.horizontal, 28)
@@ -1915,7 +1991,9 @@ struct SurveyPlanRevealScreen: View {
             SurveyContinueButton(label: "Unlock My Plan →") {
                 AnalyticsService.shared.track("plan_reveal_continue", parameters: [
                     "flow": flow,
-                    "burden": burden.shortLabel
+                    "burden": burden.shortLabel,
+                    "plan_arc": "day_based_v2",
+                    "trial_days": trialDays as NSNumber
                 ])
                 onContinue()
             }
@@ -1923,10 +2001,19 @@ struct SurveyPlanRevealScreen: View {
             .planRevealStagger(v, delay: 0.4)
         }
         .onAppear {
+            // `plan_arc` and `trial_days` exist so the before/after on this
+            // change is a breakdown rather than a release-date join. The arc
+            // shipped unconditionally, so without a marker the only way to cut
+            // "saw WEEK 4" from "saw DAY n" is by timestamp against a build
+            // rollout curve — which is exactly the kind of cut this repo has
+            // gotten wrong before. Bump the value if the arc changes shape
+            // again; do not reuse it.
             AnalyticsService.shared.track("plan_reveal_shown", parameters: [
                 "flow": flow,
                 "burden": burden.shortLabel,
-                "has_personal_declaration": hasPersonalDeclaration as NSNumber
+                "has_personal_declaration": hasPersonalDeclaration as NSNumber,
+                "plan_arc": "day_based_v2",
+                "trial_days": trialDays as NSNumber
             ])
             withAnimation { v = true }
         }

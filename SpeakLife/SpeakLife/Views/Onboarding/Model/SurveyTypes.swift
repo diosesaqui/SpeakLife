@@ -220,11 +220,28 @@ enum HeaviestBurden: String, CaseIterable, Identifiable {
         }
     }
 
-    // One vivid, present-tense picture of the won life for this burden. Shown on
-    // the pre-paywall plan reveal as the destination the plan is building toward
-    // — the bridge that connects the product to the user's dream reality right
-    // before the ask. Kept short and concrete so it lands as a felt outcome,
-    // not a feature.
+    /// The place the plan is spoken over, named plainly. Used by the plan
+    /// reveal's Day 7 line so the promise lands on a domain the user recognizes
+    /// ("your mind", "your body") rather than an abstraction.
+    var planDomain: String {
+        switch self {
+        case .peace:     return "your mind"
+        case .health:    return "your body"
+        case .joy:       return "your heart"
+        case .identity:  return "who you are"
+        case .purpose:   return "your future"
+        case .abundance: return "your finances"
+        case .allOfIt:   return "your life"
+        }
+    }
+
+    // One vivid, present-tense picture of the won life for this burden. Still
+    // shown on the pre-paywall plan reveal, but as the horizon past the trial
+    // rather than as the destination being sold: it sits under "AND BY WEEK
+    // FOUR" in muted 14pt, below a Day 1 / Day 3 / Day 7 arc. It used to be the
+    // screen's climax in gold at 18pt directly above the price, which made a
+    // four-week outcome read as the thing being bought on a seven-day trial.
+    // Kept short and concrete so it lands as a felt outcome, not a feature.
     var dreamOutcome: String {
         switch self {
         case .peace:     return "A quiet mind, a calm home, and sleep that finally comes."
