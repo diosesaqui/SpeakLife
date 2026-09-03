@@ -794,6 +794,15 @@ public final class EnhancedStreakViewModel: ObservableObject {
     /// streak had just reset: the first thing the product said to them was that
     /// its core action is locked until tomorrow.
     public func getUpcomingUnlocks(for streakDay: Int) -> [DailyTask] {
+        // A board that is already at its time budget does not grow, so nothing
+        // unlocks tomorrow for someone who asked for one or three minutes: the
+        // rows below are trimmed off the day they would arrive. Teasing them
+        // anyway promises content the checklist has decided not to show, which
+        // is the same defect the streak-floor above fixes — advertising a row
+        // as locked when the user is never going to be handed it.
+        if let limit = DailyTimeBudget.stored()?.maxTasks,
+           todayChecklist.tasks.count >= limit { return [] }
+
         let base = max(streakDay, 1)
         let nextFewDays = (base + 1)...(base + 10)
         var upcomingTasks: [DailyTask] = []
