@@ -38,7 +38,10 @@ It is a rollout curve, not a bug — 100% null before 4.54, down to 7.4% by
 Any audit of instrumentation quality must scope to current builds:
 
 ```sql
-AND properties.$app_version IN ('4.54','4.55','4.56','4.57','4.58','4.59','4.60')
+-- Every shipped build since global context landed in 4.54. Extend this on
+-- every version bump: the list drops an unlisted build silently, and the
+-- newest build is the one an audit most needs to see.
+AND properties.$app_version IN ('4.54','4.55','4.56','4.57','4.58','4.59','4.60','4.61')
 ```
 
 Corollary: `days_since_install` is unusable as a cohorting dimension on older
