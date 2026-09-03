@@ -66,10 +66,17 @@ public enum TaskType: String, CaseIterable, Codable {
 /// the one they told us they connect through. The answer was collected for
 /// months and read by nothing; this type is what makes it do something.
 ///
-/// It orders the day's content rows. It never decides which rows exist: someone
+/// On a full board it orders the day's content rows and nothing more: someone
 /// who says "reading" still gets the Burst, because speaking is the change this
 /// product exists to produce and reading is the thing they were already
 /// comfortable doing. Their answer is the on-ramp, not the destination.
+///
+/// On a board cut short by `DailyTimeBudget` it also decides membership, because
+/// at two or three rows there is no longer a difference between the two: the
+/// rows ahead of the modality are all `.speak`, so a prefix would hand a
+/// self-described listener a day with no audio in it. `capToTimeBudget` spends
+/// the last surviving slot on the on-ramp for that reason. The destination is
+/// unchanged either way — the Burst still leads every board.
 public enum ConnectStyle: String, CaseIterable, Codable {
     case speaking
     case listening
@@ -121,12 +128,17 @@ public enum ConnectStyle: String, CaseIterable, Codable {
 /// fifteen. Asking for a commitment and then handing back fifteen times it is
 /// how a day-one user decides the product was not built for them.
 ///
-/// So the answer becomes a cap on how many rows the board may show. It never
-/// decides WHICH rows: the pipeline in `getCoreTasksForStreak` has already put
-/// the day's most important work first — the Burst, then the user's own
-/// declaration, then Guarding, then the modality they said they connect
-/// through — so the cap is a prefix of that order, and the Burst always
-/// survives it because it is the only row that earns the streak.
+/// So the answer becomes a cap on how many rows the board may show. It mostly
+/// does not decide WHICH rows: the pipeline in `getCoreTasksForStreak` has
+/// already put the day's most important work first — the Burst, then the user's
+/// own declaration, then Guarding, then the modality they said they connect
+/// through — and the cap is a prefix of that order.
+///
+/// Two rows are held back from the trim. The Burst, because it is the only row
+/// that earns the streak. And the row matching their `ConnectStyle`, because
+/// everything ahead of it in that order is a `.speak` row and a plain prefix
+/// therefore served a self-described listener a day with no audio on it. See
+/// `capToTimeBudget`.
 ///
 /// Nothing is deleted, only unshown. Every trimmed row is still reachable from
 /// its own tab, and the board grows back the moment the answer changes.
@@ -1349,7 +1361,7 @@ public struct TaskLibrary {
             let guarded = withGuard(burstFirst(led), completedToday: guardCompletedToday,
                                     totalDaysCompleted: totalDaysCompleted)
             return capToTimeBudget(withPersonalDeclaration(guarded, progress: personalDeclarations),
-                                   budget: timeBudget)
+                                   budget: timeBudget, style: connectStyle)
         }
 
         // Standard task generation
@@ -1407,10 +1419,11 @@ public struct TaskLibrary {
         let guarded = withGuard(burstFirst(led), completedToday: guardCompletedToday,
                                 totalDaysCompleted: totalDaysCompleted)
         return capToTimeBudget(withPersonalDeclaration(guarded, progress: personalDeclarations),
-                               budget: timeBudget)
+                               budget: timeBudget, style: connectStyle)
     }
 
-    /// Trims the finished board down to what the user said they have time for.
+    /// Trims the finished board down to what the user said they have time for,
+    /// keeping the two rows a short day cannot be right without.
     ///
     /// Runs LAST, after every injector and every reorder, because the order it
     /// trims from is the priority order the rest of this pipeline exists to
@@ -1425,16 +1438,48 @@ public struct TaskLibrary {
     /// `burstFirst` has already put it at index 0 and the prefix keeps it; the
     /// hoist below is for a mix that had no Burst for `burstFirst` to move.
     ///
-    /// Internal rather than private so the hoist is testable — no public phase
-    /// mix drops the Burst, so that branch is otherwise unreachable and would
-    /// rot silently.
-    static func capToTimeBudget(_ tasks: [DailyTask], budget: DailyTimeBudget?) -> [DailyTask] {
+    /// **Neither is the row they said they connect through.** A plain prefix
+    /// cut in exactly the wrong place: the three rows ahead of the modality —
+    /// Burst, declaration, Guarding — are all `.speak`, so a two- or three-row
+    /// board served someone who answered "listening" three speaking rows and no
+    /// audio, and someone who answered "reading" no devotional. On an unlimited
+    /// board that answer only had to decide order, because every row was there
+    /// anyway; the moment the board is cut to two rows it decides membership,
+    /// and the on-ramp is the first thing a prefix throws away.
+    ///
+    /// So the last surviving slot is spent on their modality when the prefix
+    /// dropped it. The trade is deliberate and it comes out of the tail, never
+    /// the head: at three minutes a listener gives up Guarding and keeps their
+    /// declaration; at one minute they give up the declaration too, because two
+    /// rows cannot hold everything and a board with none of what they asked for
+    /// is the one failure that makes them stop opening it.
+    ///
+    /// Answering "speaking" costs nothing — the Burst is already a `.speak`
+    /// row, so the swap finds the modality satisfied and leaves the priority
+    /// prefix exactly as it was.
+    ///
+    /// Internal rather than private so the Burst hoist is testable — no public
+    /// phase mix drops the Burst, so that branch is otherwise unreachable and
+    /// would rot silently.
+    static func capToTimeBudget(_ tasks: [DailyTask], budget: DailyTimeBudget?,
+                                style: ConnectStyle?) -> [DailyTask] {
         guard let limit = budget?.maxTasks, limit > 0, tasks.count > limit else { return tasks }
         var result = Array(tasks.prefix(limit))
+
         if let burst = tasks.first(where: { $0.id == "complete_daily_burst" }),
            !result.contains(where: { $0.id == burst.id }) {
             result.removeLast()
             result.insert(burst, at: 0)
+        }
+
+        // `limit > 1` keeps the trade off the Burst's slot: at a one-row cap
+        // there is nothing to spend, and `removeLast` would take the one row
+        // that earns the streak.
+        if let style, limit > 1,
+           !result.contains(where: { $0.type == style.taskType }),
+           let preferred = tasks.first(where: { $0.type == style.taskType }) {
+            result.removeLast()
+            result.append(preferred)
         }
         return result
     }

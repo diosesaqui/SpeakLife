@@ -754,9 +754,14 @@ final class DailyChecklistTests: XCTestCase {
         }
     }
 
-    /// A capped board is a prefix of the uncapped one, never a re-pick. The
-    /// ordering pipeline decides which rows matter; the budget only decides
-    /// where to stop reading.
+    /// With no connect-style answer to honour, a capped board is a prefix of
+    /// the uncapped one and never a re-pick: the ordering pipeline decides
+    /// which rows matter, the budget only decides where to stop reading.
+    ///
+    /// Pinned at `connectStyle: nil` deliberately. Once there IS an answer the
+    /// last slot is traded for the modality row and the board is no longer a
+    /// prefix — that is `testTimeBudget_KeepsTheRowTheySaidTheyConnectThrough`,
+    /// and this test is the baseline it departs from.
     func testTimeBudget_TrimsTheTailAndNeverReordersWhatIsLeft() {
         withStandardTasks {
             for day in [1, 3, 8, 30, 120] {
@@ -811,7 +816,7 @@ final class DailyChecklistTests: XCTestCase {
             TaskLibrary.growthTasks[1],
             TaskLibrary.foundationTasks.first { $0.id == "complete_daily_burst" }!
         ]
-        let capped = TaskLibrary.capToTimeBudget(buried, budget: .one).map(\.id)
+        let capped = TaskLibrary.capToTimeBudget(buried, budget: .one, style: nil).map(\.id)
         XCTAssertEqual(capped, ["complete_daily_burst", "journal_insight"],
                        "capped to \(capped)")
     }
@@ -858,6 +863,150 @@ final class DailyChecklistTests: XCTestCase {
         }
         DailyTimeBudget.store(nil, defaults: defaults)
         XCTAssertNil(DailyTimeBudget.stored(defaults: defaults))
+    }
+
+    /// The alignment the cap nearly broke.
+    ///
+    /// Every row ahead of the modality in the shipped order — Burst,
+    /// declaration, Guarding — is a `.speak` row, so a plain prefix served a
+    /// self-described listener three speaking rows and no audio, and a reader
+    /// no devotional. On a short day the on-ramp has to survive.
+    func testTimeBudget_KeepsTheRowTheySaidTheyConnectThrough() {
+        withStandardTasks {
+            func board(_ style: ConnectStyle, _ budget: DailyTimeBudget?, day: Int) -> [DailyTask] {
+                TaskLibrary.getCoreTasksForStreak(
+                    day,
+                    personalDeclarations: progress(total: 1, spoken: 0),
+                    guardCompletedToday: false,
+                    totalDaysCompleted: day,
+                    connectStyle: style,
+                    timeBudget: budget
+                )
+            }
+
+            for style in ConnectStyle.allCases {
+                for budget in [DailyTimeBudget.one, .three] {
+                    // Unconditionally at day 30, where every modality has a row
+                    // on the board: this is the case the cap was cutting off.
+                    let day30 = board(style, budget, day: 30)
+                    XCTAssertTrue(day30.contains { $0.type == style.taskType },
+                                  "\(style.rawValue) at \(budget.rawValue) got no row it connects through: \(day30.map(\.id))")
+                    XCTAssertEqual(day30.first?.id, "complete_daily_burst",
+                                   "\(style.rawValue) at \(budget.rawValue) served \(day30.map(\.id))")
+                    XCTAssertEqual(day30.count, budget.maxTasks)
+
+                    // And everywhere else, conditioned on the row existing at
+                    // all. The cap keeps what the board has; it never invents a
+                    // row — past day 31 the impact and mastery mixes drop
+                    // `read_devotional` from their keepers, so a reader has no
+                    // `.read` row on their UNCAPPED board either. Asserting
+                    // unconditionally here would pin a defect this cap did not
+                    // cause and cannot honestly fix.
+                    for day in [1, 2, 7, 8, 30, 31, 120] {
+                        let full = board(style, .ten, day: day)
+                        guard full.contains(where: { $0.type == style.taskType }) else { continue }
+                        let capped = board(style, budget, day: day)
+                        XCTAssertTrue(capped.contains { $0.type == style.taskType },
+                                      "\(style.rawValue)/\(budget.rawValue) day \(day) trimmed the on-ramp: \(capped.map(\.id))")
+                    }
+                }
+            }
+        }
+    }
+
+    /// The trade comes out of the tail, never the head. At three minutes a
+    /// listener gives up Guarding — the last row standing — and keeps the Burst
+    /// and the declaration in their own words ahead of it.
+    func testTimeBudget_ModalityIsTradedForTheLastSlotOnly() {
+        withStandardTasks {
+            func board(_ style: ConnectStyle, _ budget: DailyTimeBudget) -> [String] {
+                TaskLibrary.getCoreTasksForStreak(
+                    30,
+                    personalDeclarations: progress(total: 1, spoken: 0),
+                    guardCompletedToday: false,
+                    totalDaysCompleted: 30,
+                    connectStyle: style,
+                    timeBudget: budget
+                ).map(\.id)
+            }
+
+            XCTAssertEqual(board(.listening, .three),
+                           ["complete_daily_burst", TaskLibrary.personalDeclarationTaskId, "listen_audio"])
+            XCTAssertEqual(board(.reading, .three),
+                           ["complete_daily_burst", TaskLibrary.personalDeclarationTaskId, "read_devotional"])
+            XCTAssertEqual(board(.journaling, .three),
+                           ["complete_daily_burst", TaskLibrary.personalDeclarationTaskId, "journal_insight"])
+
+            // Two rows cannot hold everything, and a board with none of what
+            // they asked for is the failure that makes them stop opening it.
+            XCTAssertEqual(board(.listening, .one), ["complete_daily_burst", "listen_audio"])
+        }
+    }
+
+    /// Answering "speaking" costs nothing: the Burst is already a `.speak` row,
+    /// so the swap finds the modality satisfied and the priority prefix — the
+    /// declaration and Guarding behind the Burst — survives untouched.
+    func testTimeBudget_SpeakingIsAlreadySatisfiedByTheBurst() {
+        withStandardTasks {
+            let ids = TaskLibrary.getCoreTasksForStreak(
+                30,
+                personalDeclarations: progress(total: 1, spoken: 0),
+                guardCompletedToday: false,
+                totalDaysCompleted: 30,
+                connectStyle: .speaking,
+                timeBudget: .three
+            ).map(\.id)
+            XCTAssertEqual(ids, ["complete_daily_burst",
+                                 TaskLibrary.personalDeclarationTaskId,
+                                 TaskLibrary.guardTaskId],
+                           "speaking at three minutes served \(ids)")
+        }
+    }
+
+    /// The swap never displaces the Burst, at any style, on any day — including
+    /// the days where the board is short enough that the trade has little to
+    /// work with.
+    func testTimeBudget_ModalitySwapNeverDisplacesTheBurst() {
+        withStandardTasks {
+            for style in ConnectStyle.allCases {
+                for budget in DailyTimeBudget.allCases {
+                    for day in [1, 2, 8, 30, 120] {
+                        let ids = TaskLibrary.getCoreTasksForStreak(
+                            day,
+                            personalDeclarations: progress(total: 1, spoken: 0),
+                            guardCompletedToday: false,
+                            totalDaysCompleted: day,
+                            connectStyle: style,
+                            timeBudget: budget
+                        ).map(\.id)
+                        XCTAssertEqual(ids.first, "complete_daily_burst",
+                                       "\(style.rawValue)/\(budget.rawValue) day \(day) served \(ids)")
+                        XCTAssertEqual(Set(ids).count, ids.count,
+                                       "\(style.rawValue)/\(budget.rawValue) day \(day) duplicated a row: \(ids)")
+                    }
+                }
+            }
+        }
+    }
+
+    /// Ten minutes is uncapped, so the connect-style answer goes back to doing
+    /// only what it did before this shipped: ordering. Nothing is traded away.
+    func testTimeBudget_TenMinutesLeavesMembershipToTheStyleOrderingAlone() {
+        withStandardTasks {
+            for style in ConnectStyle.allCases {
+                func ids(_ budget: DailyTimeBudget?) -> Set<String> {
+                    Set(TaskLibrary.getCoreTasksForStreak(
+                        30,
+                        personalDeclarations: progress(total: 1, spoken: 0),
+                        guardCompletedToday: false,
+                        totalDaysCompleted: 30,
+                        connectStyle: style,
+                        timeBudget: budget
+                    ).map(\.id))
+                }
+                XCTAssertEqual(ids(.ten), ids(nil), "\(style.rawValue) lost rows at ten minutes")
+            }
+        }
     }
 
     /// `DailyTask` uses synthesized Codable, which does NOT fall back to a
