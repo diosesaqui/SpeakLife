@@ -263,6 +263,10 @@ struct OutcomesOnboardingView: View {
         // with the flow — which is why 527 answers were collected and read by
         // nothing. `TaskLibrary` reads this key when it builds the day.
         ConnectStyle.store(responses.connectStyle.flatMap(ConnectStyle.init(rawValue:)))
+        // Same reason, same fate without it: the time answer decides how many
+        // rows the daily checklist shows, and it can only do that if it
+        // outlives the flow. Raw values match the quiz options exactly.
+        DailyTimeBudget.store(responses.dailyMinutes.flatMap(DailyTimeBudget.init(rawValue:)))
         declarationStore.choose(category) { _ in }
         if let notifTime = responses.notificationTime {
             appState.startTimeIndex = notifTime.startTimeIndex

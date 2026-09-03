@@ -442,6 +442,10 @@ struct DirectOnboardingView: View {
         // why the question was collected for months and read by nothing.
         // `TaskLibrary` reads this key when it builds the day.
         ConnectStyle.store(responses.connectStyle.flatMap(ConnectStyle.init(rawValue:)))
+        // Same reason, same fate without it: the time answer decides how many
+        // rows the daily checklist shows, and it can only do that if it
+        // outlives the flow. Raw values match the quiz options exactly.
+        DailyTimeBudget.store(responses.dailyMinutes.flatMap(DailyTimeBudget.init(rawValue:)))
         declarationStore.choose(category) { _ in }
         // Mirrors the other arms: the personal-declaration push is scheduled off
         // this flag, so an arm that captures one and doesn't set it silently

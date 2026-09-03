@@ -727,6 +727,139 @@ final class DailyChecklistTests: XCTestCase {
         }
     }
 
+    // MARK: - Daily time budget
+
+    /// The whole point: the answer collected in onboarding decides how long the
+    /// day is. Ten minutes buys the full board; one and three buy the shapes
+    /// the question's own labels promised.
+    func testTimeBudget_SetsTheBoardLength() {
+        withStandardTasks {
+            func board(_ budget: DailyTimeBudget?) -> [String] {
+                TaskLibrary.getCoreTasksForStreak(
+                    30,
+                    personalDeclarations: progress(total: 1, spoken: 0),
+                    guardCompletedToday: false,
+                    totalDaysCompleted: 30,
+                    connectStyle: nil,
+                    timeBudget: budget
+                ).map(\.id)
+            }
+
+            let full = board(.ten)
+            XCTAssertEqual(board(nil), full, "ten minutes must serve the same board as no answer")
+            XCTAssertGreaterThan(full.count, 3, "day 30 board is too short to test a cap: \(full)")
+
+            XCTAssertEqual(board(.one).count, 2, "one minute served \(board(.one))")
+            XCTAssertEqual(board(.three).count, 3, "three minutes served \(board(.three))")
+        }
+    }
+
+    /// A capped board is a prefix of the uncapped one, never a re-pick. The
+    /// ordering pipeline decides which rows matter; the budget only decides
+    /// where to stop reading.
+    func testTimeBudget_TrimsTheTailAndNeverReordersWhatIsLeft() {
+        withStandardTasks {
+            for day in [1, 3, 8, 30, 120] {
+                func board(_ budget: DailyTimeBudget?) -> [String] {
+                    TaskLibrary.getCoreTasksForStreak(
+                        day,
+                        personalDeclarations: progress(total: 2, spoken: 1),
+                        guardCompletedToday: false,
+                        totalDaysCompleted: day,
+                        connectStyle: nil,
+                        timeBudget: budget
+                    ).map(\.id)
+                }
+                let full = board(.ten)
+                for budget in [DailyTimeBudget.one, .three] {
+                    let capped = board(budget)
+                    XCTAssertEqual(capped, Array(full.prefix(capped.count)),
+                                   "day \(day) at \(budget.rawValue) served \(capped), not a prefix of \(full)")
+                }
+            }
+        }
+    }
+
+    /// The Burst is the only row that earns the streak, so a cap that trimmed
+    /// it would hand the user a day they cannot win. It leads every capped
+    /// board on every day, at every budget.
+    func testTimeBudget_AlwaysKeepsTheBurst() {
+        withStandardTasks {
+            for budget in DailyTimeBudget.allCases {
+                for day in [1, 2, 8, 30, 120] {
+                    let ids = TaskLibrary.getCoreTasksForStreak(
+                        day,
+                        personalDeclarations: progress(total: 1, spoken: 0),
+                        guardCompletedToday: false,
+                        totalDaysCompleted: day,
+                        connectStyle: nil,
+                        timeBudget: budget
+                    ).map(\.id)
+                    XCTAssertEqual(ids.first, "complete_daily_burst",
+                                   "day \(day) at \(budget.rawValue) served \(ids)")
+                }
+            }
+        }
+    }
+
+    /// The hoist for a mix that had no Burst at the front for `burstFirst` to
+    /// move. Unreachable from a public phase mix, so it is pinned directly —
+    /// otherwise the branch rots and the guarantee above quietly stops holding.
+    func testTimeBudget_HoistsABuriedBurstRatherThanTrimmingIt() {
+        let buried = [
+            TaskLibrary.growthTasks[0],
+            TaskLibrary.growthTasks[1],
+            TaskLibrary.foundationTasks.first { $0.id == "complete_daily_burst" }!
+        ]
+        let capped = TaskLibrary.capToTimeBudget(buried, budget: .one).map(\.id)
+        XCTAssertEqual(capped, ["complete_daily_burst", "journal_insight"],
+                       "capped to \(capped)")
+    }
+
+    /// No answer, no cap. Everyone who onboarded before this shipped, and
+    /// everyone in an arm that skips the question, keeps the board they had.
+    func testTimeBudget_AbsentAnswerServesTheWholeBoard() {
+        withStandardTasks {
+            let ids = TaskLibrary.getCoreTasksForStreak(3, connectStyle: nil, timeBudget: nil).map(\.id)
+            XCTAssertEqual(ids, ["complete_daily_burst", "read_devotional",
+                                 "listen_audio", "ask_the_bible"],
+                           "unbudgeted day 3 served \(ids)")
+        }
+    }
+
+    /// A cap wider than the day never invents rows to fill itself. Day 1 is
+    /// deliberately three rows, and a three-minute user gets those three.
+    func testTimeBudget_NeverPadsAShortBoard() {
+        withStandardTasks {
+            let ids = TaskLibrary.getCoreTasksForStreak(1, connectStyle: nil, timeBudget: .three).map(\.id)
+            XCTAssertEqual(ids, ["complete_daily_burst", "read_devotional", "listen_audio"],
+                           "day 1 at three minutes served \(ids)")
+        }
+    }
+
+    /// The raw values are the quiz's own option values, so an onboarding arm
+    /// stores its answer with `DailyTimeBudget(rawValue:)` and no mapping
+    /// table. If these drift, every arm silently stops persisting the answer
+    /// and every board goes back to uncapped.
+    func testTimeBudget_RawValuesMatchTheQuizOptions() {
+        XCTAssertEqual(DailyTimeBudget(rawValue: "one"), .one)
+        XCTAssertEqual(DailyTimeBudget(rawValue: "three"), .three)
+        XCTAssertEqual(DailyTimeBudget(rawValue: "ten"), .ten)
+    }
+
+    func testTimeBudget_RoundTripsThroughStorage() {
+        let defaults = UserDefaults(suiteName: "DailyTimeBudgetTests")!
+        defaults.removePersistentDomain(forName: "DailyTimeBudgetTests")
+
+        XCTAssertNil(DailyTimeBudget.stored(defaults: defaults))
+        for budget in DailyTimeBudget.allCases {
+            DailyTimeBudget.store(budget, defaults: defaults)
+            XCTAssertEqual(DailyTimeBudget.stored(defaults: defaults), budget)
+        }
+        DailyTimeBudget.store(nil, defaults: defaults)
+        XCTAssertNil(DailyTimeBudget.stored(defaults: defaults))
+    }
+
     /// `DailyTask` uses synthesized Codable, which does NOT fall back to a
     /// property's default when a key is absent. A non-optional `Bool` here would
     /// throw `keyNotFound` on every checklist persisted before this shipped, and

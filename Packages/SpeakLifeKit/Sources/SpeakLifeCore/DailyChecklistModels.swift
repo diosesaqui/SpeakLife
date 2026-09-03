@@ -108,6 +108,71 @@ public enum ConnectStyle: String, CaseIterable, Codable {
     }
 }
 
+// MARK: - Daily Time Budget
+
+/// How much time the user said they can give this daily, asked once in
+/// onboarding ("How much time can you give this daily?" — 1 / 3 / 10 minutes).
+///
+/// Every onboarding arm asks it, and until now the only thing that read the
+/// answer back was a copy line on the plan reveal. The checklist served the
+/// identical board to all three answers: someone who told us they have one
+/// minute got the Burst, their declaration, Guarding, the devotional, the audio
+/// and Ask the Bible — a board whose own `estimatedTotalMinutes` runs past
+/// fifteen. Asking for a commitment and then handing back fifteen times it is
+/// how a day-one user decides the product was not built for them.
+///
+/// So the answer becomes a cap on how many rows the board may show. It never
+/// decides WHICH rows: the pipeline in `getCoreTasksForStreak` has already put
+/// the day's most important work first — the Burst, then the user's own
+/// declaration, then Guarding, then the modality they said they connect
+/// through — so the cap is a prefix of that order, and the Burst always
+/// survives it because it is the only row that earns the streak.
+///
+/// Nothing is deleted, only unshown. Every trimmed row is still reachable from
+/// its own tab, and the board grows back the moment the answer changes.
+public enum DailyTimeBudget: String, CaseIterable, Codable {
+    /// "1 minute. I need it fast" — the Burst, and one row behind it.
+    case one
+    /// "3 minutes morning and night" — the Burst, and two rows behind it.
+    case three
+    /// "10 minutes. I want to go deep" — the whole board, uncapped.
+    case ten
+
+    /// The most rows the checklist may show, or nil for no cap.
+    ///
+    /// Counts the Burst, so `.one` is "the Burst and maybe one more" and
+    /// `.three` is a three-row day — the shapes the question's own labels
+    /// promise. `.ten` is nil rather than some large number on purpose: the
+    /// board's natural length is already the ceiling for someone who asked to
+    /// go deep, and a number here would quietly start trimming them the day a
+    /// row is added.
+    public var maxTasks: Int? {
+        switch self {
+        case .one:   return 2
+        case .three: return 3
+        case .ten:   return nil
+        }
+    }
+
+    /// Persisted by whichever onboarding arm asked the question, and read
+    /// straight from `UserDefaults` for the same reason `ConnectStyle` is.
+    /// The raw values are the quiz's own option values ("one" | "three" |
+    /// "ten"), so an arm stores its answer without a mapping table in between.
+    public static let storageKey = "daily_time_budget"
+
+    public static func stored(defaults: UserDefaults = .standard) -> DailyTimeBudget? {
+        defaults.string(forKey: storageKey).flatMap(DailyTimeBudget.init(rawValue:))
+    }
+
+    public static func store(_ budget: DailyTimeBudget?, defaults: UserDefaults = .standard) {
+        guard let budget else {
+            defaults.removeObject(forKey: storageKey)
+            return
+        }
+        defaults.set(budget.rawValue, forKey: storageKey)
+    }
+}
+
 public enum DifficultyLevel: Int, CaseIterable, Codable {
     case beginner = 1
     case intermediate = 2
@@ -1262,13 +1327,18 @@ public struct TaskLibrary {
     /// - Parameter connectStyle: how the user said they connect best with
     ///   scripture. Defaults to whatever onboarding persisted; pass an explicit
     ///   value in tests. nil leaves the ordering exactly as it was.
+    /// - Parameter timeBudget: how much time the user said they have each day.
+    ///   Defaults to whatever onboarding persisted; pass an explicit value in
+    ///   tests. nil serves the whole board, exactly as before. See
+    ///   `DailyTimeBudget` and `capToTimeBudget`.
     public static func getCoreTasksForStreak(_ streakDay: Int, userCategories: [String] = [],
                                              foundationAudioDay: Int? = nil,
                                              enforcementDay: EnforcementDay? = nil,
                                              personalDeclarations: PersonalDeclaration.Progress? = nil,
                                              guardCompletedToday: Bool? = nil,
                                              totalDaysCompleted: Int = 0,
-                                             connectStyle: ConnectStyle? = ConnectStyle.stored()) -> [DailyTask] {
+                                             connectStyle: ConnectStyle? = ConnectStyle.stored(),
+                                             timeBudget: DailyTimeBudget? = DailyTimeBudget.stored()) -> [DailyTask] {
         let audioDay = foundationAudioDay ?? streakDay
         // Check if AI features are enabled for enhanced task generation
         if isAIEnabled() {
@@ -1278,7 +1348,8 @@ public struct TaskLibrary {
             let led = leadWithPreferredModality(owned, style: connectStyle, streakDay: streakDay)
             let guarded = withGuard(burstFirst(led), completedToday: guardCompletedToday,
                                     totalDaysCompleted: totalDaysCompleted)
-            return withPersonalDeclaration(guarded, progress: personalDeclarations)
+            return capToTimeBudget(withPersonalDeclaration(guarded, progress: personalDeclarations),
+                                   budget: timeBudget)
         }
 
         // Standard task generation
@@ -1335,7 +1406,37 @@ public struct TaskLibrary {
         let led = leadWithPreferredModality(tasks, style: connectStyle, streakDay: streakDay)
         let guarded = withGuard(burstFirst(led), completedToday: guardCompletedToday,
                                 totalDaysCompleted: totalDaysCompleted)
-        return withPersonalDeclaration(guarded, progress: personalDeclarations)
+        return capToTimeBudget(withPersonalDeclaration(guarded, progress: personalDeclarations),
+                               budget: timeBudget)
+    }
+
+    /// Trims the finished board down to what the user said they have time for.
+    ///
+    /// Runs LAST, after every injector and every reorder, because the order it
+    /// trims from is the priority order the rest of this pipeline exists to
+    /// establish: Burst, then the declaration in the user's own words, then
+    /// Guarding, then the modality they told us they connect through. Capping
+    /// any earlier would trim a list the injectors then push rows back onto,
+    /// and the board would come out over its own cap.
+    ///
+    /// **The Burst is never trimmed away.** It is the only row that earns the
+    /// streak (`DailyChecklist.isStreakEarned`), so a board without it is a day
+    /// the user cannot win no matter what they tap. On every shipped path
+    /// `burstFirst` has already put it at index 0 and the prefix keeps it; the
+    /// hoist below is for a mix that had no Burst for `burstFirst` to move.
+    ///
+    /// Internal rather than private so the hoist is testable — no public phase
+    /// mix drops the Burst, so that branch is otherwise unreachable and would
+    /// rot silently.
+    static func capToTimeBudget(_ tasks: [DailyTask], budget: DailyTimeBudget?) -> [DailyTask] {
+        guard let limit = budget?.maxTasks, limit > 0, tasks.count > limit else { return tasks }
+        var result = Array(tasks.prefix(limit))
+        if let burst = tasks.first(where: { $0.id == "complete_daily_burst" }),
+           !result.contains(where: { $0.id == burst.id }) {
+            result.removeLast()
+            result.insert(burst, at: 0)
+        }
+        return result
     }
 
     /// Adds the declaration row, or replaces it if a caller already had one.
