@@ -1009,6 +1009,42 @@ final class DailyChecklistTests: XCTestCase {
         }
     }
 
+    /// The Settings picker shows `.ten` to anyone with no stored answer, on the
+    /// grounds that an unset user really is on the whole board. That is only
+    /// honest if nil and `.ten` build the same day — pinned here as well as in
+    /// `testTimeBudget_SetsTheBoardLength`, because this is the assumption the
+    /// UI default rests on and it is not obvious from the picker's code.
+    func testTimeBudget_UnsetAndTenAreTheSameDay() {
+        withStandardTasks {
+            for day in [1, 3, 8, 30, 120] {
+                func ids(_ budget: DailyTimeBudget?) -> [String] {
+                    TaskLibrary.getCoreTasksForStreak(
+                        day,
+                        personalDeclarations: progress(total: 1, spoken: 0),
+                        guardCompletedToday: false,
+                        totalDaysCompleted: day,
+                        connectStyle: nil,
+                        timeBudget: budget
+                    ).map(\.id)
+                }
+                XCTAssertEqual(ids(nil), ids(.ten), "day \(day) differs between unset and ten")
+            }
+        }
+    }
+
+    /// Every case carries picker copy. A missing string would ship an empty row
+    /// in Settings, and the switch is exhaustive so the compiler cannot catch a
+    /// case added with a placeholder.
+    func testTimeBudget_EveryCaseHasPickerCopy() {
+        for budget in DailyTimeBudget.allCases {
+            XCTAssertFalse(budget.displayName.isEmpty, "\(budget.rawValue) has no display name")
+            XCTAssertFalse(budget.settingsDetail.isEmpty, "\(budget.rawValue) has no detail line")
+        }
+        XCTAssertEqual(Set(DailyTimeBudget.allCases.map(\.displayName)).count,
+                       DailyTimeBudget.allCases.count,
+                       "two budgets share a picker label")
+    }
+
     /// `DailyTask` uses synthesized Codable, which does NOT fall back to a
     /// property's default when a key is absent. A non-optional `Bool` here would
     /// throw `keyNotFound` on every checklist persisted before this shipped, and

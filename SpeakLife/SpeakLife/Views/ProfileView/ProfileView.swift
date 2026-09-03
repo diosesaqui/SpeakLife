@@ -35,6 +35,12 @@ struct ProfileView: View {
     @EnvironmentObject var subscriptionStore: SubscriptionStore
     @EnvironmentObject var themeViewModel: ThemeViewModel
     @AppStorage("useAnimatedText") private var useAnimatedText = true
+    // Defaults to `.ten` for anyone with no stored answer, which is accurate
+    // rather than merely convenient: `capToTimeBudget` treats a nil budget and
+    // `.ten` identically, so an unset user really is on the whole board.
+    // `@AppStorage` does not write the default until the picker is touched, so
+    // showing it here does not silently cap anyone.
+    @AppStorage(DailyTimeBudget.storageKey) private var dailyTimeBudget: DailyTimeBudget = .ten
     
     @State var result: Result<MFMailComposeResult, Error>? = nil
     private let appVersion = "App version: \(APP.Version.stringNumber)"
@@ -126,6 +132,7 @@ struct ProfileView: View {
                        // }
 
                         remindersRow
+                        dailyTimeRow
                         appIconRow
                      //   widgetPreferencesRow
                        // favoritesRow
@@ -285,6 +292,51 @@ struct ProfileView: View {
         
     }
     
+    /// How much time they have for the daily checklist, asked once in
+    /// onboarding and, until now, unchangeable afterwards.
+    ///
+    /// The answer caps how many rows the board shows, so someone who picked "1
+    /// minute" on the day they installed was held to it forever — including
+    /// after the season that made them pick it had passed. A commitment the
+    /// product will not let you raise is not a commitment, it is a trap.
+    ///
+    /// Rebuilds today's board on change rather than waiting for the next day
+    /// rollover: a setting whose effect is invisible until tomorrow reads as
+    /// broken, and the checklist is one tab away.
+    @MainActor
+    private var dailyTimeRow: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Image(systemName: "clock.fill")
+                    .foregroundColor(Constants.DAMidBlue)
+                Picker(selection: $dailyTimeBudget) {
+                    ForEach(DailyTimeBudget.allCases, id: \.self) { budget in
+                        Text(budget.displayName).tag(budget)
+                    }
+                } label: {
+                    Text("Daily Time", comment: "Daily checklist time budget row title")
+                }
+                .pickerStyle(MenuPickerStyle())
+            }
+
+            Text(dailyTimeBudget.settingsDetail)
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .onChange(of: dailyTimeBudget) { _ in
+            // `@AppStorage` has already written the raw value that
+            // `DailyTimeBudget.stored()` reads, so the rebuild below picks the
+            // new cap straight up.
+            enhancedStreakViewModel.refreshTasksForPreferenceChange()
+            Event.trackUserAction(
+                "daily_time_budget_changed",
+                category: "profile",
+                metadata: ["daily_minutes": dailyTimeBudget.rawValue,
+                           "source": "profile_menu"]
+            )
+        }
+    }
+
     @MainActor
     private var appIconRow: some View {
         HStack {
