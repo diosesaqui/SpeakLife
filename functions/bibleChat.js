@@ -84,7 +84,14 @@ HOW TO WRITE ONE:
 - ONE sentence, 10 to 18 words. Built for the mouth, not the eye. Say it out loud in your head before you write it.
 - Plain words that land the first time. No poetry, no riddles, nothing the person has to decode.
 - Never name the problem in the declaration. Do not mention the fear, the sickness, the lack. Declare the higher reality that displaces it, aimed at the place it lives: a racing mind gets a sound mind, a sick body gets healing, tight finances get provision.
-- Two things Scripture never promises, so a declaration never claims them: that another free person will change or return, and any specific outcome no verse states. Declare God's faithfulness toward them and their own standing instead.`;
+- Two things Scripture never promises, so a declaration never claims them: that another free person will change or return, and any specific outcome no verse states. Declare God's faithfulness toward them and their own standing instead.
+
+TAGGING THE DECLARATION (required whenever you give one):
+After your reply, on its very last line and nothing after it, repeat the declaration as one line of JSON behind this exact marker:
+[[SL_DECL]]{"text":"the declaration, word for word as written above","verse":"the verse text it stands on","reference":"Book Chapter:Verse","category":"one value from the list"}
+- category is exactly one of: faith, fear, hope, health, wealth, wisdom, grace, addiction, confidence, godsprotection, rest, joy, hardtimes, parenting, identity, marriage, relationship, love, gratitude, purity, warfare, destiny, general. Pick the closest; use general when none fits.
+- The marker line is stripped before the person ever sees it, so it is never part of what you write to them. It exists so the app can offer to save the declaration and speak it back to them every day.
+- Omit the marker entirely when you did not give a declaration. Never emit it on an understanding question, and never on a crisis reply.`;
 
 // ─── RevenueCat entitlement check (server-side, authoritative when reachable) ─
 // Returns true/false when RC gives a definitive answer, or null when RC is
@@ -212,6 +219,42 @@ exports.bibleChat = onRequest(
       return;
     }
 
+    // ─── Pull the tagged declaration out of the reply ────────────────────
+    // The model appends a machine-readable copy of any declaration it gave, so
+    // the app can offer to save it as a real personal declaration instead of
+    // leaving it as text in a bubble. Stripped here so the marker can never
+    // reach a chat bubble, including when parsing fails.
+    // Deliberately NOT anchored to the end of the reply. An end-anchored match
+    // fails the moment the model writes one more sentence after the marker, and
+    // the failure mode is the raw `[[SL_DECL]]{...}` rendered in a chat bubble.
+    // Cut the matched span out wherever it lands, then scrub any residual
+    // marker, so a mangled tag costs the save button and never the reply.
+    let declaration = null;
+    const declMatch = reply.match(/\[\[SL_DECL\]\]\s*(\{[\s\S]*?\})/);
+    if (declMatch) {
+      reply = (reply.slice(0, declMatch.index)
+        + reply.slice(declMatch.index + declMatch[0].length)).trim();
+      try {
+        const parsed = JSON.parse(declMatch[1]);
+        const text = typeof parsed.text === 'string' ? parsed.text.trim() : '';
+        // A declaration with no line to speak is not a declaration. Everything
+        // else degrades: the app falls back to `general` on an unknown category
+        // and simply shows no verse when one is missing.
+        if (text) {
+          declaration = {
+            text,
+            verse: typeof parsed.verse === 'string' ? parsed.verse.trim() : '',
+            reference: typeof parsed.reference === 'string' ? parsed.reference.trim() : '',
+            category: typeof parsed.category === 'string' ? parsed.category.trim() : 'general',
+          };
+        }
+      } catch (err) {
+        // Malformed JSON costs the save button, not the answer.
+        console.warn('Declaration tag parse failed:', err.message);
+      }
+    }
+    reply = reply.replace(/\[\[SL_DECL\]\]/g, '').trim();
+
     if (!reply) {
       res.status(502).json({ error: 'empty_reply' });
       return;
@@ -237,6 +280,7 @@ exports.bibleChat = onRequest(
 
     res.json({
       reply,
+      declaration,
       needsPaywall: false,
       remainingFree,
       usage: {

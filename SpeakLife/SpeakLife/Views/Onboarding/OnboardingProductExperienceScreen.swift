@@ -22,7 +22,7 @@ struct OnboardingProductExperienceScreen: View {
 
     private let features: [(icon: String, title: String, body: String)] = [
         ("waveform", "Speak it out loud", "Declarations are made to be spoken, not just read. Open your mouth over your situation and watch what shifts."),
-        ("bubble.left.and.bubble.right.fill", "Bible Chat", "Ask anything and get answers rooted in Scripture. Like having a wise friend in the Word, any hour of the day."),
+        ("bubble.left.and.bubble.right.fill", "Bible Chat", "Bring whatever you're facing and get Scripture on it, plus a declaration to speak over it. Save it and hear it every day."),
         ("headphones", "Listen anywhere", "Press play and let Scripture wash over you. Hands-free declarations for the commute, the gym, or a sleepless night."),
         ("car", "Built for real life", "Use it in the car, before a hard conversation, or late at night. Simple when everything else feels heavy.")
     ]

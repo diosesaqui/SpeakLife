@@ -1007,7 +1007,7 @@ struct PersonalDeclarationOnboardingView: View {
                 .foregroundColor(.white.opacity(0.72))
             }
 
-            Text("This is Bible Chat. It's in the app, any hour.")
+            Text("This is Bible Chat. Ask it anything, get a line to speak.")
                 .font(.system(size: 12, weight: .regular, design: .rounded))
                 .foregroundColor(.white.opacity(0.4))
         }

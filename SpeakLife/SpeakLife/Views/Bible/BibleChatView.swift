@@ -444,7 +444,15 @@ struct BibleChatConversationView: View {
                         emptyState
                     } else {
                         ForEach(viewModel.messages) { msg in
-                            ChatBubble(message: msg).id(msg.id)
+                            VStack(alignment: .leading, spacing: 8) {
+                                ChatBubble(message: msg).id(msg.id)
+                                // The declaration is already written in the
+                                // bubble above, so this offers the action and
+                                // not a second copy of the words.
+                                if let declaration = msg.declaration {
+                                    ChatDeclarationSaveCard(declaration: declaration)
+                                }
+                            }
                         }
                     }
                     if viewModel.isSending {
@@ -909,6 +917,110 @@ private struct TypingDots: View {
             }
         }
         .onAppear { animating = true }
+    }
+}
+
+/// Turns a declaration the chat gave into a real personal declaration.
+///
+/// Routes through `PersonalDeclarationViewModel.saveAndContinue`, which is the
+/// same call the onboarding flow makes, so a declaration saved from a chat is
+/// indistinguishable from one written on frame one: same repository, same limit
+/// check, same daily notification. Building a second save path would have meant
+/// a second definition of what a personal declaration is.
+private struct ChatDeclarationSaveCard: View {
+    let declaration: ChatDeclaration
+
+    @EnvironmentObject private var appState: AppState
+    @EnvironmentObject private var subscriptionStore: SubscriptionStore
+
+    private enum SaveState: Equatable { case idle, saving, saved, failed(String) }
+    @State private var state: SaveState = .idle
+
+    var body: some View {
+        Group {
+            switch state {
+            case .saved:
+                HStack(spacing: 7) {
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.system(size: 13))
+                    Text("Saved. You'll hear this every day.")
+                        .font(.system(size: 13, weight: .medium))
+                }
+                .foregroundColor(Constants.gold.opacity(0.9))
+
+            case .failed(let message):
+                HStack(spacing: 7) {
+                    Image(systemName: "exclamationmark.circle.fill")
+                        .font(.system(size: 13))
+                    Text(message)
+                        .font(.system(size: 13))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .foregroundColor(.red.opacity(0.85))
+
+            case .idle, .saving:
+                Button {
+                    Task { await save() }
+                } label: {
+                    HStack(spacing: 8) {
+                        if state == .saving {
+                            ProgressView().scaleEffect(0.7).tint(Constants.gold)
+                        } else {
+                            Image(systemName: "hands.sparkles.fill")
+                                .font(.system(size: 13))
+                        }
+                        Text(state == .saving ? "Saving..." : "Speak this daily")
+                            .font(.system(size: 14, weight: .semibold))
+                    }
+                    .foregroundColor(Constants.gold)
+                    .padding(.vertical, 9)
+                    .padding(.horizontal, 14)
+                    .background(
+                        Capsule()
+                            .fill(Constants.gold.opacity(0.12))
+                            .overlay(Capsule().stroke(Constants.gold.opacity(0.35), lineWidth: 1))
+                    )
+                }
+                .disabled(state == .saving)
+            }
+        }
+        .padding(.leading, 2)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .animation(.easeOut(duration: 0.25), value: state)
+    }
+
+    private func save() async {
+        state = .saving
+        let viewModel = DIContainer.shared.makePersonalDeclarationViewModel()
+        // `beliefText` is what the user was carrying; the chat's own words for
+        // the situation are the closest thing this surface has to the free-form
+        // input onboarding collects.
+        viewModel.inputText = declaration.text
+        viewModel.match = DeclarationMatch(
+            category: DeclarationCategory(rawValue: declaration.categoryRaw) ?? .general,
+            declarationText: declaration.text,
+            verse: declaration.verse,
+            verseReference: declaration.reference,
+            isConfident: true
+        )
+        do {
+            _ = try await viewModel.saveAndContinue(
+                startTimeIndex: appState.personalDeclarationTimeIndex,
+                limit: PersonalDeclarationLimits.maxDeclarations(isPremium: subscriptionStore.isPremium)
+            )
+            appState.hasPersonalDeclaration = true
+            AnalyticsService.shared.track("bible_chat_declaration_saved", parameters: [
+                "category": (DeclarationCategory(rawValue: declaration.categoryRaw) ?? .general).rawValue
+            ])
+            state = .saved
+        } catch let error as PersonalDeclarationLimitError {
+            AnalyticsService.shared.track("bible_chat_declaration_save_blocked", parameters: [
+                "reason": "limit"
+            ])
+            state = .failed(error.errorDescription ?? "You've reached your limit.")
+        } catch {
+            state = .failed("Couldn't save that. Try again.")
+        }
     }
 }
 

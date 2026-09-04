@@ -247,7 +247,7 @@ enum UserPain: String, CaseIterable {
             leadSolution,
             ("headphones", "His Word in your ears", "Guided declarations over \(domain) for the morning, the commute, and before bed."),
             ("calendar", "Thirty days, not one good day", "A daily plan so you're speaking over \(domain) on the ordinary days too."),
-            ("bubble.left.and.bubble.right.fill", "Ask the Bible anything", "Every promise about \(domain), chapter and verse, in seconds.")
+            ("bubble.left.and.bubble.right.fill", "Ask the Bible anything", "Bring \(domain) and get back a declaration to speak, not just an answer.")
         ]
     }
 
@@ -693,7 +693,13 @@ struct HighConversionPaywallView: View {
     private static let comparisonRows: [(feature: String, others: OthersMark)] = [
         ("Spoken declarations",  .no),
         ("Guided audio",         .no),
-        ("AI Bible chat",        .yes),   // both have it — check on both columns
+        // Was "AI Bible chat" marked `.yes`: a checkmark in both columns, on the
+        // one row where the difference is now real. Every faith app has a chat
+        // that answers. This one ends the answer with a line to speak and
+        // offers to save it as a declaration you hear daily, which is the whole
+        // product in one row. Renamed so the row states what is actually being
+        // compared rather than conceding the category.
+        ("Chat with a declaration", .no),
         ("Faith journal",        .some),
         ("Personalized to you",  .no)
     ]

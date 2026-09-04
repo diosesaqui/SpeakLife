@@ -134,7 +134,9 @@ final class BibleChatConversationViewModel: ObservableObject {
                     if messages.last?.role == .user { messages.removeLast() }
                     needsPaywall = true
                 } else if let reply = result.reply {
-                    messages.append(ChatMessage(role: .assistant, text: reply))
+                    messages.append(ChatMessage(role: .assistant,
+                                                text: reply,
+                                                declaration: result.declaration))
                     remainingFree = result.remainingFree
                     // Persist the exchange to local history (creates the
                     // conversation on the first save of a new chat).
