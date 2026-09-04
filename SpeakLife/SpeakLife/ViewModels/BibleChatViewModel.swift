@@ -54,6 +54,15 @@ final class BibleChatViewModel: ObservableObject {
 final class BibleChatConversationViewModel: ObservableObject {
 
     @Published var messages: [ChatMessage] = []
+
+    /// Assistant messages whose declaration has already been saved.
+    ///
+    /// Lives here rather than as `@State` on the card because the message list
+    /// is a `LazyVStack`: scrolling a saved row out of view and back tears the
+    /// card down and rebuilds it, so view-local state came back as "Speak this
+    /// daily" and a second tap wrote a duplicate `PersonalDeclaration` with its
+    /// own daily notification.
+    @Published var savedDeclarationIDs: Set<UUID> = []
     @Published var draft: String = ""
     @Published var isSending: Bool = false
     @Published var errorMessage: String?

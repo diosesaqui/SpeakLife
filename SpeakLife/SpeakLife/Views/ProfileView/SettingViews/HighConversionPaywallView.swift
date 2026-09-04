@@ -699,7 +699,7 @@ struct HighConversionPaywallView: View {
         // offers to save it as a declaration you hear daily, which is the whole
         // product in one row. Renamed so the row states what is actually being
         // compared rather than conceding the category.
-        ("Chat with a declaration", .no),
+        ("Chat that gives a declaration", .no),
         ("Faith journal",        .some),
         ("Personalized to you",  .no)
     ]

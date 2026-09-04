@@ -139,6 +139,14 @@ struct PersonalDeclarationOnboardingView: View {
     /// One follow-up is what turns a form submission into a conversation.
     @State private var isFollowUp = false
 
+    /// The declaration the user was looking at when they tapped the follow-up.
+    ///
+    /// Restored if they back out, and honoured on skip: without it, "Skip for
+    /// now" from the follow-up input discarded a declaration the user had
+    /// already been told to speak, and there was no route back to `.result` at
+    /// all. A one-way door sitting directly under the primary CTA.
+    @State private var priorMatch: DeclarationMatch? = nil
+
     @State private var keyboardHeight: CGFloat = 0
     private var keyboardUp: Bool { keyboardHeight > 0 }
 
@@ -407,7 +415,25 @@ struct PersonalDeclarationOnboardingView: View {
         )
     }
 
+    /// Returns to the declaration the follow-up navigated away from.
+    private func cancelFollowUp() {
+        AnalyticsService.shared.track("onboarding_declaration_follow_up_cancelled",
+                                      parameters: ["flow": flow])
+        if let priorMatch { viewModel.match = priorMatch }
+        isFollowUp = false
+        priorMatch = nil
+        viewModel.errorMessage = nil
+        withAnimation { viewModel.step = .result }
+    }
+
     private func skip() {
+        // A skip from the follow-up is a change of mind about the follow-up,
+        // not about the declaration they already earned. Send them back to it
+        // rather than completing the screen with nothing.
+        if isFollowUp, priorMatch != nil {
+            cancelFollowUp()
+            return
+        }
         AnalyticsService.shared.track("personal_declaration_skipped", parameters: [
             "flow": flow,
             "after_failure": viewModel.errorMessage != nil
@@ -865,6 +891,7 @@ struct PersonalDeclarationOnboardingView: View {
                         .padding(.bottom, 12)
 
                         Button("Try Again — Be More Specific") {
+                            isFollowUp = false
                             withAnimation { viewModel.step = .input }
                         }
                         .font(.system(size: 14, weight: .semibold))
@@ -993,6 +1020,10 @@ struct PersonalDeclarationOnboardingView: View {
                     "flow": flow,
                     "category": (viewModel.match?.category.rawValue ?? "unknown") as NSString
                 ])
+                // Keep the match. The user has just been told to speak this
+                // line and the CTA commits to it, so a curious tap must not be
+                // the thing that destroys it.
+                priorMatch = viewModel.match
                 isFollowUp = true
                 viewModel.inputText = ""
                 viewModel.errorMessage = nil
@@ -1001,13 +1032,18 @@ struct PersonalDeclarationOnboardingView: View {
                 HStack(spacing: 7) {
                     Image(systemName: "bubble.left.and.text.bubble.right.fill")
                         .font(.system(size: 12))
-                    Text("Ask about something else")
+                    Text("Try a different one")
                         .font(.system(size: 14, weight: .semibold, design: .rounded))
                 }
                 .foregroundColor(.white.opacity(0.72))
             }
 
-            Text("This is Bible Chat. Ask it anything, get a line to speak.")
+            // Names the feature without claiming this screen IS it. This runs
+            // `ClaudeDeclarationMatcher`, a declaration writer with its own
+            // refusal rules, not the chat endpoint: "ask it anything" here
+            // returns a strange declaration or a redirect, and the sentence
+            // taught a capability the screen does not have.
+            Text("Bible Chat does this for anything you're carrying, any hour.")
                 .font(.system(size: 12, weight: .regular, design: .rounded))
                 .foregroundColor(.white.opacity(0.4))
         }

@@ -443,14 +443,23 @@ struct BibleChatConversationView: View {
                     if viewModel.messages.isEmpty {
                         emptyState
                     } else {
-                        ForEach(viewModel.messages) { msg in
+                        ForEach(Array(viewModel.messages.enumerated()), id: \.element.id) { index, msg in
                             VStack(alignment: .leading, spacing: 8) {
                                 ChatBubble(message: msg).id(msg.id)
                                 // The declaration is already written in the
                                 // bubble above, so this offers the action and
                                 // not a second copy of the words.
                                 if let declaration = msg.declaration {
-                                    ChatDeclarationSaveCard(declaration: declaration)
+                                    ChatDeclarationSaveCard(
+                                        declaration: declaration,
+                                        // What the person actually asked. Used
+                                        // both to screen the request and as the
+                                        // belief text the saved card displays.
+                                        askedText: viewModel.messages[..<index]
+                                            .last(where: { $0.role == .user })?.text ?? "",
+                                        isSaved: viewModel.savedDeclarationIDs.contains(msg.id),
+                                        onSaved: { viewModel.savedDeclarationIDs.insert(msg.id) }
+                                    )
                                 }
                             }
                         }
@@ -521,7 +530,7 @@ struct BibleChatConversationView: View {
     /// `TrialExperienceService` personalizes its trial pushes from, so a user
     /// who never answered lands on `.general` and gets nothing extra rather than
     /// a wrong guess. Phrased as the user would type it, not as a topic label.
-    private var seededQuestion: String? {
+    private var seededQuestion: String {
         switch UserPreferencesTracker.shared.primaryCategory {
         case .anxiety:    return "My mind won't stop racing. What does God say about that?"
         case .fear:       return "I keep bracing for bad news. What does God say to that fear?"
@@ -533,8 +542,20 @@ struct BibleChatConversationView: View {
         case .joy:        return "Everything feels flat lately. What does God say about joy?"
         case .love:       return "What does God's Word say about how He loves me?"
         case .faith:      return "How do I build faith that actually holds?"
-        case .general:    return nil
+        // Not "we never asked" — `primaryCategory` is a `CategoryType` with 11
+        // cases, while onboarding records `DeclarationCategory` raw values, of
+        // which there are far more. Anyone whose heaviest thing is wealth,
+        // grief, purity, parenting or a dozen others falls through here, so
+        // `.general` is the COMMON case rather than the empty one. An opener
+        // everyone can answer beats a blank screen; it is an invitation, not a
+        // wrong guess.
+        case .general:    return "What's the heaviest thing on you right now?"
         }
+    }
+
+    /// True when the opener came from something the user actually told us.
+    private var seedIsPersonal: Bool {
+        UserPreferencesTracker.shared.primaryCategory != .general
     }
 
     private var emptyState: some View {
@@ -580,47 +601,54 @@ struct BibleChatConversationView: View {
             // it had never met them. A blank chat is a hard thing to start; a
             // chat that already knows what is heavy is not. Sits above the
             // curated starters because it is the one row aimed at THIS person.
-            if let seeded = seededQuestion {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("PICK UP WHERE YOU LEFT OFF")
-                        .font(.system(size: 11, weight: .bold))
-                        .tracking(1.4)
-                        .foregroundColor(Constants.gold.opacity(0.75))
-                        .padding(.leading, 4)
+            VStack(alignment: .leading, spacing: 10) {
+                Text("START HERE")
+                    .font(.system(size: 11, weight: .bold))
+                    .tracking(1.4)
+                    .foregroundColor(Constants.gold.opacity(0.75))
+                    .padding(.leading, 4)
 
-                    Button {
-                        Juice.play(.tapLight)
-                        AnalyticsService.shared.track("bible_chat_seeded_starter_tapped", parameters: [
-                            "category": UserPreferencesTracker.shared.primaryCategory.rawValue
-                        ])
-                        viewModel.send(seeded, isPremium: subscriptionStore.isPremium)
-                    } label: {
-                        HStack(spacing: 12) {
-                            Image(systemName: "heart.text.square.fill")
-                                .font(.system(size: 18))
-                                .foregroundColor(Constants.gold)
-                            Text(seeded)
-                                .font(.system(size: 15, weight: .medium))
-                                .foregroundColor(.white.opacity(0.92))
-                                .multilineTextAlignment(.leading)
-                                .fixedSize(horizontal: false, vertical: true)
-                            Spacer(minLength: 0)
-                        }
-                        .padding(14)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(
-                            RoundedRectangle(cornerRadius: 14)
-                                .fill(Constants.gold.opacity(0.10))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 14)
-                                        .stroke(Constants.gold.opacity(0.30), lineWidth: 1)
-                                )
-                        )
+                Button {
+                    Juice.play(.tapLight)
+                    AnalyticsService.shared.track("bible_chat_seeded_starter_tapped", parameters: [
+                        "category": UserPreferencesTracker.shared.primaryCategory.rawValue,
+                        "is_personal": seedIsPersonal as NSNumber
+                    ])
+                    viewModel.send(seededQuestion, isPremium: subscriptionStore.isPremium)
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "heart.text.square.fill")
+                            .font(.system(size: 18))
+                            .foregroundColor(Constants.gold)
+                        Text(seededQuestion)
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundColor(.white.opacity(0.92))
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Spacer(minLength: 0)
                     }
+                    .padding(14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(Constants.gold.opacity(0.10))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(Constants.gold.opacity(0.30), lineWidth: 1)
+                            )
+                    )
                 }
-                .opacity(heroAppeared ? 1 : 0)
-                .offset(y: heroAppeared ? 0 : 12)
-                .animation(.easeOut(duration: 0.4).delay(0.05), value: heroAppeared)
+            }
+            .opacity(heroAppeared ? 1 : 0)
+            .offset(y: heroAppeared ? 0 : 12)
+            .animation(.easeOut(duration: 0.4).delay(0.05), value: heroAppeared)
+            // Paired with the tap event so the row's take-rate is measurable.
+            // Without a shown event there was no denominator.
+            .onAppear {
+                AnalyticsService.shared.track("bible_chat_seeded_starter_shown", parameters: [
+                    "category": UserPreferencesTracker.shared.primaryCategory.rawValue,
+                    "is_personal": seedIsPersonal as NSNumber
+                ])
             }
 
             // Suggestions
@@ -929,17 +957,34 @@ private struct TypingDots: View {
 /// a second definition of what a personal declaration is.
 private struct ChatDeclarationSaveCard: View {
     let declaration: ChatDeclaration
+    /// The user's own message that produced this reply.
+    let askedText: String
+    let isSaved: Bool
+    let onSaved: () -> Void
 
     @EnvironmentObject private var appState: AppState
     @EnvironmentObject private var subscriptionStore: SubscriptionStore
 
-    private enum SaveState: Equatable { case idle, saving, saved, failed(String) }
+    private enum SaveState: Equatable { case idle, saving, failed(String) }
     @State private var state: SaveState = .idle
+    @State private var showPremium = false
+
+    /// The same deterministic screen the onboarding writer runs, for the same
+    /// reason its own comment gives: prompt instructions alone were judged
+    /// insufficient for a surface that turns model output into scripture-shaped
+    /// text the app stands behind. This path is strictly worse without it —
+    /// saving does not just render a line, it schedules a repeating daily
+    /// notification — so a crisis or harm-to-another request must never reach a
+    /// save button, whatever the model chose to write.
+    private var isStandable: Bool {
+        SituationScreen.screen(askedText) == .standable
+    }
 
     var body: some View {
         Group {
-            switch state {
-            case .saved:
+            if !isStandable {
+                EmptyView()
+            } else if isSaved {
                 HStack(spacing: 7) {
                     Image(systemName: "checkmark.seal.fill")
                         .font(.system(size: 13))
@@ -947,55 +992,70 @@ private struct ChatDeclarationSaveCard: View {
                         .font(.system(size: 13, weight: .medium))
                 }
                 .foregroundColor(Constants.gold.opacity(0.9))
-
-            case .failed(let message):
-                HStack(spacing: 7) {
-                    Image(systemName: "exclamationmark.circle.fill")
-                        .font(.system(size: 13))
-                    Text(message)
-                        .font(.system(size: 13))
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .foregroundColor(.red.opacity(0.85))
-
-            case .idle, .saving:
-                Button {
-                    Task { await save() }
-                } label: {
-                    HStack(spacing: 8) {
-                        if state == .saving {
-                            ProgressView().scaleEffect(0.7).tint(Constants.gold)
-                        } else {
-                            Image(systemName: "hands.sparkles.fill")
-                                .font(.system(size: 13))
+            } else {
+                VStack(alignment: .leading, spacing: 6) {
+                    Button {
+                        Task { await save() }
+                    } label: {
+                        HStack(spacing: 8) {
+                            if state == .saving {
+                                ProgressView().scaleEffect(0.7).tint(Constants.gold)
+                            } else {
+                                Image(systemName: "hands.sparkles.fill")
+                                    .font(.system(size: 13))
+                            }
+                            Text(state == .saving ? "Saving..." : "Speak this daily")
+                                .font(.system(size: 14, weight: .semibold))
                         }
-                        Text(state == .saving ? "Saving..." : "Speak this daily")
-                            .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(Constants.gold)
+                        .padding(.vertical, 9)
+                        .padding(.horizontal, 14)
+                        .background(
+                            Capsule()
+                                .fill(Constants.gold.opacity(0.12))
+                                .overlay(Capsule().stroke(Constants.gold.opacity(0.35), lineWidth: 1))
+                        )
                     }
-                    .foregroundColor(Constants.gold)
-                    .padding(.vertical, 9)
-                    .padding(.horizontal, 14)
-                    .background(
-                        Capsule()
-                            .fill(Constants.gold.opacity(0.12))
-                            .overlay(Capsule().stroke(Constants.gold.opacity(0.35), lineWidth: 1))
-                    )
+                    .disabled(state == .saving)
+
+                    if case .failed(let message) = state {
+                        Text(message)
+                            .font(.system(size: 12))
+                            .foregroundColor(.white.opacity(0.7))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
-                .disabled(state == .saving)
             }
         }
         .padding(.leading, 2)
         .frame(maxWidth: .infinity, alignment: .leading)
         .animation(.easeOut(duration: 0.25), value: state)
+        .sheet(isPresented: $showPremium) {
+            PremiumView()
+                .environmentObject(subscriptionStore)
+                .environmentObject(appState)
+        }
+    }
+
+    /// Grammatical and actionable, unlike the shared `PersonalDeclarationLimitError`
+    /// text, which interpolates the count into "You can believe for 1 things at
+    /// a time." A free user who finished onboarding already carries their one,
+    /// so this is the message they hit on their first ever chat save.
+    private var limitMessage: String {
+        let max = PersonalDeclarationLimits.maxDeclarations(isPremium: subscriptionStore.isPremium)
+        let carried = max == 1 ? "one declaration" : "\(max) declarations"
+        let base = "You're carrying \(carried) already. Mark one answered in My Declarations to add this."
+        return subscriptionStore.isPremium ? base : base + " Premium carries up to \(PersonalDeclarationLimits.premium)."
     }
 
     private func save() async {
         state = .saving
         let viewModel = DIContainer.shared.makePersonalDeclarationViewModel()
-        // `beliefText` is what the user was carrying; the chat's own words for
-        // the situation are the closest thing this surface has to the free-form
-        // input onboarding collects.
-        viewModel.inputText = declaration.text
+        // The belief is what the PERSON said, not what the model wrote back.
+        // Setting this to the declaration made `PersonalDeclarationCard` print
+        // the same sentence twice, the second time under "WHAT YOU'RE BELIEVING
+        // FOR" as though the user had written it.
+        viewModel.inputText = askedText
         viewModel.match = DeclarationMatch(
             category: DeclarationCategory(rawValue: declaration.categoryRaw) ?? .general,
             declarationText: declaration.text,
@@ -1009,15 +1069,29 @@ private struct ChatDeclarationSaveCard: View {
                 limit: PersonalDeclarationLimits.maxDeclarations(isPremium: subscriptionStore.isPremium)
             )
             appState.hasPersonalDeclaration = true
+            UserPreferencesTracker.shared.personalDeclarationBelief = askedText
             AnalyticsService.shared.track("bible_chat_declaration_saved", parameters: [
                 "category": (DeclarationCategory(rawValue: declaration.categoryRaw) ?? .general).rawValue
             ])
-            state = .saved
-        } catch let error as PersonalDeclarationLimitError {
+            state = .idle
+            onSaved()
+        } catch is PersonalDeclarationLimitError {
             AnalyticsService.shared.track("bible_chat_declaration_save_blocked", parameters: [
-                "reason": "limit"
+                "reason": "limit",
+                "is_premium": subscriptionStore.isPremium as NSNumber
             ])
-            state = .failed(error.errorDescription ?? "You've reached your limit.")
+            // `SavePersonalDeclarationUseCase`'s own doc says the limit is a
+            // backstop and entry points are expected to gate up front so the
+            // user sees the paywall rather than an error. Free users carry one
+            // declaration and every onboarding arm saves it, so without this
+            // the button's only outcome for them is a red row — under copy that
+            // just promised "save it and hear it every day".
+            if subscriptionStore.isPremium {
+                state = .failed(limitMessage)
+            } else {
+                state = .idle
+                showPremium = true
+            }
         } catch {
             state = .failed("Couldn't save that. Try again.")
         }
