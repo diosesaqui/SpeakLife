@@ -127,6 +127,18 @@ struct PersonalDeclarationOnboardingView: View {
     // "Find My Declaration" and "Generate My Declaration" were buried, with no
     // way to dismiss the keyboard: a user who typed their answer could not
     // submit it. Lift the content manually instead.
+    /// True once the user has asked a follow-up from the result screen.
+    ///
+    /// Frame one already runs a Bible Chat turn: free-form situation in,
+    /// Scripture back, through `ClaudeDeclarationMatcher` on the Anthropic
+    /// Messages API. It just ended after one exchange, so what the user learned
+    /// was "this app gave me a declaration" rather than "I can ask this app
+    /// about my life" — and Bible Chat, the feature that IS this, appeared in
+    /// onboarding only as a bullet in a feature list.
+    ///
+    /// One follow-up is what turns a form submission into a conversation.
+    @State private var isFollowUp = false
+
     @State private var keyboardHeight: CGFloat = 0
     private var keyboardUp: Bool { keyboardHeight > 0 }
 
@@ -263,7 +275,9 @@ struct PersonalDeclarationOnboardingView: View {
                 // with no height to spare once the keyboard is up; the line
                 // limit plus scale factor makes the height predictable instead
                 // of device-dependent, for an override as well as the default.
-                Text(prompt ?? "What's one thing you're\ntrusting God for?")
+                Text(isFollowUp
+                     ? "What else is on\nyour heart?"
+                     : (prompt ?? "What's one thing you're\ntrusting God for?"))
                     .font(.system(size: keyboardUp ? 26 : 30, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
@@ -958,7 +972,46 @@ struct PersonalDeclarationOnboardingView: View {
         }
         .frame(width: size.width * 0.87, height: 54)
         .padding(.top, 12)
-        .padding(.bottom, 36)
+        .padding(.bottom, 14)
+
+        // Below the primary CTA and deliberately quiet.
+        //
+        // The order declaration -> "read it out loud" -> commit is the thesis of
+        // the product and the warmest paywall headline in the app comes out of
+        // it, so nothing gets to interrupt it. But this screen is also the only
+        // place in onboarding where the user experiences the capability that
+        // Bible Chat is, and until now it ended here without ever being named.
+        //
+        // `MatchDeclarationUseCase` takes a string, not a thread, so the second
+        // turn is a fresh match rather than a continuation. The prompt is worded
+        // to match ("What else is on your heart?", not "more about this"), and
+        // the new declaration replaces the old one — which is right, since the
+        // save step should carry whatever is actually heaviest.
+        VStack(spacing: 5) {
+            Button {
+                AnalyticsService.shared.track("onboarding_declaration_follow_up", parameters: [
+                    "flow": flow,
+                    "category": (viewModel.match?.category.rawValue ?? "unknown") as NSString
+                ])
+                isFollowUp = true
+                viewModel.inputText = ""
+                viewModel.errorMessage = nil
+                withAnimation { viewModel.step = .input }
+            } label: {
+                HStack(spacing: 7) {
+                    Image(systemName: "bubble.left.and.text.bubble.right.fill")
+                        .font(.system(size: 12))
+                    Text("Ask about something else")
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                }
+                .foregroundColor(.white.opacity(0.72))
+            }
+
+            Text("This is Bible Chat. It's in the app, any hour.")
+                .font(.system(size: 12, weight: .regular, design: .rounded))
+                .foregroundColor(.white.opacity(0.4))
+        }
+        .padding(.bottom, 30)
 
         if let errorMsg = viewModel.errorMessage {
             Text(errorMsg)

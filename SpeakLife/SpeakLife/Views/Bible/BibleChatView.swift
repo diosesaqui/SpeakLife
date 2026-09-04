@@ -507,6 +507,28 @@ struct BibleChatConversationView: View {
         }
     }
 
+    /// The opening question, built from what onboarding already learned.
+    ///
+    /// Reads `UserPreferencesTracker.primaryCategory`, the same source
+    /// `TrialExperienceService` personalizes its trial pushes from, so a user
+    /// who never answered lands on `.general` and gets nothing extra rather than
+    /// a wrong guess. Phrased as the user would type it, not as a topic label.
+    private var seededQuestion: String? {
+        switch UserPreferencesTracker.shared.primaryCategory {
+        case .anxiety:    return "My mind won't stop racing. What does God say about that?"
+        case .fear:       return "I keep bracing for bad news. What does God say to that fear?"
+        case .health:     return "What does God's Word say over my body right now?"
+        case .marriage:   return "Things are hard at home. What does God say about my marriage?"
+        case .confidence: return "I don't feel good enough. Who does God say I am?"
+        case .hope:       return "I'm having a hard time hoping again. What does God say?"
+        case .rest:       return "I can't seem to rest. What does God say about that?"
+        case .joy:        return "Everything feels flat lately. What does God say about joy?"
+        case .love:       return "What does God's Word say about how He loves me?"
+        case .faith:      return "How do I build faith that actually holds?"
+        case .general:    return nil
+        }
+    }
+
     private var emptyState: some View {
         VStack(spacing: DS.Spacing.lg) {
             // Hero
@@ -542,6 +564,56 @@ struct BibleChatConversationView: View {
             .opacity(heroAppeared ? 1 : 0)
             .offset(y: heroAppeared ? 0 : 10)
             .animation(.easeOut(duration: 0.45), value: heroAppeared)
+
+            // The question they already came in with.
+            //
+            // Onboarding asks every user what they are carrying and stores the
+            // answer, then this screen opened on a generic topic list as though
+            // it had never met them. A blank chat is a hard thing to start; a
+            // chat that already knows what is heavy is not. Sits above the
+            // curated starters because it is the one row aimed at THIS person.
+            if let seeded = seededQuestion {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("PICK UP WHERE YOU LEFT OFF")
+                        .font(.system(size: 11, weight: .bold))
+                        .tracking(1.4)
+                        .foregroundColor(Constants.gold.opacity(0.75))
+                        .padding(.leading, 4)
+
+                    Button {
+                        Juice.play(.tapLight)
+                        AnalyticsService.shared.track("bible_chat_seeded_starter_tapped", parameters: [
+                            "category": UserPreferencesTracker.shared.primaryCategory.rawValue
+                        ])
+                        viewModel.send(seeded, isPremium: subscriptionStore.isPremium)
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "heart.text.square.fill")
+                                .font(.system(size: 18))
+                                .foregroundColor(Constants.gold)
+                            Text(seeded)
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundColor(.white.opacity(0.92))
+                                .multilineTextAlignment(.leading)
+                                .fixedSize(horizontal: false, vertical: true)
+                            Spacer(minLength: 0)
+                        }
+                        .padding(14)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14)
+                                .fill(Constants.gold.opacity(0.10))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .stroke(Constants.gold.opacity(0.30), lineWidth: 1)
+                                )
+                        )
+                    }
+                }
+                .opacity(heroAppeared ? 1 : 0)
+                .offset(y: heroAppeared ? 0 : 12)
+                .animation(.easeOut(duration: 0.4).delay(0.05), value: heroAppeared)
+            }
 
             // Suggestions
             VStack(alignment: .leading, spacing: 10) {
