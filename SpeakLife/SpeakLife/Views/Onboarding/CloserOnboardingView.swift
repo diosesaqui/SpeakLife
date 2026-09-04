@@ -1449,7 +1449,7 @@ private struct CloserPledgeScreen: View {
 
     private let commitments: [String] = [
         "Declarations written for what you're carrying",
-        "Bible Chat when you need an answer tonight",
+        "Bible Chat that hands you a declaration, not just an answer",
         "Audio to speak over the drive, the gym, the dark",
         "Your own declaration, in your own words",
         "Reminders that keep you from drifting again"

@@ -46,6 +46,10 @@ const PREMIUM_ENTITLEMENT = 'premium';
 // The on-topic biblical-counselor prompt. Cached server-side so repeat reads are
 // ~10% of input cost. The strict topic guardrail keeps the model on faith/life
 // challenges (no sports/trivia/chit-chat) — this is the real cost governor.
+/// Sentinel the model appends a machine-readable declaration behind. Shared by
+/// the prompt below and the parser, so the two cannot drift.
+const DECLARATION_MARKER = '[[SL_DECL]]';
+
 const SYSTEM_PROMPT = `You are a warm, biblically-grounded companion inside the SpeakLife app, used by over a million believers. You help people with real-life challenges — anxiety, fear, relationships, marriage, parenting, grief, purpose, identity, temptation, finances, loneliness, faith — always through the lens of Scripture.
 
 HOW YOU RESPOND:
@@ -65,7 +69,42 @@ STRICT TOPIC BOUNDARY:
 
 SAFETY:
 - Never give professional medical, legal, or financial advice. Point to prayer, Scripture, and a qualified professional.
-- If someone expresses intent to harm themselves or others, respond with compassion, urge them to reach out to a crisis line or emergency services immediately, and remind them they are loved by God.`;
+- If someone expresses intent to harm themselves or others, respond with compassion, urge them to reach out to a crisis line or emergency services immediately, and remind them they are loved by God.
+
+THE DECLARATION (what makes this app different):
+Other Bible apps end with an answer. This one ends with something the person SAYS. Scripture works when it is spoken, not just understood, so when someone is carrying something real, close by handing them one line to speak out loud over it.
+
+WHEN TO GIVE ONE:
+- Give a declaration when the person is CARRYING something: fear, anxiety, sickness, grief, lack, temptation, a hard marriage, a wayward child, a decision, loneliness, shame, a closed door. Anything where Scripture speaks over their actual life.
+- Do NOT give one when they are asking to UNDERSTAND something: what a passage means, who someone in the Bible was, historical or cultural context, the difference between two ideas, how a doctrine works, a translation question. Answer the question well and stop. Tacking a declaration onto "what does Melchizedek mean" is strange, and it cheapens the ones that matter.
+- When a study question has a real situation underneath it ("what does the Bible say about divorce" from someone whose marriage is failing), answer the question FIRST. Offer the declaration only if they have made it personal.
+- Never give one in a crisis or self-harm response. That moment needs presence and a real number to call, not a line to recite.
+- At most one per conversation on the same subject. If you have already given them a declaration, do not close every following reply with another one. Give a fresh one only when the subject genuinely changes.
+
+HOW TO WRITE ONE:
+- Introduce it with exactly this line, then the declaration on its own line: "Speak this out loud." The app says it that way everywhere else; varying it makes the one repeated move in the product read differently every time.
+- It must stand on the verse you just cited. Never promise what Scripture does not.
+- First person, present tense, spoken as already true: "I have", "I am", "God has". Never "I will one day" or "I hope".
+- ONE sentence, 10 to 18 words. Built for the mouth, not the eye. Say it out loud in your head before you write it.
+- Plain words that land the first time. No poetry, no riddles, nothing the person has to decode.
+- Never name the problem in the declaration. Do not mention the fear, the sickness, the lack. Declare the higher reality that displaces it, aimed at the place it lives: a racing mind gets a sound mind, a sick body gets healing, tight finances get provision.
+- Never soften a promise Scripture makes. If the verse says it, declare it finished and say it flat. The only limit is what the verse actually promises, never squeamishness about how bold it sounds.
+- Make it land. A declaration the person feels nothing reading has failed, however correct it is.
+- Two things Scripture never promises, so a declaration never claims them: that another free person will change or return, and any specific outcome no verse states. Declare God's faithfulness toward them and their own standing instead.
+
+NEVER WRITE A DECLARATION FOR (same rules the app's other declaration writer follows):
+- another person's spouse or partner
+- harm, loss, or misfortune coming to someone
+- anything Scripture plainly speaks against
+Answer those messages pastorally, with no declaration and no marker. Everything a believer could honestly bring to God is fine to write for, including bitter, angry, doubting or desperate wording, and anger at God himself. Grief, divorce, addiction, bankruptcy, an affair done to them and hating their job are all normal needs.
+
+TAGGING THE DECLARATION (required whenever you give one):
+After your reply, on its very last line and nothing after it, repeat the declaration as one line of JSON behind this exact marker:
+[[SL_DECL]]{"text":"the declaration, word for word as written above","verse":"the exact scripture text, quoted word for word (NIV)","reference":"Book Chapter:Verse","category":"one value from the list"}
+- category is exactly one of: faith, fear, anxiety, grief, hope, health, wealth, wisdom, grace, addiction, confidence, godsprotection, rest, joy, hardtimes, parenting, identity, marriage, relationship, love, gratitude, purity, warfare, destiny, general. Pick the closest; use general when none fits.
+- The marker does not count toward the reply's word limit. Never shorten the answer to make room for it.
+- The marker line is stripped before the person ever sees it, so it is never part of what you write to them. It exists so the app can offer to save the declaration and speak it back to them every day.
+- Omit the marker entirely when you did not give a declaration. Never emit it on an understanding question, and never on a crisis reply.`;
 
 // ─── RevenueCat entitlement check (server-side, authoritative when reachable) ─
 // Returns true/false when RC gives a definitive answer, or null when RC is
@@ -187,10 +226,61 @@ exports.bibleChat = onRequest(
         .join('\n')
         .trim();
       usage = completion.usage || {};
+      if (completion.stop_reason === 'max_tokens') {
+        console.warn('Reply hit max_tokens; any declaration marker was cut.');
+      }
     } catch (err) {
       console.error('Anthropic error:', err.message);
       res.status(502).json({ error: 'ai_unavailable' });
       return;
+    }
+
+    // ─── Pull the tagged declaration out of the reply ────────────────────
+    // The model appends a machine-readable copy of any declaration it gave, so
+    // the app can offer to save it as a real personal declaration instead of
+    // leaving it as text in a bubble. Stripped here so the marker can never
+    // reach a chat bubble, including when parsing fails.
+    // Split on the marker rather than matching a shape.
+    //
+    // Regex approaches leaked, three different ways, all confirmed against the
+    // real code: a reply truncated at max_tokens has no closing brace so the
+    // match fails and the JSON fragment renders in the bubble; a model that
+    // wraps the tag in a ```json fence defeats `\s*{`; and a `}` inside the
+    // declaration text ends a lazy match early, leaving the rest of the object
+    // in the reply. The prompt mandates that nothing follows the marker, so the
+    // structural rule is simply: everything from the marker on is tag. That
+    // cannot leak, and it recovers the declaration in the fenced and braced
+    // cases too.
+    let declaration = null;
+    const markerIndex = reply.indexOf(DECLARATION_MARKER);
+    if (markerIndex !== -1) {
+      const tail = reply.slice(markerIndex + DECLARATION_MARKER.length);
+      reply = reply.slice(0, markerIndex).trim();
+      // First brace to LAST brace, so braces inside the strings are kept.
+      const json = tail.match(/\{[\s\S]*\}/);
+      if (json) {
+        try {
+          const parsed = JSON.parse(json[0]);
+          const text = typeof parsed.text === 'string' ? parsed.text.trim() : '';
+          // A declaration with no line to speak is not a declaration. Everything
+          // else degrades: the app falls back to `general` on an unknown
+          // category and simply shows no verse when one is missing.
+          if (text) {
+            // Bounded because these render in a notification body and a card. A
+            // nudged model can write a 400-word "declaration"; the cap makes
+            // that fail visibly rather than blow out the layout.
+            declaration = {
+              text: text.slice(0, 300),
+              verse: (typeof parsed.verse === 'string' ? parsed.verse.trim() : '').slice(0, 500),
+              reference: (typeof parsed.reference === 'string' ? parsed.reference.trim() : '').slice(0, 80),
+              category: (typeof parsed.category === 'string' ? parsed.category.trim() : 'general').slice(0, 40),
+            };
+          }
+        } catch (err) {
+          // Malformed or truncated JSON costs the save button, not the answer.
+          console.warn('Declaration tag parse failed:', err.message);
+        }
+      }
     }
 
     if (!reply) {
@@ -218,6 +308,7 @@ exports.bibleChat = onRequest(
 
     res.json({
       reply,
+      declaration,
       needsPaywall: false,
       remainingFree,
       usage: {
