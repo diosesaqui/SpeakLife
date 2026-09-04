@@ -304,7 +304,11 @@ struct OnboardingDailyBurstScreen: View {
                         .foregroundColor(.white.opacity(0.9))
                         .multilineTextAlignment(.center)
                     
-                    Text("Do this every morning to transform\nyour mind and win your day")
+                    // The burst is invited three times a day now, not once —
+                    // this is the first place a new user is told what the
+                    // rhythm actually is, so it has to match the pushes they
+                    // start receiving tomorrow.
+                    Text("Do this three times a day to transform\nyour mind and win your day")
                         .font(.system(size: 16))
                         .foregroundColor(.white.opacity(0.7))
                         .multilineTextAlignment(.center)

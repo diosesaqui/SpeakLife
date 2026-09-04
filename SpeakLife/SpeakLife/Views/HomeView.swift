@@ -271,6 +271,25 @@ struct HomeView: View {
                             // immediately dismissed, forcing the user to trigger it twice.
                             // Daily first-open: show Structured Day plan instead of raw burst.
                             // The burst task is inside the checklist — users reach it naturally.
+                            // Routes a Daily Burst push tap. The burst's cover
+                            // belongs to DeclarationView (see the note above),
+                            // so the feed's tab has to be selected before the
+                            // cover can be seen — asserting it on a background
+                            // tab presented into nothing, and a tap taken while
+                            // the user was on Today or Profile did nothing at
+                            // all. Select the tab, then post on the next
+                            // runloop so the feed is on screen to receive it.
+                            .onReceive(NotificationCenter.default.publisher(
+                                for: DailyDeclarationReminderService.openBurstFromNotification
+                            )) { _ in
+                                tabViewModel.goToDeclarations()
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                                    NotificationCenter.default.post(
+                                        name: Notification.Name("ShowDailyDeclarationBurst"),
+                                        object: nil
+                                    )
+                                }
+                            }
                             .fullScreenCover(isPresented: $showDailyStructuredDayOnLaunch) {
                                 ModernDailyChecklistView(viewModel: streakViewModel)
                                     .environmentObject(appState)

@@ -35,6 +35,15 @@ final class NotificationHandler: NSObject, ObservableObject, UNUserNotificationC
     /// True when a cold-launch notification tap is buffered and waiting to be
     /// replayed once the UI is ready.
     var hasPendingNotification: Bool { pendingNotificationContent != nil }
+
+    /// Set when a Daily Burst push was tapped before the declaration feed —
+    /// the only listener for the burst's presentation notification — existed.
+    ///
+    /// Deliberately not folded into `hasPendingNotification`: that flag also
+    /// asserts `beginNotificationProcessing()`, which suppresses the feed's
+    /// category selection so a deep-linked declaration is not clobbered. A
+    /// burst deep-links to no declaration and has nothing to protect.
+    private var pendingBurstTap = false
     
     // MARK: - UNUserNotificationCenterDelegate
     
@@ -63,9 +72,23 @@ final class NotificationHandler: NSObject, ObservableObject, UNUserNotificationC
 
         // Check if this is a daily burst notification
         if content.userInfo["action"] as? String == "daily_declaration_burst" {
-            // Handle daily burst notification
-            DispatchQueue.main.async {
-                DailyDeclarationReminderService.shared.handleNotificationTap()
+            // Handle daily burst notification.
+            //
+            // Buffered on cold launch for the same reason the content path is:
+            // the burst is opened by a NotificationCenter post that only the
+            // declaration feed listens for, and on a cold start this delegate
+            // fires long before that feed exists — so posting immediately sent
+            // the invitation into nothing and the tap did nothing at all. The
+            // callback being set is the readiness signal the content path
+            // already uses; SpeakLifeApp replays this once the landing screen
+            // is out of the way.
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
+                if self.callback != nil {
+                    DailyDeclarationReminderService.shared.handleNotificationTap()
+                } else {
+                    self.pendingBurstTap = true
+                }
             }
         } else {
             // Handle other notifications
@@ -102,6 +125,18 @@ final class NotificationHandler: NSObject, ObservableObject, UNUserNotificationC
 
         DispatchQueue.main.async {
             callback(pending)
+        }
+    }
+
+    /// Opens the burst for a tap that arrived during cold launch. Called by
+    /// SpeakLifeApp once the landing screen has dismissed and the declaration
+    /// feed — which owns the burst's cover — is on screen.
+    func replayPendingBurstTapIfNeeded() {
+        guard pendingBurstTap else { return }
+        pendingBurstTap = false
+
+        DispatchQueue.main.async {
+            DailyDeclarationReminderService.shared.handleNotificationTap()
         }
     }
     

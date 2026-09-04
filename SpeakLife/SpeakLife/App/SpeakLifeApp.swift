@@ -234,6 +234,12 @@ struct SpeakLifeApp: App {
                                 NotificationHandler.shared.replayPendingNotificationIfNeeded()
                             }
 
+                            // A Daily Burst push tapped from a cold start. Its
+                            // own buffer, replayed here for the same reason as
+                            // the one above: the feed that presents the burst
+                            // only exists once the landing screen is gone.
+                            NotificationHandler.shared.replayPendingBurstTapIfNeeded()
+
                             // Daily checklist no longer auto-presents on launch — it was
                             // racing notification-tap routing (the popup landed on top of
                             // the deep-linked declaration). Users get a pulsing icon on
@@ -320,6 +326,15 @@ struct SpeakLifeApp: App {
                     // Ensure checklist notifications are scheduled (they repeat daily)
                     NotificationManager.shared.scheduleChecklistNotifications()
                 }
+
+                // Re-run the Daily Burst plan on every foreground. The requests
+                // repeat daily and carry stable per-slot identifiers, so this is
+                // idempotent — iOS replaces them in place. It exists so the copy
+                // rotates (it is keyed on the day of the year, and a static
+                // repeating request would read the same line every morning) and
+                // so the slots re-dodge the user's own reminder batch after they
+                // move it in Reminders.
+                DailyDeclarationReminderService.shared.refreshBurstReminders()
 
                 // Reset the lapsed re-engagement timer on every foreground (not just
                 // cold launch). Without this, a user who background/foregrounds for

@@ -35,6 +35,9 @@ struct ProfileView: View {
     @EnvironmentObject var subscriptionStore: SubscriptionStore
     @EnvironmentObject var themeViewModel: ThemeViewModel
     @AppStorage("useAnimatedText") private var useAnimatedText = true
+    /// Observed so the Daily Burst row's trailing count updates the moment the
+    /// user changes it on the screen behind it, instead of going stale.
+    @ObservedObject private var burstReminders = DailyDeclarationReminderService.shared
     
     @State var result: Result<MFMailComposeResult, Error>? = nil
     private let appVersion = "App version: \(APP.Version.stringNumber)"
@@ -125,7 +128,15 @@ struct ProfileView: View {
                            communityRow
                        // }
 
-                        remindersRow
+                        // Grouped so the section stays under ViewBuilder's
+                        // ten-child limit, which adding the Daily Burst row
+                        // otherwise sat exactly on — the next row anyone adds
+                        // here would have failed to build for reasons that
+                        // point nowhere near the cause.
+                        Group {
+                            remindersRow
+                            dailyBurstRemindersRow
+                        }
                         appIconRow
                      //   widgetPreferencesRow
                        // favoritesRow
@@ -285,6 +296,42 @@ struct ProfileView: View {
         
     }
     
+    /// How often the user is called in to speak their seven.
+    ///
+    /// Its own row rather than a control buried inside Reminders: the burst is
+    /// the app's anchor habit, and how often someone is invited into it is the
+    /// most consequential notification choice they make. The current count sits
+    /// on the row so it can be read without opening anything.
+    @MainActor
+    private var dailyBurstRemindersRow: some View {
+        HStack {
+            Image(systemName: "bolt.fill")
+                .foregroundColor(Constants.DAMidBlue)
+            NavigationLink(destination: LazyView(DailyBurstRemindersView())) {
+                HStack {
+                    Text("Daily Burst", comment: "Daily burst reminder row title")
+                    Spacer()
+                    Text(dailyBurstSummary)
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.6))
+                }
+            }
+            .simultaneousGesture(TapGesture().onEnded {
+                Event.trackUserAction(
+                    "daily_burst_reminders_opened",
+                    category: "profile",
+                    metadata: ["source": "profile_menu"]
+                )
+            })
+        }
+    }
+
+    private var dailyBurstSummary: String {
+        let service = burstReminders
+        guard service.isEnabled else { return "Off" }
+        return service.burstsPerDay == 1 ? "1× a day" : "\(service.burstsPerDay)× a day"
+    }
+
     @MainActor
     private var appIconRow: some View {
         HStack {

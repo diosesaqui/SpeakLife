@@ -216,7 +216,11 @@ public final class SyncedSettingsStore {
         SyncedKey(key: "eveningCheckInHour", strategy: .lastWriterWins),
         SyncedKey(key: "eveningCheckInMinute", strategy: .lastWriterWins),
         SyncedKey(key: "checklistNotificationsEnabled", strategy: .lastWriterWins),
-        SyncedKey(key: "dailyDeclarationRemindersEnabled", strategy: .lastWriterWins)
+        SyncedKey(key: "dailyDeclarationRemindersEnabled", strategy: .lastWriterWins),
+        // How many Daily Burst invitations a day. Travels with the toggle above:
+        // someone who turned the rhythm down to one a day on their phone should
+        // not be nudged three times on their iPad.
+        SyncedKey(key: "burstRemindersPerDay", strategy: .lastWriterWins)
     ]
 
     // MARK: - Bookkeeping keys
