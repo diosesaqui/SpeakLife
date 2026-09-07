@@ -526,10 +526,12 @@ struct BibleChatConversationView: View {
 
     /// The opening question, built from what onboarding already learned.
     ///
-    /// Reads `UserPreferencesTracker.primaryCategory`, the same source
-    /// `TrialExperienceService` personalizes its trial pushes from, so a user
-    /// who never answered lands on `.general` and gets nothing extra rather than
-    /// a wrong guess. Phrased as the user would type it, not as a topic label.
+    /// Reads `UserPreferencesTracker.primaryCategory` first, the same source
+    /// `TrialExperienceService` personalizes its trial pushes from, then falls
+    /// back to the category onboarding stored for the burdens that enum cannot
+    /// name. A user who never answered either lands on the general opener and
+    /// gets nothing extra rather than a wrong guess. Phrased as the user would
+    /// type it, not as a topic label.
     private var seededQuestion: String {
         switch UserPreferencesTracker.shared.primaryCategory {
         case .anxiety:    return "My mind won't stop racing. What does God say about that?"
@@ -546,16 +548,62 @@ struct BibleChatConversationView: View {
         // cases, while onboarding records `DeclarationCategory` raw values, of
         // which there are far more. Anyone whose heaviest thing is wealth,
         // grief, purity, parenting or a dozen others falls through here, so
-        // `.general` is the COMMON case rather than the empty one. An opener
-        // everyone can answer beats a blank screen; it is an invitation, not a
-        // wrong guess.
-        case .general:    return "What's the heaviest thing on you right now?"
+        // `.general` is the COMMON case rather than the empty one.
+        //
+        // `extendedOpener` recovers the ones we DO have a line for from the
+        // richer category onboarding stored. Only here, never above: this
+        // switch reads a category that keeps moving with what the user actually
+        // opens, while `selectedCategory` is frozen at onboarding, so a live
+        // signal outranks the seed wherever one exists.
+        //
+        // If neither names it, an opener everyone can answer beats a blank
+        // screen; it is an invitation, not a wrong guess.
+        case .general:
+            return Self.extendedOpener(for: onboardingCategory)
+                ?? "What's the heaviest thing on you right now?"
+        }
+    }
+
+    /// The burden onboarding recorded, as the richer `DeclarationCategory` every
+    /// arm writes to `selectedCategory` on the same line it calls
+    /// `trackCategorySelection` (`AppState` already reads this key the same way).
+    private var onboardingCategory: DeclarationCategory? {
+        UserDefaults.standard.string(forKey: "selectedCategory")
+            .flatMap(DeclarationCategory.init(rawValue:))
+    }
+
+    /// Openers for burdens `CategoryType` has no case for.
+    ///
+    /// `primaryCategory` is a `CategoryType`, which is 11 cases wide, and
+    /// `HeaviestBurden.seedCategory` maps `abundance` to `.wealth`, `identity` to
+    /// `.identity` and `purpose` to `.destiny` — none of which round-trip through
+    /// `CategoryType(rawValue:)`. Those three burdens therefore resolve to
+    /// `.general` on the `primaryCategory` path, which is how `?ob=provision` and
+    /// `?ob=renewal` — deep-linked arms whose entire premise is that the ad
+    /// already named the topic — would have opened on "what's the heaviest thing
+    /// on you right now?". Reading the `DeclarationCategory` directly recovers
+    /// them without widening a persisted enum that `TrialExperienceService` and
+    /// the paywalls also read.
+    ///
+    /// Returns nil for everything `CategoryType` covers, so the switch above
+    /// stays the single home for those lines. Internal rather than private so
+    /// `OnboardingAngleTests` can assert every arm's seed reaches a personal
+    /// opener through one path or the other.
+    static func extendedOpener(for category: DeclarationCategory?) -> String? {
+        guard let category else { return nil }
+        switch category {
+        case .wealth:   return "Money is tight and it's wearing on me. What does God say about providing for me?"
+        case .identity: return "I don't know how God actually sees me. What does His Word say about who I am?"
+        case .destiny:  return "I can't tell where my life is going. What does God say about my future?"
+        case .grief:    return "I lost someone. What does God say to me in this?"
+        default:        return nil
         }
     }
 
     /// True when the opener came from something the user actually told us.
     private var seedIsPersonal: Bool {
-        UserPreferencesTracker.shared.primaryCategory != .general
+        Self.extendedOpener(for: onboardingCategory) != nil
+            || UserPreferencesTracker.shared.primaryCategory != .general
     }
 
     private var emptyState: some View {

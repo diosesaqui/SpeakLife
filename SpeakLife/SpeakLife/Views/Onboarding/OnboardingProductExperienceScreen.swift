@@ -6,15 +6,23 @@
 //  ProductOnboardingView so multiple onboarding flows can reuse the same source
 //  (avoids two copies drifting). Used by:
 //    - Product flow (value screen #4, "Good experience")
-//    - Warfare flow (pre-paywall recap, after the rating ask) — shows the
-//      tangible features right before the purchase decision to de-risk the ask.
+//    - Every angle arm (`OnboardingAngle.showsExperienceScreen`, which defaults
+//      to true, so all seven including the deep-linked healing / provision /
+//      anxiety / renewal arms) — shows the tangible features right before the
+//      purchase decision to de-risk the ask.
+//
+//  This is the ONLY place the Bible Chat capability is described before the
+//  paywall, so an arm that opts out of this screen also opts out of the
+//  chat-to-declaration framing the paywall then charges for.
 //
 
 import SwiftUI
 
 struct OnboardingProductExperienceScreen: View {
     let size: CGSize
-    /// Which onboarding flow is showing this screen ("product" | "warfare").
+    /// Which onboarding flow is showing this screen ("product", or any angle's
+    /// `flow` slug: "promises" | "warfare" | "outcomes" | "healing" |
+    /// "provision" | "anxiety" | "renewal").
     /// Stamped onto `product_experience_shown` so the funnels can tell them apart.
     let flow: String
     let onContinue: () -> Void
