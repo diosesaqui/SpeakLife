@@ -428,15 +428,19 @@ struct HomeView: View {
         case .identity:
             IdentityOnboardingView(size: UIScreen.main.bounds.size) { finishOnboarding() }
                 .ignoresSafeArea()
-        case .outcomes:
-            OutcomesOnboardingView(size: UIScreen.main.bounds.size) { finishOnboarding() }
-                .ignoresSafeArea()
-        case .warfare:
-            WarfareOnboardingView(size: UIScreen.main.bounds.size) { finishOnboarding() }
-                .ignoresSafeArea()
-        case .promises:
-            PromisesOnboardingView(size: UIScreen.main.bounds.size) { finishOnboarding() }
-                .ignoresSafeArea()
+        // Angle arms all render through one driver; the variant only picks which
+        // OnboardingAngle it is handed. Adding an arm is adding an angle
+        // constant and an enum case, not another view.
+        case .outcomes, .warfare, .promises, .healing, .provision, .anxiety, .renewal:
+            if let angle = subscriptionStore.resolvedOnboardingVariant.angle {
+                AngleOnboardingView(angle: angle, size: UIScreen.main.bounds.size) { finishOnboarding() }
+                    .ignoresSafeArea()
+            } else {
+                // Unreachable: every angle case above has a constant in
+                // OnboardingAngles. Fall back rather than show a blank screen.
+                QuizOnboardingView(size: UIScreen.main.bounds.size) { finishOnboarding() }
+                    .ignoresSafeArea()
+            }
         case .closer:
             CloserOnboardingView(size: UIScreen.main.bounds.size) { finishOnboarding() }
                 .ignoresSafeArea()

@@ -105,7 +105,9 @@ final class SubscriptionStore: ObservableObject {
     @Published var useQuizOnboarding = true
 
     // MARK: - Onboarding A/B variant (single switch for which flow shows)
-    // Remote Config key `onboardingVariant`: "quiz" | "product" | "identity" | "outcomes" | "warfare" | "promises" | "closer" | "direct".
+    // Remote Config key `onboardingVariant`: "quiz" | "product" | "identity" | "outcomes"
+    // | "warfare" | "promises" | "closer" | "direct" | "healing" | "provision" | "anxiety"
+    // | "renewal".
     // Empty/unset falls back to the legacy useQuizOnboarding boolean so live
     // users are unaffected until the string key is set in Remote Config.
     @Published var onboardingVariant: String = ""
@@ -120,9 +122,21 @@ final class SubscriptionStore: ObservableObject {
     @Published var adOnboardingVariant: String? =
         UserDefaults.standard.string(forKey: SubscriptionStore.adOnboardingKey)
 
-    enum OnboardingVariant: String {
-        case quiz, product, identity, outcomes, warfare, promises, closer, direct
+    enum OnboardingVariant: String, CaseIterable {
+        // Bespoke flows, each with its own view.
+        case quiz, product, identity, closer, direct
+        // Angle arms: one shared driver (AngleOnboardingView) rendering an
+        // OnboardingAngle. The first three are broad (the user names their own
+        // area); the last four are single-issue arms meant to be deep linked
+        // from angle-matched creative, so the whole arc matches the ad.
+        case outcomes, warfare, promises
+        case healing, provision, anxiety, renewal
         init?(code: String) { self.init(rawValue: code.lowercased()) }
+
+        /// The angle this arm renders, or nil for a bespoke flow with its own view.
+        /// Raw values and angle ids are deliberately the same string, which is
+        /// also the `?ob=` deep-link code.
+        var angle: OnboardingAngle? { OnboardingAngles.angle(id: rawValue) }
     }
 
     // Once onboarding first appears the variant is frozen (lockOnboardingVariant)
@@ -494,7 +508,7 @@ final class SubscriptionStore: ObservableObject {
         // Quiz Onboarding A/B from Remote Config (key: useQuizOnboarding) — legacy fallback.
         useQuizOnboarding = flagValue("useQuizOnboarding")
 
-        // Onboarding A/B variant (key: onboardingVariant) — "quiz" | "product" | "identity" | "outcomes".
+        // Onboarding A/B variant (key: onboardingVariant) — any OnboardingVariant raw value.
         // Empty until set in Remote Config; resolvedOnboardingVariant then falls
         // back to useQuizOnboarding so nothing changes for live users.
         onboardingVariant = stringValue("onboardingVariant")
