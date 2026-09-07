@@ -117,6 +117,24 @@ final class AppState: ObservableObject {
     // QuizOnboardingView; read by HighConversionPaywallView for headline
     // framing and by analytics for segment lift measurement.
     @AppStorage("onboarding_segment") var onboardingSegment: String = ""
+
+    /// Sets the segment AND mirrors it to the `onboarding_segment` person
+    /// property. Every flow must go through this rather than assigning
+    /// `onboardingSegment` directly.
+    ///
+    /// The raw @AppStorage write only ever reached event properties on the
+    /// paywall, which is the wrong shape for the questions the segment exists
+    /// to answer. Retention and revenue are read per PERSON, and the events
+    /// that carry the money (`rc_trial_converted_event`, `rc_renewal_event`)
+    /// are sent by RevenueCat's servers while the app is shut, so they can
+    /// carry nothing the app knows at that moment except person properties.
+    /// Without this mirror, "does the healing_diagnosis row retain better than
+    /// healing_loved_one" has no join to make.
+    func setOnboardingSegment(_ segment: String) {
+        onboardingSegment = segment
+        guard !segment.isEmpty else { return }
+        AnalyticsService.shared.setUserProperty("onboarding_segment", value: segment)
+    }
     @AppStorage("onboarding_completed_at") var onboardingCompletedAt: Date?
     @AppStorage("onboarding_quiz_version") var onboardingQuizVersion: String = ""
 

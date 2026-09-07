@@ -78,7 +78,13 @@ From finishing onboarding through to a paid conversion.
 | 2 | `screen_viewed` | Opened the app (first real screen) |
 | 3 | `paywall_impression` | Saw the paywall |
 | 4 | `trial_started` | Started a trial |
-| 5 | `trial_activated` | Converted to paid |
+| 5 | `trial_activated` | Converted to paid — **never fires today**, see below |
+
+> **Step 5 is empty.** `AnalyticsService.trackTrialActivated` has no call sites,
+> so this funnel dead-ends at `trial_started` and reads 0% conversion rather than
+> no data. For trial → paid, use RevenueCat's server-side
+> `rc_trial_converted_event` broken down by the `onboarding_variant` person
+> property. Retention questions belong in `RETENTION_ANALYTICS.md`.
 
 **Funnel settings:** conversion window `7 days`, order `sequential`.
 

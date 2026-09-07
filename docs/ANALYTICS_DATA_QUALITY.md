@@ -260,6 +260,15 @@ not trust any pre-fix cohort revenue number.
 - **Paid acquisition source per person.** Branch/Meta attribution is wired for
   onboarding routing but not mirrored to a person property, so CAC-vs-LTV still
   can't be split by channel.
+- ~~**Onboarding segment as a cohort.**~~ Resolved: `AppState.setOnboardingSegment`
+  mirrors it to the `onboarding_segment` person property, so retention and
+  server-side RevenueCat revenue can be cut by the ad angle a person walked in on.
+  New data only.
+- **Trial → paid as a client event.** `AnalyticsService.trackTrialActivated` has
+  zero call sites, so `trial_activated` never fires and the Activation → Trial
+  funnel's last step is always empty. RevenueCat's `rc_trial_converted_event`
+  covers the conversion itself; the app-side event with screen context does not
+  exist.
 
 ---
 

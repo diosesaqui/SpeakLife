@@ -587,7 +587,7 @@ struct QuizOnboardingView: View {
     private func handleAnswer(_ picked: QuizSegment) {
         Juice.play(.tapLight)
         selectedSegment = picked
-        appState.onboardingSegment = picked.rawValue
+        appState.setOnboardingSegment(picked.rawValue)
         appState.onboardingQuizVersion = Self.quizVersion
 
         let timeToAnswer = Int(Date().timeIntervalSince(quizShownAt))
