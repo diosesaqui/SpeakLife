@@ -25,6 +25,9 @@ experiment. The variant is **frozen** once onboarding appears
 
 ## The variants
 
+**Broad arms.** The arc argues the mechanism from one emotional entry point, then
+the user names their own area on a seven-row picker (one row per `HeaviestBurden`).
+
 | Ad creative angle / hook | `ob=` value |
 |---|---|
 | "Who God says you are" / labels / self-worth | `identity` |
@@ -34,6 +37,46 @@ experiment. The variant is **frozen** once onboarding appears
 | "The enemy has been stealing from you" / the fight | `warfare` |
 | "God's promises have never failed" / trust and activate | `promises` |
 | "Feel closer to God" / drifted away, come back near | `closer` |
+| Straight-to-the-offer, no narrative | `direct` |
+
+**Single-issue arms.** Built to be deep linked from angle-matched creative: every
+screen, the picker included, stays on the one subject the ad promised, so a healing
+ad can never seed a money feed. Each row still separates the *intent* inside that
+subject (`onboardingSegment` = `<flow>_<row>`, e.g. `healing_diagnosis`), which is
+the granularity to optimise creative against.
+
+| Ad creative angle / hook | `ob=` value | Seeds | Picker asks |
+|---|---|---|---|
+| Healing, a diagnosis, chronic pain, praying for a loved one | `healing` | `health` | "What are you believing God for right now?" |
+| Provision, bills, debt, a job, business increase | `provision` | `wealth` | "What are you believing God to provide?" |
+| Anxiety, overwhelm, sleepless nights, waiting on news | `anxiety` | `anxiety` | "Where do you most need His peace?" |
+| Renew your mind, self-talk, how you see yourself | `renewal` | `identity` | "Where does your mind most need renewing?" |
+
+An `ob=` value is only accepted if it matches a `SubscriptionStore.OnboardingVariant`
+case, so a typo in an ad link is ignored and the user falls back to the Remote Config
+experiment rather than to a blank screen.
+
+## Adding a new angle
+
+Angle arms (everything except `identity`, `product`, `quiz`, `closer` and `direct`)
+share one driver, so a new angle is copy plus three lines of wiring:
+
+1. Add an `OnboardingAngle` constant in
+   `Views/Onboarding/Model/OnboardingAngles.swift` — scenes, a picker, and the
+   analytics strings. Start `flowSchema` at 1.
+2. Add its case to `SubscriptionStore.OnboardingVariant`, raw value == the angle's
+   `id` == the `ob=` code.
+3. Add the case to the angle-arm list in `HomeView.onboardingFlow`.
+
+`OnboardingAngleTests` then holds you to the invariants (id/case agreement, a
+terminal step, unique picker rows, no dashes in copy, single-issue arms staying on
+one burden). The debug panel picks the new arm up automatically.
+
+Analytics come out as `<flow>_onboarding_started`, `<flow>_step_completed`
+(`step` is the screen's index, interpreted against `flow_schema`),
+`<flow>_scene_shown`, `<flow>_picker_shown` and `<flow>_onboarding_completed`
+(which carries `picker_choice`). Changing an arm's step ORDER must bump its
+`flowSchema`, or the historical `step` integers stop meaning the same screens.
 
 ## Branch setup (one-time)
 
@@ -93,4 +136,8 @@ reads.) For **owned channels** without Branch you can still use
 - `SpeakLifeApp.swift` — `.onOpenURL` → `handleIncomingURL` + `BranchAttribution.handleDeepLink`.
 - `SubscriptionStore.swift` — `adOnboardingVariant`, `resolvedOnboardingVariant`
   (override precedence), `lockOnboardingVariant`, `handleIncomingURL`,
-  `assignOnboardingVariantFromAd`.
+  `assignOnboardingVariantFromAd`, `OnboardingVariant` (the set of valid `ob=` codes).
+- `Views/Onboarding/Model/OnboardingAngle.swift` — the shared angle model and the
+  step list every angle arm is built from.
+- `Views/Onboarding/Model/OnboardingAngles.swift` — every angle's copy.
+- `Views/Onboarding/AngleOnboardingView.swift` — the one driver that renders them.

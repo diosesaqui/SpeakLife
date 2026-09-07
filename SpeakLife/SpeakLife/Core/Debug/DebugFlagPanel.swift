@@ -160,10 +160,10 @@ enum DebugFlagCatalog {
 
     static let onboardingVariantKey = "onboardingVariant"
 
-    static let onboardingVariants = [
-        "quiz", "product", "identity", "outcomes", "warfare", "promises", "closer",
-        "direct",
-    ]
+    // Every arm the panel can force. Angle arms (outcomes/warfare/promises and
+    // the single-issue healing/provision/anxiety/renewal) share one driver, so
+    // this list doubles as the set of valid `?ob=` deep-link codes.
+    static let onboardingVariants = SubscriptionStore.OnboardingVariant.allCases.map(\.rawValue)
 }
 
 // MARK: - Panel
