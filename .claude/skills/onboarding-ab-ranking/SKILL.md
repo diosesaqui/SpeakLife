@@ -1,6 +1,6 @@
 ---
 name: onboarding-ab-ranking
-description: Query PostHog for the onboarding A/B funnel and rank the variants (product / identity / quiz / outcomes / warfare / promises / closer / direct) to pick a winner. Use when asked which onboarding is winning, onboarding A/B results, onboarding funnel rankings, or "which onboarding should we ship".
+description: Query PostHog for the onboarding A/B funnel and rank the variants (product / identity / quiz / outcomes / warfare / promises / closer / direct, plus the deep-linked healing / provision / anxiety / renewal arms) to pick a winner. Use when asked which onboarding is winning, onboarding A/B results, onboarding funnel rankings, or "which onboarding should we ship".
 ---
 
 # Onboarding A/B Ranking
@@ -13,6 +13,14 @@ variant is winning, with the numbers behind it.
 - The app shows one of several onboarding flows, chosen by Remote Config
   `onboardingVariant`: `product`, `identity`, `quiz`, `outcomes`, `warfare`,
   `promises`, `closer`, `direct`. `warfare` is the default arm from app **v4.28+**.
+- `healing`, `provision`, `anxiety` and `renewal` are **single-issue arms**, added
+  to be deep linked from angle-matched creative (`ob=healing` and friends). They are
+  targeted, not random-assigned, so **do not rank them against the random arms** —
+  their traffic is self-selected by the ad that sent it. Compare a single-issue arm
+  against the broad arm its ad traffic would otherwise have landed in, or against
+  itself over time. Their picker rows all share one burden and separate on
+  `picker_choice` / `onboardingSegment` (e.g. `healing_diagnosis`), which is the
+  breakdown to use when asked which creative angle converts.
 - `closer` is the visual-system arm (black canvas + cinematic hero art +
   yes/no agreement ladder + "I'm In" pledge). Its natural control is
   `outcomes` — same quiz, same back-half — so when comparing, cut those two

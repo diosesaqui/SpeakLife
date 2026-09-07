@@ -2082,7 +2082,8 @@ struct SurveyPlanRevealScreen: View {
 /// navy/hero visual system; keep the wording in sync with `CloserScene.storm`.
 struct StormOpenerScreen: View {
     let size: CGSize
-    /// Which onboarding arm is showing this screen ("outcomes" | "promises").
+    /// Which onboarding arm is showing this screen — an `OnboardingAngle.flow`
+    /// for the angle arms, or a bespoke flow's own slug.
     let flow: String
     let onContinue: () -> Void
 
