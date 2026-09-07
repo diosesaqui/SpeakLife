@@ -51,6 +51,9 @@ the granularity to optimise creative against.
 | Provision, bills, debt, a job, business increase | `provision` | `wealth` | "What are you believing God to provide?" |
 | Anxiety, overwhelm, sleepless nights, waiting on news | `anxiety` | `anxiety` | "Where do you most need His peace?" |
 | Renew your mind, self-talk, how you see yourself | `renewal` | `identity` | "Where does your mind most need renewing?" |
+| Calling, direction, stuck years, "made for more than this" | `purpose` | `destiny` | "Where do you most need Him to open your calling?" |
+| Heaviness, grief, going through the motions | `joy` | `joy` | "Where do you most need His joy?" |
+| Not in crisis, hungry for more of God (growth track) | `more` | `faith` | "What do you want more of from God?" |
 
 An `ob=` value is only accepted if it matches a `SubscriptionStore.OnboardingVariant`
 case, so a typo in an ad link is ignored and the user falls back to the Remote Config

@@ -13,7 +13,8 @@
 //  this file, copy and step order preserved exactly so the live A/B funnels
 //  still join.
 //
-//  SINGLE-ISSUE ARMS (healing / provision / anxiety / renewal) exist to be deep
+//  SINGLE-ISSUE ARMS (healing / provision / anxiety / renewal / purpose / joy /
+//  more) exist to be deep
 //  linked from an angle-matched ad: `?ob=healing` on the install link and the
 //  whole arc, picker included, is about healing. Their picker rows all resolve
 //  to the SAME burden, so the feed, pushes and named plan stay on the angle the
@@ -31,7 +32,8 @@ enum OnboardingAngles {
 
     /// Every angle, keyed by `id` (which is also the `?ob=` deep-link code).
     static let all: [String: OnboardingAngle] = Dictionary(
-        uniqueKeysWithValues: [promises, warfare, outcomes, healing, provision, anxiety, renewal]
+        uniqueKeysWithValues: [promises, warfare, outcomes,
+                               healing, provision, anxiety, renewal, purpose, joy, more]
             .map { ($0.id, $0) }
     )
 
@@ -778,6 +780,296 @@ enum OnboardingAngles {
                                   statement: "Where my mind goes all day",
                                   subtitle: "Thoughts that stay on what is true",
                                   symbol: "brain.head.profile", segmentLabel: "focus"),
+            ]
+        )
+    )
+
+    // MARK: - Purpose (single-issue, deep link ?ob=purpose)
+
+    // For calling and direction creative. The person is not in crisis, they are
+    // off-course: years in, unsure what they were made for. Settles that the
+    // calling was assigned before they arrived, then hands them the mechanism.
+    // Every picker row seeds `purpose` → the `destiny` category.
+    static let purpose = OnboardingAngle(
+        id: "purpose",
+        flow: "purpose",
+        flowSchema: 1,
+        opensWithStormScreen: true,
+        scenes: [
+            AngleScene(
+                symbol: "book.closed.fill",
+                eyebrow: "SETTLED BEFORE YOU GOT HERE",
+                title: "Your days were written\nbefore you lived one.",
+                body: "You are not a late start or a leftover. Every day of your life was written in His book before one of them came to be, and He has never lost the page.",
+                verse: "All the days ordained for me were written in your book before one of them came to be.",
+                reference: "Psalm 139:16",
+                analyticsEvent: "purpose_scene_shown",
+                analyticsParameters: ["scene": "written"]
+            ),
+            AngleScene(
+                symbol: "flag.fill",
+                eyebrow: "WHY YOU WERE CALLED",
+                title: "He called you\non purpose.",
+                body: "The calling on your life did not depend on your resume, your record, or how the last few years went. He called you because of His own purpose and grace.",
+                verse: "He has saved us and called us to a holy life, not because of anything we have done but because of his own purpose and grace.",
+                reference: "2 Timothy 1:9",
+                analyticsEvent: "purpose_scene_shown",
+                analyticsParameters: ["scene": "called"]
+            ),
+            AngleScene(
+                symbol: "hammer.fill",
+                eyebrow: "HE DOES NOT LEAVE IT HALF BUILT",
+                title: "He finishes\nwhat He starts.",
+                body: "What God began in you is not stalled and it is not abandoned. He carries it on to completion, and He is the one responsible for the finish.",
+                verse: "He who began a good work in you will carry it on to completion until the day of Christ Jesus.",
+                reference: "Philippians 1:6",
+                analyticsEvent: "purpose_scene_shown",
+                analyticsParameters: ["scene": "finished"]
+            ),
+            AngleScene(
+                symbol: "waveform",
+                eyebrow: "HOW A CALLING COMES OUT",
+                title: "You call it out\nbefore you see it.",
+                body: "God speaks to things that are not yet as though they already are. You say what He called you before the proof shows up, and your steps start lining up with it.",
+                verse: "The God who gives life to the dead and calls into being things that were not.",
+                reference: "Romans 4:17",
+                analyticsEvent: "purpose_scene_shown",
+                analyticsParameters: ["scene": "call_it"]
+            ),
+            AngleScene(
+                symbol: "map.fill",
+                eyebrow: "WHAT YOUR YEARS LOOK LIKE",
+                title: "Every step\nordered by Him.",
+                body: "Direction you can act on. Doors opening at the right hour. Work that finally matters. The Lord makes firm the steps of the one who delights in Him.",
+                verse: "The Lord makes firm the steps of the one who delights in him.",
+                reference: "Psalm 37:23",
+                buttonLabel: "This Is What I'm Called To →",
+                analyticsEvent: "purpose_scene_shown",
+                analyticsParameters: ["scene": "ordered"]
+            ),
+        ],
+        picker: AnglePicker(
+            headline: "Where do you most need\nHim to open your calling?",
+            subtitle: "We'll build your daily destiny declarations\naround it and put His Word to work.",
+            analyticsEvent: "purpose_picker_shown",
+            choices: [
+                AnglePickerChoice(id: "direction", burden: .purpose,
+                                  statement: "Clear direction for my next step",
+                                  subtitle: "Knowing exactly where He is leading",
+                                  symbol: "location.north.line.fill", segmentLabel: "direction"),
+                AnglePickerChoice(id: "calling", burden: .purpose,
+                                  statement: "The work I was made for",
+                                  subtitle: "Walking in what He assigned me",
+                                  symbol: "flag.fill", segmentLabel: "calling"),
+                AnglePickerChoice(id: "doors", burden: .purpose,
+                                  statement: "Doors only God can open",
+                                  subtitle: "Favor going ahead of me",
+                                  symbol: "key.fill", segmentLabel: "doors"),
+                AnglePickerChoice(id: "courage", burden: .purpose,
+                                  statement: "Boldness to actually begin",
+                                  subtitle: "Starting what He told me to start",
+                                  symbol: "bolt.fill", segmentLabel: "courage"),
+                AnglePickerChoice(id: "timing", burden: .purpose,
+                                  statement: "My season opening up",
+                                  subtitle: "Right on time, nothing delayed",
+                                  symbol: "clock.fill", segmentLabel: "timing"),
+                AnglePickerChoice(id: "impact", burden: .purpose,
+                                  statement: "Impact beyond myself",
+                                  subtitle: "A life that leaves something behind",
+                                  symbol: "person.3.fill", segmentLabel: "impact"),
+            ]
+        )
+    )
+
+    // MARK: - Joy (single-issue, deep link ?ob=joy)
+
+    // For heaviness and grief creative. Per the rule of calling higher, the
+    // screens claim the joy rather than dwelling on the weight: scripture names
+    // the trade, the copy declares what it is traded for. Every picker row
+    // seeds `joy` → the `joy` category.
+    static let joy = OnboardingAngle(
+        id: "joy",
+        flow: "joy",
+        flowSchema: 1,
+        opensWithStormScreen: true,
+        scenes: [
+            AngleScene(
+                symbol: "sun.max.fill",
+                eyebrow: "IT WAS NEVER YOURS TO MANUFACTURE",
+                title: "His joy is\nyour strength.",
+                body: "Joy is not a mood you work up on a good day. It is His, given to you, and it is the very thing that holds you up when nothing else does.",
+                verse: "Do not grieve, for the joy of the Lord is your strength.",
+                reference: "Nehemiah 8:10",
+                analyticsEvent: "joy_scene_shown",
+                analyticsParameters: ["scene": "strength"]
+            ),
+            AngleScene(
+                symbol: "arrow.triangle.swap",
+                eyebrow: "HE TRADES",
+                title: "He turns mourning\ninto dancing.",
+                body: "God does not ask you to carry heavy things quietly. He takes them off you and puts gladness on you in their place. That is the trade He makes.",
+                verse: "You turned my wailing into dancing; you removed my sackcloth and clothed me with joy.",
+                reference: "Psalm 30:11",
+                analyticsEvent: "joy_scene_shown",
+                analyticsParameters: ["scene": "trade"]
+            ),
+            AngleScene(
+                symbol: "sunrise.fill",
+                eyebrow: "THE MORNING IS COMING",
+                title: "Rejoicing comes\nin the morning.",
+                body: "Nights end. God set a limit on them. What you have been through has an expiration date, and gladness is what is waiting on the other side of it.",
+                verse: "Weeping may stay for the night, but rejoicing comes in the morning.",
+                reference: "Psalm 30:5",
+                analyticsEvent: "joy_scene_shown",
+                analyticsParameters: ["scene": "morning"]
+            ),
+            AngleScene(
+                symbol: "waveform",
+                eyebrow: "HOW JOY COMES BACK",
+                title: "You speak to\nyour own soul.",
+                body: "David did not wait to feel better. He talked to himself out loud, put his hope in God, and said I will yet praise Him. Your soul listens to your voice.",
+                verse: "Why, my soul, are you downcast? Put your hope in God, for I will yet praise him.",
+                reference: "Psalm 42:5",
+                analyticsEvent: "joy_scene_shown",
+                analyticsParameters: ["scene": "speak"]
+            ),
+            AngleScene(
+                symbol: "sparkles",
+                eyebrow: "WHAT YOUR DAYS LOOK LIKE",
+                title: "Fullness of joy,\nnot a good day here and there.",
+                body: "Mornings you are glad to be in. Laughter back in your house. A gladness that holds when the week does not cooperate. In His presence there is fullness of joy.",
+                verse: "You make known to me the path of life; you will fill me with joy in your presence.",
+                reference: "Psalm 16:11",
+                buttonLabel: "This Is the Joy I Want →",
+                analyticsEvent: "joy_scene_shown",
+                analyticsParameters: ["scene": "fullness"]
+            ),
+        ],
+        picker: AnglePicker(
+            headline: "Where do you most\nneed His joy?",
+            subtitle: "We'll build your daily joy declarations\naround it and put His Word to work.",
+            analyticsEvent: "joy_picker_shown",
+            choices: [
+                AnglePickerChoice(id: "mornings", burden: .joy,
+                                  statement: "Waking up glad again",
+                                  subtitle: "Mornings I am happy to be in",
+                                  symbol: "sunrise.fill", segmentLabel: "mornings"),
+                AnglePickerChoice(id: "home", burden: .joy,
+                                  statement: "Laughter back in my home",
+                                  subtitle: "Gladness where my family lives",
+                                  symbol: "house.fill", segmentLabel: "home"),
+                AnglePickerChoice(id: "loss", burden: .joy,
+                                  statement: "Something I lost",
+                                  subtitle: "Comfort and joy after grief",
+                                  symbol: "heart.circle.fill", segmentLabel: "loss"),
+                AnglePickerChoice(id: "delight", burden: .joy,
+                                  statement: "Delight in my everyday life",
+                                  subtitle: "Loving the days I am actually in",
+                                  symbol: "leaf.fill", segmentLabel: "delight"),
+                AnglePickerChoice(id: "worship", burden: .joy,
+                                  statement: "Praise that rises easily",
+                                  subtitle: "Worship that comes from the heart",
+                                  symbol: "music.note", segmentLabel: "worship"),
+                AnglePickerChoice(id: "strength", burden: .joy,
+                                  statement: "Strength to keep going",
+                                  subtitle: "His joy holding me up daily",
+                                  symbol: "bolt.fill", segmentLabel: "strength"),
+            ]
+        )
+    )
+
+    // MARK: - More of God (single-issue, deep link ?ob=more)
+
+    // The one growth-track arm. For creative aimed at the believer who is not in
+    // crisis and knows there is more of God available than they are living in.
+    // Every picker row seeds `allOfIt` → the `faith` category.
+    static let more = OnboardingAngle(
+        id: "more",
+        flow: "more",
+        flowSchema: 1,
+        opensWithStormScreen: true,
+        scenes: [
+            AngleScene(
+                symbol: "magnifyingglass",
+                eyebrow: "HE IS NOT HIDING IT",
+                title: "Seek Him and\nyou will find Him.",
+                body: "God never made nearness a guessing game. He promised that the one who looks for Him with a whole heart finds Him, every time, without exception.",
+                verse: "You will seek me and find me when you seek me with all your heart.",
+                reference: "Jeremiah 29:13",
+                analyticsEvent: "more_scene_shown",
+                analyticsParameters: ["scene": "find"]
+            ),
+            AngleScene(
+                symbol: "arrow.right.circle.fill",
+                eyebrow: "HE MOVES WHEN YOU MOVE",
+                title: "Come near,\nand He comes near.",
+                body: "One step toward Him is answered with a step toward you. Closeness with God is not reserved for a few people. It is offered to whoever comes.",
+                verse: "Come near to God and he will come near to you.",
+                reference: "James 4:8",
+                analyticsEvent: "more_scene_shown",
+                analyticsParameters: ["scene": "near"]
+            ),
+            AngleScene(
+                symbol: "infinity",
+                eyebrow: "THE SIZE OF WHAT'S AVAILABLE",
+                title: "Immeasurably more\nthan you've asked for.",
+                body: "Whatever you have been believing God for, He is able to do beyond it. Not slightly past your prayers. Immeasurably more than you know how to ask.",
+                verse: "Now to him who is able to do immeasurably more than all we ask or imagine.",
+                reference: "Ephesians 3:20",
+                analyticsEvent: "more_scene_shown",
+                analyticsParameters: ["scene": "more"]
+            ),
+            AngleScene(
+                symbol: "waveform",
+                eyebrow: "HOW FAITH GROWS",
+                title: "Faith comes\nby hearing.",
+                body: "Faith is not something you strain for. It comes by hearing the Word of God, and the voice you hear say it most is your own. Daily, out loud, is how it grows.",
+                verse: "Faith comes from hearing the message, and the message is heard through the word about Christ.",
+                reference: "Romans 10:17",
+                analyticsEvent: "more_scene_shown",
+                analyticsParameters: ["scene": "hearing"]
+            ),
+            AngleScene(
+                symbol: "sparkles",
+                eyebrow: "WHAT HE CAME TO GIVE",
+                title: "Life to the full.\nNothing held back.",
+                body: "Jesus said He came so you would have life, and have it to the full. Not managed. Not maintained. Full, in every area He touches.",
+                verse: "I have come that they may have life, and have it to the full.",
+                reference: "John 10:10",
+                buttonLabel: "I Want All of It →",
+                analyticsEvent: "more_scene_shown",
+                analyticsParameters: ["scene": "full"]
+            ),
+        ],
+        picker: AnglePicker(
+            headline: "What do you want\nmore of from God?",
+            subtitle: "We'll build your daily declarations around it\nand put His Word to work in your life.",
+            analyticsEvent: "more_picker_shown",
+            choices: [
+                AnglePickerChoice(id: "nearness", burden: .allOfIt,
+                                  statement: "Closeness with God every day",
+                                  subtitle: "Walking with Him, not just about Him",
+                                  symbol: "heart.fill", segmentLabel: "nearness"),
+                AnglePickerChoice(id: "hearing", burden: .allOfIt,
+                                  statement: "Hearing His voice clearly",
+                                  subtitle: "Knowing it is Him when He speaks",
+                                  symbol: "ear.fill", segmentLabel: "hearing"),
+                AnglePickerChoice(id: "faith", burden: .allOfIt,
+                                  statement: "Faith that moves things",
+                                  subtitle: "Believing God and seeing it happen",
+                                  symbol: "mountain.2.fill", segmentLabel: "faith"),
+                AnglePickerChoice(id: "rhythm", burden: .allOfIt,
+                                  statement: "A daily rhythm that sticks",
+                                  subtitle: "Time in the Word I actually keep",
+                                  symbol: "calendar", segmentLabel: "rhythm"),
+                AnglePickerChoice(id: "boldness", burden: .allOfIt,
+                                  statement: "Boldness in how I live",
+                                  subtitle: "Unashamed, everywhere I go",
+                                  symbol: "bolt.fill", segmentLabel: "boldness"),
+                AnglePickerChoice(id: "everything", burden: .allOfIt,
+                                  statement: "All of it, every area",
+                                  subtitle: "Nothing left outside His hand",
+                                  symbol: "sparkles", segmentLabel: "everything"),
             ]
         )
     )

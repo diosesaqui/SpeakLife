@@ -127,10 +127,10 @@ final class SubscriptionStore: ObservableObject {
         case quiz, product, identity, closer, direct
         // Angle arms: one shared driver (AngleOnboardingView) rendering an
         // OnboardingAngle. The first three are broad (the user names their own
-        // area); the last four are single-issue arms meant to be deep linked
+        // area); the rest are single-issue arms meant to be deep linked
         // from angle-matched creative, so the whole arc matches the ad.
         case outcomes, warfare, promises
-        case healing, provision, anxiety, renewal
+        case healing, provision, anxiety, renewal, purpose, joy, more
         init?(code: String) { self.init(rawValue: code.lowercased()) }
 
         /// The angle this arm renders, or nil for a bespoke flow with its own view.
