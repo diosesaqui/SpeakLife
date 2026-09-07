@@ -433,7 +433,8 @@ struct HomeView: View {
         // constant and an enum case, not another view.
         case .outcomes, .warfare, .promises, .command, .healing, .provision, .anxiety, .renewal,
              .grief, .mortality, .prodigal, .purity, .depression, .fear,
-             .parenting, .addiction, .marriage, .hardtimes:
+             .parenting, .addiction, .marriage, .hardtimes,
+             .purpose, .joy, .more:
             if let angle = subscriptionStore.resolvedOnboardingVariant.angle {
                 AngleOnboardingView(angle: angle, size: UIScreen.main.bounds.size) { finishOnboarding() }
                     .ignoresSafeArea()

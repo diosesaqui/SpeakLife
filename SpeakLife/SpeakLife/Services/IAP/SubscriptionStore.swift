@@ -161,6 +161,10 @@ final class SubscriptionStore: ObservableObject {
         // `parenting` carry the same limit `prodigal` does: no promise about
         // what another free person will do.
         case parenting, addiction, marriage, hardtimes
+        // Fourth wave. These three seed straight off `HeaviestBurden`, so they
+        // carry no per-row override: purpose maps to destiny, joy to joy, and
+        // more to faith, which is the growth track for someone not in crisis.
+        case purpose, joy, more
         init?(code: String) { self.init(rawValue: code.lowercased()) }
 
         /// The angle this arm renders, or nil for a bespoke flow with its own view.
