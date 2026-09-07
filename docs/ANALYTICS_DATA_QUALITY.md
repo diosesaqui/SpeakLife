@@ -252,14 +252,33 @@ not trust any pre-fix cohort revenue number.
 
 ### Still not instrumented
 
-- **Notification *delivery*** — only opens. Open rate has no true denominator;
-  `lifecycle_notifications_scheduled` counts scheduling, not delivery.
+- **Notification *delivery*** — only opens. There is still no per-notification
+  delivery signal (`lifecycle_notifications_scheduled` counts scheduling), so
+  open rate has no exact denominator. The person property
+  `notifications_authorized` now bounds it: refreshed on every foreground from
+  `UNUserNotificationCenter`, it is the set of people who can currently be
+  reached, which is what makes push types comparable to each other. The
+  onboarding `notification_permission` event is a decision, not a state —
+  permission is revoked in iOS Settings silently.
 - ~~**Renewal revenue while the app is closed.**~~ Resolved by handing revenue
   to RevenueCat and setting `$posthogUserId`. Sum `rc_*` `revenue` per person;
   there is no longer a client-side figure to compare it against.
-- **Paid acquisition source per person.** Branch/Meta attribution is wired for
-  onboarding routing but not mirrored to a person property, so CAC-vs-LTV still
-  can't be split by channel.
+- ~~**Paid acquisition source per person.**~~ Resolved by the per-person
+  acquisition channel below: `AcquisitionAttribution.mirror` writes the full
+  `acquisition_*` person set and mirrors it to RevenueCat's subscriber
+  attributes. Coverage limits per source still apply (Meta is a floor, TikTok
+  is unwired, Branch is compiled out) — see that section.
+- ~~**Onboarding segment as a cohort.**~~ Resolved: `AppState.setOnboardingSegment`
+  mirrors it to the `onboarding_segment` person property, so retention and
+  server-side RevenueCat revenue can be cut by the ad angle a person walked in on.
+  New data only.
+- ~~**Trial → paid as a client event.**~~ Resolved. `GrowthMetrics.reconcileTrialState`
+  persists the trial across launches and fires `trial_activated` once, on the
+  first launch after the charge, which is also what carries the conversion to
+  Meta and TikTok. RevenueCat's `rc_trial_converted_event` stays the source of
+  truth for revenue and exact timing. **New data only**, and the client event
+  lags the charge by up to one app open — do not read the two as duplicates of
+  each other.
 
 ---
 

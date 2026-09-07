@@ -80,6 +80,16 @@ From finishing onboarding through to a paid conversion.
 | 4 | `trial_started` | Started a trial |
 | 5 | `trial_activated` | Converted to paid |
 
+> **Step 5 has no history before the build carrying `reconcileTrialState`.**
+> `trackTrialActivated` had no call sites for months, so this funnel read 0%
+> conversion rather than no data. It now fires from the RevenueCat entitlement
+> listener on the first launch after the charge (`GrowthMetrics.reconcileTrialState`),
+> which means it is a client-side event with a lag of up to one app open.
+> RevenueCat's server-side `rc_trial_converted_event` remains the source of truth
+> for revenue and for timing; `trial_activated` is what carries the conversion to
+> Meta and TikTok for ad optimisation, and what closes this funnel.
+> Retention questions belong in `RETENTION_ANALYTICS.md`.
+
 **Funnel settings:** conversion window `7 days`, order `sequential`.
 
 > **Which arms enter this funnel.** Step 1, `onboarding_completed`, is fired by
@@ -296,8 +306,8 @@ These route through `AnalyticsService` and reach every provider:
 | `paywall_shown` | `track` (HighConversionPaywallView) | `variant`, `segment`, `source`, `pain` |
 | `paywall_conversion` | `trackPaywallConversion` | `product_id`, `price` |
 | `trial_started` | `trackTrialStarted` / `track` (purchase) | `product_id`, `value`, `variant` |
-| `trial_activated` | `trackTrialActivated` | `product_id`, `price` |
-| `subscription_renewal` | `trackSubscriptionRenewal` | `product_id`, `price` |
+| `trial_activated` | `trackTrialActivated` (SubscriptionStore → `GrowthMetrics.reconcileTrialState`) | `product_id`, `price`, `days_since_install`, `source` |
+| `subscription_renewal` | ~~`trackSubscriptionRenewal`~~ | **Unwired on purpose.** RevenueCat reports renewals server-side (`rc_renewal_event`); a client copy would fire on whichever launch noticed. |
 | `subscription_cancelled` | `trackSubscriptionCancelled` | `product_id` |
 | `content_interaction` | `trackContentInteraction` | `content_type`, `content_id`, `action` |
 | `audio_playback` | `trackAudioPlayback` | `audio_id`, `action` |

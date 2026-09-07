@@ -256,7 +256,7 @@ struct CloserOnboardingView: View {
         // Leaving the closeness picker: stamp the segment so downstream paywall
         // events carry a meaningful segment for this arm (quiz sets its own).
         if currentStep == .closenessPicker, let burden = responses.heaviestBurden {
-            appState.onboardingSegment = "closer_\(burden.shortLabel)"
+            appState.setOnboardingSegment("closer_\(burden.shortLabel)")
         }
 
         // Leaving the hits-hardest question: pre-select the notification-time

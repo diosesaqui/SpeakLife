@@ -377,7 +377,7 @@ struct DirectOnboardingView: View {
         // retention — can be split by what the user actually came in carrying.
         if let pain,
            currentStep == .declaration || currentStep == .painFallback || currentStep == .declarationRetry {
-            appState.onboardingSegment = "direct_\(pain.rawValue)"
+            appState.setOnboardingSegment("direct_\(pain.rawValue)")
             AnalyticsService.shared.setUserProperty("onboarding_burden", value: pain.rawValue)
         }
 

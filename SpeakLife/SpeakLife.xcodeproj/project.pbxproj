@@ -27,6 +27,7 @@
 		4501F3A32F840A01008704F9 /* Agreement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4501F3A42F840A01008704F9 /* Agreement.swift */; };
 		4501F3A52F840A01008704F9 /* WarriorRoomTypesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4501F3A62F840A01008704F9 /* WarriorRoomTypesTests.swift */; };
 		D0960000000000000096BBBB /* OnboardingAngleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0960000000000000096AAAA /* OnboardingAngleTests.swift */; };
+		D0960000000000000097BBBB /* GrowthMetricsTrialTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0960000000000000097AAAA /* GrowthMetricsTrialTests.swift */; };
 		4501F3A72F840A01008704F9 /* PrayerWallPostTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4501F3A82F840A01008704F9 /* PrayerWallPostTests.swift */; };
 		4501F3A92F840A01008704F9 /* PrayerWallViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4501F3AA2F840A01008704F9 /* PrayerWallViewModelTests.swift */; };
 		450901B22F630925008704F9 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 450901B12F630925008704F9 /* GoogleService-Info.plist */; };
@@ -431,6 +432,7 @@
 		4501F3A42F840A01008704F9 /* Agreement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Agreement.swift; sourceTree = "<group>"; };
 		4501F3A62F840A01008704F9 /* WarriorRoomTypesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WarriorRoomTypesTests.swift; sourceTree = "<group>"; };
 		C0960000000000000096AAAA /* OnboardingAngleTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OnboardingAngleTests.swift; sourceTree = "<group>"; };
+		C0960000000000000097AAAA /* GrowthMetricsTrialTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GrowthMetricsTrialTests.swift; sourceTree = "<group>"; };
 		4501F3A82F840A01008704F9 /* PrayerWallPostTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerWallPostTests.swift; sourceTree = "<group>"; };
 		4501F3AA2F840A01008704F9 /* PrayerWallViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerWallViewModelTests.swift; sourceTree = "<group>"; };
 		450901B12F630925008704F9 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
@@ -868,6 +870,7 @@
 				TIC00TST000000000000001A /* TakeItCaptiveServiceTests.swift */,
 				4501F3A62F840A01008704F9 /* WarriorRoomTypesTests.swift */,
 				C0960000000000000096AAAA /* OnboardingAngleTests.swift */,
+				C0960000000000000097AAAA /* GrowthMetricsTrialTests.swift */,
 				4501F3A82F840A01008704F9 /* PrayerWallPostTests.swift */,
 				4501F3AA2F840A01008704F9 /* PrayerWallViewModelTests.swift */,
 				2F740F6829D4017400E89E7F /* APIClientTests.swift */,
@@ -1980,6 +1983,7 @@
 				TIC00TST000000000000001B /* TakeItCaptiveServiceTests.swift in Sources */,
 				4501F3A52F840A01008704F9 /* WarriorRoomTypesTests.swift in Sources */,
 				D0960000000000000096BBBB /* OnboardingAngleTests.swift in Sources */,
+				D0960000000000000097BBBB /* GrowthMetricsTrialTests.swift in Sources */,
 				4501F3A72F840A01008704F9 /* PrayerWallPostTests.swift in Sources */,
 				4501F3A92F840A01008704F9 /* PrayerWallViewModelTests.swift in Sources */,
 				2F740F6929D4017400E89E7F /* APIClientTests.swift in Sources */,

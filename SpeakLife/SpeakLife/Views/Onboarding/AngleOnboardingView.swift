@@ -228,7 +228,7 @@ struct AngleOnboardingView: View {
         // carry a meaningful segment for this arm (quiz sets its own).
         if currentStep == .picker,
            let choice = angle.picker.choices.first(where: { $0.id == selectedChoiceID }) {
-            appState.onboardingSegment = "\(angle.flow)_\(choice.segmentLabel)"
+            appState.setOnboardingSegment("\(angle.flow)_\(choice.segmentLabel)")
         }
 
         // Leaving the hits-hardest question: pre-select the notification-time

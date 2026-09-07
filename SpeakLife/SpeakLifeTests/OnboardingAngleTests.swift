@@ -161,6 +161,9 @@ final class OnboardingAngleTests: XCTestCase {
             "provision": .abundance,
             "anxiety": .peace,
             "renewal": .identity,
+            "purpose": .purpose,
+            "joy": .joy,
+            "more": .allOfIt,
         ]
         for (id, burden) in expected {
             guard let angle = OnboardingAngles.angle(id: id) else {
