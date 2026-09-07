@@ -769,6 +769,23 @@ final class SubscriptionStore: ObservableObject {
                 metadata: ["source": "rc_customer_info_update"]
             )
         }
+
+        // Track trial → paid. Deliberately NOT a comparison against the
+        // captured `wasSubscribed` state above: the charge lands on day 3 with
+        // the app shut, so the previous in-memory value is whatever this launch
+        // initialised, not what the person was before the conversion.
+        // GrowthMetrics persists the pending trial and dedupes, so this is safe
+        // to call on every entitlement update.
+        let activeProductId = purchasedSubscriptions.first?.id ?? lastKnownProductId
+        let activePrice = subscriptions
+            .first { $0.id == activeProductId }
+            .map { NSDecimalNumber(decimal: $0.price).doubleValue }
+        GrowthMetrics.shared.reconcileTrialState(
+            isPremium: premiumActive,
+            isInTrial: isInTrial,
+            productId: activeProductId,
+            price: activePrice
+        )
     }
 
     @MainActor

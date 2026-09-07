@@ -108,10 +108,10 @@ This is the only lever that reaches people who already left. Kill any push type
 whose open rate does not clear the others; the send budget is attention you do
 not get back.
 
-> **Caveat that limits D.** Only opens are instrumented, never *deliveries*, so
-> open rate has no true denominator (`lifecycle_notifications_scheduled` counts
-> scheduling, not delivery). Compare push types against each other, never against
-> an absolute bar.
+> **Caveat that limits D.** Deliveries are still not instrumented, so there is no
+> exact denominator. Bound it with the `notifications_authorized` person property
+> (refreshed every foreground): people who can currently be reached. Compare push
+> types against each other, never against an absolute bar.
 
 ---
 
@@ -181,10 +181,11 @@ six months later.
   walked in on (`healing_diagnosis` vs `healing_loved_one`). **It only exists from
   the build that ships this change forward** — cohort on `install_date` when
   comparing, exactly as with the acquisition properties.
-- **`trial_activated` never fires.** `AnalyticsService.trackTrialActivated` has no
-  call sites, so the documented Activation→Trial step 5 dead-ends. Use RevenueCat's
-  `rc_trial_converted_event` for trial→paid until it is wired.
+- **`trial_activated` now fires**, from the RevenueCat entitlement listener on the
+  first launch after the charge. New data only, and it lags the charge by up to one
+  app open, so use `rc_trial_converted_event` when the exact conversion time matters.
 - **Notification delivery is not instrumented** — see the caveat in §1D.
+  `notifications_authorized` bounds the population; nothing counts a delivery.
 - **`rc_*` history starts 2026-08-08**, and revenue before the identity fix is
   orphaned from behaviour. Any retention-vs-revenue cut is on new data only.
 

@@ -9,6 +9,7 @@ import SwiftUI
 import Combine
 import TipKit
 import AVFoundation
+import UserNotifications
 
 /// Whether this process is running the test suite rather than serving a user.
 ///
@@ -277,6 +278,16 @@ struct SpeakLifeApp: App {
                 GrowthMetrics.shared.trackDayStarted(
                     currentStreak: enhancedStreakViewModel.streakStats.currentStreak
                 )
+                // Read on every foreground rather than trusted from the
+                // onboarding grant: permission is revoked in iOS Settings
+                // silently, and push open rate is meaningless without a
+                // denominator of people who can still be reached.
+                UNUserNotificationCenter.current().getNotificationSettings { settings in
+                    GrowthMetrics.shared.recordNotificationAuthorization(
+                        settings.authorizationStatus == .authorized
+                            || settings.authorizationStatus == .provisional
+                    )
+                }
 
                 // Set up app state references
                 appDelegate.appState = appState

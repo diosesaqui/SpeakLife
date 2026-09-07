@@ -41,6 +41,7 @@ final class GrowthMetrics {
         static let featuresUsed = "growth_features_used"
         static let maxStreak = "growth_max_streak"
         static let aliasedRevenueID = "growth_aliased_revenue_id"
+        static let pendingTrialProduct = "growth_pending_trial_product"
     }
 
     /// Person-property names. Referenced rather than typed at call sites so a
@@ -60,6 +61,7 @@ final class GrowthMetrics {
         static let installDate = "install_date"
         static let churnedAt = "churned_at"
         static let lastCancelReason = "last_cancel_reason"
+        static let notificationsAuthorized = "notifications_authorized"
     }
 
     // MARK: - Install cohort
@@ -243,6 +245,15 @@ final class GrowthMetrics {
     // does not carry: the app's own view of which plan the person is on.
 
     func recordTrialStarted(productId: String, plan: String, trialDays: Int) {
+        // Arm the trial → paid detector at the one moment the trial is known
+        // for certain. `reconcileTrialState` also arms it from RevenueCat's
+        // entitlement updates, but that listener's timing relative to the
+        // purchase is not guaranteed, and a trial that is never armed converts
+        // silently.
+        lock.lock()
+        defaults.set(productId, forKey: Key.pendingTrialProduct)
+        lock.unlock()
+
         AnalyticsService.shared.setUserProperty(
             Person.trialStartedAt, value: Date().analyticsISO8601String
         )
@@ -272,6 +283,95 @@ final class GrowthMetrics {
         AnalyticsService.shared.setUserProperty(Person.billingTerm, value: Self.billingTerm(for: productId))
     }
 
+    // MARK: - Metric: trial → paid
+    //
+    // The one conversion the app is never running for. The charge lands on day
+    // 3 with the app shut, so no in-memory comparison can catch it: `isInTrial`
+    // starts false on every launch, and by the time RevenueCat answers, the
+    // person just looks like a subscriber who was never on a trial at all.
+    // That is why `trial_activated` has never fired despite being documented as
+    // the last step of the Activation → Trial funnel — there was no state that
+    // survived the launch to compare against. The pending flag below is that
+    // state, and the transition is detected on the first launch AFTER the
+    // charge.
+    //
+    // RevenueCat's `rc_trial_converted_event` stays the source of truth for
+    // revenue: it is server-side, it carries real USD, and it sees conversions
+    // this process cannot. This exists for the destinations that integration
+    // does not reach — Meta (`Subscribe`) and TikTok, which optimise ad
+    // delivery on the conversion — and to fill the funnel step in PostHog.
+    //
+    // Renewals are deliberately NOT tracked here. RevenueCat reports them
+    // server-side as `rc_renewal_event`, TikTok does not track renewals, and a
+    // client-side copy would fire on whichever launch happened to notice, which
+    // is a worse signal than none. `trackSubscriptionRenewal` stays unwired on
+    // purpose.
+
+    /// What a RevenueCat entitlement update means for the person's trial.
+    ///
+    /// Pure, and separated from the recording below so the state machine can be
+    /// tested without a live analytics stack.
+    enum TrialTransition: Equatable {
+        /// Nothing to record: no trial in flight, or one already resolved.
+        case none
+        /// A trial is running. Remember the SKU so a conversion days later can name it.
+        case pending(productId: String)
+        /// A tracked trial is now a paid subscription.
+        case converted(productId: String)
+        /// A tracked trial ended without converting. The cancellation path already reports it.
+        case ended
+    }
+
+    static func trialTransition(
+        isPremium: Bool,
+        isInTrial: Bool,
+        productId: String?,
+        pending: String?
+    ) -> TrialTransition {
+        if isInTrial {
+            return .pending(productId: productId ?? pending ?? "unknown")
+        }
+        // No tracked trial. Covers a direct purchase, a free user, and every
+        // person who was already subscribed before this shipped — none of whom
+        // may produce a conversion event.
+        guard let pending else { return .none }
+        return isPremium ? .converted(productId: productId ?? pending) : .ended
+    }
+
+    /// Call on every RevenueCat entitlement update. Fires `trial_activated`
+    /// exactly once per trial: clearing the pending flag IS the dedupe, so a
+    /// replayed or repeated update can never produce a second event.
+    func reconcileTrialState(isPremium: Bool, isInTrial: Bool, productId: String?, price: Double? = nil) {
+        lock.lock()
+        let transition = Self.trialTransition(
+            isPremium: isPremium,
+            isInTrial: isInTrial,
+            productId: productId,
+            pending: defaults.string(forKey: Key.pendingTrialProduct)
+        )
+        switch transition {
+        case .none:
+            break
+        case .pending(let product):
+            defaults.set(product, forKey: Key.pendingTrialProduct)
+        case .converted, .ended:
+            defaults.removeObject(forKey: Key.pendingTrialProduct)
+        }
+        lock.unlock()
+
+        guard case .converted(let product) = transition else { return }
+
+        var metadata: [String: Any] = [
+            "days_since_install": AnalyticsContext.shared.daysSinceInstall,
+            "source": "rc_customer_info_update"
+        ]
+        // Meta's Subscribe event is skipped without a price, so pass one
+        // whenever the StoreKit product for the SKU is loaded.
+        if let price { metadata["price"] = price }
+
+        AnalyticsService.shared.trackTrialActivated(productId: product, metadata: metadata)
+    }
+
     func recordChurn(reason: String) {
         AnalyticsService.shared.setUserProperty(Person.churnedAt, value: Date().analyticsISO8601String)
         AnalyticsService.shared.setUserProperty(Person.lastCancelReason, value: reason)
@@ -282,6 +382,22 @@ final class GrowthMetrics {
     // Nothing recorded a notification tap before this, so the entire push
     // programme — lifecycle, streak-break, daily burst, personal declaration —
     // had no measurable open rate and no way to tell which type earns its send.
+
+    /// Mirrors the CURRENT notification authorization onto the person, once per
+    /// foreground.
+    ///
+    /// The grant is already tracked as an event at onboarding, but that is a
+    /// record of a decision, not of a state: permission is revoked in iOS
+    /// Settings without the app hearing about it, so an onboarding grant from
+    /// six months ago says nothing about whether this person can be reached
+    /// today. Push open rate needs the denominator to be people who can
+    /// currently receive a push, and this is the only honest source of it.
+    ///
+    /// Not a delivery count — see `ANALYTICS_DATA_QUALITY.md`. It bounds the
+    /// population, which is what makes push types comparable to each other.
+    func recordNotificationAuthorization(_ isAuthorized: Bool) {
+        AnalyticsService.shared.setUserProperty(Person.notificationsAuthorized, value: isAuthorized)
+    }
 
     func trackNotificationOpened(type: String, identifier: String, category: String?) {
         var params: [String: Any] = [
