@@ -1020,9 +1020,9 @@ struct TermsConditionsView: View {
 
 struct StreakStatsProfileSheet: View {
     @ObservedObject var viewModel: EnhancedStreakViewModel
-    /// Guarding's lifetime counter. Observed rather than read once, so ground
-    /// arriving from another device while this sheet is open shows up.
-    @ObservedObject private var guardService = TakeItCaptiveService.shared
+    /// Magnifying's lifetime counter. Observed rather than read once, so reps
+    /// arriving from another device while this sheet is open show up.
+    @ObservedObject private var magnifyService = MagnifyService.shared
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -1100,7 +1100,7 @@ struct StreakStatsProfileSheet: View {
         // that has taken no ground locally never rendered it, never ran the
         // refresh, and so never learned about ground another device had already
         // synced. The refresh has to run before the count is read, not after.
-        .onAppear { guardService.refreshGround() }
+        .onAppear { magnifyService.refreshCount() }
     }
 
     // ── Ground taken ──────────────────────────────────────────────────────
@@ -1112,27 +1112,27 @@ struct StreakStatsProfileSheet: View {
     // and never again.
     //
     // Hidden at zero, on purpose. Someone who has never opened Guarding does
-    // not need a nought with their name on it, and "0 thoughts taken captive"
-    // is the one thing this counter must never say — the whole design of
-    // `GroundTakenView` is that the number only goes up and never accuses.
+    // not need a nought with their name on it, and "0 times magnified" is the
+    // one thing this counter must never say — the whole design of
+    // `HigherGroundView` is that the number only goes up and never accuses.
     @ViewBuilder
     private var groundTakenSection: some View {
-        if guardService.groundTaken > 0 {
+        if magnifyService.timesMagnified > 0 {
             VStack(spacing: DS.Spacing.md) {
                 Divider()
 
                 HStack(spacing: DS.Spacing.md) {
-                    Image(systemName: "brain.head.profile")
+                    Image(systemName: "sparkles")
                         .font(.title2)
                         .foregroundColor(.teal)
 
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("\(guardService.groundTaken)")
+                        Text("\(magnifyService.timesMagnified)")
                             .font(.title.bold())
                             .contentTransition(.numericText())
-                        Text(guardService.groundTaken == 1
-                             ? "thought taken captive"
-                             : "thoughts taken captive")
+                        Text(magnifyService.timesMagnified == 1
+                             ? "time you've magnified the Lord"
+                             : "times you've magnified the Lord")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -1142,7 +1142,7 @@ struct StreakStatsProfileSheet: View {
 
                 // Same sentence the completion screen ends on, so the number
                 // means the same thing in both places.
-                Text("That's ground you don't give back.")
+                Text("Every one of them made Him bigger than the day.")
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)

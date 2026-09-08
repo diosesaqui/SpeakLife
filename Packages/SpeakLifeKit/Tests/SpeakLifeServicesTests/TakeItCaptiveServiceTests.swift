@@ -402,29 +402,29 @@ final class TakeItCaptiveServiceTests: XCTestCase {
 
 /// The row is the feature's only entry point outside the App Intent, so how it
 /// appears and disappears is part of the contract.
-final class GuardChecklistRowTests: XCTestCase {
+final class MagnifyChecklistRowTests: XCTestCase {
 
-    private let tenured = TaskLibrary.guardIntroducedAfterDaysCompleted + 10
+    private let tenured = TaskLibrary.magnifyIntroducedAfterDaysCompleted + 10
 
     func testRowIsAbsentWhenThePillarIsDark() {
         // nil = kill switch off, or the bank failed to load.
-        let tasks = TaskLibrary.getCoreTasksForStreak(30, guardCompletedToday: nil,
+        let tasks = TaskLibrary.getCoreTasksForStreak(30, magnifyCompletedToday: nil,
                                                       totalDaysCompleted: tenured)
-        XCTAssertFalse(tasks.contains { $0.id == TaskLibrary.guardTaskId },
+        XCTAssertFalse(tasks.contains { $0.id == TaskLibrary.magnifyTaskId },
                        "A task nobody can finish is worse than no task.")
     }
 
     func testRowIsHeldBackUntilTheCoreLoopHasTakenHold() {
-        for days in 0..<TaskLibrary.guardIntroducedAfterDaysCompleted {
-            let tasks = TaskLibrary.getCoreTasksForStreak(days + 1, guardCompletedToday: false,
+        for days in 0..<TaskLibrary.magnifyIntroducedAfterDaysCompleted {
+            let tasks = TaskLibrary.getCoreTasksForStreak(days + 1, magnifyCompletedToday: false,
                                                           totalDaysCompleted: days)
-            XCTAssertFalse(tasks.contains { $0.id == TaskLibrary.guardTaskId },
+            XCTAssertFalse(tasks.contains { $0.id == TaskLibrary.magnifyTaskId },
                            "The first days must stay light so the streak is easy to earn.")
         }
         let tasks = TaskLibrary.getCoreTasksForStreak(
-            3, guardCompletedToday: false,
-            totalDaysCompleted: TaskLibrary.guardIntroducedAfterDaysCompleted)
-        XCTAssertTrue(tasks.contains { $0.id == TaskLibrary.guardTaskId })
+            3, magnifyCompletedToday: false,
+            totalDaysCompleted: TaskLibrary.magnifyIntroducedAfterDaysCompleted)
+        XCTAssertTrue(tasks.contains { $0.id == TaskLibrary.magnifyTaskId })
     }
 
     /// The regression this pins is the worst one the feature could ship: gating
@@ -432,9 +432,9 @@ final class GuardChecklistRowTests: XCTestCase {
     /// streak broke — punishing someone for a lapse by removing the tool, on the
     /// exact day they need it most. Tenure is monotonic, so it cannot happen.
     func testABrokenStreakNeverRemovesThePillar() {
-        let tasks = TaskLibrary.getCoreTasksForStreak(0, guardCompletedToday: false,
+        let tasks = TaskLibrary.getCoreTasksForStreak(0, magnifyCompletedToday: false,
                                                       totalDaysCompleted: 200)
-        XCTAssertTrue(tasks.contains { $0.id == TaskLibrary.guardTaskId },
+        XCTAssertTrue(tasks.contains { $0.id == TaskLibrary.magnifyTaskId },
                       "A 200-day user whose streak just died must keep Guarding.")
     }
 
@@ -444,9 +444,9 @@ final class GuardChecklistRowTests: XCTestCase {
     /// narrows.
     func testRowSurvivesEveryPhase() {
         for day in [3, 7, 8, 30, 31, 99, 100, 365] {
-            let tasks = TaskLibrary.getCoreTasksForStreak(day, guardCompletedToday: false,
+            let tasks = TaskLibrary.getCoreTasksForStreak(day, magnifyCompletedToday: false,
                                                           totalDaysCompleted: day)
-            XCTAssertTrue(tasks.contains { $0.id == TaskLibrary.guardTaskId },
+            XCTAssertTrue(tasks.contains { $0.id == TaskLibrary.magnifyTaskId },
                           "Guard row went missing on day \(day)")
         }
     }
@@ -458,10 +458,10 @@ final class GuardChecklistRowTests: XCTestCase {
     /// Asserted as "above every ordinary task" rather than a fixed index, so
     /// adding another spoken row does not fail this for the wrong reason.
     func testRowSitsDirectlyBehindTheBurst() {
-        let tasks = TaskLibrary.getCoreTasksForStreak(30, guardCompletedToday: false,
+        let tasks = TaskLibrary.getCoreTasksForStreak(30, magnifyCompletedToday: false,
                                                       totalDaysCompleted: tenured)
         guard let burst = tasks.firstIndex(where: { $0.id == "complete_daily_burst" }),
-              let guardRow = tasks.firstIndex(where: { $0.id == TaskLibrary.guardTaskId }) else {
+              let guardRow = tasks.firstIndex(where: { $0.id == TaskLibrary.magnifyTaskId }) else {
             return XCTFail("Both rows should be present.")
         }
         XCTAssertEqual(burst, 0, "The Burst leads: it is the only row that earns the streak.")
@@ -473,13 +473,13 @@ final class GuardChecklistRowTests: XCTestCase {
         let tasks = TaskLibrary.getCoreTasksForStreak(
             30,
             personalDeclarations: .init(total: 1, spokenToday: 0, headline: "I am healed."),
-            guardCompletedToday: false,
+            magnifyCompletedToday: false,
             totalDaysCompleted: tenured
         )
         let ids = tasks.map(\.id)
         guard let burst = ids.firstIndex(of: "complete_daily_burst"),
               let declaration = ids.firstIndex(of: TaskLibrary.personalDeclarationTaskId),
-              let guardRow = ids.firstIndex(of: TaskLibrary.guardTaskId) else {
+              let guardRow = ids.firstIndex(of: TaskLibrary.magnifyTaskId) else {
             return XCTFail("All three rows should be present, got \(ids).")
         }
         XCTAssertEqual(burst, 0, "ordered as \(ids)")
@@ -488,19 +488,19 @@ final class GuardChecklistRowTests: XCTestCase {
     }
 
     func testRowCompletionIsDerivedFromTheService() {
-        let done = TaskLibrary.getCoreTasksForStreak(30, guardCompletedToday: true,
+        let done = TaskLibrary.getCoreTasksForStreak(30, magnifyCompletedToday: true,
                                                      totalDaysCompleted: tenured)
-        XCTAssertEqual(done.first { $0.id == TaskLibrary.guardTaskId }?.isCompleted, true)
+        XCTAssertEqual(done.first { $0.id == TaskLibrary.magnifyTaskId }?.isCompleted, true)
 
-        let notDone = TaskLibrary.getCoreTasksForStreak(30, guardCompletedToday: false,
+        let notDone = TaskLibrary.getCoreTasksForStreak(30, magnifyCompletedToday: false,
                                                         totalDaysCompleted: tenured)
-        XCTAssertEqual(notDone.first { $0.id == TaskLibrary.guardTaskId }?.isCompleted, false)
+        XCTAssertEqual(notDone.first { $0.id == TaskLibrary.magnifyTaskId }?.isCompleted, false)
     }
 
     /// Adding a pillar must not change what earns a streak. Someone who never
     /// opens Guarding has lost nothing.
     func testGuardNeverGatesTheStreak() {
-        var tasks = TaskLibrary.getCoreTasksForStreak(30, guardCompletedToday: false,
+        var tasks = TaskLibrary.getCoreTasksForStreak(30, magnifyCompletedToday: false,
                                                       totalDaysCompleted: tenured)
         for index in tasks.indices where tasks[index].id == "complete_daily_burst" {
             tasks[index].isCompleted = true
@@ -513,9 +513,9 @@ final class GuardChecklistRowTests: XCTestCase {
     /// The row never names the low thing. No "anxious", no "negative", no
     /// "your thought" — see rule 2 of the guardrails.
     func testRowCopyNeverAccusesTheUser() {
-        let tasks = TaskLibrary.getCoreTasksForStreak(30, guardCompletedToday: false,
+        let tasks = TaskLibrary.getCoreTasksForStreak(30, magnifyCompletedToday: false,
                                                       totalDaysCompleted: tenured)
-        guard let row = tasks.first(where: { $0.id == TaskLibrary.guardTaskId }) else {
+        guard let row = tasks.first(where: { $0.id == TaskLibrary.magnifyTaskId }) else {
             return XCTFail("Expected the Guard row.")
         }
         let copy = (row.title + " " + row.description).lowercased()

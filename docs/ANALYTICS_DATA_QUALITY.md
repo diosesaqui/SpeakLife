@@ -368,3 +368,37 @@ ORDER BY people DESC
 Revenue comes from the `rc_*` events, not from a person property — the
 `lifetime_revenue_usd` this query used to read no longer exists, and the values
 it held were local currency mislabelled as USD.
+
+---
+
+## Rule 10 — the fifth pillar's events changed name AND meaning (2026-09-08)
+
+Take It Captive became Magnify the Lord. The `guard_*` events were retired and
+replaced by `magnify_*`. **Do not stitch the two together into one series.**
+
+The tempting move is a `event LIKE 'guard_%' OR event LIKE 'magnify_%'` union to
+keep a continuous line through the change. It produces a clean-looking chart that
+is wrong, because the funnel is not the same funnel:
+
+| Old | New | Why they are not comparable |
+|---|---|---|
+| `guard_task_started` | `magnify_started` | Old required a typed sentence to proceed; new needs one tap, or none. Started-to-completed rates are structurally different. |
+| `guard_thought_rejected` | `magnify_beheld` | The old step was *rejecting a lie*. The new one is *beholding a name of God*. Same position in the flow, opposite act. |
+| `guard_declaration_spoken` | `magnify_spoken` | Closest to a true rename, but the old line included a rebuke and the new one an exaltation, so `duration_ms` shifts. |
+| `guard_task_completed` | `magnify_completed` | Comparable in *count only*. `category` became `domain` and the values changed (`fear` → `peace`, `lack` → `provision`, …). |
+| `guard_escape_hatch_used` | `magnify_written_used` | Was the front door and metered; now an optional secondary route, on device, unmetered on the day's rep. Volume will drop hard and that is the design, not a regression. |
+| — | `magnify_storm_entered` | New. No predecessor. |
+| — | `magnify_why_completed` / `magnify_why_skipped` | New, first-run only. |
+
+Two more traps specific to this cutover:
+
+1. **`totalThoughtsTakenCaptive` was deliberately NOT renamed.** The synced
+   counter behind the badges and the profile card still carries the old key, so
+   a user's lifetime number is continuous even though every event name around it
+   changed. Do not read the key name as evidence the old feature is still live.
+2. **`guardEnabled` is still the kill-switch key** in Remote Config, for the same
+   reason. A dashboard filtering on the flag name is filtering on the *new*
+   pillar.
+
+For anything spanning the ship date, report the two eras separately and say
+where the cut is. `magnify_*` names carry no history before this build.

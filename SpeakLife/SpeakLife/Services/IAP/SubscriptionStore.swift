@@ -226,11 +226,16 @@ final class SubscriptionStore: ObservableObject {
     // take every Enforcement surface dark at once.
     @Published var enforcementEnabled = true
 
-    // MARK: - Guarding Flag (Take It Captive)
+    // MARK: - Fifth Pillar Flag (Magnify the Lord)
     // Kill switch for the fifth pillar. Defaults true (registered in AppDelegate's
     // Remote Config defaults); set `guardEnabled` to false in Remote Config and the
-    // checklist stops building the Guard row, which is the feature's only entry
-    // point outside the App Intent.
+    // checklist stops building the Magnify row, which is the feature's only entry
+    // point outside the App Intents.
+    //
+    // The KEY is deliberately still `guardEnabled`. It already carries a value in
+    // the Remote Config console; renaming it in code would ship the pillar dark
+    // (or lit) for everyone until the console caught up. Same trade as
+    // `TimesMagnified.counterKey`.
     @Published var guardEnabled = true
 
     // MARK: - Onboarding Rating Ask Flag

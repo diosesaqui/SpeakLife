@@ -138,8 +138,11 @@ enum DebugFlagCatalog {
         Flag(key: "enforcementEnabled",
              title: "Enforcement campaigns",
              blurb: "Off takes every Enforcement surface dark at once."),
+        // Key kept from when this pillar was Take It Captive — it is already set
+        // in the Remote Config console, and renaming it here would ship the
+        // feature dark until someone added the new key on the other side.
         Flag(key: "guardEnabled",
-             title: "Guarding (Take It Captive)",
+             title: "Magnify the Lord",
              blurb: "Off removes the fifth pillar's only entry point."),
         Flag(key: "onboardingRatingEnabled",
              title: "Onboarding rating ask",

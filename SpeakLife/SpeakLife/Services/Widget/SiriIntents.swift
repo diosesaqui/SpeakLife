@@ -306,20 +306,35 @@ struct PromiseAppShortcutsProvider: AppShortcutsProvider {
             systemImageName: "tag.fill"
         )
 
-        // Guarding — the interception entry point. Phrased around what the user
-        // is actually feeling ("I can't stop thinking about this"), not around
-        // the feature's name, because nobody in that moment remembers what we
-        // called it.
+        // Magnifying — the daily rep by voice.
         AppShortcut(
-            intent: TakeThoughtCaptiveIntent(),
+            intent: MagnifyTheLordIntent(),
             phrases: [
-                "Take a thought captive in \(.applicationName)",
-                "Take this thought captive with \(.applicationName)",
-                "I can't stop thinking about this, \(.applicationName)",
-                "Guard my mind with \(.applicationName)"
+                "Magnify the Lord with \(.applicationName)",
+                "Magnify God in \(.applicationName)",
+                "Show me who God is, \(.applicationName)",
+                "Give me a word from \(.applicationName)"
             ],
-            shortTitle: "Take It Captive",
-            systemImageName: "shield.lefthalf.filled"
+            shortTitle: "Magnify the Lord",
+            systemImageName: "sparkles"
+        )
+
+        // Storm mode — the 2am entry point. Phrased around what the user is
+        // actually living ("everything is falling apart"), never around the
+        // feature's name, because nobody in that moment remembers what we called
+        // it. This is the one shortcut that has to work when the person using it
+        // cannot think straight, so every phrase here is something someone would
+        // say out loud without planning it first.
+        AppShortcut(
+            intent: MagnifyInAStormIntent(),
+            phrases: [
+                "I need God to be bigger than this, \(.applicationName)",
+                "Everything is falling apart, \(.applicationName)",
+                "\(.applicationName), remind me who God is",
+                "Help me magnify God right now with \(.applicationName)"
+            ],
+            shortTitle: "He's Bigger Than This",
+            systemImageName: "cloud.bolt.rain"
         )
     }
 }

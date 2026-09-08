@@ -113,7 +113,7 @@ struct BadgeTestView: View {
             socialShares: 5,
             favoritesAdded: 10,
             categoriesCompleted: Set(["Faith", "Health"]),
-            // Past the first two Guarding thresholds and short of the third, so
+            // Past the first two Magnify thresholds and short of the third, so
             // this fixture exercises both an earned and an unearned tier.
             thoughtsTakenCaptive: 12
         )

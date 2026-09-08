@@ -211,7 +211,15 @@ public enum TaskNavigationDestination: String, Codable {
     case journal
     case personalDeclaration
     /// Guarding — the fifth pillar. Opens the Take It Captive drill.
+    ///
+    /// **Retained for decoding only.** `DailyChecklist` is persisted whole into
+    /// UserDefaults, so a checklist written before the pillar became Magnifying
+    /// still carries this value and must not throw on the way back in. Nothing
+    /// writes it any more; the row is regenerated on every rebuild with
+    /// `.magnify`, and `withMagnify` filters the old task id out.
     case takeItCaptive
+    /// Magnifying the Lord — the fifth pillar. Opens the magnify flow.
+    case magnify
 }
 
 // MARK: - Enhanced Daily Task Model
@@ -1329,13 +1337,13 @@ public struct TaskLibrary {
     ///   are spoken today. nil leaves the row out entirely, which is right for
     ///   anyone who has not started one — a task nobody can finish is worse than
     ///   no task.
-    /// - Parameter guardCompletedToday: whether today's Take It Captive rep is
-    ///   done. nil leaves the row out entirely — that is the state when the
-    ///   pillar is switched off in Remote Config or when the thought bank failed
-    ///   to load. A task with nothing behind it is worse than no task.
+    /// - Parameter magnifyCompletedToday: whether today's Magnify rep is done.
+    ///   nil leaves the row out entirely — that is the state when the pillar is
+    ///   switched off in Remote Config or when the facet bank failed to load. A
+    ///   task with nothing behind it is worse than no task.
     /// - Parameter totalDaysCompleted: `StreakStats.totalDaysCompleted`, the
-    ///   monotonic tenure counter. Gates when Guarding is introduced. Never
-    ///   `currentStreak` — see `guardIntroducedAfterDaysCompleted`.
+    ///   monotonic tenure counter. Gates when Magnifying is introduced. Never
+    ///   `currentStreak` — see `magnifyIntroducedAfterDaysCompleted`.
     /// - Parameter connectStyle: how the user said they connect best with
     ///   scripture. Defaults to whatever onboarding persisted; pass an explicit
     ///   value in tests. nil leaves the ordering exactly as it was.
@@ -1347,7 +1355,7 @@ public struct TaskLibrary {
                                              foundationAudioDay: Int? = nil,
                                              enforcementDay: EnforcementDay? = nil,
                                              personalDeclarations: PersonalDeclaration.Progress? = nil,
-                                             guardCompletedToday: Bool? = nil,
+                                             magnifyCompletedToday: Bool? = nil,
                                              totalDaysCompleted: Int = 0,
                                              connectStyle: ConnectStyle? = ConnectStyle.stored(),
                                              timeBudget: DailyTimeBudget? = DailyTimeBudget.stored()) -> [DailyTask] {
@@ -1358,7 +1366,7 @@ public struct TaskLibrary {
             let planned = applyAudioPlan(to: aiTasks, day: audioDay, enforcementDay: enforcementDay)
             let owned = markCampaignOwned(planned, enforcementDay: enforcementDay)
             let led = leadWithPreferredModality(owned, style: connectStyle, streakDay: streakDay)
-            let guarded = withGuard(burstFirst(led), completedToday: guardCompletedToday,
+            let guarded = withMagnify(burstFirst(led), completedToday: magnifyCompletedToday,
                                     totalDaysCompleted: totalDaysCompleted)
             return capToTimeBudget(withPersonalDeclaration(guarded, progress: personalDeclarations),
                                    budget: timeBudget, style: connectStyle)
@@ -1416,7 +1424,7 @@ public struct TaskLibrary {
         // the front and the Burst directly behind it. Reversing these lets
         // burstFirst hoist the Burst back over the declaration.
         let led = leadWithPreferredModality(tasks, style: connectStyle, streakDay: streakDay)
-        let guarded = withGuard(burstFirst(led), completedToday: guardCompletedToday,
+        let guarded = withMagnify(burstFirst(led), completedToday: magnifyCompletedToday,
                                 totalDaysCompleted: totalDaysCompleted)
         return capToTimeBudget(withPersonalDeclaration(guarded, progress: personalDeclarations),
                                budget: timeBudget, style: connectStyle)
@@ -1521,9 +1529,16 @@ public struct TaskLibrary {
         return result
     }
 
-    public static let guardTaskId = "take_it_captive"
+    /// The row's id. Renamed with the pillar, so a checklist persisted before
+    /// the change carries `legacyGuardTaskId` and is filtered out on rebuild
+    /// rather than sitting alongside the new row.
+    public static let magnifyTaskId = "magnify_the_lord"
 
-    /// How many completed days the user needs behind them before Guarding
+    /// The id this row used to ship under. Only ever used to remove it — see
+    /// `withMagnify`.
+    public static let legacyGuardTaskId = "take_it_captive"
+
+    /// How many completed days the user needs behind them before Magnifying
     /// appears.
     ///
     /// Not day 1: the first day is deliberately light (Burst, devotional, audio)
@@ -1536,41 +1551,46 @@ public struct TaskLibrary {
     /// delete the pillar for two days, which is precisely the
     /// you-failed-at-guarding-your-mind punishment this feature's guardrails
     /// forbid — and it fired on the exact morning someone needs it most.
-    public static let guardIntroducedAfterDaysCompleted = 2
+    public static let magnifyIntroducedAfterDaysCompleted = 2
 
-    /// Adds the Guarding row — the fifth pillar.
+    /// Adds the Magnifying row — the fifth pillar.
     ///
     /// Injected here rather than added to `foundationTasks` on purpose. The
     /// foundation phase takes `prefix(5)` of that array and the later phases
     /// pick from it by id, so a sixth entry would silently drop out of the
-    /// checklist somewhere around day 8. Guarding is a lifelong daily habit like
-    /// speaking and hearing, not a first-week exercise, so it rides the same
+    /// checklist somewhere around day 8. Magnifying is a lifelong daily habit
+    /// like speaking and hearing, not a first-week exercise, so it rides the same
     /// injector path the personal declaration does and survives every phase.
     ///
     /// **Completion is derived, never toggled.** It is done when today's rep is
     /// finished and not before, so the row cannot be ticked without actually
-    /// speaking the counter-declaration out loud — which is the entire feature.
+    /// speaking out loud — which is the entire feature.
     /// `EnhancedStreakViewModel.completeTask` refuses this id for that reason.
     ///
     /// **It never earns the streak.** `DailyChecklist.isStreakEarned` reads the
     /// Burst alone, so this changes the day's "N of M" and nothing else. A user
-    /// who guards their mind but skips the Burst has still not lost a streak to
+    /// who magnifies the Lord but skips the Burst has still not lost a streak to
     /// this feature, and one who never opens it has lost nothing at all.
-    private static func withGuard(_ tasks: [DailyTask],
-                                  completedToday: Bool?,
-                                  totalDaysCompleted: Int) -> [DailyTask] {
-        var result = tasks.filter { $0.id != guardTaskId }
+    ///
+    /// Both ids are filtered before the row is rebuilt. A checklist persisted
+    /// under the old pillar still holds a `take_it_captive` row, and leaving it
+    /// in would show the user two fifth pillars on upgrade day — one of them
+    /// pointing at a flow that no longer exists.
+    private static func withMagnify(_ tasks: [DailyTask],
+                                    completedToday: Bool?,
+                                    totalDaysCompleted: Int) -> [DailyTask] {
+        var result = tasks.filter { $0.id != magnifyTaskId && $0.id != legacyGuardTaskId }
         guard let completedToday,
-              totalDaysCompleted >= guardIntroducedAfterDaysCompleted else { return result }
+              totalDaysCompleted >= magnifyIntroducedAfterDaysCompleted else { return result }
 
         var task = DailyTask(
-            id: guardTaskId,
-            title: "Take a Thought Captive",
-            // Never names the low thing. No "anxious thought", no "negative
-            // thinking" — the row describes the higher ground being taken, not
-            // the intruder being removed.
-            description: "One thought. Reject it, and speak the truth out loud.",
-            icon: "shield.lefthalf.filled",
+            id: magnifyTaskId,
+            title: "Magnify the Lord",
+            // Never names the low thing — and now it does not have to work at
+            // it. The row describes the higher reality being stepped into, with
+            // nothing to displace named anywhere in the sentence.
+            description: "See how big He is, and say it out loud.",
+            icon: "sparkles",
             category: .foundation,
             type: .speak,
             difficulty: .beginner,
@@ -1578,17 +1598,17 @@ public struct TaskLibrary {
             // `getAvailableTasks`, so the real gate is the tenure check above.
             minimumStreakDay: 1,
             estimatedMinutes: 1,
-            navigationDestination: .takeItCaptive
+            navigationDestination: .magnify
         )
         task.isCompleted = completedToday
 
         // Directly behind the Burst at the time this runs. Speaking leads;
-        // guarding holds what speaking took.
+        // magnifying sets the size of everything the speaking lands on.
         //
         // `withPersonalDeclaration` runs after this and inserts at the same
-        // anchor, so the shipped order is Burst → declaration → Guarding. That
-        // is deliberate: both rows are spoken out loud, and the one made of the
-        // user's own words comes first.
+        // anchor, so the shipped order is Burst → declaration → Magnifying. That
+        // is deliberate: all three rows are spoken out loud, and the one made of
+        // the user's own words comes first.
         if let burstIndex = result.firstIndex(where: { $0.id == "complete_daily_burst" }) {
             result.insert(task, at: min(burstIndex + 1, result.count))
         } else {

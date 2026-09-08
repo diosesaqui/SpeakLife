@@ -411,7 +411,7 @@ public final class EnhancedStreakViewModel: ObservableObject {
                                                            foundationAudioDay: workingStreakDay,
                                                            enforcementDay: EnforcementService.shared.enabledActiveDay,
                                                            personalDeclarations: PersonalDeclarationProgressBridge.todayProgress(),
-                                                           guardCompletedToday: TakeItCaptiveService.shared.enabledCompletedToday,
+                                                           magnifyCompletedToday: MagnifyService.shared.enabledCompletedToday,
                                                            totalDaysCompleted: totalDaysCompleted)
 
         // Preserve completion status from existing tasks
@@ -428,7 +428,7 @@ public final class EnhancedStreakViewModel: ObservableObject {
             // declaration added, or the Guard row done on a day whose rep has
             // not been taken yet.
             if task.id != TaskLibrary.personalDeclarationTaskId,
-               task.id != TaskLibrary.guardTaskId,
+               task.id != TaskLibrary.magnifyTaskId,
                let (wasCompleted, completedAt) = existingCompletions[task.id] {
                 updatedTask.isCompleted = wasCompleted
                 updatedTask.completedAt = completedAt
@@ -458,7 +458,7 @@ public final class EnhancedStreakViewModel: ObservableObject {
                                                            foundationAudioDay: workingStreakDay,
                                                            enforcementDay: EnforcementService.shared.enabledActiveDay,
                                                            personalDeclarations: PersonalDeclarationProgressBridge.todayProgress(),
-                                                           guardCompletedToday: TakeItCaptiveService.shared.enabledCompletedToday,
+                                                           magnifyCompletedToday: MagnifyService.shared.enabledCompletedToday,
                                                            totalDaysCompleted: totalDaysCompleted)
 
         // Completions must survive: starting a campaign after speaking today's
@@ -476,7 +476,7 @@ public final class EnhancedStreakViewModel: ObservableObject {
             // declaration added, or the Guard row done on a day whose rep has
             // not been taken yet.
             if task.id != TaskLibrary.personalDeclarationTaskId,
-               task.id != TaskLibrary.guardTaskId,
+               task.id != TaskLibrary.magnifyTaskId,
                let (wasCompleted, completedAt) = existingCompletions[task.id] {
                 updatedTask.isCompleted = wasCompleted
                 updatedTask.completedAt = completedAt
@@ -548,13 +548,12 @@ public final class EnhancedStreakViewModel: ObservableObject {
         // would record a task-completion event, creating a second source of
         // truth that could disagree with the declarations across devices.
         guard taskId != TaskLibrary.personalDeclarationTaskId else { return }
-        // Same rule, same reason: the Guarding row is earned by rejecting the
-        // thought and SPEAKING the counter out loud. Ticking it by hand would
-        // record ground the user never took, and the next rebuild — which
-        // re-derives it from TakeItCaptiveService — would undo the tick anyway.
-        // The row's tap opens the drill instead (see
-        // ModernDailyChecklistView.handleTaskNavigation).
-        guard taskId != TaskLibrary.guardTaskId else { return }
+        // Same rule, same reason: the Magnifying row is earned by beholding who
+        // God is and SPEAKING it out loud. Ticking it by hand would record a rep
+        // the user never made, and the next rebuild — which re-derives it from
+        // MagnifyService — would undo the tick anyway. The row's tap opens the
+        // flow instead (see ModernDailyChecklistView.handleTaskNavigation).
+        guard taskId != TaskLibrary.magnifyTaskId else { return }
         guard let taskIndex = todayChecklist.tasks.firstIndex(where: { $0.id == taskId }),
               !todayChecklist.tasks[taskIndex].isCompleted else { return }
 
@@ -640,7 +639,7 @@ public final class EnhancedStreakViewModel: ObservableObject {
         // And ground taken is never given back — there is no code path in this
         // feature that lowers the count, so there must not be one that unticks
         // the row it came from.
-        guard taskId != TaskLibrary.guardTaskId else { return }
+        guard taskId != TaskLibrary.magnifyTaskId else { return }
         guard let taskIndex = todayChecklist.tasks.firstIndex(where: { $0.id == taskId }),
               todayChecklist.tasks[taskIndex].isCompleted else { return }
 
@@ -737,7 +736,7 @@ public final class EnhancedStreakViewModel: ObservableObject {
                                                              foundationAudioDay: workingStreakDay,
                                                            enforcementDay: EnforcementService.shared.enabledActiveDay,
                                                            personalDeclarations: PersonalDeclarationProgressBridge.todayProgress(),
-                                                           guardCompletedToday: TakeItCaptiveService.shared.enabledCompletedToday,
+                                                           magnifyCompletedToday: MagnifyService.shared.enabledCompletedToday,
                                                            totalDaysCompleted: totalDaysCompleted)
 
         // Preserve completion status for existing tasks
@@ -747,7 +746,7 @@ public final class EnhancedStreakViewModel: ObservableObject {
             var updatedTask = task
             // Derived, so never inherited. See the note on the other rebuild.
             if task.id != TaskLibrary.personalDeclarationTaskId,
-               task.id != TaskLibrary.guardTaskId,
+               task.id != TaskLibrary.magnifyTaskId,
                let wasCompleted = existingCompletions[task.id] {
                 updatedTask.isCompleted = wasCompleted
                 if wasCompleted {
@@ -768,7 +767,7 @@ public final class EnhancedStreakViewModel: ObservableObject {
                                                       foundationAudioDay: workingStreakDay,
                                                            enforcementDay: EnforcementService.shared.enabledActiveDay,
                                                            personalDeclarations: PersonalDeclarationProgressBridge.todayProgress(),
-                                                           guardCompletedToday: TakeItCaptiveService.shared.enabledCompletedToday,
+                                                           magnifyCompletedToday: MagnifyService.shared.enabledCompletedToday,
                                                            totalDaysCompleted: totalDaysCompleted)
 
         return DailyChecklist(
@@ -1244,9 +1243,12 @@ public final class EnhancedStreakViewModel: ObservableObject {
         let versesRead = userDefaults.integer(forKey: "totalVersesRead")
         let socialShares = userDefaults.integer(forKey: "totalSocialShares")
         let favoritesAdded = userDefaults.integer(forKey: "totalFavoritesAdded")
-        // Guarding's counter. Read through `GroundTaken` rather than by raw key
-        // so the one definition of what "ground taken" means stays in one file.
-        let thoughtsTakenCaptive = GroundTaken.total(defaults: userDefaults)
+        // Magnifying's counter. Read through `TimesMagnified` rather than by raw
+        // key so the one definition of what the number means stays in one file.
+        // The `UserStats` property it feeds is still named for the pillar this
+        // replaced, for the same reason the storage key is — see
+        // `TimesMagnified.counterKey`.
+        let thoughtsTakenCaptive = TimesMagnified.total(defaults: userDefaults)
         let userStats = UserStats(
             affirmationsSpoken: affirmationsSpoken,
             versesRead: versesRead,

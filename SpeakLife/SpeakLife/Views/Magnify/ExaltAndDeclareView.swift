@@ -1,40 +1,29 @@
 //
-//  ReplaceDeclarationView.swift
+//  ExaltAndDeclareView.swift
 //  SpeakLife
 //
-//  Screen 3 of Take It Captive. Everything inverts.
+//  Where the rep terminates: words out loud. This is the one screen the whole
+//  pillar exists to reach, and the one rule no future change may break — Hearing
+//  and Quiet Time end at receiving; this ends at speaking.
 //
-//  They speak TWICE here, in one breath. First to the thing, naming it — the
-//  only place in the app that names it, because you cannot command what you
-//  will not say out loud. Then over their own life, where it is never named
-//  again. Rebuke and fill: a house swept clean and left empty is Matthew
-//  12:43-45, and it is why the second line is not optional.
+//  Two lines, one breath, and the order is the mechanism:
 //
-//  The screen the thought arrives on is cold, grey, recessed, wrong. This one is
-//  navy, gold, lit and warm. That contrast is doing real work: the user should
-//  feel like they walked out of one room and into another. Do not harmonize
-//  these two screens.
+//      TO HIM        "You are Jehovah Rapha. You are the God who heals."
+//      OVER MY LIFE  "I am healed and whole. This body carries the life of Christ."
 //
-//  `TakenCaptiveView` finishes on navy for the same reason, so this screen fades
-//  into a field that is already its own colour and the handover reads as one
-//  motion. The contrast is spent between the thought and the word, not between
-//  two loads.
+//  Those two labels are small, permanent, and doing real teaching. Every morning
+//  they show the shape of the thing: you lift Him first, and then you speak from
+//  underneath what you just said about Him. A person who does this ninety times
+//  has the pattern whether or not they ever read the first-run cards.
 //
-//  The mic ARMS ITSELF. There is no record button to START, because a button
-//  turns speaking into an extra decision at exactly the moment the user should
-//  just open their mouth.
-//
-//  There IS a way to say you have FINISHED. Stopping is inferred from a pause,
-//  but inference alone stranded people: it only fires from trailing silence
-//  after speech was heard, so a re-armed mic and a silent user waited on a
-//  30-second backstop with nothing on screen saying so.
-//
-//  Verification is `DeclarationVerificationService` — the same validator the
-//  personal-declaration card uses. It transcribes and scores the spoken words
-//  against the line, so "did they say it" has a real answer. The amplitude
-//  heuristic this replaced could only answer "was there a noise", and got even
-//  that wrong in both directions: an empty room completed a rep, and then two
-//  words did.
+//  This replaces `ReplaceDeclarationView`, and the machinery below is carried
+//  across from it deliberately and almost intact — the auto-arming mic, the
+//  transcript scoring, the never-accuse re-listen, the press-and-hold fallback.
+//  All of it was argued out and paid for once, and none of the reasons changed
+//  when the first line stopped being a rebuke and started being praise. What DID
+//  change is what is spoken: that screen's first line commanded the thing by name
+//  and was the app's one sanctioned exception to CLAUDE.md rule 12. Nothing here
+//  needs that exception, and nothing here may reintroduce it.
 //
 //  What it still must never do is tell someone they said it wrong. A low score
 //  cannot tell "they didn't say it" apart from "the recognizer missed it" —
@@ -46,24 +35,22 @@
 import SwiftUI
 import AVFoundation
 
-struct ReplaceDeclarationView: View {
+struct ExaltAndDeclareView: View {
 
-    let thought: IncomingThought
+    let entry: MagnifyEntry
     /// - Parameters:
     ///   - spoken: whether a voice was actually heard (or the hold confirmed).
     ///   - method: "mic" or "hold", for the speak-rate metric.
     ///   - duration: how long the speaking step took.
     let onSpoken: (_ spoken: Bool, _ method: String, _ duration: TimeInterval) -> Void
-    /// Leaving without speaking. The drill must always have a way out — a
+    /// Leaving without speaking. The rep must always have a way out — a
     /// full-screen cover with no close control is a trap, and trapping someone
     /// inside a screen that is asking them to speak is the worst place to do it.
     let onClose: () -> Void
 
-    /// The same validator the personal-declaration card uses. It transcribes
-    /// on device and scores the spoken words against the line, which is a real
-    /// answer to "did they say it" — the amplitude heuristic this replaced
-    /// could only ever answer "was there a noise", and got that wrong in both
-    /// directions: an empty room completed a rep, then two words did.
+    /// The same validator the personal-declaration card uses. It transcribes on
+    /// device and scores the spoken words against the line, which is a real
+    /// answer to "did they say it".
     @StateObject private var verifier = DeclarationVerificationService()
     @State private var startedAt = Date()
     /// Nudges the copy on a re-listen. Never a failure state — see `promptText`.
@@ -75,35 +62,34 @@ struct ReplaceDeclarationView: View {
     @State private var settled = false
     /// Shown before the system dialog so the ask has a reason attached.
     @State private var showMicRationale = false
-    /// Drives the staged entrance. The screen used to appear fully formed in the
-    /// same frame the card burned off, which read as one continuous blur rather
-    /// than as arriving somewhere new.
+    /// Drives the staged entrance, so the screen arrives rather than appearing
+    /// fully formed in the same frame the bloom finished.
     @State private var revealed = false
 
-    /// Navy field, per spec.
     private let field = Color(hex: "#1A264D")
     private let gold = Color(hex: "#F5B742")
 
     var body: some View {
         ZStack {
-            LinearGradient(colors: [field, Color(hex: "#0F1730")],
+            LinearGradient(colors: [Color(hex: "#22336B"), field],
                            startPoint: .top, endPoint: .bottom)
                 .ignoresSafeArea()
 
-            // Warmth: a soft gold bloom behind the declaration. The grey screen
-            // had nothing like this.
-            RadialGradient(colors: [gold.opacity(0.16), .clear],
-                           center: .center, startRadius: 10, endRadius: 320)
+            // BEHOLD hands over already bloomed, so this screen opens into a
+            // field that is already its own colour and the two read as one
+            // motion. Do not harmonize this away.
+            RadialGradient(colors: [gold.opacity(0.20), .clear],
+                           center: .center, startRadius: 10, endRadius: 340)
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
 
             VStack(spacing: DS.Spacing.lg) {
                 HStack {
                     Spacer()
-                    Button(action: {
+                    Button {
                         verifier.cancel()
                         onClose()
-                    }) {
+                    } label: {
                         Image(systemName: "xmark")
                             .font(.system(size: 15, weight: .semibold))
                             .foregroundColor(.white.opacity(0.35))
@@ -120,73 +106,60 @@ struct ReplaceDeclarationView: View {
                     .foregroundColor(gold.opacity(0.9))
                     .opacity(revealed ? 1 : 0)
 
-                // Two lines, one breath, in the order Jesus used: speak to the
-                // thing, then say what is true. The rebuke is smaller and set
-                // apart above — it is the shorter, harder half, and it is over
-                // in four words. The declaration is what the screen is for.
-                //
-                // Both highlight off the SAME transcript. The verifier is
+                // Both blocks highlight off the SAME transcript. The verifier is
                 // primed with the two lines joined, so `matchedIndices` runs
-                // straight through and the second block only has to subtract
-                // the first block's length to find its own indices.
-                VStack(spacing: DS.Spacing.md) {
-                    HighlightedDeclarationText(
-                        displayWords: rebukeWords,
-                        matchedIndices: verifier.matchedIndices.filter { $0 < rebukeWords.count },
-                        isRecording: verifier.isRecording,
-                        fontSize: 19
+                // straight through and the second block only has to subtract the
+                // first block's length to find its own indices.
+                VStack(spacing: DS.Spacing.lg) {
+                    lineBlock(
+                        label: "TO HIM",
+                        words: exaltationWords,
+                        matched: verifier.matchedIndices.filter { $0 < exaltationWords.count },
+                        fontSize: 20,
+                        glows: false
                     )
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
 
-                    // Words light gold as the transcript matches them, so the
-                    // screen shows the line being taken rather than a bar
-                    // filling.
-                    HighlightedDeclarationText(
-                        displayWords: declarationWords,
-                        matchedIndices: Set(verifier.matchedIndices
-                            .filter { $0 >= rebukeWords.count }
-                            .map { $0 - rebukeWords.count }),
-                        isRecording: verifier.isRecording
+                    lineBlock(
+                        label: "OVER MY LIFE",
+                        words: declarationWords,
+                        matched: Set(verifier.matchedIndices
+                            .filter { $0 >= exaltationWords.count }
+                            .map { $0 - exaltationWords.count }),
+                        fontSize: 26,
+                        glows: true
                     )
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .shadow(color: gold.opacity(0.25), radius: 18)
                 }
                 .opacity(revealed ? 1 : 0)
                 .offset(y: revealed ? 0 : 14)
 
                 VStack(spacing: 6) {
-                    Text(thought.verseText)
-                        .font(.system(size: 14, weight: .regular))
-                        .foregroundColor(.white.opacity(0.7))
+                    Text(entry.verseText)
+                        .font(.system(size: 13, weight: .regular))
+                        .foregroundColor(.white.opacity(0.62))
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
-                    Text(thought.book)
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(gold.opacity(0.85))
+                    Text(entry.book)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(gold.opacity(0.8))
                 }
                 .padding(.horizontal, 8)
 
                 Spacer(minLength: 0)
 
-                if usingHoldFallback {
-                    holdControl
-                } else {
-                    micControl
-                }
+                if usingHoldFallback { holdControl } else { micControl }
             }
             .padding(.horizontal, 28)
             .padding(.vertical, 32)
         }
+        .preferredColorScheme(.dark)
         // The reveal lives in onAppear, not in the task: `.task`'s closure is
         // @Sendable and carries no actor guarantee, and this writes @State and
         // drives an animation.
         .onAppear { withAnimation(DS.Motion.smooth) { revealed = true } }
         .task { await arm() }
         .onDisappear { verifier.cancel(); holdTimer?.invalidate() }
-        // The speaker stopped. Close the recording and let the transcript
-        // decide, rather than guessing from how loud the room was.
+        // The speaker stopped. Close the recording and let the transcript decide,
+        // rather than guessing from how loud the room was.
         .onChange(of: verifier.endpointedAt) { _, stamped in
             guard stamped != nil, !settled, !isVerifying else { return }
             Task { await verify() }
@@ -195,12 +168,58 @@ struct ReplaceDeclarationView: View {
             Button("Not now", role: .cancel) { usingHoldFallback = true }
             Button("Continue") { Task { await requestMic() } }
         } message: {
-            // Honest, because this now transcribes. It checks the words
-            // against the line, on device where the phone supports it, and
-            // deletes the audio the moment the check is done. Saying "nothing
-            // is transcribed" here would be a lie told inside a permission ask.
+            // Honest, because this transcribes. Saying "nothing is transcribed"
+            // here would be a lie told inside a permission ask.
             Text("SpeakLife listens to check you spoke the line out loud. The audio is deleted the moment it's checked, and never saved.")
         }
+    }
+
+    // MARK: - Lines
+
+    /// One spoken line with its label above it. Words light gold as the
+    /// transcript matches them, so the screen shows the line being spoken rather
+    /// than a progress bar filling.
+    /// - Parameter glows: the declaration carries the gold bloom; the exaltation
+    ///   above it does not. The two are deliberately unequal in weight — the
+    ///   first line is the shorter, higher half and is over in seven words, and
+    ///   the second is what the screen is for.
+    private func lineBlock(label: String,
+                           words: [String],
+                           matched: Set<Int>,
+                           fontSize: CGFloat,
+                           glows: Bool) -> some View {
+        VStack(spacing: DS.Spacing.xs) {
+            Text(label)
+                .font(.system(size: 9, weight: .bold))
+                .tracking(2.2)
+                .foregroundColor(.white.opacity(0.34))
+
+            HighlightedDeclarationText(
+                displayWords: words,
+                matchedIndices: matched,
+                isRecording: verifier.isRecording,
+                fontSize: fontSize
+            )
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
+            .shadow(color: gold.opacity(glows ? 0.25 : 0), radius: 18)
+        }
+    }
+
+    /// What they say out loud: up to Him, then over their own life. One utterance,
+    /// one mic session, so the rep still fits in a breath.
+    private var spokenLine: String { entry.spokenLine }
+
+    /// The words of each line, for the highlighter. Split on whitespace so the
+    /// indices line up with `DeclarationVerificationService.declarationWords`,
+    /// which tokenizes the same way — and so the concatenation in `spokenLine`
+    /// splits at exactly `exaltationWords.count`.
+    private var exaltationWords: [String] {
+        entry.exaltation.split(separator: " ").map(String.init)
+    }
+
+    private var declarationWords: [String] {
+        entry.declaration.split(separator: " ").map(String.init)
     }
 
     // MARK: - Arming
@@ -210,8 +229,7 @@ struct ReplaceDeclarationView: View {
         startedAt = Date()
         verifier.prepare(declarationText: spokenLine)
         if Self.micPreviouslyDenied {
-            // Denied before: go straight to the fallback. Asking again is the
-            // nag the spec rules out.
+            // Denied before: go straight to the fallback. Asking again is a nag.
             usingHoldFallback = true
             return
         }
@@ -249,9 +267,8 @@ struct ReplaceDeclarationView: View {
     ///
     /// A match completes the rep. A miss re-listens ONCE and then hands over to
     /// press-and-hold. It never accuses: a low score cannot distinguish "they
-    /// didn't say it" from "the recognizer didn't catch it", and this feature
-    /// does not get to call someone a liar about the one act it exists to
-    /// encourage.
+    /// didn't say it" from "the recognizer didn't catch it", and this feature does
+    /// not get to call someone a liar about the one act it exists to encourage.
     @MainActor
     private func verify() async {
         isVerifying = true
@@ -274,9 +291,8 @@ struct ReplaceDeclarationView: View {
     /// across the app.
     private static let matchThreshold: Double = 0.65
 
-    /// Read without prompting, so the screen can show its one-line reason
-    /// BEFORE the system dialog — the difference between a permission people
-    /// grant and one they don't.
+    /// Read without prompting, so the screen can show its one-line reason BEFORE
+    /// the system dialog.
     private static var micAlreadyAuthorized: Bool {
         AVAudioApplication.shared.recordPermission == .granted
     }
@@ -289,7 +305,7 @@ struct ReplaceDeclarationView: View {
 
     private var micControl: some View {
         VStack(spacing: 14) {
-            GuardWaveform(levels: verifier.levels, tint: gold, isSettled: settled)
+            MagnifyWaveform(levels: verifier.levels, tint: gold, isSettled: settled)
                 .frame(height: 64)
 
             Text(promptText)
@@ -297,13 +313,13 @@ struct ReplaceDeclarationView: View {
                 .foregroundColor(.white.opacity(settled ? 0.95 : 0.65))
                 .multilineTextAlignment(.center)
 
-            // "I've said it." The way to finish on purpose.
+            // The way to finish on purpose.
             //
             // Auto-endpointing handles the common case, but it only fires from
             // trailing silence after speech was heard, or from a 30-second
             // backstop. Re-arm the mic after a missed pass and say nothing, and
-            // there was no way to finish and no sign of how long the wait was.
-            // A screen that asks someone to speak must always let them say when
+            // there is no way to finish and no sign of how long the wait is. A
+            // screen that asks someone to speak must always let them say when
             // they're done.
             if !settled {
                 Button {
@@ -314,18 +330,13 @@ struct ReplaceDeclarationView: View {
                         .foregroundColor(.white.opacity(0.9))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 13)
-                        .background(
-                            Capsule()
-                                .stroke(Color.white.opacity(0.28), lineWidth: 1)
-                        )
+                        .background(Capsule().stroke(Color.white.opacity(0.28), lineWidth: 1))
                 }
                 .buttonStyle(.dsPressable(feel: .tapSolid))
                 // Also disabled when the mic isn't live. `finishSpeaking()`
                 // no-ops unless a recording is in flight, so between the two
-                // passes — after the transcript comes back and before the mic
-                // re-arms — the button would look active and do nothing. A
-                // silently dead control is the same failure this button exists
-                // to fix, so it greys for those few milliseconds instead.
+                // passes the button would look active and do nothing. A silently
+                // dead control is the same failure this button exists to fix.
                 .disabled(!canFinish)
                 .opacity(canFinish ? 1 : 0.4)
             }
@@ -350,43 +361,19 @@ struct ReplaceDeclarationView: View {
         verifier.isRecording && !isVerifying
     }
 
-    /// What they say out loud: the rebuke, then the declaration. One utterance,
-    /// one mic session, so the drill still fits in a breath and still ends where
-    /// it has always ended — in speaking.
-    private var spokenLine: String {
-        "\(thought.spokenRebuke) \(thought.counterDeclaration)"
-    }
-
-    /// The words of each line, for the highlighter. Split on whitespace so the
-    /// indices line up with `DeclarationVerificationService.declarationWords`,
-    /// which tokenizes the same way — and so the concatenation above splits at
-    /// exactly `rebukeWords.count`.
-    private var rebukeWords: [String] {
-        thought.spokenRebuke.split(separator: " ").map(String.init)
-    }
-
-    private var declarationWords: [String] {
-        thought.counterDeclaration.split(separator: " ").map(String.init)
-    }
-
     /// Never says "wrong", never says "failed", never counts attempts.
-    ///
-    /// A poor match cannot tell "they didn't say it" apart from "the recognizer
-    /// missed it" — accents, a noisy room, a cased mic. So the second pass is
-    /// phrased as an invitation, not a correction, and the press-and-hold way
-    /// through is on screen the whole time.
     private var promptText: String {
         if settled { return "Heard." }
         if isVerifying { return "…" }
-        if isSecondPass { return "Once more — the whole line" }
-        return verifier.isRecording ? "Read it out loud" : "Listening…"
+        if isSecondPass { return "Once more — both lines" }
+        return verifier.isRecording ? "Say it out loud" : "Listening…"
     }
 
     // MARK: - Hold fallback
 
-    /// Press and hold "I spoke it". Same log, same ground, no nagging, and no
-    /// second-class framing — someone who whispered it in a waiting room took
-    /// the same ground as someone who shouted it in their car.
+    /// Press and hold. Same log, same count, no nagging, and no second-class
+    /// framing — someone who whispered it in a waiting room magnified God exactly
+    /// as much as someone who shouted it in their car.
     private var holdControl: some View {
         VStack(spacing: 14) {
             ZStack {
@@ -396,7 +383,7 @@ struct ReplaceDeclarationView: View {
                         .fill(DS.Gradient.gold)
                         .frame(width: geo.size.width * holdProgress)
                 }
-                Text(settled ? "Ground taken" : "Hold to confirm you spoke it")
+                Text(settled ? "He is magnified" : "Hold to confirm you spoke it")
                     .font(.system(size: 16, weight: .bold, design: .rounded))
                     .foregroundColor(holdProgress > 0.55 ? Color(hex: "#1A264D") : .white)
             }
@@ -468,7 +455,7 @@ struct ReplaceDeclarationView: View {
 
 /// Bars that respond to the voice. Purely a mirror — it measures nothing and
 /// judges nothing, it just shows the user that the room heard them.
-struct GuardWaveform: View {
+struct MagnifyWaveform: View {
     let levels: [Float]
     let tint: Color
     let isSettled: Bool

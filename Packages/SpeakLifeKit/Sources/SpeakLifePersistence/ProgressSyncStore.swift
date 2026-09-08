@@ -100,14 +100,20 @@ public final class ProgressSyncStore {
         "totalVersesRead",
         "totalSocialShares",
         "totalFavoritesAdded",
-        // Guarding: ground taken. Belongs here rather than in its own store
-        // precisely because this machinery is append-only and monotonic by
-        // construction — there is no code path that can lower it, which is the
-        // one guarantee that feature makes about its only number.
+        // Magnifying the Lord: how many times. Belongs here rather than in its
+        // own store precisely because this machinery is append-only and
+        // monotonic by construction — there is no code path that can lower it,
+        // which is the one guarantee that feature makes about its only number.
         //
-        // The literal string mirrors `GroundTaken.counterKey` in the app target
-        // (TakeItCaptive.swift). Inlined here so this file does not import back
-        // through the app; the two must not drift.
+        // The literal string mirrors `TimesMagnified.counterKey` (Magnify.swift).
+        // Inlined here so this file does not import back through the app; the
+        // two must not drift.
+        //
+        // The name is historical: this counter was `GroundTaken` when the pillar
+        // was Take It Captive, and the key was deliberately NOT renamed when it
+        // became Magnifying. It is already merged across every device the user
+        // owns, and a new key would have silently reset a long-tenured user to
+        // zero on upgrade day.
         "totalThoughtsTakenCaptive"
     ]
 

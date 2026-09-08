@@ -7,16 +7,18 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		TIC00SVC000000000000004B /* TakeThoughtCaptiveIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00SVC000000000000004A /* TakeThoughtCaptiveIntent.swift */; };
-		TIC00VW0000000000000001B /* TakeItCaptiveFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00VW0000000000000001A /* TakeItCaptiveFlowView.swift */; };
-		TIC00VW0000000000000003B /* ReplaceDeclarationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00VW0000000000000003A /* ReplaceDeclarationView.swift */; };
-		TIC00VW0000000000000004B /* GroundTakenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00VW0000000000000004A /* GroundTakenView.swift */; };
-		TIC00VW0000000000000005B /* EscapeHatchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00VW0000000000000005A /* EscapeHatchView.swift */; };
-		TIC00VW0000000000000006B /* TakenCaptiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00VW0000000000000006A /* TakenCaptiveView.swift */; };
+		TIC00SVC000000000000004B /* MagnifyIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00SVC000000000000004A /* MagnifyIntents.swift */; };
+		MGN00VW0000000000000001B /* MagnifyFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGN00VW0000000000000001A /* MagnifyFlowView.swift */; };
+		MGN00VW0000000000000002B /* LiftView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGN00VW0000000000000002A /* LiftView.swift */; };
+		MGN00VW0000000000000003B /* BeholdView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGN00VW0000000000000003A /* BeholdView.swift */; };
+		MGN00VW0000000000000004B /* ExaltAndDeclareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGN00VW0000000000000004A /* ExaltAndDeclareView.swift */; };
+		MGN00VW0000000000000005B /* HigherGroundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGN00VW0000000000000005A /* HigherGroundView.swift */; };
+		MGN00VW0000000000000006B /* WhyMagnifyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MGN00VW0000000000000006A /* WhyMagnifyView.swift */; };
+		MGN00RES000000000000001B /* magnify.json in Resources */ = {isa = PBXBuildFile; fileRef = MGN00RES000000000000001A /* magnify.json */; };
 		FAA00VW0000000000000001B /* BurstFaithActionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAA00VW0000000000000001A /* BurstFaithActionView.swift */; };
 		FAA00VW0000000000000002B /* BurstDeclarationStage.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAA00VW0000000000000002A /* BurstDeclarationStage.swift */; };
 		TIC00RES000000000000001B /* thoughts.json in Resources */ = {isa = PBXBuildFile; fileRef = TIC00RES000000000000001A /* thoughts.json */; };
-		TIC00TST000000000000001B /* TakeItCaptiveServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00TST000000000000001A /* TakeItCaptiveServiceTests.swift */; };
+		TIC00TST000000000000001B /* MagnifyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00TST000000000000001A /* MagnifyTests.swift */; };
 		01ED29F757107A93D56507E0 /* WidgetIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59BFF68BFA515EAC0AC88C85 /* WidgetIntents.swift */; };
 		0E1A8C97F61B9FB156F0F50F /* HowToUseSpeakLifeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74DAA35385DD02F8B0DCADE5 /* HowToUseSpeakLifeView.swift */; };
 		20F4D11E6F9CB2FA07540EE7 /* TrialExperienceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC73B2698B17B267C7A6F437 /* TrialExperienceService.swift */; };
@@ -409,15 +411,17 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		TIC00SVC000000000000004A /* TakeThoughtCaptiveIntent.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TakeThoughtCaptiveIntent.swift; sourceTree = "<group>"; };
-		TIC00VW0000000000000001A /* TakeItCaptiveFlowView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TakeItCaptiveFlowView.swift; sourceTree = "<group>"; };
-		TIC00VW0000000000000003A /* ReplaceDeclarationView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReplaceDeclarationView.swift; sourceTree = "<group>"; };
-		TIC00VW0000000000000004A /* GroundTakenView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GroundTakenView.swift; sourceTree = "<group>"; };
-		TIC00VW0000000000000005A /* EscapeHatchView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EscapeHatchView.swift; sourceTree = "<group>"; };
-		TIC00VW0000000000000006A /* TakenCaptiveView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TakenCaptiveView.swift; sourceTree = "<group>"; };
+		TIC00SVC000000000000004A /* MagnifyIntents.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MagnifyIntents.swift; sourceTree = "<group>"; };
+		MGN00VW0000000000000001A /* MagnifyFlowView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MagnifyFlowView.swift; sourceTree = "<group>"; };
+		MGN00VW0000000000000002A /* LiftView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LiftView.swift; sourceTree = "<group>"; };
+		MGN00VW0000000000000003A /* BeholdView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BeholdView.swift; sourceTree = "<group>"; };
+		MGN00VW0000000000000004A /* ExaltAndDeclareView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExaltAndDeclareView.swift; sourceTree = "<group>"; };
+		MGN00VW0000000000000005A /* HigherGroundView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HigherGroundView.swift; sourceTree = "<group>"; };
+		MGN00VW0000000000000006A /* WhyMagnifyView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WhyMagnifyView.swift; sourceTree = "<group>"; };
+		MGN00RES000000000000001A /* magnify.json */ = {isa = PBXFileReference; includeInIndex = 1; path = magnify.json; sourceTree = "<group>"; };
 		FAA00VW0000000000000001A /* BurstFaithActionView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BurstFaithActionView.swift; sourceTree = "<group>"; };
 		FAA00VW0000000000000002A /* BurstDeclarationStage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BurstDeclarationStage.swift; sourceTree = "<group>"; };
-		TIC00TST000000000000001A /* TakeItCaptiveServiceTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TakeItCaptiveServiceTests.swift; sourceTree = "<group>"; };
+		TIC00TST000000000000001A /* MagnifyTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MagnifyTests.swift; sourceTree = "<group>"; };
 		TIC00RES000000000000001A /* thoughts.json */ = {isa = PBXFileReference; includeInIndex = 1; path = thoughts.json; sourceTree = "<group>"; };
 		067C652453504C60AD4342E8 /* AdaptiveSheetModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveSheetModifier.swift; sourceTree = "<group>"; };
 		0CE4BBB786820DC2A78A8766 /* EnforcementCompletionView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = EnforcementCompletionView.swift; sourceTree = "<group>"; };
@@ -822,26 +826,27 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		TIC00GRP000000000000001A /* Guard */ = {
+		MGN00GRP000000000000001A /* Magnify */ = {
 			isa = PBXGroup;
 			children = (
-				TIC00SVC000000000000004A /* TakeThoughtCaptiveIntent.swift */,
+				MGN00VW0000000000000001A /* MagnifyFlowView.swift */,
+				MGN00VW0000000000000002A /* LiftView.swift */,
+				MGN00VW0000000000000003A /* BeholdView.swift */,
+				MGN00VW0000000000000004A /* ExaltAndDeclareView.swift */,
+				MGN00VW0000000000000005A /* HigherGroundView.swift */,
+				MGN00VW0000000000000006A /* WhyMagnifyView.swift */,
 			);
-			name = Guard;
-			path = Guard;
+			name = Magnify;
+			path = Magnify;
 			sourceTree = "<group>";
 		};
-		TIC00GRP000000000000002A /* Guard */ = {
+		TIC00GRP000000000000001A /* Magnify */ = {
 			isa = PBXGroup;
 			children = (
-				TIC00VW0000000000000001A /* TakeItCaptiveFlowView.swift */,
-				TIC00VW0000000000000003A /* ReplaceDeclarationView.swift */,
-				TIC00VW0000000000000004A /* GroundTakenView.swift */,
-				TIC00VW0000000000000005A /* EscapeHatchView.swift */,
-				TIC00VW0000000000000006A /* TakenCaptiveView.swift */,
+				TIC00SVC000000000000004A /* MagnifyIntents.swift */,
 			);
-			name = Guard;
-			path = Guard;
+			name = Magnify;
+			path = Magnify;
 			sourceTree = "<group>";
 		};
 		1322CBF2A657C03EC44A50F3 /* Enforcement */ = {
@@ -865,7 +870,7 @@
 		2F740F5F29D4014500E89E7F /* SpeakLifeTests */ = {
 			isa = PBXGroup;
 			children = (
-				TIC00TST000000000000001A /* TakeItCaptiveServiceTests.swift */,
+				TIC00TST000000000000001A /* MagnifyTests.swift */,
 				4501F3A62F840A01008704F9 /* WarriorRoomTypesTests.swift */,
 				C0960000000000000096AAAA /* OnboardingAngleTests.swift */,
 				4501F3A82F840A01008704F9 /* PrayerWallPostTests.swift */,
@@ -1196,6 +1201,7 @@
 			isa = PBXGroup;
 			children = (
 				TIC00RES000000000000001A /* thoughts.json */,
+				MGN00RES000000000000001A /* magnify.json */,
 				45C15A772F2E9B21006171F5 /* declarationsv10.json */,
 				457D531A2D964AA10098A49A /* audioDevotionals.json */,
 				45FF718D2E6294330048C523 /* declarationsv7_backup.json */,
@@ -1313,7 +1319,6 @@
 		7AA8706528DACB3500134ADB /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				TIC00GRP000000000000002A /* Guard */,
 				458510D82B159B0D00230EE5 /* LandingView.swift */,
 				7A601440294E574500CD2103 /* HomeView.swift */,
 				45FACE0012345678ABCDEF02 /* RemoteMessageView.swift */,
@@ -1340,6 +1345,7 @@
 				456885252B390FF4007B1EBB /* WarriorView.swift */,
 				456585F22D4F62EE002F2709 /* DevotionalSubscriptionView.swift */,
 				A000FFFFFFFFFFFFFFFFFFFF /* BreakthroughFlowView.swift */,
+				MGN00GRP000000000000001A /* Magnify */,
 				1322CBF2A657C03EC44A50F3 /* Enforcement */,
 			);
 			path = Views;
@@ -1362,7 +1368,7 @@
 		7AA8706728DACB5100134ADB /* Services */ = {
 			isa = PBXGroup;
 			children = (
-				TIC00GRP000000000000001A /* Guard */,
+				TIC00GRP000000000000001A /* Magnify */,
 				45567D712F29F6FA00382072 /* Auth */,
 				45BC74622EDA4CB5003AC964 /* PaywallTriggerManager.swift */,
 				45BC74642EDA53FF003AC964 /* UserPreferencesTracker.swift */,
@@ -1934,6 +1940,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				TIC00RES000000000000001B /* thoughts.json in Resources */,
+				MGN00RES000000000000001B /* magnify.json in Resources */,
 				45A4A3A52D7BF62600DFCEB7 /* declarationsv7.json in Resources */,
 				45D6402B2CD218AE006F05AD /* declarationsv5.json in Resources */,
 				45A4A3D12D86B86100DFCEB7 /* washed.mp3 in Resources */,
@@ -1977,7 +1984,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				TIC00TST000000000000001B /* TakeItCaptiveServiceTests.swift in Sources */,
+				TIC00TST000000000000001B /* MagnifyTests.swift in Sources */,
 				4501F3A52F840A01008704F9 /* WarriorRoomTypesTests.swift in Sources */,
 				D0960000000000000096BBBB /* OnboardingAngleTests.swift in Sources */,
 				4501F3A72F840A01008704F9 /* PrayerWallPostTests.swift in Sources */,
@@ -1990,12 +1997,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				TIC00SVC000000000000004B /* TakeThoughtCaptiveIntent.swift in Sources */,
-				TIC00VW0000000000000001B /* TakeItCaptiveFlowView.swift in Sources */,
-				TIC00VW0000000000000003B /* ReplaceDeclarationView.swift in Sources */,
-				TIC00VW0000000000000004B /* GroundTakenView.swift in Sources */,
-				TIC00VW0000000000000005B /* EscapeHatchView.swift in Sources */,
-				TIC00VW0000000000000006B /* TakenCaptiveView.swift in Sources */,
+				TIC00SVC000000000000004B /* MagnifyIntents.swift in Sources */,
+				MGN00VW0000000000000001B /* MagnifyFlowView.swift in Sources */,
+				MGN00VW0000000000000002B /* LiftView.swift in Sources */,
+				MGN00VW0000000000000003B /* BeholdView.swift in Sources */,
+				MGN00VW0000000000000004B /* ExaltAndDeclareView.swift in Sources */,
+				MGN00VW0000000000000005B /* HigherGroundView.swift in Sources */,
+				MGN00VW0000000000000006B /* WhyMagnifyView.swift in Sources */,
 				45BC76442EFD2775003AC964 /* ModernCelebrationView.swift in Sources */,
 				45BCBA9A2C360245001F28C4 /* BibleStory.swift in Sources */,
 				7AA8706C28DACC4E00134ADB /* Theme.swift in Sources */,

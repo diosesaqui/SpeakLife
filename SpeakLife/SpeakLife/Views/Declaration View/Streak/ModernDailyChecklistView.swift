@@ -33,14 +33,17 @@ struct ModernDailyChecklistView: View {
     /// advanced from the burst, so the view observes the shared service rather
     /// than owning it.
     @ObservedObject private var enforcementService = EnforcementService.shared
-    /// Same reasoning: the Guard service outlives this view (the App Intent can
-    /// drive it before any view exists), so the view observes it rather than
+    /// Same reasoning: the Magnify service outlives this view (the App Intent
+    /// can drive it before any view exists), so the view observes it rather than
     /// owning it.
-    @ObservedObject private var takeItCaptiveService = TakeItCaptiveService.shared
-    @State private var showTakeItCaptive = false
-    /// True when Siri / Shortcuts / the lock screen opened the drill, so the
-    /// flow can tell an interception apart from the day's task.
-    @State private var takeItCaptiveFromIntent = false
+    @ObservedObject private var magnifyService = MagnifyService.shared
+    @State private var showMagnify = false
+    /// True when Siri / Shortcuts / the lock screen opened it, so the flow can
+    /// tell an extra rep apart from the day's task.
+    @State private var magnifyFromIntent = false
+    /// Set when the Siri / lock-screen shortcut asked for storm mode
+    /// specifically, so the flow skips the domain picker.
+    @State private var magnifyFromStorm = false
     @State private var showJournal = false
     @State private var showWarriorRoom = false
     @State private var showCreateYourOwn = false
@@ -123,19 +126,24 @@ struct ModernDailyChecklistView: View {
                 ])
             }
             openBurst()
-        case .takeItCaptive:
-            openTakeItCaptive()
+        case .takeItCaptive, .magnify:
+            // `.takeItCaptive` only reaches here from a checklist persisted
+            // before the pillar changed. It routes to the same place — the row
+            // is rebuilt as `.magnify` on the next pass anyway, and a tap that
+            // does nothing in the meantime is worse than one that works.
+            openMagnify()
         case .none:
             viewModel.completeTask(taskId: task.id)
         }
     }
 
-    /// Guarding — the fifth pillar. Presented right here on Today rather than
+    /// Magnifying — the fifth pillar. Presented right here on Today rather than
     /// routed to a tab of its own: the whole promise is under 60 seconds, and a
     /// tab switch spends the first five of them.
-    private func openTakeItCaptive(fromIntent: Bool = false) {
-        takeItCaptiveFromIntent = fromIntent
-        showTakeItCaptive = true
+    private func openMagnify(fromIntent: Bool = false, storm: Bool = false) {
+        magnifyFromIntent = fromIntent
+        magnifyFromStorm = storm
+        showMagnify = true
     }
 
     /// Present the daily burst right here on the Today tab instead of routing
@@ -563,11 +571,11 @@ struct ModernDailyChecklistView: View {
                                     openPersonalDeclaration()
                                     return
                                 }
-                                // Same again for Guarding: the row is earned by
-                                // speaking, so a tap on the checkbox opens the
-                                // drill rather than bouncing off a no-op.
-                                guard taskId != TaskLibrary.guardTaskId else {
-                                    openTakeItCaptive()
+                                // Same again for Magnifying: the row is earned
+                                // by speaking, so a tap on the checkbox opens the
+                                // flow rather than bouncing off a no-op.
+                                guard taskId != TaskLibrary.magnifyTaskId else {
+                                    openMagnify()
                                     return
                                 }
                                 if task.isCompleted {
@@ -760,17 +768,18 @@ struct ModernDailyChecklistView: View {
         .sheet(isPresented: $showDevotional) {
             DevotionalView(viewModel: devotionalViewModel)
         }
-        // Guarding. Full-screen, not a sheet: the thought being taken only works
-        // if it is the only thing on the display, and a sheet leaves the warm
-        // Today tab visible behind it — which is exactly the contrast the flow
+        // Magnifying. Full-screen, not a sheet: the name of God swelling to fill
+        // the display only works if it IS the whole display, and a sheet leaves
+        // the Today tab visible behind it — which is exactly the field the bloom
         // spends its first two screens building.
-        .fullScreenCover(isPresented: $showTakeItCaptive) {
-            TakeItCaptiveFlowView(
-                service: takeItCaptiveService,
-                // The reviewed pool, so a typed thought can be answered out of
-                // the whole library instead of the bundled thought bank.
+        .fullScreenCover(isPresented: $showMagnify) {
+            MagnifyFlowView(
+                service: magnifyService,
+                // The reviewed pool, so the optional written route can be
+                // answered out of the whole library instead of the bundled bank.
                 library: declarationStore.allAvailableDeclarations,
-                launchedFromIntent: takeItCaptiveFromIntent,
+                launchedFromIntent: magnifyFromIntent,
+                launchedAsStorm: magnifyFromStorm,
                 onCompleted: {
                     // The row is derived from the service, so the checklist has
                     // to be rebuilt for the tick to appear.
@@ -1029,28 +1038,28 @@ struct ModernDailyChecklistView: View {
                     "is_premium": subscriptionStore.isPremium
                 ])
             }
-            // Ground taken can arrive from another device while this view is off
+            // Reps can arrive from another device while this view is off
             // screen, and the row's tick is derived from today's rep — so both
             // are re-read on appear rather than trusted from the last build.
-            takeItCaptiveService.refreshGround()
-            // Siri / Shortcuts / lock screen asked for the drill on a COLD
-            // launch. Consumed exactly once, and only when it's fresh — see
+            magnifyService.refreshCount()
+            // Siri / Shortcuts / lock screen asked for it on a COLD launch.
+            // Consumed exactly once, and only when it's fresh — see
             // consumePendingLaunch. The warm case is the onChange below.
             if subscriptionStore.guardEnabled,
-               TakeItCaptiveService.consumePendingLaunch() {
-                takeItCaptiveService.launchRequestedAt = nil
-                openTakeItCaptive(fromIntent: true)
+               MagnifyService.consumePendingLaunch() {
+                magnifyService.launchRequestedAt = nil
+                openMagnify(fromIntent: true, storm: MagnifyService.consumePendingStorm())
             }
         }
         // The warm case: the app was already running, so onAppear never fires
         // again and the persisted stamp alone would sit there unread.
-        .onChange(of: takeItCaptiveService.launchRequestedAt) { _, requested in
-            guard requested != nil, subscriptionStore.guardEnabled, !showTakeItCaptive else { return }
-            takeItCaptiveService.launchRequestedAt = nil
+        .onChange(of: magnifyService.launchRequestedAt) { _, requested in
+            guard requested != nil, subscriptionStore.guardEnabled, !showMagnify else { return }
+            magnifyService.launchRequestedAt = nil
             // Consume the persisted stamp too, so the next cold appear doesn't
-            // present the drill a second time for the same request.
-            _ = TakeItCaptiveService.consumePendingLaunch()
-            openTakeItCaptive(fromIntent: true)
+            // present the flow a second time for the same request.
+            _ = MagnifyService.consumePendingLaunch()
+            openMagnify(fromIntent: true, storm: MagnifyService.consumePendingStorm())
         }
         .onChange(of: viewModel.todayChecklist.isCompleted) { isCompleted in
             if isCompleted {

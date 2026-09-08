@@ -148,6 +148,30 @@ Every declaration must be understood instantly, the first time, by anyone. This 
 project's Resources build phase. Edit THIS file. Do not recreate the old
 single-nested `SpeakLife/Preview Content/...` copy, which the build never used.)
 
+---
+
+## Magnify the Lord (the fifth pillar)
+
+`magnify.json`, in the same directory, is **generated — never hand-edit it.**
+Run `python3 scripts/generate_magnify.py` from the repo root; every `declaration`
+in it is copied verbatim out of `declarationsv10.json`, which is what stops the
+bank and the reviewed library from drifting. Edit the facets at the top of that
+script instead, then regenerate.
+
+Two content rules apply on top of the declaration rules above, and
+`MagnifyBankContentTests` enforces both:
+
+1. **Every `exaltation` is spoken TO God, in the second person.** "You are
+   Jehovah Rapha", never "He is the God who heals". This is the line that
+   replaced the old rebuke, and it is why this pillar no longer needs the
+   standing exception to Rule 12 that Take It Captive had.
+2. **Nothing names the low thing** — not an exaltation, not an attribute, not a
+   domain raw value. The domains are named for the higher reality (`peace`,
+   `provision`, `healing`), never for what it displaces.
+
+The declaration half of each entry still follows every rule above it: first
+person, present tense, one sentence, no dashes, plain words.
+
 ## Development Branch
 Always develop on `claude/review-destiny-declarations-gVBrT` and push there.
 
