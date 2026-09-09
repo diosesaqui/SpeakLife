@@ -454,7 +454,10 @@ struct DirectOnboardingView: View {
         if let notifTime = responses.notificationTime {
             appState.startTimeIndex = notifTime.startTimeIndex
             appState.endTimeIndex   = notifTime.endTimeIndex
-            appState.personalDeclarationTimeIndex = notifTime.startTimeIndex
+            // No `personalDeclarationTimeIndex` mirror: onboarding no longer asks
+            // for a window, so there is no user preference to mirror. The
+            // personal declaration push keeps its own 8:00 AM default and stays
+            // adjustable independently.
             // Cross-arm event name, same shape the quiz arm uses, so "did they
             // set a daily time" is one query across every flow rather than
             // per-arm. Safe for the quiz-flow funnel: that funnel is ordered

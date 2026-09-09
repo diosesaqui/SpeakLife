@@ -464,6 +464,10 @@ enum DeclarationStyle: String, CaseIterable, Identifiable {
     }
 }
 
+/// Onboarding no longer asks for a window — every flow locks in `.allDay` and
+/// the user narrows it later in Settings → Reminders. The narrower cases are
+/// kept so the `notification_time` analytics property keeps one vocabulary
+/// across the historical picker data and today's all-day default.
 enum NotificationTime: String, CaseIterable, Identifiable {
     var id: String { rawValue }
     case morning = "Morning (6-9am) — start my day in truth before the world gets loud"
@@ -476,7 +480,7 @@ enum NotificationTime: String, CaseIterable, Identifiable {
         case .morning: return 12   // 6:00 AM
         case .midday:  return 24   // 12:00 PM
         case .evening: return 38   // 7:00 PM
-        case .allDay:  return 12   // 6:00 AM
+        case .allDay:  return NotificationWindow.defaultStartIndex   // 7:00 AM
         }
     }
 
@@ -485,7 +489,7 @@ enum NotificationTime: String, CaseIterable, Identifiable {
         case .morning: return 18   // 9:00 AM
         case .midday:  return 28   // 2:00 PM
         case .evening: return 42   // 9:00 PM
-        case .allDay:  return 44   // 10:00 PM
+        case .allDay:  return NotificationWindow.defaultEndIndex     // 9:00 PM
         }
     }
 
@@ -608,19 +612,6 @@ class SurveyResponses: ObservableObject {
         guard let value = victoryOutcome else { return nil }
         let burden = heaviestBurden ?? .peace  // mirrors the screen's fallback
         return burden.victoryOptions.first(where: { $0.value == value })?.echo
-    }
-
-    /// Maps the "when does it hit hardest?" answer to a notification window so
-    /// the time screen arrives pre-selected (the user can still change it).
-    /// 3am/night battles get all-day anchoring; the rest map directly.
-    var suggestedNotificationTime: NotificationTime? {
-        switch hitsHardest {
-        case "morning": return .morning
-        case "midday":  return .midday
-        case "evening": return .evening
-        case "night":   return .allDay
-        default:        return nil
-        }
     }
 
     var resolvedGoalWord: SurveyGoalWord {

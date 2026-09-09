@@ -172,7 +172,10 @@ struct IdentityOnboardingView: View {
         if let notifTime = responses.notificationTime {
             appState.startTimeIndex = notifTime.startTimeIndex
             appState.endTimeIndex   = notifTime.endTimeIndex
-            appState.personalDeclarationTimeIndex = notifTime.startTimeIndex
+            // No `personalDeclarationTimeIndex` mirror: onboarding no longer asks
+            // for a window, so there is no user preference to mirror. The
+            // personal declaration push keeps its own 8:00 AM default and stays
+            // adjustable independently.
         }
         appState.hasPersonalDeclaration = savedDeclaration != nil
         AnalyticsService.shared.track("identity_onboarding_completed", parameters: [

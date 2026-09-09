@@ -3,7 +3,8 @@
 //  SpeakLife
 //
 //  Personalized notification onboarding — copy driven by SurveyPersonalizationEngine.
-//  Start time is pre-seeded from the user's survey Q8 answer.
+//  The delivery window is fixed at all day (7 AM to 9 PM); users narrow it
+//  in Settings → Reminders.
 //
 
 import SwiftUI
@@ -24,6 +25,26 @@ struct NotificationOnboarding: View {
         notificationSceneAlt(size: size)
     }
     
+    private var allDayWindowRow: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "sun.max.fill")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(.yellow)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("All day anchoring")
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .foregroundColor(appState.onBoardingTest ? .white : Constants.DEABlack)
+                Text("7:00 AM to 9:00 PM. Nothing overnight.")
+                    .font(.system(size: 12, weight: .regular, design: .rounded))
+                    .foregroundColor((appState.onBoardingTest ? Color.white : Constants.DEABlack).opacity(0.7))
+            }
+            Spacer()
+        }
+        .padding()
+        .overlay(RoundedRectangle(cornerRadius: 20)
+            .stroke(Constants.DAMidBlue, lineWidth: 1))
+    }
+
     private func notificationSceneAlt(size: CGSize) -> some View  {
         VStack {
             // Progress dots at top
@@ -86,34 +107,14 @@ struct NotificationOnboarding: View {
                 }
                 .foregroundColor(appState.onBoardingTest ? .white : Constants.DEABlack)
                 .frame(width: size.width * 0.87 ,height: size.height * 0.09)
-               
-                
-                TimeNotificationCountView(value: appState.startTimeIndex) {
-                    Text("Start_time", comment: "notification start time")
-                    
-                } valueTime:  { valueTime in
-                    appState.startTimeNotification = valueTime
-                } valueIndex: { valueIndex in
-                    appState.startTimeIndex = valueIndex
-                    // Mirror to the personal declaration push time. There's no
-                    // separate picker for it, and users expect their selected
-                    // window to also drive the personal declaration reminder.
-                    appState.personalDeclarationTimeIndex = valueIndex
-                }
-                
-                .foregroundColor(appState.onBoardingTest ? .white : Constants.DEABlack)
-                .frame(width: size.width * 0.87 ,height: size.height * 0.09)
 
-                TimeNotificationCountView(value: appState.endTimeIndex) {
-                    Text("End_time", comment: "notification end time")
-                } valueTime: { valueTime in
-                    appState.endTimeNotification = valueTime
-                } valueIndex: { valueIndex in
-                    appState.endTimeIndex = valueIndex
-                }
-                .foregroundColor(appState.onBoardingTest ? .white : Constants.DEABlack)
-               
-                .frame(width: size.width * 0.87 ,height: size.height * 0.09)
+                // The start/end pickers are gone from onboarding. Everyone
+                // starts anchored all day and narrows the window later in
+                // Settings → Reminders if they want to — asking someone to
+                // pick a 3-hour band before they have seen a single
+                // declaration land was a choice they had no basis to make.
+                allDayWindowRow
+                    .frame(width: size.width * 0.87)
                 }
 
                 Spacer()
@@ -139,6 +140,14 @@ struct NotificationOnboarding: View {
 
             Spacer()
                 .frame(width: 5, height: size.height * 0.07)
+        }
+        .onAppear {
+            // Onboarding always hands the user the all-day window. Seeding it
+            // here (rather than relying on the @AppStorage default) also covers
+            // a replayed onboarding, where a previously narrowed window would
+            // otherwise survive a flow that no longer offers a way to widen it.
+            appState.startTimeIndex = NotificationWindow.defaultStartIndex
+            appState.endTimeIndex = NotificationWindow.defaultEndIndex
         }
         .frame(width: size.width, height: size.height)
         .background(

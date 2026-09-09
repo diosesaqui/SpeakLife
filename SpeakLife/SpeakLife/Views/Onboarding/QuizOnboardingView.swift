@@ -421,9 +421,9 @@ struct QuizOnboardingView: View {
     @State private var stepEnteredAt: Date = Date()
 
     // Backing model for SurveyQ8NotificationScreen so we can reuse that
-    // screen verbatim (same UI as Control's notification picker). We only
-    // populate heaviestBurden (for the subtitle/preview) and notificationTime
-    // (set by the user's pick on the screen).
+    // screen verbatim. We only populate heaviestBurden (for the
+    // subtitle/preview); the screen itself writes notificationTime, which is
+    // always `.allDay` now that onboarding no longer asks for a window.
     @StateObject private var notificationResponses = SurveyResponses()
 
     private var segment: QuizSegment { selectedSegment ?? .unsegmented }
@@ -771,9 +771,10 @@ struct QuizOnboardingView: View {
         if let notifTime = notificationResponses.notificationTime {
             appState.startTimeIndex = notifTime.startTimeIndex
             appState.endTimeIndex   = notifTime.endTimeIndex
-            // Mirror to the personal declaration push time — same pattern
-            // SurveyOnboardingView uses for the survey flow's notification step.
-            appState.personalDeclarationTimeIndex = notifTime.startTimeIndex
+            // No `personalDeclarationTimeIndex` mirror: onboarding no longer asks
+            // for a window, so there is no user preference to mirror. The
+            // personal declaration push keeps its own 8:00 AM default and stays
+            // adjustable independently.
             AnalyticsService.shared.track("onboarding_notification_time_picked", parameters: [
                 "segment": segment.rawValue,
                 "notification_time": notifTime.rawValue

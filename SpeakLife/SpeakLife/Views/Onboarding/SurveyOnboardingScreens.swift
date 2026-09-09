@@ -674,62 +674,74 @@ struct SurveyQ8NotificationScreen: View {
     var flow: String = "quiz"
     var onContinue: () -> Void
 
-    @State private var showPreview = false
+    @State private var cardShown = false
 
     private var subtitle: String {
         if let burden = responses.heaviestBurden {
-            return "When should we send your \(burden.shortLabel) declaration?"
+            return "Your \(burden.shortLabel) declarations land all day, 7 AM to 9 PM."
         } else {
-            return "When should we send your daily declaration?"
+            return "Your declarations land all day, 7 AM to 9 PM."
         }
     }
 
     var body: some View {
         VStack(spacing: 0) {
             SurveyQuestionHeader(
-                "Habits are built at the same time every day.",
+                "Truth lands best when it keeps showing up.",
                 subtitle: subtitle
             )
             .padding(.top, size.height * 0.12)
 
-            ScrollView {
-                VStack(spacing: 12) {
-                    ForEach(NotificationTime.allCases, id: \.self) { option in
-                        SurveyOptionRow(
-                            text: option.rawValue,
-                            isSelected: responses.notificationTime == option
-                        ) {
-                            responses.notificationTime = option
-                            withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
-                                showPreview = true
-                            }
-                        }
-                    }
+            Spacer().frame(height: 28)
 
-                    if showPreview, let time = responses.notificationTime {
-                        notificationPreview(time: time)
-                            .transition(.opacity.combined(with: .offset(x: 0, y: 10)))
-                            .padding(.top, 4)
-                    }
-                }
+            notificationPreview
                 .padding(.horizontal, 20)
-                .padding(.top, 8)
-                .padding(.bottom, 16)
-            }
+                .scaleEffect(cardShown ? 1 : 0.94)
+                .opacity(cardShown ? 1 : 0)
+
+            Spacer().frame(height: 20)
+
+            windowSummary
+                .padding(.horizontal, 20)
+                .opacity(cardShown ? 1 : 0)
 
             Spacer()
 
-            SurveyContinueButton(label: "Lock It In →", isEnabled: responses.notificationTime != nil) {
-                onContinue()
+            VStack(spacing: 12) {
+                SurveyContinueButton(label: "Turn On Declarations →", isEnabled: true) {
+                    // No window question any more: every install starts anchored
+                    // all day. `.allDay` is still written onto `responses` because
+                    // every flow's completion handler reads it to seed
+                    // `startTimeIndex` / `endTimeIndex`.
+                    responses.notificationTime = .allDay
+                    onContinue()
+                }
+
+                HStack(spacing: 5) {
+                    Image(systemName: "checkmark.shield.fill")
+                        .font(.system(size: 13))
+                        .foregroundColor(.green)
+                    Text("Want fewer, or a narrower window? Change it anytime in Settings.")
+                        .font(.system(size: 12, weight: .medium, design: .rounded))
+                        .foregroundColor(.white.opacity(0.65))
+                        .multilineTextAlignment(.center)
+                }
+                .padding(.horizontal, 24)
             }
             .padding(.bottom, 36)
         }
         .onAppear {
+            // Seed it up front too, so a flow that skips the button (or is
+            // dismissed) still completes with the all-day window rather than nil.
+            responses.notificationTime = .allDay
             AnalyticsService.shared.track("survey_q8_shown", parameters: ["flow": flow])
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.15)) {
+                cardShown = true
+            }
         }
     }
 
-    private func notificationPreview(time: NotificationTime) -> some View {
+    private var notificationPreview: some View {
         let preview = responses.heaviestBurden?.previewDeclaration
         return HStack(spacing: 12) {
             ZStack {
@@ -746,7 +758,7 @@ struct SurveyQ8NotificationScreen: View {
                         .font(.system(size: 13, weight: .semibold, design: .rounded))
                         .foregroundColor(.white)
                     Spacer()
-                    Text(time.previewTime)
+                    Text(NotificationTime.allDay.previewTime)
                         .font(.system(size: 12, weight: .regular, design: .rounded))
                         .foregroundColor(.white.opacity(0.5))
                 }
@@ -759,6 +771,33 @@ struct SurveyQ8NotificationScreen: View {
         }
         .padding(14)
         .dsGlass(cornerRadius: DS.Radius.md)
+    }
+
+    private var windowSummary: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "sun.max.fill")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(.yellow)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("All day anchoring")
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .foregroundColor(.white)
+                Text("7:00 AM to 9:00 PM. Nothing overnight.")
+                    .font(.system(size: 12, weight: .regular, design: .rounded))
+                    .foregroundColor(.white.opacity(0.65))
+            }
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
+                .fill(Color.white.opacity(0.08))
+                .overlay(
+                    RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
+                        .strokeBorder(Color.white.opacity(0.12), lineWidth: 1)
+                )
+        )
     }
 }
 

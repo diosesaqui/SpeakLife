@@ -231,13 +231,6 @@ struct AngleOnboardingView: View {
             appState.onboardingSegment = "\(angle.flow)_\(choice.segmentLabel)"
         }
 
-        // Leaving the hits-hardest question: pre-select the notification-time
-        // screen from when their struggle hits (no auto-advance; still editable).
-        if currentStep == .hitsHardest, responses.notificationTime == nil,
-           let suggested = responses.suggestedNotificationTime {
-            responses.notificationTime = suggested
-        }
-
         if currentStep == .notificationTime {
             applyResponsesAndComplete()
             return
@@ -289,7 +282,10 @@ struct AngleOnboardingView: View {
         if let notifTime = responses.notificationTime {
             appState.startTimeIndex = notifTime.startTimeIndex
             appState.endTimeIndex   = notifTime.endTimeIndex
-            appState.personalDeclarationTimeIndex = notifTime.startTimeIndex
+            // No `personalDeclarationTimeIndex` mirror: onboarding no longer asks
+            // for a window, so there is no user preference to mirror. The
+            // personal declaration push keeps its own 8:00 AM default and stays
+            // adjustable independently.
         }
         appState.hasPersonalDeclaration = savedDeclaration != nil
         AnalyticsService.shared.track("\(angle.flow)_onboarding_completed", parameters: [
