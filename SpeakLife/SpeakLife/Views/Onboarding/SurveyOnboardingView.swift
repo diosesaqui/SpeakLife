@@ -158,11 +158,10 @@ struct SurveyOnboardingView: View {
         if let notifTime = responses.notificationTime {
             appState.startTimeIndex = notifTime.startTimeIndex
             appState.endTimeIndex   = notifTime.endTimeIndex
-            // Mirror to the personal declaration push time. The dedicated field
-            // exists for future independence, but there's no UI to set it
-            // separately today — so onboarding's window choice is the user's
-            // implicit preference for when their personal declaration fires too.
-            appState.personalDeclarationTimeIndex = notifTime.startTimeIndex
+            // No `personalDeclarationTimeIndex` mirror: onboarding no longer asks
+            // for a window, so there is no user preference to mirror. The
+            // personal declaration push keeps its own 8:00 AM default and stays
+            // adjustable independently.
         }
         appState.hasPersonalDeclaration = savedDeclaration != nil
         AnalyticsService.shared.track("survey_onboarding_completed", parameters: [
