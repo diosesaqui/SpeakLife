@@ -452,6 +452,27 @@ public final class EnhancedStreakViewModel: ObservableObject {
     /// Deliberately not `refreshTasksWithUserCategories`, which returns early
     /// when the user has no chosen categories and so cannot be relied on here.
     public func refreshTasksForCampaignChange() {
+        rebuildTodayTasks()
+    }
+
+    /// Rebuilds today's board after the user changes a checklist preference.
+    ///
+    /// The time budget and connect style are read by `getCoreTasksForStreak`
+    /// from `UserDefaults`, and nothing re-reads them on its own: without this
+    /// hook, someone who changes their daily time in Settings watches the board
+    /// stay exactly as it was until the next day rollover, and reasonably
+    /// concludes the setting is broken.
+    ///
+    /// Shares `refreshTasksForCampaignChange`'s rebuild verbatim, because the
+    /// requirements are identical — re-derive the board, keep every completion,
+    /// re-derive the derived rows. Deliberately NOT
+    /// `refreshTasksWithUserCategories`, which returns early for a user who has
+    /// chosen no categories and so cannot be relied on to run at all.
+    public func refreshTasksForPreferenceChange() {
+        rebuildTodayTasks()
+    }
+
+    private func rebuildTodayTasks() {
         let currentStreak = streakStats.currentStreak > 0 ? streakStats.currentStreak : 1
         let freshTasks = TaskLibrary.getCoreTasksForStreak(currentStreak,
                                                            userCategories: getUserTopCategories(),

@@ -166,6 +166,28 @@ public enum DailyTimeBudget: String, CaseIterable, Codable {
         }
     }
 
+    /// Row copy, kept here rather than in the view so the Settings picker and
+    /// any surface added later cannot drift from each other or from `maxTasks`.
+    public var displayName: String {
+        switch self {
+        case .one:   return "1 minute"
+        case .three: return "3 minutes"
+        case .ten:   return "10 minutes"
+        }
+    }
+
+    /// What the choice actually buys, in rows rather than in minutes. The
+    /// picker says "3 minutes" because that is the promise the user made in
+    /// onboarding; this says what the board will look like tomorrow morning,
+    /// which is the part they can check.
+    public var settingsDetail: String {
+        switch self {
+        case .one:   return "Your Burst, and one thing more."
+        case .three: return "Three things, every day."
+        case .ten:   return "Everything on your list."
+        }
+    }
+
     /// Persisted by whichever onboarding arm asked the question, and read
     /// straight from `UserDefaults` for the same reason `ConnectStyle` is.
     /// The raw values are the quiz's own option values ("one" | "three" |
