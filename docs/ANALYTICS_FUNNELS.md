@@ -85,7 +85,8 @@ From finishing onboarding through to a paid conversion.
 > **Which arms enter this funnel.** Step 1, `onboarding_completed`, is fired by
 > the **`quiz`** arm (at the commitment hold) and the **`direct`** arm (leaving
 > the review wall) — both at the last pre-paywall milestone. The other arms
-> (`product` / `identity` / `outcomes` / `warfare` / `promises` / `closer`) do
+> (`product` / `identity` / `outcomes` / `warfare` / `promises` / `command` /
+> `closer`) do
 > not fire it, so they are invisible here; read those in funnel 3 instead.
 > Both arms that do fire it stamp `variant`, and every event carries the
 > `onboarding_variant` person property, so **break this funnel down by variant**
@@ -101,7 +102,7 @@ From finishing onboarding through to a paid conversion.
 The cross-variant experiment funnel. Every onboarding flow now fires a unified
 `onboarding_started` → `onboarding_finished` pair from `HomeView`, tagged with
 the chosen arm, so the variants (`product` / `identity` / `quiz` / `outcomes` /
-`warfare` / `promises` / `closer` / `direct`, selected by Remote Config
+`warfare` / `promises` / `command` / `closer` / `direct`, selected by Remote Config
 `onboardingVariant`) compare head-to-head. `warfare` is the default arm from app **v4.28+**.
 These route through `AnalyticsService`, so PostHog and Firebase both receive them.
 
@@ -113,7 +114,7 @@ These route through `AnalyticsService`, so PostHog and Firebase both receive the
 | 2 | `onboarding_finished` | Completed onboarding |
 | 3 | `subscription_started` | Started a trial or paid sub |
 
-**Breakdown:** event property `variant` (`product` / `identity` / `quiz` / `outcomes` / `warfare` / `promises` / `closer` / `direct`). Dynamic, so new arms appear automatically.
+**Breakdown:** event property `variant` (`product` / `identity` / `quiz` / `outcomes` / `warfare` / `promises` / `command` / `closer` / `direct`). Dynamic, so new arms appear automatically.
 **Funnel settings:** conversion window `14 days`, order `ordered`.
 
 `onboarding_finished` also carries `converted` (bool) and `conversion_type`
@@ -182,16 +183,18 @@ a realtime Remote Config activation cannot move a user between cells mid-run.
 Split traffic within `closer` 50/50 to read it; leave it at the default if you
 only want the arm-vs-arm result first.
 
-### 3c. The storm opener (screen one, `outcomes` / `promises` / `closer`)
+### 3c. The storm opener (screen one)
 
 The App Store listing is **"SpeakLife: Pray Like Jesus — Victory Over Every
-Storm."** Screen one of these three arms now answers that line directly ("Jesus
-didn't ask the storm to calm down. He spoke to it.") so the listing reads as the
-hook instead of an unexplained promise the user carries through the whole flow.
+Storm."** Screen one of the arms that run the opener now answers that line
+directly ("Jesus didn't ask the storm to calm down. He spoke to it.") so the
+listing reads as the hook instead of an unexplained promise the user carries
+through the whole flow. Every angle arm except `warfare` and `command` opens on
+it, plus `closer`; the `flow` property says which arm the impression came from.
 
 | Event | Properties | Why it matters |
 |-------|-----------|----------------|
-| `storm_opener_shown` | `flow` (`outcomes` / `promises` / `closer`) | Screen-one reach; the denominator for everything after it |
+| `storm_opener_shown` | `flow` (`outcomes` / `promises` / `closer` / `healing` / `provision` / `anxiety` / `renewal`) | Screen-one reach; the denominator for everything after it |
 
 Because the opener is prepended as step 0, every step raw value in those three
 arms shifted by one. **`flow_schema` was bumped on all three** — `outcomes` 3→4,
@@ -279,6 +282,45 @@ shorter on paper.
 is answered, so **every** later event — `trial_started`, `subscription_started`,
 retention — can be split by the pain the user walked in with. Only `direct` sets
 it today, so it reads null for other arms.
+
+---
+
+### 3e. The `command` arm (morning-ritual test)
+
+`command` is the ritual arm. Every other arm argues WHAT is already yours; this
+one argues WHEN you take it: the day is decided in its first sixty seconds, so
+you speak over your finances, your body and your household before anything else
+gets a vote. What it sells is the retention behaviour itself, which is the reason
+to read it past the paywall.
+
+| Event | Properties | Why it matters |
+|-------|-----------|----------------|
+| `command_onboarding_started` | | Arm entry |
+| `command_scene_shown` | `scene` (`first_word` / `authority` / `sixty_seconds`) | Which beat of the argument loses people. `first_word` is the stakes hook, `sixty_seconds` the cost-objection screen and the last one before the picker |
+| `command_picker_shown` | | Reach of the area choice |
+| `command_first_words_shown` | `burden` | The burden-matched payoff: the words the user will say tomorrow morning. Cut against `command_picker_shown` to see whether spending the sixty seconds up front holds |
+| `command_step_completed` | `step`, `flow_schema` | Per-screen drop-off. 14 steps, `flow_schema` starts at **1** |
+| `command_onboarding_completed` | `burden`, `picker_choice`, … | Same shape as every other angle arm, with four properties always `"unknown"` (below) |
+
+**It is the lean arm.** 14 screens against the other broad arms' 22 to 23: no
+storm opener, no product recap, three scenes, two quiz questions, no plan loader.
+A 24-screen flow selling a sixty-second habit argues against itself, so depth is
+part of this angle rather than a separate test.
+
+**Two things that follow.** `battle_duration`, `already_tried`, `hits_hardest` and
+`belief` arrive as `"unknown"` on `command_onboarding_completed` — the screens that
+collected them are gone, and nothing but that event ever read them, so **don't
+build a cross-arm breakdown on those four and expect `command` in it**. Use
+`burden` / `picker_choice`, which every arm still sets. And its Completion % is
+**flattered** the way `direct`'s is, for the same structural reason: fewer screens
+to fall out of. **Rank it on Conversion %.**
+
+**How to read it.** Control it against `warfare` (the default broad arm) for
+arm-vs-default, and against `direct` to see how much of any win is just the shorter
+funnel — `command` moves angle and depth together, so it is not a pure angle
+result. Then read D1/D7 retention and streak length by `onboarding_variant`,
+because a morning-ritual pitch that converts no better but retains better is still
+the winning arm.
 
 ---
 

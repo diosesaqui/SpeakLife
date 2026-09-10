@@ -77,7 +77,7 @@ but belongs only to the test target — do not use it anywhere here.
 - [ ] **Create one Quick Link per onboarding angle**, each with custom data
       `ob=<variant>`. Valid values, from `SubscriptionStore.OnboardingVariant`:
       `quiz`, `product`, `identity`, `outcomes`, `warfare`, `promises`,
-      `closer`, `direct`. A typo here fails closed — `OnboardingVariant(code:)`
+      `command`, `closer`, `direct`. A typo here fails closed — `OnboardingVariant(code:)`
       returns nil and the person quietly gets the default arm.
 
 ## 2. Verify the association file

@@ -19,6 +19,10 @@
 //  angle is deep-linkable the moment its case exists: an ad can point at
 //  `speaklife://open?ob=healing` and the healing arc is what the install opens to.
 //
+//  Depth is data too: `quizSteps` and `showsPlanBuilding` let an arm run a
+//  shorter funnel without a second driver. Both default to what every arm did
+//  when the lists were hardcoded, so an arm that ignores them is unchanged.
+//
 //  Analytics note: every event name and property emitted by a ported arm is
 //  carried on the angle constant, not derived from it. The three live arms keep
 //  the exact event names, step raw values and `flow_schema` values they had as
@@ -53,6 +57,33 @@ struct OnboardingAngle {
     /// Optional burden-matched payoff screen shown immediately after the picker
     /// (warfare's victory vision). Nil for arms that don't run one.
     let burdenScene: AngleBurdenScene?
+    /// Which extended-quiz questions this arm asks, in order. Defaults to
+    /// `fullQuiz`, which is what every arm asked when the quiz block was
+    /// hardcoded, so an arm that says nothing is unchanged.
+    ///
+    /// A shorter list is how an arm trims its depth. Four of the seven questions
+    /// (`battleDuration`, `alreadyTried`, `hitsHardest`, `belief`) are read by
+    /// NOTHING but the completion event, and `insight` takes no input at all, so
+    /// dropping them costs analytics segmentation and the commitment beat, not
+    /// behaviour. The two that are not optional are `connectStyle` (v1 stores
+    /// `ConnectStyle`; v2 puts the victory question in the same slot, which the
+    /// plan reveal echoes) and `dailyMinutes` (stores `DailyTimeBudget`, which
+    /// sizes the daily checklist) — `OnboardingAngleTests` holds every arm to
+    /// both.
+    let quizSteps: [AngleStep]
+    /// Whether the "building your plan" loader runs before the plan reveal. Pure
+    /// theatre, so a lean arm can skip it; every ported arm keeps it.
+    let showsPlanBuilding: Bool
+
+    /// The seven-question block, in the order the ported arms ask it.
+    static let fullQuiz: [AngleStep] = [
+        .battleDuration, .alreadyTried, .insight, .hitsHardest, .connectStyle, .belief, .dailyMinutes
+    ]
+
+    /// The shortest quiz an arm may run: the two questions whose answers outlive
+    /// onboarding. Both are needed, and in this order, for the progress bar's
+    /// last screen to stay `dailyMinutes`.
+    static let leanQuiz: [AngleStep] = [.connectStyle, .dailyMinutes]
 
     init(
         id: String,
@@ -63,7 +94,9 @@ struct OnboardingAngle {
         showsExperienceScreen: Bool = true,
         scenes: [AngleScene],
         picker: AnglePicker,
-        burdenScene: AngleBurdenScene? = nil
+        burdenScene: AngleBurdenScene? = nil,
+        quizSteps: [AngleStep] = OnboardingAngle.fullQuiz,
+        showsPlanBuilding: Bool = true
     ) {
         self.id = id
         self.flow = flow
@@ -74,6 +107,8 @@ struct OnboardingAngle {
         self.scenes = scenes
         self.picker = picker
         self.burdenScene = burdenScene
+        self.quizSteps = quizSteps
+        self.showsPlanBuilding = showsPlanBuilding
     }
 }
 
@@ -81,11 +116,14 @@ struct OnboardingAngle {
 
 /// One screen in an angle flow. The flow's step list is derived from the angle
 /// (see `OnboardingAngle.steps`), and a step's INDEX in that list is the integer
-/// reported as `step` on `<flow>_step_completed` — which is why the list always
-/// contains `.belief` and `.rating` even when they're skipped at runtime. Both
-/// are conditionally jumped over in `advance()`, exactly as the hand-written
-/// arms did, so the numbering never shifts under a remote flag.
-enum AngleStep: Equatable {
+/// reported as `step` on `<flow>_step_completed` — which is why an arm that ASKS
+/// `.belief` keeps it in the list even when quiz v1 skips it, and why `.rating`
+/// stays in every arm's list even when the remote flag is off. Both are
+/// conditionally jumped over in `advance()`, exactly as the hand-written arms
+/// did, so the numbering never shifts under a remote flag. An arm that drops a
+/// question from `quizSteps` altogether is a different matter: that changes the
+/// step ORDER, so it belongs to a new arm or a `flowSchema` bump.
+enum AngleStep: Hashable {
     case storm
     case scene(Int)
     case experience
@@ -119,19 +157,17 @@ extension OnboardingAngle {
         if showsExperienceScreen { steps.append(.experience) }
         steps.append(.picker)
         if burdenScene != nil { steps.append(.burdenScene) }
-        steps.append(contentsOf: [
-            AngleStep.battleDuration, .alreadyTried, .insight, .hitsHardest, .connectStyle, .belief, .dailyMinutes
-        ])
-        steps.append(contentsOf: [
-            AngleStep.firstDeclaration, .personalDeclaration, .rating,
-            .planBuilding, .planReveal, .testimonials, .paywall, .notificationTime
-        ])
+        steps.append(contentsOf: quizSteps)
+        steps.append(contentsOf: [AngleStep.firstDeclaration, .personalDeclaration, .rating])
+        if showsPlanBuilding { steps.append(.planBuilding) }
+        steps.append(contentsOf: [AngleStep.planReveal, .testimonials, .paywall, .notificationTime])
         return steps
     }
 
     /// The screens the progress bar counts: everything from the opener through
     /// the last quiz question. The belief step only exists in quiz v2, so the
-    /// denominator has to know which quiz is running.
+    /// denominator has to know which quiz is running (an arm that never asks it
+    /// reads the same on both).
     func valueScreens(quizV2: Bool) -> [AngleStep] {
         var screens = Array(steps.prefix(while: { $0 != .firstDeclaration }))
         if !quizV2 { screens.removeAll { $0 == .belief } }

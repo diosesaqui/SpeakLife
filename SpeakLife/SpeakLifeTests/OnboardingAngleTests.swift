@@ -73,9 +73,10 @@ final class OnboardingAngleTests: XCTestCase {
         XCTAssertEqual(steps[22], .notificationTime)
     }
 
-    /// Raw values from `WarfareStep`, before the port. Warfare is the one arm
-    /// with no storm opener and the only one with a burden-matched payoff, so
-    /// its indices sit one lower than the others from the picker on.
+    /// Raw values from `WarfareStep`, before the port. Warfare is the one PORTED
+    /// arm with no storm opener, and the first of the two that run a
+    /// burden-matched payoff (`command` is the other), so its indices sit one
+    /// lower than the other ported arms from the picker on.
     func testWarfareStepIndicesAreUnchanged() {
         let steps = OnboardingAngles.warfare.steps
         XCTAssertEqual(steps.count, 22)
@@ -103,6 +104,69 @@ final class OnboardingAngleTests: XCTestCase {
         XCTAssertEqual(steps[22], .notificationTime)
     }
 
+    /// The command arm is the lean one: no storm opener, no product recap, three
+    /// scenes, two quiz questions and no plan loader, because a 24-screen flow
+    /// selling a sixty-second habit argues against itself. 14 screens against the
+    /// other broad arms' 22 to 23. Nothing historical is riding on these indices
+    /// (flowSchema 1, never shipped at any other depth), but they are the contract
+    /// `command_step_completed` is read against from here on: change the order and
+    /// bump the schema with it.
+    func testCommandStepIndices() {
+        let steps = OnboardingAngles.command.steps
+        XCTAssertEqual(steps.count, 14)
+        XCTAssertEqual(steps[0], .scene(0))       // Jesus' morning, screen one
+        XCTAssertEqual(steps[2], .scene(2))       // sixty seconds
+        XCTAssertEqual(steps[3], .picker)
+        XCTAssertEqual(steps[4], .burdenScene)    // tomorrow morning's words
+        XCTAssertEqual(steps[5], .connectStyle)
+        XCTAssertEqual(steps[6], .dailyMinutes)
+        XCTAssertEqual(steps[7], .firstDeclaration)
+        XCTAssertEqual(steps[9], .rating)
+        XCTAssertEqual(steps[12], .paywall)
+        XCTAssertEqual(steps[13], .notificationTime)
+        // The trimmed screens are gone, not reordered.
+        for dropped in [AngleStep.storm, .experience, .battleDuration, .alreadyTried,
+                        .insight, .hitsHardest, .belief, .planBuilding] {
+            XCTAssertFalse(steps.contains(dropped), "command should not run \(dropped)")
+        }
+    }
+
+    /// Trimming depth is data (`quizSteps`), so the compiler cannot stop an arm
+    /// from dropping a question whose answer something downstream still reads.
+    /// `ConnectStyle` (v1) and `DailyTimeBudget` both outlive onboarding and are
+    /// read by `TaskLibrary` when it builds the day, and in quiz v2 the connect
+    /// slot carries the victory question the plan reveal echoes. Every arm keeps
+    /// both, and `dailyMinutes` stays last so the progress bar's denominator ends
+    /// where `valueScreens` expects.
+    func testEveryAngleAsksTheQuestionsThatOutliveOnboarding() {
+        for (id, angle) in OnboardingAngles.all {
+            XCTAssertTrue(angle.quizSteps.contains(.connectStyle),
+                          "\(id): dropping the connect slot loses ConnectStyle (v1) and the victory echo (v2)")
+            XCTAssertTrue(angle.quizSteps.contains(.dailyMinutes),
+                          "\(id): dropping daily minutes loses DailyTimeBudget, which sizes the checklist")
+            XCTAssertEqual(angle.quizSteps.last, .dailyMinutes, "\(id): the quiz has to end on daily minutes")
+            XCTAssertEqual(Set(angle.quizSteps).count, angle.quizSteps.count, "\(id): a question is asked twice")
+            for step in angle.quizSteps {
+                XCTAssertTrue(OnboardingAngle.fullQuiz.contains(step),
+                              "\(id): \(step) is not one of the extended-quiz screens")
+            }
+        }
+    }
+
+    /// The default has to stay the full block, or trimming one arm silently
+    /// shortens every arm that never asked to be trimmed.
+    func testOnlyTheCommandArmRunsShort() {
+        for id in ["promises", "warfare", "outcomes", "healing", "provision", "anxiety", "renewal"] {
+            guard let angle = OnboardingAngles.angle(id: id) else {
+                return XCTFail("missing angle '\(id)'")
+            }
+            XCTAssertEqual(angle.quizSteps, OnboardingAngle.fullQuiz, "\(id): quiz depth changed")
+            XCTAssertTrue(angle.showsPlanBuilding, "\(id): lost the plan loader")
+        }
+        XCTAssertEqual(OnboardingAngles.command.quizSteps, OnboardingAngle.leanQuiz)
+        XCTAssertFalse(OnboardingAngles.command.showsPlanBuilding)
+    }
+
     /// `totalValueScreens` drove the progress bar in all three arms; quiz v1
     /// drops the belief question, so the denominator differs by one.
     func testValueScreenCountsAreUnchanged() {
@@ -112,6 +176,10 @@ final class OnboardingAngleTests: XCTestCase {
         XCTAssertEqual(OnboardingAngles.warfare.valueScreens(quizV2: false).count, 13)
         XCTAssertEqual(OnboardingAngles.outcomes.valueScreens(quizV2: true).count, 15)
         XCTAssertEqual(OnboardingAngles.outcomes.valueScreens(quizV2: false).count, 14)
+        // The command arm never asks the belief question, so its bar reads the
+        // same on both quizzes: 3 scenes + picker + payoff + 2 questions.
+        XCTAssertEqual(OnboardingAngles.command.valueScreens(quizV2: true).count, 7)
+        XCTAssertEqual(OnboardingAngles.command.valueScreens(quizV2: false).count, 7)
     }
 
     func testValueScreensStopBeforeTheBackHalf() {
@@ -175,7 +243,7 @@ final class OnboardingAngleTests: XCTestCase {
 
     /// The broad arms let the user name their own area, so every burden needs a row.
     func testBroadAnglesCoverEveryBurden() {
-        for id in ["promises", "warfare", "outcomes"] {
+        for id in ["promises", "warfare", "outcomes", "command"] {
             guard let angle = OnboardingAngles.angle(id: id) else {
                 return XCTFail("missing angle '\(id)'")
             }

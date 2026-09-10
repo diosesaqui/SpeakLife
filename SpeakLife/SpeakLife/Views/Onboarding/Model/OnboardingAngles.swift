@@ -5,13 +5,13 @@
 //  Every onboarding angle's copy, in one place. See `OnboardingAngle` for the
 //  model and `AngleOnboardingView` for the driver that renders it.
 //
-//  BROAD ARMS (promises / warfare / outcomes) argue the mechanism from a
-//  different emotional entry point and then let the user name their own area:
+//  BROAD ARMS (promises / warfare / outcomes / command) argue the mechanism from
+//  a different emotional entry point and then let the user name their own area:
 //  promises leads with a settled fact, warfare with the fight for what is
-//  already yours, outcomes with the won life. Their picker lists one row per
-//  HeaviestBurden. All three are ports of the hand-written views that preceded
-//  this file, copy and step order preserved exactly so the live A/B funnels
-//  still join.
+//  already yours, outcomes with the won life, command with the first sixty
+//  seconds of the morning. Their picker lists one row per HeaviestBurden. The
+//  first three are ports of the hand-written views that preceded this file, copy
+//  and step order preserved exactly so the live A/B funnels still join.
 //
 //  SINGLE-ISSUE ARMS (healing / provision / anxiety / renewal) exist to be deep
 //  linked from an angle-matched ad: `?ob=healing` on the install link and the
@@ -31,7 +31,7 @@ enum OnboardingAngles {
 
     /// Every angle, keyed by `id` (which is also the `?ob=` deep-link code).
     static let all: [String: OnboardingAngle] = Dictionary(
-        uniqueKeysWithValues: [promises, warfare, outcomes, healing, provision, anxiety, renewal]
+        uniqueKeysWithValues: [promises, warfare, outcomes, command, healing, provision, anxiety, renewal]
             .map { ($0.id, $0) }
     )
 
@@ -780,5 +780,187 @@ enum OnboardingAngles {
                                   symbol: "brain.head.profile", segmentLabel: "focus"),
             ]
         )
+    )
+
+    // MARK: - Command your day (morning ritual, deep link ?ob=command)
+
+    // A RITUAL arm, and the only one whose hook is WHEN rather than WHAT. Every
+    // other angle argues what already belongs to you; this one argues that the
+    // day is decided in its first sixty seconds. Before the phone, the news and
+    // the to-do list get a vote, you command your finances, your body and your
+    // household out loud, or you spend the rest of the day answering whatever
+    // shows up.
+    //
+    // It sells the exact behaviour retention is built on: a sixty-second morning
+    // declaration. So the arc and the product promise are the same sentence,
+    // which is what the promises/warfare/outcomes arms have to bridge and this
+    // one does not.
+    //
+    // DEPTH IS PART OF THE ANGLE HERE. A 24-screen flow selling a sixty-second
+    // habit argues against itself, so this arm runs lean: no storm opener, no
+    // product recap, three scenes instead of five, the two quiz questions whose
+    // answers outlive onboarding instead of all seven, and no plan loader. 14
+    // screens against the other broad arms' 22 to 23. What it keeps is
+    // everything that either seeds the app or sells: the picker, the payoff, the
+    // taste, record-your-own, the plan reveal and the testimonial wall.
+    //
+    // The cost is deliberate: `battle_duration`, `already_tried`, `hits_hardest`
+    // and `belief` land as "unknown" on this arm's completion event, because the
+    // screens that collected them are gone. Nothing else read them.
+    //
+    // Broad arm: one picker row per HeaviestBurden, framed as the area you
+    // command FIRST tomorrow morning. The burden-matched payoff then hands the
+    // user the actual words they will speak over it, so the sixty seconds stops
+    // being an idea before they ever reach the paywall.
+    static let command = OnboardingAngle(
+        id: "command",
+        flow: "command",
+        flowSchema: 1,
+        opensWithStormScreen: false,
+        showsExperienceScreen: false,
+        scenes: [
+            AngleScene(
+                symbol: "bell.badge.fill",
+                // Screen one is the hook, so it carries the conflict, not a
+                // devotional observation. The stakes here are what warfare's
+                // thief screen is to that arm: something already has your
+                // mornings, and it is not you. Naming the low thing is fine in
+                // onboarding copy (warfare names the thief); the declarations
+                // themselves still never do.
+                eyebrow: "SOMETHING GETS THE FIRST WORD",
+                title: "Your day is talking\nbefore you are.",
+                body: "The phone. The balance you don't want to look at. The ache you woke up with. Most mornings the day speaks first, and everything after it is you reacting to what it said.",
+                verse: "Above all else, guard your heart, for everything you do flows from it.",
+                reference: "Proverbs 4:23",
+                analyticsEvent: "command_scene_shown",
+                analyticsParameters: ["scene": "first_word"]
+            ),
+            AngleScene(
+                symbol: "sunrise.fill",
+                // Jesus' morning and the authority to decree it, in one screen:
+                // the model, then the handoff to the user's own mouth.
+                eyebrow: "JESUS NEVER GAVE IT AWAY",
+                title: "Up before the house,\nsettling the day.",
+                body: "Long before sunrise, while it was still dark, He was already with the Father. He did not ask the day to go well. He told it. That same authority is in your mouth.",
+                verse: "What you decide on will be done, and light will shine on your ways.",
+                reference: "Job 22:28",
+                analyticsEvent: "command_scene_shown",
+                analyticsParameters: ["scene": "authority"]
+            ),
+            AngleScene(
+                symbol: "timer",
+                // Last screen before the picker, so it carries the cost
+                // objection, the cadence, and the close. The final line puts the
+                // choice back on the user instead of restating the benefit:
+                // tomorrow happens either way.
+                eyebrow: "EVERY MORNING, FIRST THING",
+                title: "Sixty seconds, and the\nday answers to you.",
+                body: "Not an hour. Not a study plan. One minute over your money, your body and your household before you touch your phone. Tomorrow morning comes either way. The only question is who speaks first.",
+                verse: "Satisfy us in the morning with your unfailing love, that we may sing for joy and be glad all our days.",
+                reference: "Psalm 90:14",
+                buttonLabel: "I'm Ready to Command My Day →",
+                analyticsEvent: "command_scene_shown",
+                analyticsParameters: ["scene": "sixty_seconds"]
+            ),
+        ],
+        picker: AnglePicker(
+            headline: "What are you commanding\nfirst tomorrow morning?",
+            subtitle: "We'll build your sixty seconds around it\nand have it ready every morning when you wake up.",
+            analyticsEvent: "command_picker_shown",
+            // Finances, body and protection lead, in the order this arm argues
+            // them, rather than the broad arms' health-first order.
+            choices: [
+                AnglePickerChoice(id: "abundance", burden: .abundance,
+                                  statement: "My finances",
+                                  subtitle: "Provision called in before the day starts",
+                                  symbol: "key.fill"),
+                AnglePickerChoice(id: "health", burden: .health,
+                                  statement: "My body",
+                                  subtitle: "Healing and strength, first thing",
+                                  symbol: "heart.fill"),
+                AnglePickerChoice(id: "more", burden: .allOfIt,
+                                  statement: "My protection",
+                                  subtitle: "My household covered before we walk out",
+                                  symbol: "shield.lefthalf.filled"),
+                AnglePickerChoice(id: "peace", burden: .peace,
+                                  statement: "My mind and my home",
+                                  subtitle: "Peace set before the noise starts",
+                                  symbol: "house.fill"),
+                AnglePickerChoice(id: "identity", burden: .identity,
+                                  statement: "Who I am today",
+                                  subtitle: "Standing as His before I step out",
+                                  symbol: "crown.fill"),
+                AnglePickerChoice(id: "purpose", burden: .purpose,
+                                  statement: "My steps",
+                                  subtitle: "Ordered before I take the first one",
+                                  symbol: "flag.fill"),
+                AnglePickerChoice(id: "joy", burden: .joy,
+                                  statement: "My joy",
+                                  subtitle: "Strength decided for the whole day",
+                                  symbol: "sun.max.fill"),
+            ]
+        ),
+        // The arm promises sixty seconds, so the screen right after the picker
+        // spends them: the actual words for the area just chosen, before any
+        // quiz question or paywall. Same slot warfare uses for its victory
+        // vision.
+        burdenScene: AngleBurdenScene(
+            eyebrow: "TOMORROW MORNING, THIS IS WHAT YOU SAY",
+            buttonLabel: "That's What I'm Speaking →",
+            analyticsEvent: "command_first_words_shown",
+            // `.peace` lives here rather than in the dictionary: it is what an
+            // unlisted burden falls back to, and two copies would drift apart.
+            defaultContent: .init(
+                symbol: "house.fill",
+                title: "Your mind and\nyour home, first.",
+                body: "You say it before the noise starts. I have the mind of Christ, my mind is clear and at rest, and peace rules my home today. Sixty seconds, and the day walks in on your terms.",
+                verse: "You will keep in perfect peace those whose minds are steadfast, because they trust in you.",
+                reference: "Isaiah 26:3"),
+            content: [
+                .abundance: .init(
+                    symbol: "key.fill",
+                    title: "Your finances,\nsettled first.",
+                    body: "You say it before you check a single balance. My God supplies every need of mine, my work prospers, and increase finds me today. Sixty seconds, and provision goes ahead of you into the day.",
+                    verse: "And my God will meet all your needs according to the riches of his glory in Christ Jesus.",
+                    reference: "Philippians 4:19"),
+                .health: .init(
+                    symbol: "heart.fill",
+                    title: "Your body,\nbefore you stand up.",
+                    body: "You say it before your feet touch the floor. By His wounds I am healed, this body is strong, and strength rises in me today. Sixty seconds, and you meet the day standing up.",
+                    verse: "He sent out his word and healed them; he rescued them from the grave.",
+                    reference: "Psalm 107:20"),
+                .allOfIt: .init(
+                    symbol: "shield.lefthalf.filled",
+                    title: "Your household,\ncovered.",
+                    body: "You say it before anyone walks out the door. No weapon formed against me prospers, angels guard my household, and everyone under this roof is covered today. Sixty seconds, and protection goes out ahead of them.",
+                    verse: "No weapon forged against you will prevail.",
+                    reference: "Isaiah 54:17"),
+                .identity: .init(
+                    symbol: "crown.fill",
+                    title: "Who you are,\nsettled early.",
+                    body: "You say it before the day tries to tell you otherwise. I am chosen, I am His, and I am a new creation today. Sixty seconds, and you step out already sure of who you are.",
+                    verse: "If anyone is in Christ, the new creation has come: The old has gone, the new is here.",
+                    reference: "2 Corinthians 5:17"),
+                .purpose: .init(
+                    symbol: "flag.fill",
+                    title: "Your steps,\nordered first.",
+                    body: "You say it before you take one. My steps are ordered by God, my plans succeed, and I walk in the calling He gave me today. Sixty seconds, and the day has direction before it starts.",
+                    verse: "In their hearts humans plan their course, but the Lord establishes their steps.",
+                    reference: "Proverbs 16:9"),
+                .joy: .init(
+                    symbol: "sun.max.fill",
+                    title: "Your joy,\nchosen first.",
+                    body: "You say it before you look at your phone. The joy of the Lord is my strength, this is the day the Lord has made, and I am glad in it. Sixty seconds, and joy is decided before anything else gets a vote.",
+                    verse: "The joy of the Lord is your strength.",
+                    reference: "Nehemiah 8:10"),
+            ]
+        ),
+        // Two questions, not seven: the ones whose answers outlive onboarding
+        // (`ConnectStyle` and `DailyTimeBudget`, both read by TaskLibrary). The
+        // four analytics-only questions and the no-input insight screen are what
+        // the sixty-second pitch could not afford.
+        quizSteps: OnboardingAngle.leanQuiz,
+        // The loader is theatre, and this arm's claim is speed.
+        showsPlanBuilding: false
     )
 }
