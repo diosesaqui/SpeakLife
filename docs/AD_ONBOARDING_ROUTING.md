@@ -42,12 +42,22 @@ the user names their own area on a seven-row picker (one row per `HeaviestBurden
 
 `command` is the ritual arm: its hook is WHEN rather than WHAT. The day is decided
 in its first sixty seconds, so you speak over your finances, your body and your
-household before the phone gets a vote. It is the only broad arm that both opens on
-the storm screen and runs a burden-matched payoff (the words the user will actually
-say tomorrow morning), which makes it 24 screens against the other broad arms' 22
-to 23 — read it on conversion, and expect completion to sit slightly under a
-shorter arm's. Its natural control is `warfare` (the default). Pair it with
-morning-routine, "first thing when you wake up" and 60-second creative.
+household before the phone gets a vote. It is also the **lean** arm — 14 screens
+against the other broad arms' 22 to 23 — because a 24-screen flow selling a
+sixty-second habit argues against itself. What it drops: the storm opener, the
+product recap, two of five scenes, the four analytics-only quiz questions plus the
+no-input insight screen, and the plan loader. What it keeps is everything that
+seeds the app or sells: the picker, the burden-matched payoff (the words the user
+will actually say tomorrow morning), the taste, record-your-own, the plan reveal
+and the testimonial wall.
+
+Two consequences. Its completion event carries `battle_duration`, `already_tried`,
+`hits_hardest` and `belief` as `"unknown"`, because the screens that collected them
+are gone — deliberate, since nothing but that event ever read them. And it varies
+angle AND depth at once, so it is not a pure angle result: `warfare` is still the
+arm to control it against, but `direct` (the depth arm) is the one that says how
+much of any win is just the shorter funnel. Pair it with morning-routine, "first
+thing when you wake up" and 60-second creative.
 
 **Single-issue arms.** Built to be deep linked from angle-matched creative: every
 screen, the picker included, stays on the one subject the ad promised, so a healing
@@ -73,7 +83,11 @@ share one driver, so a new angle is copy plus three lines of wiring:
 
 1. Add an `OnboardingAngle` constant in
    `Views/Onboarding/Model/OnboardingAngles.swift` — scenes, a picker, and the
-   analytics strings. Start `flowSchema` at 1.
+   analytics strings. Start `flowSchema` at 1. Depth is data too: `quizSteps`
+   (default `fullQuiz`) and `showsPlanBuilding` (default true) let an arm run a
+   shorter funnel without a second driver, and both `connectStyle` and
+   `dailyMinutes` have to stay in any quiz you shorten — their answers outlive
+   onboarding.
 2. Add its case to `SubscriptionStore.OnboardingVariant`, raw value == the angle's
    `id` == the `ob=` code.
 3. Add the case to the angle-arm list in `HomeView.onboardingFlow`.

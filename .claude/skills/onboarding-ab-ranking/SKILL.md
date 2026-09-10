@@ -29,11 +29,15 @@ variant is winning, with the numbers behind it.
 - `command` is the **ritual** arm: the hook is WHEN, not WHAT. It sells the
   sixty-second morning declaration over finances, body and household, which is the
   retention behaviour itself, so watch D1/D7 retention and streaks on it and not
-  only trial starts. It is the LONGEST arm (24 screens: storm opener plus a
-  burden-matched payoff), so its Completion % is structurally penalised the way
-  `direct`'s is flattered. Rank it on Conversion %, control it against `warfare`
-  (the default broad arm), and cut `command_first_words_shown` against
-  `command_picker_shown` to see whether the payoff screen holds.
+  only trial starts. It is also **lean** (14 screens vs 22 to 23 for the other
+  broad arms), so like `direct` its Completion % is flattered by having fewer
+  screens to fall out of: **rank it on Conversion %**. Control it against
+  `warfare` (the default broad arm) and against `direct`, since it moves angle and
+  depth together and is not a pure angle result. Two gotchas: `battle_duration`,
+  `already_tried`, `hits_hardest` and `belief` are always `"unknown"` on this arm
+  (those screens were cut), so break it down on `burden` / `picker_choice`
+  instead; and cut `command_first_words_shown` against `command_picker_shown` to
+  see whether the payoff screen holds.
 - `direct` is the **funnel-depth** arm: pain question on frame one, four screens
   to the paywall instead of sixteen (no extended quiz, no plan reveal, no
   pledge, no rating ask). Read it against `warfare` (the default) for

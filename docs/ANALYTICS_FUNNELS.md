@@ -189,12 +189,12 @@ The App Store listing is **"SpeakLife: Pray Like Jesus — Victory Over Every
 Storm."** Screen one of the arms that run the opener now answers that line
 directly ("Jesus didn't ask the storm to calm down. He spoke to it.") so the
 listing reads as the hook instead of an unexplained promise the user carries
-through the whole flow. Every angle arm except `warfare` opens on it, plus
-`closer`; the `flow` property says which arm the impression came from.
+through the whole flow. Every angle arm except `warfare` and `command` opens on
+it, plus `closer`; the `flow` property says which arm the impression came from.
 
 | Event | Properties | Why it matters |
 |-------|-----------|----------------|
-| `storm_opener_shown` | `flow` (`outcomes` / `promises` / `command` / `closer` / `healing` / `provision` / `anxiety` / `renewal`) | Screen-one reach; the denominator for everything after it |
+| `storm_opener_shown` | `flow` (`outcomes` / `promises` / `closer` / `healing` / `provision` / `anxiety` / `renewal`) | Screen-one reach; the denominator for everything after it |
 
 Because the opener is prepended as step 0, every step raw value in those three
 arms shifted by one. **`flow_schema` was bumped on all three** — `outcomes` 3→4,
@@ -296,18 +296,31 @@ to read it past the paywall.
 | Event | Properties | Why it matters |
 |-------|-----------|----------------|
 | `command_onboarding_started` | | Arm entry |
-| `command_scene_shown` | `scene` (`morning` / `authority` / `areas` / `protection` / `sixty_seconds`) | Which beat of the argument loses people. `sixty_seconds` is the cost-objection screen and the last one before the picker |
+| `command_scene_shown` | `scene` (`morning` / `authority` / `sixty_seconds`) | Which beat of the argument loses people. `sixty_seconds` is the cost-objection screen and the last one before the picker |
 | `command_picker_shown` | | Reach of the area choice |
 | `command_first_words_shown` | `burden` | The burden-matched payoff: the words the user will say tomorrow morning. Cut against `command_picker_shown` to see whether spending the sixty seconds up front holds |
-| `command_step_completed` | `step`, `flow_schema` | Per-screen drop-off. 24 steps, `flow_schema` starts at **1** |
-| `command_onboarding_completed` | `burden`, `picker_choice`, … | Same shape as every other angle arm |
+| `command_step_completed` | `step`, `flow_schema` | Per-screen drop-off. 14 steps, `flow_schema` starts at **1** |
+| `command_onboarding_completed` | `burden`, `picker_choice`, … | Same shape as every other angle arm, with four properties always `"unknown"` (below) |
 
-**How to read it.** Control it against `warfare` (the default broad arm). It is
-the LONGEST arm — 24 screens, the only broad arm with both the storm opener and a
-burden-matched payoff — so its Completion % is structurally penalised the way
-`direct`'s is flattered: **rank it on Conversion %**. Then read D1/D7 retention
-and streak length by `onboarding_variant`, because a morning-ritual pitch that
-converts no better but retains better is still the winning arm.
+**It is the lean arm.** 14 screens against the other broad arms' 22 to 23: no
+storm opener, no product recap, three scenes, two quiz questions, no plan loader.
+A 24-screen flow selling a sixty-second habit argues against itself, so depth is
+part of this angle rather than a separate test.
+
+**Two things that follow.** `battle_duration`, `already_tried`, `hits_hardest` and
+`belief` arrive as `"unknown"` on `command_onboarding_completed` — the screens that
+collected them are gone, and nothing but that event ever read them, so **don't
+build a cross-arm breakdown on those four and expect `command` in it**. Use
+`burden` / `picker_choice`, which every arm still sets. And its Completion % is
+**flattered** the way `direct`'s is, for the same structural reason: fewer screens
+to fall out of. **Rank it on Conversion %.**
+
+**How to read it.** Control it against `warfare` (the default broad arm) for
+arm-vs-default, and against `direct` to see how much of any win is just the shorter
+funnel — `command` moves angle and depth together, so it is not a pure angle
+result. Then read D1/D7 retention and streak length by `onboarding_variant`,
+because a morning-ritual pitch that converts no better but retains better is still
+the winning arm.
 
 ---
 

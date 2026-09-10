@@ -796,6 +796,18 @@ enum OnboardingAngles {
     // which is what the promises/warfare/outcomes arms have to bridge and this
     // one does not.
     //
+    // DEPTH IS PART OF THE ANGLE HERE. A 24-screen flow selling a sixty-second
+    // habit argues against itself, so this arm runs lean: no storm opener, no
+    // product recap, three scenes instead of five, the two quiz questions whose
+    // answers outlive onboarding instead of all seven, and no plan loader. 14
+    // screens against the other broad arms' 22 to 23. What it keeps is
+    // everything that either seeds the app or sells: the picker, the payoff, the
+    // taste, record-your-own, the plan reveal and the testimonial wall.
+    //
+    // The cost is deliberate: `battle_duration`, `already_tried`, `hits_hardest`
+    // and `belief` land as "unknown" on this arm's completion event, because the
+    // screens that collected them are gone. Nothing else read them.
+    //
     // Broad arm: one picker row per HeaviestBurden, framed as the area you
     // command FIRST tomorrow morning. The burden-matched payoff then hands the
     // user the actual words they will speak over it, so the sixty seconds stops
@@ -804,15 +816,16 @@ enum OnboardingAngles {
         id: "command",
         flow: "command",
         flowSchema: 1,
-        opensWithStormScreen: true,
+        opensWithStormScreen: false,
+        showsExperienceScreen: false,
         scenes: [
             AngleScene(
                 symbol: "sunrise.fill",
-                // The storm opener taught speaking instead of begging. This puts
-                // that on a clock: Jesus did it before the day started.
+                // Screen one, with no storm opener in front of it, so it has to
+                // be the doorway as well as the first beat of the argument.
                 eyebrow: "HOW JESUS STARTED HIS DAY",
                 title: "He set the day\nbefore it set Him.",
-                body: "Long before sunrise, while the house was still dark, Jesus was already up and with the Father. The day never got the first word. He did.",
+                body: "Long before sunrise, while the house was still dark, Jesus was already up and with the Father. He did not ask the day to go well. He settled it first.",
                 verse: "Very early in the morning, while it was still dark, Jesus got up, left the house and went off to a solitary place, where he prayed.",
                 reference: "Mark 1:35",
                 analyticsEvent: "command_scene_shown",
@@ -820,33 +833,15 @@ enum OnboardingAngles {
             ),
             AngleScene(
                 symbol: "bolt.fill",
+                // Carries the mechanism (it is in your mouth) AND all three
+                // areas, which were a screen each before the trim.
                 eyebrow: "YOU HAVE THE AUTHORITY",
                 title: "You don't ask the day.\nYou tell it.",
-                body: "God put the outcome of your day inside your own mouth. What you decide on and say out loud is what gets established, and light goes out ahead of you on the road.",
+                body: "God put the outcome of your day in your own mouth. You speak over your finances, over your body, over everyone under your roof, and what you decide on is what stands.",
                 verse: "What you decide on will be done, and light will shine on your ways.",
                 reference: "Job 22:28",
                 analyticsEvent: "command_scene_shown",
                 analyticsParameters: ["scene": "authority"]
-            ),
-            AngleScene(
-                symbol: "key.fill",
-                eyebrow: "WHILE THE HOUSE IS STILL QUIET",
-                title: "Your money and your\nbody get answered first.",
-                body: "Provision spoken over your finances before the day asks anything of them. Healing and strength spoken over your body before your feet touch the floor. The two places the day comes for are already settled.",
-                verse: "I pray that you may enjoy good health and that all may go well with you, even as your soul is getting along well.",
-                reference: "3 John 1:2",
-                analyticsEvent: "command_scene_shown",
-                analyticsParameters: ["scene": "areas"]
-            ),
-            AngleScene(
-                symbol: "shield.lefthalf.filled",
-                eyebrow: "BEFORE ANYONE LEAVES THE HOUSE",
-                title: "Angels on assignment\nover your household.",
-                body: "You send protection out ahead of your kids, your commute, your front door. Everyone under your roof walks out covered, because you covered them before they went.",
-                verse: "For he will command his angels concerning you to guard you in all your ways.",
-                reference: "Psalm 91:11",
-                analyticsEvent: "command_scene_shown",
-                analyticsParameters: ["scene": "protection"]
             ),
             AngleScene(
                 symbol: "timer",
@@ -854,7 +849,7 @@ enum OnboardingAngles {
                 // the last screen, right before the picker.
                 eyebrow: "IT TAKES SIXTY SECONDS",
                 title: "One minute out loud,\nand the day is yours.",
-                body: "Not an hour. Not a study plan. Sixty seconds of God's Word over your finances, your body and your household, and you walk into the day already standing on victory.",
+                body: "Not an hour. Not a study plan. Sixty seconds of God's Word over your money, your body and your household, and you walk into the day already standing on victory.",
                 verse: "Satisfy us in the morning with your unfailing love, that we may sing for joy and be glad all our days.",
                 reference: "Psalm 90:14",
                 buttonLabel: "I'm Ready to Command My Day →",
@@ -953,6 +948,13 @@ enum OnboardingAngles {
                     verse: "The joy of the Lord is your strength.",
                     reference: "Nehemiah 8:10"),
             ]
-        )
+        ),
+        // Two questions, not seven: the ones whose answers outlive onboarding
+        // (`ConnectStyle` and `DailyTimeBudget`, both read by TaskLibrary). The
+        // four analytics-only questions and the no-input insight screen are what
+        // the sixty-second pitch could not afford.
+        quizSteps: OnboardingAngle.leanQuiz,
+        // The loader is theatre, and this arm's claim is speed.
+        showsPlanBuilding: false
     )
 }
