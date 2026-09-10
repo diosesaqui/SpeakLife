@@ -123,7 +123,7 @@ signature drift against whatever SDK version you pin.
    subscription app the useful ladder is trial start → paywall view → purchase,
    not raw revenue buckets.
 5. OneLink template + one link per onboarding angle, each carrying custom data
-   `ob=identity|product|outcomes|quiz|warfare|promises|closer`
+   `ob=identity|product|outcomes|quiz|warfare|promises|command|closer`
    (see `docs/AD_ONBOARDING_ROUTING.md` — the Branch link table maps 1:1).
 6. RevenueCat → Integrations → AppsFlyer. Confirm your RC plan includes
    third-party integrations before counting on server-side revenue events.

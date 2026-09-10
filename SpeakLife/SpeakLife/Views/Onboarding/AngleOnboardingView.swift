@@ -11,12 +11,16 @@
 //  Flow shape, identical for every angle:
 //
 //    [storm opener] → narrative scenes → [product recap] → burden picker
-//      → [burden-matched payoff] → extended quiz (Q2–Q6 + insight)
-//      → first declaration → record your own → [rating] → plan loader
-//      → plan reveal → testimonials → paywall → notification time
+//      → [burden-matched payoff] → extended quiz (per-angle: the full Q2–Q6 +
+//      insight block, or a shorter one) → first declaration → record your own
+//      → [rating] → [plan loader] → plan reveal → testimonials → paywall
+//      → notification time
 //
-//  Bracketed screens are per-angle. Everything else is fixed, which is the point:
-//  an A/B across angles isolates the ANGLE, never the funnel depth.
+//  Bracketed screens are per-angle; everything else is fixed. Keeping the depth
+//  equal is what lets an A/B across angles isolate the ANGLE, so an arm that
+//  trims it (`quizSteps`, `showsPlanBuilding` — `command` is the one that does)
+//  is testing angle AND depth together, and cannot be read against the others as
+//  a pure angle result.
 //
 //  HomeView routes here for every angle arm; which angle is decided by
 //  `SubscriptionStore.resolvedOnboardingVariant`, which honours the `?ob=` deep

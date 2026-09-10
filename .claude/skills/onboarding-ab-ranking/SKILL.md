@@ -1,6 +1,6 @@
 ---
 name: onboarding-ab-ranking
-description: Query PostHog for the onboarding A/B funnel and rank the variants (product / identity / quiz / outcomes / warfare / promises / closer / direct, plus the deep-linked healing / provision / anxiety / renewal arms) to pick a winner. Use when asked which onboarding is winning, onboarding A/B results, onboarding funnel rankings, or "which onboarding should we ship".
+description: Query PostHog for the onboarding A/B funnel and rank the variants (product / identity / quiz / outcomes / warfare / promises / command / closer / direct, plus the deep-linked healing / provision / anxiety / renewal arms) to pick a winner. Use when asked which onboarding is winning, onboarding A/B results, onboarding funnel rankings, or "which onboarding should we ship".
 ---
 
 # Onboarding A/B Ranking
@@ -12,7 +12,8 @@ variant is winning, with the numbers behind it.
 
 - The app shows one of several onboarding flows, chosen by Remote Config
   `onboardingVariant`: `product`, `identity`, `quiz`, `outcomes`, `warfare`,
-  `promises`, `closer`, `direct`. `warfare` is the default arm from app **v4.28+**.
+  `promises`, `command`, `closer`, `direct`. `warfare` is the default arm from app
+  **v4.28+**.
 - `healing`, `provision`, `anxiety` and `renewal` are **single-issue arms**, added
   to be deep linked from angle-matched creative (`ob=healing` and friends). They are
   targeted, not random-assigned, so **do not rank them against the random arms** —
@@ -25,6 +26,18 @@ variant is winning, with the numbers behind it.
   yes/no agreement ladder + "I'm In" pledge). Its natural control is
   `outcomes` — same quiz, same back-half — so when comparing, cut those two
   head-to-head before reading the whole field.
+- `command` is the **ritual** arm: the hook is WHEN, not WHAT. It sells the
+  sixty-second morning declaration over finances, body and household, which is the
+  retention behaviour itself, so watch D1/D7 retention and streaks on it and not
+  only trial starts. It is also **lean** (14 screens vs 22 to 23 for the other
+  broad arms), so like `direct` its Completion % is flattered by having fewer
+  screens to fall out of: **rank it on Conversion %**. Control it against
+  `warfare` (the default broad arm) and against `direct`, since it moves angle and
+  depth together and is not a pure angle result. Two gotchas: `battle_duration`,
+  `already_tried`, `hits_hardest` and `belief` are always `"unknown"` on this arm
+  (those screens were cut), so break it down on `burden` / `picker_choice`
+  instead; and cut `command_first_words_shown` against `command_picker_shown` to
+  see whether the payoff screen holds.
 - `direct` is the **funnel-depth** arm: pain question on frame one, four screens
   to the paywall instead of sixteen (no extended quiz, no plan reveal, no
   pledge, no rating ask). Read it against `warfare` (the default) for
