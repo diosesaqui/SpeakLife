@@ -820,24 +820,28 @@ enum OnboardingAngles {
         showsExperienceScreen: false,
         scenes: [
             AngleScene(
-                symbol: "sunrise.fill",
-                // Screen one, with no storm opener in front of it, so it has to
-                // be the doorway as well as the first beat of the argument.
-                eyebrow: "HOW JESUS STARTED HIS DAY",
-                title: "He set the day\nbefore it set Him.",
-                body: "Long before sunrise, while the house was still dark, Jesus was already up and with the Father. He did not ask the day to go well. He settled it first.",
-                verse: "Very early in the morning, while it was still dark, Jesus got up, left the house and went off to a solitary place, where he prayed.",
-                reference: "Mark 1:35",
+                symbol: "bell.badge.fill",
+                // Screen one is the hook, so it carries the conflict, not a
+                // devotional observation. The stakes here are what warfare's
+                // thief screen is to that arm: something already has your
+                // mornings, and it is not you. Naming the low thing is fine in
+                // onboarding copy (warfare names the thief); the declarations
+                // themselves still never do.
+                eyebrow: "SOMETHING GETS THE FIRST WORD",
+                title: "Your day is talking\nbefore you are.",
+                body: "The phone. The balance you don't want to look at. The ache you woke up with. Most mornings the day speaks first, and everything after it is you reacting to what it said.",
+                verse: "Above all else, guard your heart, for everything you do flows from it.",
+                reference: "Proverbs 4:23",
                 analyticsEvent: "command_scene_shown",
-                analyticsParameters: ["scene": "morning"]
+                analyticsParameters: ["scene": "first_word"]
             ),
             AngleScene(
-                symbol: "bolt.fill",
-                // Carries the mechanism (it is in your mouth) AND all three
-                // areas, which were a screen each before the trim.
-                eyebrow: "YOU HAVE THE AUTHORITY",
-                title: "You don't ask the day.\nYou tell it.",
-                body: "God put the outcome of your day in your own mouth. You speak over your finances, over your body, over everyone under your roof, and what you decide on is what stands.",
+                symbol: "sunrise.fill",
+                // Jesus' morning and the authority to decree it, in one screen:
+                // the model, then the handoff to the user's own mouth.
+                eyebrow: "JESUS NEVER GAVE IT AWAY",
+                title: "Up before the house,\nsettling the day.",
+                body: "Long before sunrise, while it was still dark, He was already with the Father. He did not ask the day to go well. He told it. That same authority is in your mouth.",
                 verse: "What you decide on will be done, and light will shine on your ways.",
                 reference: "Job 22:28",
                 analyticsEvent: "command_scene_shown",
@@ -845,14 +849,13 @@ enum OnboardingAngles {
             ),
             AngleScene(
                 symbol: "timer",
-                // Carries three jobs, because it is the last screen before the
-                // picker: the cost objection (the reason this arm exists), the
-                // DAILY-ness (a habit, not a one-off), and the first-word claim
-                // that the whole angle rests on. The eyebrow takes the cadence so
-                // the title can stay the one-line cost killer.
+                // Last screen before the picker, so it carries the cost
+                // objection, the cadence, and the close. The final line puts the
+                // choice back on the user instead of restating the benefit:
+                // tomorrow happens either way.
                 eyebrow: "EVERY MORNING, FIRST THING",
-                title: "One minute out loud,\nand the day is yours.",
-                body: "Not an hour. Not a study plan. Sixty seconds over your money, your body and your household, spoken before you touch your phone. Your day does not get the first word. Your circumstances do not. You do.",
+                title: "Sixty seconds, and the\nday answers to you.",
+                body: "Not an hour. Not a study plan. One minute over your money, your body and your household before you touch your phone. Tomorrow morning comes either way. The only question is who speaks first.",
                 verse: "Satisfy us in the morning with your unfailing love, that we may sing for joy and be glad all our days.",
                 reference: "Psalm 90:14",
                 buttonLabel: "I'm Ready to Command My Day →",

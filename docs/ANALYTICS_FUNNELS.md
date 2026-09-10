@@ -296,7 +296,7 @@ to read it past the paywall.
 | Event | Properties | Why it matters |
 |-------|-----------|----------------|
 | `command_onboarding_started` | | Arm entry |
-| `command_scene_shown` | `scene` (`morning` / `authority` / `sixty_seconds`) | Which beat of the argument loses people. `sixty_seconds` is the cost-objection screen and the last one before the picker |
+| `command_scene_shown` | `scene` (`first_word` / `authority` / `sixty_seconds`) | Which beat of the argument loses people. `first_word` is the stakes hook, `sixty_seconds` the cost-objection screen and the last one before the picker |
 | `command_picker_shown` | | Reach of the area choice |
 | `command_first_words_shown` | `burden` | The burden-matched payoff: the words the user will say tomorrow morning. Cut against `command_picker_shown` to see whether spending the sixty seconds up front holds |
 | `command_step_completed` | `step`, `flow_schema` | Per-screen drop-off. 14 steps, `flow_schema` starts at **1** |
