@@ -845,11 +845,14 @@ enum OnboardingAngles {
             ),
             AngleScene(
                 symbol: "timer",
-                // The cost objection is the whole reason this arm exists. It gets
-                // the last screen, right before the picker.
-                eyebrow: "IT TAKES SIXTY SECONDS",
+                // Carries three jobs, because it is the last screen before the
+                // picker: the cost objection (the reason this arm exists), the
+                // DAILY-ness (a habit, not a one-off), and the first-word claim
+                // that the whole angle rests on. The eyebrow takes the cadence so
+                // the title can stay the one-line cost killer.
+                eyebrow: "EVERY MORNING, FIRST THING",
                 title: "One minute out loud,\nand the day is yours.",
-                body: "Not an hour. Not a study plan. Sixty seconds of God's Word over your money, your body and your household, and you walk into the day already standing on victory.",
+                body: "Not an hour. Not a study plan. Sixty seconds over your money, your body and your household, spoken before you touch your phone. Your day does not get the first word. Your circumstances do not. You do.",
                 verse: "Satisfy us in the morning with your unfailing love, that we may sing for joy and be glad all our days.",
                 reference: "Psalm 90:14",
                 buttonLabel: "I'm Ready to Command My Day →",
@@ -859,7 +862,7 @@ enum OnboardingAngles {
         ],
         picker: AnglePicker(
             headline: "What are you commanding\nfirst tomorrow morning?",
-            subtitle: "We'll build your sixty seconds around it\nand have it waiting when you wake up.",
+            subtitle: "We'll build your sixty seconds around it\nand have it ready every morning when you wake up.",
             analyticsEvent: "command_picker_shown",
             // Finances, body and protection lead, in the order this arm argues
             // them, rather than the broad arms' health-first order.
