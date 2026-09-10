@@ -9,6 +9,25 @@ import SwiftUI
 import StoreKit
 import FirebaseAnalytics
 
+/// The notification delivery window, expressed in the 30-minute slot indices
+/// `TimeSlots` lays out from midnight (index = hour × 2).
+///
+/// Onboarding no longer asks the user to pick a window. Every install starts
+/// anchored all day — 7:00 AM to 9:00 PM — and anyone who wants a narrower
+/// band narrows it in Settings → Reminders. The old onboarding question forced
+/// a 3-hour band on people before they had ever seen a declaration land, which
+/// is a choice they had no information to make.
+enum NotificationWindow {
+    /// 7:00 AM.
+    static let defaultStartIndex = 14
+    /// 9:00 PM. Late enough to catch the evening, early enough not to push into
+    /// wind-down.
+    static let defaultEndIndex = 42
+    /// 8:00 AM. The personal declaration push has its own time and is
+    /// deliberately not tied to the window start.
+    static let defaultPersonalDeclarationIndex = 16
+}
+
 final class AppState: ObservableObject {
     @Published var rootViewId = UUID()
     /// A personalized message delivered via push notification, awaiting display in
@@ -57,8 +76,8 @@ final class AppState: ObservableObject {
     @AppStorage("notificationCount") var notificationCount = 5
     @AppStorage("startTimeNotification") var startTimeNotification = ""
     @AppStorage("endTimeNotification") var endTimeNotification = ""
-    @AppStorage("startTimeIndex") var startTimeIndex = 14
-    @AppStorage("endTimeIndex") var endTimeIndex = 47
+    @AppStorage("startTimeIndex") var startTimeIndex = NotificationWindow.defaultStartIndex
+    @AppStorage("endTimeIndex") var endTimeIndex = NotificationWindow.defaultEndIndex
     @AppStorage("selectedNotificationCategories") var selectedNotificationCategories: String = ""
     @AppStorage("abbasLoveLetterIndex") var loveLetterIndex = 0
     @AppStorage("resetNotifications") var resetNotifications = true
@@ -89,7 +108,7 @@ final class AppState: ObservableObject {
     // 30-minute slots from midnight; 16 = 8:00 AM. Once set at save time the
     // declaration push stays at that time regardless of other notification
     // settings changes.
-    @AppStorage("personalDeclarationTimeIndex") var personalDeclarationTimeIndex = 16
+    @AppStorage("personalDeclarationTimeIndex") var personalDeclarationTimeIndex = NotificationWindow.defaultPersonalDeclarationIndex
     @AppStorage("lastReviewRequestSetDatev1") var lastReviewRequestSetDate: Date?
     @AppStorage("offerDiscount") var offerDiscount = false
     @AppStorage("offerDiscountTry") var offerDiscountTry = 0
@@ -167,18 +186,18 @@ final class AppState: ObservableObject {
             defaults.set(5, forKey: "notificationCount")
         }
         if defaults.object(forKey: "startTimeIndex") == nil {
-            defaults.set(14, forKey: "startTimeIndex") // 7:00 AM (index = hour × 2)
+            defaults.set(NotificationWindow.defaultStartIndex, forKey: "startTimeIndex") // 7:00 AM (index = hour × 2)
         }
         if defaults.object(forKey: "endTimeIndex") == nil {
-            defaults.set(47, forKey: "endTimeIndex")
+            defaults.set(NotificationWindow.defaultEndIndex, forKey: "endTimeIndex")     // 9:00 PM
         }
 
         // 4.10 reset: existing users get the new all-day window.
         // Their preferences are overwritten once, then the flag is set so this never repeats.
         if needsV2Migration {
             defaults.set(5, forKey: "notificationCount")
-            defaults.set(14, forKey: "startTimeIndex") // 7:00 AM
-            defaults.set(47, forKey: "endTimeIndex")   // 11:30 PM
+            defaults.set(NotificationWindow.defaultStartIndex, forKey: "startTimeIndex") // 7:00 AM
+            defaults.set(NotificationWindow.defaultEndIndex, forKey: "endTimeIndex")     // 9:00 PM
             // Force the next foreground tick in SpeakLifeApp to reschedule notifications
             // with the new window instead of waiting for the existing batch to expire.
             defaults.removeObject(forKey: "lastScheduledNotificationDate")
@@ -191,7 +210,7 @@ final class AppState: ObservableObject {
         // existing UserDefaults values. Bump them to 7:00 AM exactly once.
         if hasExistingNotificationPrefs,
            defaults.object(forKey: "notificationDefaultsMigratedV3") == nil {
-            defaults.set(14, forKey: "startTimeIndex") // 7:00 AM
+            defaults.set(NotificationWindow.defaultStartIndex, forKey: "startTimeIndex") // 7:00 AM
             defaults.removeObject(forKey: "lastScheduledNotificationDate")
             defaults.removeObject(forKey: "nextRescheduleDate")
         }
@@ -223,7 +242,7 @@ final class AppState: ObservableObject {
             // 8 AM (index 16). 12 = 6 AM is the lowest "reasonable" morning.
             if defaults.object(forKey: "personalDeclarationTimeIndex") == nil {
                 let currentStart = defaults.integer(forKey: "startTimeIndex")
-                let seed = (currentStart >= 12) ? currentStart : 16
+                let seed = (currentStart >= 12) ? currentStart : NotificationWindow.defaultPersonalDeclarationIndex
                 defaults.set(seed, forKey: "personalDeclarationTimeIndex")
             }
             let healTimeIndex = defaults.integer(forKey: "personalDeclarationTimeIndex")
@@ -364,14 +383,15 @@ final class AppState: ObservableObject {
             notificationCount = 5
         }
 
-        // Fix time indices — default window starts at 7:00 AM and runs to 11:30 PM
-        // so reminders never wake users overnight.
+        // Fix time indices — the default window runs 7:00 AM to 9:00 PM so
+        // reminders land all day without waking users overnight. 47 (11:30 PM)
+        // is still a valid choice in Settings; it is just no longer the default.
         if startTimeIndex < 0 || startTimeIndex >= 48 {
-            startTimeIndex = 14 // 7:00 AM
+            startTimeIndex = NotificationWindow.defaultStartIndex // 7:00 AM
         }
 
         if endTimeIndex <= startTimeIndex || endTimeIndex >= 48 {
-            endTimeIndex = 47
+            endTimeIndex = min(max(NotificationWindow.defaultEndIndex, startTimeIndex + 4), 47) // 9:00 PM
         }
 
         // Ensure minimum window of 2 hours

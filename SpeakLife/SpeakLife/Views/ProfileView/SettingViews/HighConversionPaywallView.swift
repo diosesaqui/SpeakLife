@@ -490,6 +490,13 @@ struct HighConversionPaywallView: View {
     private var showWeeklyPlan: Bool {
         subscriptionStore.useWeeklyPlan && subscriptionStore.currentOfferedWeekly != nil
     }
+    /// Remote Config `onlyShowYearly`: sell the annual plan and nothing else.
+    /// When on, the non-annual card is removed from both layouts and Annual is
+    /// the only thing the user can select — the same flag and behavior as
+    /// OptimizedSubscriptionViewV1, so a single switch covers every paywall.
+    /// Annual stays the selection regardless (onAppear pins it), so no purchase
+    /// path can end up on a plan that has no card on screen.
+    private var onlyShowYearly: Bool { subscriptionStore.onlyShowYearly }
     private var nonAnnualTitle: String { showWeeklyPlan ? "Weekly" : "Monthly" }
     private var nonAnnualSub: String { showWeeklyPlan ? "per week" : "per month" }
     /// Plan identity of the non-annual card, so analytics report "weekly" (not
@@ -879,10 +886,12 @@ struct HighConversionPaywallView: View {
         GeometryReader { geo in
             let cardWidth = (geo.size.width - 10) / 2
             HStack(spacing: 10) {
-                planCard(plan: nonAnnualPlan, topLabel: nil, title: nonAnnualTitle, price: nonAnnualPrice, sub: nonAnnualSub)
-                    .frame(width: cardWidth)
+                if !onlyShowYearly {
+                    planCard(plan: nonAnnualPlan, topLabel: nil, title: nonAnnualTitle, price: nonAnnualPrice, sub: nonAnnualSub)
+                        .frame(width: cardWidth)
+                }
                 planCard(plan: .annual, topLabel: annualSavingsPercent.map { "SAVE \($0)%" } ?? "BEST VALUE", title: "Annual", price: annualPrice, sub: "per month \(annualPerMonth)")
-                    .frame(width: cardWidth)
+                    .frame(width: onlyShowYearly ? geo.size.width : cardWidth)
             }
         }
         .frame(height: 90)
@@ -1227,15 +1236,17 @@ struct HighConversionPaywallView: View {
                 badge: "MOST POPULAR"
             )
             .padding(.top, 10) // room for the badge overhang
-            cleanPlanCard(
-                plan: nonAnnualPlan,
-                title: nonAnnualTitle,
-                rightPrice: nonAnnualPrice,
-                rightUnit: showWeeklyPlan ? "/week" : "/month",
-                struck: nil,
-                subline: cleanNonAnnualSubline,
-                badge: nil
-            )
+            if !onlyShowYearly {
+                cleanPlanCard(
+                    plan: nonAnnualPlan,
+                    title: nonAnnualTitle,
+                    rightPrice: nonAnnualPrice,
+                    rightUnit: showWeeklyPlan ? "/week" : "/month",
+                    struck: nil,
+                    subline: cleanNonAnnualSubline,
+                    badge: nil
+                )
+            }
             cleanTrialLine
             cleanContinueButton
             // Same Remote Config-gated link as the dark layout, so enabling
@@ -1450,6 +1461,7 @@ struct HighConversionPaywallView: View {
             "variant": paywallVariant,
             "user_category": preferencesTracker.primaryCategory.rawValue,
             "initial_plan": "annual",
+            "only_yearly": onlyShowYearly,
             "segment": segmentParam,
             "pain": painParam
         ])

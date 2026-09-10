@@ -259,13 +259,6 @@ struct CloserOnboardingView: View {
             appState.onboardingSegment = "closer_\(burden.shortLabel)"
         }
 
-        // Leaving the hits-hardest question: pre-select the notification-time
-        // screen from when their struggle hits (no auto-advance; still editable).
-        if currentStep == .hitsHardest, responses.notificationTime == nil,
-           let suggested = responses.suggestedNotificationTime {
-            responses.notificationTime = suggested
-        }
-
         switch currentStep {
         case .notificationTime:
             applyResponsesAndComplete()
@@ -323,7 +316,10 @@ struct CloserOnboardingView: View {
         if let notifTime = responses.notificationTime {
             appState.startTimeIndex = notifTime.startTimeIndex
             appState.endTimeIndex   = notifTime.endTimeIndex
-            appState.personalDeclarationTimeIndex = notifTime.startTimeIndex
+            // No `personalDeclarationTimeIndex` mirror: onboarding no longer asks
+            // for a window, so there is no user preference to mirror. The
+            // personal declaration push keeps its own 8:00 AM default and stays
+            // adjustable independently.
         }
         appState.hasPersonalDeclaration = savedDeclaration != nil
         AnalyticsService.shared.track("closer_onboarding_completed", parameters: [
@@ -387,7 +383,7 @@ enum CloserStep: Int, CaseIterable {
     case battleDuration  = 9   // Q2: how long has this been going on?
     case alreadyTried    = 10  // Q3: what have you already tried?
     case insight         = 11  // micro-insight interstitial (reading vs speaking)
-    case hitsHardest     = 12  // Q4: when does it hit hardest? (preselects notification time)
+    case hitsHardest     = 12  // Q4: when does it hit hardest? (segmentation only)
     case connectStyle    = 13  // Q5: connect style (quiz v1) or victory outcome (quiz v2)
     case belief          = 14  // quiz v2 only: do you believe God wants more? (v1 skips it)
     case dailyMinutes    = 15  // Q6: how much time daily? (drives plan reveal rhythm)

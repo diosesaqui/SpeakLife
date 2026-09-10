@@ -202,13 +202,6 @@ struct ProductOnboardingView: View {
             appState.onboardingSegment = "product_\(burden.shortLabel)"
         }
 
-        // Leaving the hits-hardest question: pre-select the notification-time
-        // screen from when their battle hits (no auto-advance; still editable).
-        if currentStep == .hitsHardest, responses.notificationTime == nil,
-           let suggested = responses.suggestedNotificationTime {
-            responses.notificationTime = suggested
-        }
-
         switch currentStep {
         case .notificationTime:
             applyResponsesAndComplete()
@@ -260,7 +253,10 @@ struct ProductOnboardingView: View {
         if let notifTime = responses.notificationTime {
             appState.startTimeIndex = notifTime.startTimeIndex
             appState.endTimeIndex   = notifTime.endTimeIndex
-            appState.personalDeclarationTimeIndex = notifTime.startTimeIndex
+            // No `personalDeclarationTimeIndex` mirror: onboarding no longer asks
+            // for a window, so there is no user preference to mirror. The
+            // personal declaration push keeps its own 8:00 AM default and stays
+            // adjustable independently.
         }
         appState.hasPersonalDeclaration = savedDeclaration != nil
         AnalyticsService.shared.track("product_onboarding_completed", parameters: [
@@ -317,7 +313,7 @@ enum ProductStep: Int, CaseIterable {
     case battleDuration  = 5   // Q2: how long has this battle been going on?
     case alreadyTried    = 6   // Q3: what have you already tried?
     case insight         = 7   // micro-insight interstitial (reading vs speaking)
-    case hitsHardest     = 8   // Q4: when does it hit hardest? (preselects notification time)
+    case hitsHardest     = 8   // Q4: when does it hit hardest? (segmentation only)
     case connectStyle    = 9   // Q5: connect style (quiz v1) or victory outcome (quiz v2)
     case belief          = 10  // quiz v2 only: do you believe God wants more? (v1 skips it)
     case dailyMinutes    = 11  // Q6: how much time daily? (drives plan reveal rhythm)
