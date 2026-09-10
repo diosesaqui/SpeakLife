@@ -37,7 +37,17 @@ the user names their own area on a seven-row picker (one row per `HeaviestBurden
 | "The enemy has been stealing from you" / the fight | `warfare` |
 | "God's promises have never failed" / trust and activate | `promises` |
 | "Feel closer to God" / drifted away, come back near | `closer` |
+| "Command your day in 60 seconds" / the morning routine | `command` |
 | Straight-to-the-offer, no narrative | `direct` |
+
+`command` is the ritual arm: its hook is WHEN rather than WHAT. The day is decided
+in its first sixty seconds, so you speak over your finances, your body and your
+household before the phone gets a vote. It is the only broad arm that both opens on
+the storm screen and runs a burden-matched payoff (the words the user will actually
+say tomorrow morning), which makes it 24 screens against the other broad arms' 22
+to 23 — read it on conversion, and expect completion to sit slightly under a
+shorter arm's. Its natural control is `warfare` (the default). Pair it with
+morning-routine, "first thing when you wake up" and 60-second creative.
 
 **Single-issue arms.** Built to be deep linked from angle-matched creative: every
 screen, the picker included, stays on the one subject the ad promised, so a healing

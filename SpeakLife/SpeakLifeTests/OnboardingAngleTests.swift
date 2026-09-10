@@ -74,8 +74,9 @@ final class OnboardingAngleTests: XCTestCase {
     }
 
     /// Raw values from `WarfareStep`, before the port. Warfare is the one arm
-    /// with no storm opener and the only one with a burden-matched payoff, so
-    /// its indices sit one lower than the others from the picker on.
+    /// with no storm opener, and the first of the two that run a burden-matched
+    /// payoff (`command` is the other), so its indices sit one lower than the
+    /// other ported arms from the picker on.
     func testWarfareStepIndicesAreUnchanged() {
         let steps = OnboardingAngles.warfare.steps
         XCTAssertEqual(steps.count, 22)
@@ -103,6 +104,27 @@ final class OnboardingAngleTests: XCTestCase {
         XCTAssertEqual(steps[22], .notificationTime)
     }
 
+    /// The command arm is the only broad arm that opens on the storm screen AND
+    /// runs a burden-matched payoff, so it is one screen longer than every other
+    /// arm. Nothing historical is riding on these indices yet (flowSchema 1), but
+    /// they are the contract `command_step_completed` is read against from here
+    /// on: change the order and bump the schema with it.
+    func testCommandStepIndices() {
+        let steps = OnboardingAngles.command.steps
+        XCTAssertEqual(steps.count, 24)
+        XCTAssertEqual(steps[0], .storm)
+        XCTAssertEqual(steps[5], .scene(4))       // sixty seconds
+        XCTAssertEqual(steps[6], .experience)
+        XCTAssertEqual(steps[7], .picker)
+        XCTAssertEqual(steps[8], .burdenScene)    // tomorrow morning's words
+        XCTAssertEqual(steps[9], .battleDuration)
+        XCTAssertEqual(steps[14], .belief)
+        XCTAssertEqual(steps[15], .dailyMinutes)
+        XCTAssertEqual(steps[18], .rating)
+        XCTAssertEqual(steps[22], .paywall)
+        XCTAssertEqual(steps[23], .notificationTime)
+    }
+
     /// `totalValueScreens` drove the progress bar in all three arms; quiz v1
     /// drops the belief question, so the denominator differs by one.
     func testValueScreenCountsAreUnchanged() {
@@ -112,6 +134,8 @@ final class OnboardingAngleTests: XCTestCase {
         XCTAssertEqual(OnboardingAngles.warfare.valueScreens(quizV2: false).count, 13)
         XCTAssertEqual(OnboardingAngles.outcomes.valueScreens(quizV2: true).count, 15)
         XCTAssertEqual(OnboardingAngles.outcomes.valueScreens(quizV2: false).count, 14)
+        XCTAssertEqual(OnboardingAngles.command.valueScreens(quizV2: true).count, 16)
+        XCTAssertEqual(OnboardingAngles.command.valueScreens(quizV2: false).count, 15)
     }
 
     func testValueScreensStopBeforeTheBackHalf() {
@@ -175,7 +199,7 @@ final class OnboardingAngleTests: XCTestCase {
 
     /// The broad arms let the user name their own area, so every burden needs a row.
     func testBroadAnglesCoverEveryBurden() {
-        for id in ["promises", "warfare", "outcomes"] {
+        for id in ["promises", "warfare", "outcomes", "command"] {
             guard let angle = OnboardingAngles.angle(id: id) else {
                 return XCTFail("missing angle '\(id)'")
             }

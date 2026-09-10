@@ -106,8 +106,8 @@ final class SubscriptionStore: ObservableObject {
 
     // MARK: - Onboarding A/B variant (single switch for which flow shows)
     // Remote Config key `onboardingVariant`: "quiz" | "product" | "identity" | "outcomes"
-    // | "warfare" | "promises" | "closer" | "direct" | "healing" | "provision" | "anxiety"
-    // | "renewal".
+    // | "warfare" | "promises" | "command" | "closer" | "direct" | "healing" | "provision"
+    // | "anxiety" | "renewal".
     // Empty/unset falls back to the legacy useQuizOnboarding boolean so live
     // users are unaffected until the string key is set in Remote Config.
     @Published var onboardingVariant: String = ""
@@ -126,10 +126,10 @@ final class SubscriptionStore: ObservableObject {
         // Bespoke flows, each with its own view.
         case quiz, product, identity, closer, direct
         // Angle arms: one shared driver (AngleOnboardingView) rendering an
-        // OnboardingAngle. The first three are broad (the user names their own
+        // OnboardingAngle. The first four are broad (the user names their own
         // area); the last four are single-issue arms meant to be deep linked
         // from angle-matched creative, so the whole arc matches the ad.
-        case outcomes, warfare, promises
+        case outcomes, warfare, promises, command
         case healing, provision, anxiety, renewal
         init?(code: String) { self.init(rawValue: code.lowercased()) }
 
