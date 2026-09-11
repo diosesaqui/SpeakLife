@@ -6,15 +6,23 @@
 //  ProductOnboardingView so multiple onboarding flows can reuse the same source
 //  (avoids two copies drifting). Used by:
 //    - Product flow (value screen #4, "Good experience")
-//    - Warfare flow (pre-paywall recap, after the rating ask) — shows the
-//      tangible features right before the purchase decision to de-risk the ask.
+//    - Every angle arm (`OnboardingAngle.showsExperienceScreen`, which defaults
+//      to true, so all seven including the deep-linked healing / provision /
+//      anxiety / renewal arms) — shows the tangible features right before the
+//      purchase decision to de-risk the ask.
+//
+//  This is the ONLY place the Bible Chat capability is described before the
+//  paywall, so an arm that opts out of this screen also opts out of the
+//  chat-to-declaration framing the paywall then charges for.
 //
 
 import SwiftUI
 
 struct OnboardingProductExperienceScreen: View {
     let size: CGSize
-    /// Which onboarding flow is showing this screen ("product" | "warfare").
+    /// Which onboarding flow is showing this screen ("product", or any angle's
+    /// `flow` slug: "promises" | "warfare" | "outcomes" | "healing" |
+    /// "provision" | "anxiety" | "renewal").
     /// Stamped onto `product_experience_shown` so the funnels can tell them apart.
     let flow: String
     let onContinue: () -> Void
@@ -22,7 +30,7 @@ struct OnboardingProductExperienceScreen: View {
 
     private let features: [(icon: String, title: String, body: String)] = [
         ("waveform", "Speak it out loud", "Declarations are made to be spoken, not just read. Open your mouth over your situation and watch what shifts."),
-        ("bubble.left.and.bubble.right.fill", "Bible Chat", "Ask anything and get answers rooted in Scripture. Like having a wise friend in the Word, any hour of the day."),
+        ("bubble.left.and.bubble.right.fill", "Bible Chat", "Bring whatever you're facing and get Scripture on it, plus a declaration to speak over it. Save it and hear it every day."),
         ("headphones", "Listen anywhere", "Press play and let Scripture wash over you. Hands-free declarations for the commute, the gym, or a sleepless night."),
         ("car", "Built for real life", "Use it in the car, before a hard conversation, or late at night. Simple when everything else feels heavy.")
     ]

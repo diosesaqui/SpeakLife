@@ -443,8 +443,25 @@ struct BibleChatConversationView: View {
                     if viewModel.messages.isEmpty {
                         emptyState
                     } else {
-                        ForEach(viewModel.messages) { msg in
-                            ChatBubble(message: msg).id(msg.id)
+                        ForEach(Array(viewModel.messages.enumerated()), id: \.element.id) { index, msg in
+                            VStack(alignment: .leading, spacing: 8) {
+                                ChatBubble(message: msg).id(msg.id)
+                                // The declaration is already written in the
+                                // bubble above, so this offers the action and
+                                // not a second copy of the words.
+                                if let declaration = msg.declaration {
+                                    ChatDeclarationSaveCard(
+                                        declaration: declaration,
+                                        // What the person actually asked. Used
+                                        // both to screen the request and as the
+                                        // belief text the saved card displays.
+                                        askedText: viewModel.messages[..<index]
+                                            .last(where: { $0.role == .user })?.text ?? "",
+                                        isSaved: viewModel.savedDeclarationIDs.contains(msg.id),
+                                        onSaved: { viewModel.savedDeclarationIDs.insert(msg.id) }
+                                    )
+                                }
+                            }
                         }
                     }
                     if viewModel.isSending {
@@ -507,6 +524,99 @@ struct BibleChatConversationView: View {
         }
     }
 
+    /// The opening question, built from what onboarding already learned.
+    ///
+    /// Reads `UserPreferencesTracker.primaryCategory` first, the same source
+    /// `TrialExperienceService` personalizes its trial pushes from, then falls
+    /// back to the category onboarding stored for the burdens that enum cannot
+    /// name. A user who never answered either lands on the general opener and
+    /// gets nothing extra rather than a wrong guess. Phrased as the user would
+    /// type it, not as a topic label.
+    private var seededQuestion: String {
+        switch UserPreferencesTracker.shared.primaryCategory {
+        case .anxiety:    return "My mind won't stop racing. What does God say about that?"
+        case .fear:       return "I keep bracing for bad news. What does God say to that fear?"
+        case .health:     return "What does God's Word say over my body right now?"
+        case .marriage:   return "Things are hard at home. What does God say about my marriage?"
+        case .confidence: return "I don't feel good enough. Who does God say I am?"
+        case .hope:       return "I'm having a hard time hoping again. What does God say?"
+        case .rest:       return "I can't seem to rest. What does God say about that?"
+        case .joy:        return "Everything feels flat lately. What does God say about joy?"
+        case .love:       return "What does God's Word say about how He loves me?"
+        case .faith:      return "How do I build faith that actually holds?"
+        // Not "we never asked" — `primaryCategory` is a `CategoryType` with 11
+        // cases, while onboarding records `DeclarationCategory` raw values, of
+        // which there are far more. Anyone whose heaviest thing is wealth,
+        // grief, purity, parenting or a dozen others falls through here, so
+        // `.general` is the COMMON case rather than the empty one.
+        //
+        // `extendedOpener` recovers the ones we DO have a line for from the
+        // richer category onboarding stored. Only here, never above: this
+        // switch reads a category that keeps moving with what the user actually
+        // opens, while `selectedCategory` is frozen at onboarding, so a live
+        // signal outranks the seed wherever one exists.
+        //
+        // If neither names it, an opener everyone can answer beats a blank
+        // screen; it is an invitation, not a wrong guess.
+        case .general:
+            return Self.extendedOpener(for: onboardingCategory)
+                ?? "What's the heaviest thing on you right now?"
+        }
+    }
+
+    /// The burden onboarding recorded, as the richer `DeclarationCategory` every
+    /// arm writes to `selectedCategory` on the same line it calls
+    /// `trackCategorySelection` (`AppState` already reads this key the same way).
+    private var onboardingCategory: DeclarationCategory? {
+        UserDefaults.standard.string(forKey: "selectedCategory")
+            .flatMap(DeclarationCategory.init(rawValue:))
+    }
+
+    /// Openers for burdens `CategoryType` has no case for.
+    ///
+    /// `primaryCategory` is a `CategoryType`, which is 11 cases wide, and
+    /// `HeaviestBurden.seedCategory` maps `abundance` to `.wealth`, `identity` to
+    /// `.identity` and `purpose` to `.destiny` — none of which round-trip through
+    /// `CategoryType(rawValue:)`. Those three burdens therefore resolve to
+    /// `.general` on the `primaryCategory` path, which is how `?ob=provision` and
+    /// `?ob=renewal` — deep-linked arms whose entire premise is that the ad
+    /// already named the topic — would have opened on "what's the heaviest thing
+    /// on you right now?". Reading the `DeclarationCategory` directly recovers
+    /// them without widening a persisted enum that `TrialExperienceService` and
+    /// the paywalls also read.
+    ///
+    /// The single-issue arms widened this further: `grief`, `mortality`,
+    /// `prodigal` and `purity` override the seed per picker row, so they land on
+    /// `.grief`, `.heaven`, `.salvation`, `.purity` and `.grace` — categories no
+    /// `HeaviestBurden` can name and `CategoryType` has never had. Those arms are
+    /// the ones a wrong opener costs most: the ad said "you lost someone" and the
+    /// first screen must not ask what is heaviest.
+    ///
+    /// Returns nil for everything `CategoryType` covers, so the switch above
+    /// stays the single home for those lines. Internal rather than private so
+    /// `OnboardingAngleTests` can assert every arm's seed reaches a personal
+    /// opener through one path or the other.
+    static func extendedOpener(for category: DeclarationCategory?) -> String? {
+        guard let category else { return nil }
+        switch category {
+        case .wealth:   return "Money is tight and it's wearing on me. What does God say about providing for me?"
+        case .identity: return "I don't know how God actually sees me. What does His Word say about who I am?"
+        case .destiny:  return "I can't tell where my life is going. What does God say about my future?"
+        case .grief:    return "I lost someone. What does God say to me in this?"
+        case .heaven:   return "I've been thinking about death a lot. What does God say about what comes after?"
+        case .salvation: return "Someone I love is far from God. What does His Word say about them?"
+        case .purity:   return "I keep falling into the same sin. What does God say about walking free of it?"
+        case .grace:    return "I've messed up badly. What does God's Word say about grace for someone like me?"
+        default:        return nil
+        }
+    }
+
+    /// True when the opener came from something the user actually told us.
+    private var seedIsPersonal: Bool {
+        Self.extendedOpener(for: onboardingCategory) != nil
+            || UserPreferencesTracker.shared.primaryCategory != .general
+    }
+
     private var emptyState: some View {
         VStack(spacing: DS.Spacing.lg) {
             // Hero
@@ -542,6 +652,63 @@ struct BibleChatConversationView: View {
             .opacity(heroAppeared ? 1 : 0)
             .offset(y: heroAppeared ? 0 : 10)
             .animation(.easeOut(duration: 0.45), value: heroAppeared)
+
+            // The question they already came in with.
+            //
+            // Onboarding asks every user what they are carrying and stores the
+            // answer, then this screen opened on a generic topic list as though
+            // it had never met them. A blank chat is a hard thing to start; a
+            // chat that already knows what is heavy is not. Sits above the
+            // curated starters because it is the one row aimed at THIS person.
+            VStack(alignment: .leading, spacing: 10) {
+                Text("START HERE")
+                    .font(.system(size: 11, weight: .bold))
+                    .tracking(1.4)
+                    .foregroundColor(Constants.gold.opacity(0.75))
+                    .padding(.leading, 4)
+
+                Button {
+                    Juice.play(.tapLight)
+                    AnalyticsService.shared.track("bible_chat_seeded_starter_tapped", parameters: [
+                        "category": UserPreferencesTracker.shared.primaryCategory.rawValue,
+                        "is_personal": seedIsPersonal as NSNumber
+                    ])
+                    viewModel.send(seededQuestion, isPremium: subscriptionStore.isPremium)
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "heart.text.square.fill")
+                            .font(.system(size: 18))
+                            .foregroundColor(Constants.gold)
+                        Text(seededQuestion)
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundColor(.white.opacity(0.92))
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Spacer(minLength: 0)
+                    }
+                    .padding(14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(Constants.gold.opacity(0.10))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(Constants.gold.opacity(0.30), lineWidth: 1)
+                            )
+                    )
+                }
+            }
+            .opacity(heroAppeared ? 1 : 0)
+            .offset(y: heroAppeared ? 0 : 12)
+            .animation(.easeOut(duration: 0.4).delay(0.05), value: heroAppeared)
+            // Paired with the tap event so the row's take-rate is measurable.
+            // Without a shown event there was no denominator.
+            .onAppear {
+                AnalyticsService.shared.track("bible_chat_seeded_starter_shown", parameters: [
+                    "category": UserPreferencesTracker.shared.primaryCategory.rawValue,
+                    "is_personal": seedIsPersonal as NSNumber
+                ])
+            }
 
             // Suggestions
             VStack(alignment: .leading, spacing: 10) {
@@ -837,6 +1004,156 @@ private struct TypingDots: View {
             }
         }
         .onAppear { animating = true }
+    }
+}
+
+/// Turns a declaration the chat gave into a real personal declaration.
+///
+/// Routes through `PersonalDeclarationViewModel.saveAndContinue`, which is the
+/// same call the onboarding flow makes, so a declaration saved from a chat is
+/// indistinguishable from one written on frame one: same repository, same limit
+/// check, same daily notification. Building a second save path would have meant
+/// a second definition of what a personal declaration is.
+private struct ChatDeclarationSaveCard: View {
+    let declaration: ChatDeclaration
+    /// The user's own message that produced this reply.
+    let askedText: String
+    let isSaved: Bool
+    let onSaved: () -> Void
+
+    @EnvironmentObject private var appState: AppState
+    @EnvironmentObject private var subscriptionStore: SubscriptionStore
+
+    private enum SaveState: Equatable { case idle, saving, failed(String) }
+    @State private var state: SaveState = .idle
+    @State private var showPremium = false
+
+    /// The same deterministic screen the onboarding writer runs, for the same
+    /// reason its own comment gives: prompt instructions alone were judged
+    /// insufficient for a surface that turns model output into scripture-shaped
+    /// text the app stands behind. This path is strictly worse without it —
+    /// saving does not just render a line, it schedules a repeating daily
+    /// notification — so a crisis or harm-to-another request must never reach a
+    /// save button, whatever the model chose to write.
+    private var isStandable: Bool {
+        SituationScreen.screen(askedText) == .standable
+    }
+
+    var body: some View {
+        Group {
+            if !isStandable {
+                EmptyView()
+            } else if isSaved {
+                HStack(spacing: 7) {
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.system(size: 13))
+                    Text("Saved. You'll hear this every day.")
+                        .font(.system(size: 13, weight: .medium))
+                }
+                .foregroundColor(Constants.gold.opacity(0.9))
+            } else {
+                VStack(alignment: .leading, spacing: 6) {
+                    Button {
+                        Task { await save() }
+                    } label: {
+                        HStack(spacing: 8) {
+                            if state == .saving {
+                                ProgressView().scaleEffect(0.7).tint(Constants.gold)
+                            } else {
+                                Image(systemName: "hands.sparkles.fill")
+                                    .font(.system(size: 13))
+                            }
+                            Text(state == .saving ? "Saving..." : "Speak this daily")
+                                .font(.system(size: 14, weight: .semibold))
+                        }
+                        .foregroundColor(Constants.gold)
+                        .padding(.vertical, 9)
+                        .padding(.horizontal, 14)
+                        .background(
+                            Capsule()
+                                .fill(Constants.gold.opacity(0.12))
+                                .overlay(Capsule().stroke(Constants.gold.opacity(0.35), lineWidth: 1))
+                        )
+                    }
+                    .disabled(state == .saving)
+
+                    if case .failed(let message) = state {
+                        Text(message)
+                            .font(.system(size: 12))
+                            .foregroundColor(.white.opacity(0.7))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+        }
+        .padding(.leading, 2)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .animation(.easeOut(duration: 0.25), value: state)
+        .sheet(isPresented: $showPremium) {
+            PremiumView()
+                .environmentObject(subscriptionStore)
+                .environmentObject(appState)
+        }
+    }
+
+    /// Grammatical and actionable, unlike the shared `PersonalDeclarationLimitError`
+    /// text, which interpolates the count into "You can believe for 1 things at
+    /// a time." A free user who finished onboarding already carries their one,
+    /// so this is the message they hit on their first ever chat save.
+    private var limitMessage: String {
+        let max = PersonalDeclarationLimits.maxDeclarations(isPremium: subscriptionStore.isPremium)
+        let carried = max == 1 ? "one declaration" : "\(max) declarations"
+        let base = "You're carrying \(carried) already. Mark one answered in My Declarations to add this."
+        return subscriptionStore.isPremium ? base : base + " Premium carries up to \(PersonalDeclarationLimits.premium)."
+    }
+
+    private func save() async {
+        state = .saving
+        let viewModel = DIContainer.shared.makePersonalDeclarationViewModel()
+        // The belief is what the PERSON said, not what the model wrote back.
+        // Setting this to the declaration made `PersonalDeclarationCard` print
+        // the same sentence twice, the second time under "WHAT YOU'RE BELIEVING
+        // FOR" as though the user had written it.
+        viewModel.inputText = askedText
+        viewModel.match = DeclarationMatch(
+            category: DeclarationCategory(rawValue: declaration.categoryRaw) ?? .general,
+            declarationText: declaration.text,
+            verse: declaration.verse,
+            verseReference: declaration.reference,
+            isConfident: true
+        )
+        do {
+            _ = try await viewModel.saveAndContinue(
+                startTimeIndex: appState.personalDeclarationTimeIndex,
+                limit: PersonalDeclarationLimits.maxDeclarations(isPremium: subscriptionStore.isPremium)
+            )
+            appState.hasPersonalDeclaration = true
+            UserPreferencesTracker.shared.personalDeclarationBelief = askedText
+            AnalyticsService.shared.track("bible_chat_declaration_saved", parameters: [
+                "category": (DeclarationCategory(rawValue: declaration.categoryRaw) ?? .general).rawValue
+            ])
+            state = .idle
+            onSaved()
+        } catch is PersonalDeclarationLimitError {
+            AnalyticsService.shared.track("bible_chat_declaration_save_blocked", parameters: [
+                "reason": "limit",
+                "is_premium": subscriptionStore.isPremium as NSNumber
+            ])
+            // `SavePersonalDeclarationUseCase`'s own doc says the limit is a
+            // backstop and entry points are expected to gate up front so the
+            // user sees the paywall rather than an error. Free users carry one
+            // declaration and every onboarding arm saves it, so without this
+            // the button's only outcome for them is a red row — under copy that
+            // just promised "save it and hear it every day".
+            if subscriptionStore.isPremium {
+                state = .failed(limitMessage)
+            } else {
+                state = .idle
+                showPremium = true
+            }
+        } catch {
+            state = .failed("Couldn't save that. Try again.")
+        }
     }
 }
 

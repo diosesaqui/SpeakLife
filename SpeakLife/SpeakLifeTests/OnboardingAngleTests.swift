@@ -284,6 +284,50 @@ final class OnboardingAngleTests: XCTestCase {
         }
     }
 
+    // MARK: - Bible Chat seeding
+
+    /// Bible Chat's empty state opens on a question built from the burden
+    /// onboarding recorded, and that lookup runs through two different enums:
+    /// `UserPreferencesTracker.CategoryType` (11 cases) and, for the burdens it
+    /// has no case for, `DeclarationCategory` via `BibleChatConversationView.extendedOpener`.
+    /// A burden that misses BOTH lands on the generic "what's the heaviest thing
+    /// on you right now?" — which is worst precisely where it costs most, on a
+    /// deep-linked arm where the ad already named the topic and the user knows
+    /// we know.
+    ///
+    /// This would have caught `?ob=provision` and `?ob=renewal` on the day they
+    /// landed: `abundance` seeds `.wealth` and `identity` seeds `.identity`, and
+    /// neither round-trips through `CategoryType(rawValue:)`.
+    ///
+    /// It reads `resolvedSeedCategory`, not the burden, so a single-issue arm's
+    /// per-row override is what gets checked — otherwise the four second-wave
+    /// arms would test the burden they stand nearest instead of the subject they
+    /// actually seed.
+    ///
+    /// `@MainActor` because `BibleChatConversationView` is a `View`, and `View` is
+    /// `@MainActor` on the iOS 17+ SDK — which isolates its static members too.
+    @MainActor
+    func testEveryAngleSeedsAPersonalChatOpener() {
+        for (id, angle) in OnboardingAngles.all {
+            for choice in angle.picker.choices {
+                let seed = choice.resolvedSeedCategory
+                let hasExtended = BibleChatConversationView.extendedOpener(for: seed) != nil
+                // nil and `.general` are the same outcome here: the generic opener.
+                let categoryType = UserPreferencesTracker.CategoryType(rawValue: seed.rawValue)
+                let hasCategoryType = categoryType != nil && categoryType != .general
+                XCTAssertTrue(
+                    hasExtended || hasCategoryType,
+                    """
+                    \(id): row '\(choice.id)' seeds \(seed.rawValue), which neither \
+                    CategoryType nor BibleChatConversationView.extendedOpener has an opener for, \
+                    so Bible Chat would open on the generic question. Add a case to \
+                    extendedOpener.
+                    """
+                )
+            }
+        }
+    }
+
     /// `HeaviestBurden` has seven cases and cannot name grief, the fear of death,
     /// a prodigal or purity, so those arms carry the category on the picker row.
     /// If a row ever loses its override it silently falls back to the nearest
