@@ -769,6 +769,10 @@ final class SubscriptionStore: ObservableObject {
                 metadata: ["source": "rc_customer_info_update"]
             )
         }
+
+        // Meta's qualified-trial event: fires once a trial has survived 24h
+        // with auto-renew on. No-ops for everyone else.
+        Task { await QualifiedTrialTracker.shared.evaluate(info) }
     }
 
     @MainActor

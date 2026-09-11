@@ -180,6 +180,9 @@ struct SpeakLifeApp: App {
                                 // ATT is now resolved, so Meta can return the deferred
                                 // app link → ad-matched onboarding. Runs once.
                                 appDelegate.checkDeferredAppLinkOnce()
+                                // The launch-time collection ran before ATT was
+                                // answered; resend with the real IDFA status.
+                                RevenueCatManager.shared.collectDeviceIdentifiers()
                             }
                         }
                     
@@ -274,6 +277,10 @@ struct SpeakLifeApp: App {
                 GrowthMetrics.shared.linkRevenueIdentity(
                     appUserID: RevenueCatManager.shared.appUserID
                 )
+                // Meta's qualified-trial event. A foreground is usually when a
+                // trialist crosses the 24h mark; RevenueCat updates cover the rest
+                // (see SubscriptionStore.applyCustomerInfo).
+                Task { await QualifiedTrialTracker.shared.evaluate() }
                 GrowthMetrics.shared.trackDayStarted(
                     currentStreak: enhancedStreakViewModel.streakStats.currentStreak
                 )

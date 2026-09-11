@@ -98,6 +98,7 @@ Sanity check: if a content title looks like test data, it is.
 | `favorites_category_viewed` | Name promises a category dimension it never had. Pre-fix rows have no category. |
 | `category_chooser_tapped` | One of three call sites wrote `declaration_category` instead of `category`, so 69% of the event read as having no category. |
 | `trial_started` vs `trial_experience_started` | Not duplicates despite near-identical daily counts. `trial_started` is the StoreKit subscription trial (single-sourced in `SubscriptionStore`); `trial_experience_started` is the in-app trial-push scheduler. |
+| `qualified_trial` | A free trial still set to auto-renew 24h+ after it started, once per trial. **Client-fired**, so it lands on the first foreground past the mark and never for a trialist who doesn't reopen the app. Check `hours_since_trial_start` for how late it fired. Compare it to RevenueCat trials that were not cancelled in their first 24h, never to `trial_started`. In Meta this is **Add Payment Info** (`fb_mobile_add_payment_info`), repurposed, not a payment-info event. |
 
 ---
 
