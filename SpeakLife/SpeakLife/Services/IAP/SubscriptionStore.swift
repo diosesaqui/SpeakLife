@@ -107,7 +107,8 @@ final class SubscriptionStore: ObservableObject {
     // MARK: - Onboarding A/B variant (single switch for which flow shows)
     // Remote Config key `onboardingVariant`: "quiz" | "product" | "identity" | "outcomes"
     // | "warfare" | "promises" | "command" | "closer" | "direct" | "healing" | "provision"
-    // | "anxiety" | "renewal".
+    // | "anxiety" | "renewal" | "grief" | "mortality" | "prodigal" | "purity"
+    // | "depression".
     // Empty/unset falls back to the legacy useQuizOnboarding boolean so live
     // users are unaffected until the string key is set in Remote Config.
     @Published var onboardingVariant: String = ""
@@ -131,10 +132,10 @@ final class SubscriptionStore: ObservableObject {
         // from angle-matched creative, so the whole arc matches the ad.
         case outcomes, warfare, promises, command
         case healing, provision, anxiety, renewal
-        // Second wave of single-issue arms. These four name subjects
+        // Second wave of single-issue arms. These five name subjects
         // `HeaviestBurden` cannot, so their picker rows carry their own
         // `seedCategory`. See `AnglePickerChoice.seedCategory`.
-        case grief, mortality, prodigal, purity
+        case grief, mortality, prodigal, purity, depression
         init?(code: String) { self.init(rawValue: code.lowercased()) }
 
         /// The angle this arm renders, or nil for a bespoke flow with its own view.

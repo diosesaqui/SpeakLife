@@ -75,11 +75,14 @@ the granularity to optimise creative against.
 | Fear of death, a diagnosis, losing someone, what comes after | `mortality` | `fear` / `heaven` | "What does the fear circle back to?" |
 | A prodigal child, an unsaved spouse or parent, a whole household | `prodigal` | `salvation` | "Who are you standing in the gap for?" |
 | Lust, temptation, the late night cycle, the shame after | `purity` | `purity` / `grace` | "Where does it usually get you?" |
+| Heaviness, emptiness, joy gone, no hope for tomorrow | `depression` | `hope` / `joy` | "What do you want back first?" |
 
 **The second wave seeds from the ROW, not the burden.** `HeaviestBurden` has seven
 cases and maps to seven categories, which covered every arm while they were all
 some flavour of peace, health, joy, identity, purpose or money. It cannot name
-grief, purity, salvation or the fear of death. Those four arms therefore carry a
+grief, purity, salvation or the fear of death, and for heaviness its nearest case
+(`joy`) is not the set you want someone reading on a bad morning. These arms
+therefore carry a
 `seedCategory` on each `AnglePickerChoice`, and `AngleOnboardingView` prefers it
 over `responses.seedCategory`. Without it a grief ad would seed an anxiety feed on
 the first morning, which is the exact failure single-issue arms exist to prevent.
@@ -87,12 +90,25 @@ the first morning, which is the exact failure single-issue arms exist to prevent
 its subject, and `testOnlySecondWaveArmsOverrideTheSeed` stops the override
 spreading to arms meant to follow their burden.
 
-Two of these need care beyond the wiring. **`prodigal` never promises the outcome**:
+`depression` is the one that seeds a category its burden could have reached and
+deliberately does not: `hope` has more material than `joy` (64 lines to 59) and
+points someone forward instead of asking them to rejoice before they can. Its two
+explicitly joyful rows keep `joy`, so its allowed set is both.
+
+Three of these need care beyond the wiring. **`prodigal` never promises the outcome**:
 Scripture does not promise that another free person will change, so its copy stands
 on God's mercy and the intercessor's own footing, never on what the prodigal will
 choose. **`mortality` is the only arm that names death**, which is deliberate (it is
 the fear underneath the others and nobody in the category advertises to it) but
-makes it the most likely of the four to draw a Meta review.
+makes it among the most likely to draw a Meta review. **`depression` never
+diagnoses**: it speaks to the weight someone is carrying rather than telling them
+what they have, it claims only what scripture claims (nearness now, joy returned
+and kept, the exchange for heaviness) and never a timeline, and the shared quiz it
+runs into already offers "therapy or counseling" as an answer, so nothing in the
+arc reads as a reason to stop getting help. Its creative needs the same care:
+Meta's Personal Attributes policy rejects ads asserting something about the
+viewer's condition, so the hook stays scripture-led or first-person, never "Are you
+depressed?".
 
 An `ob=` value is only accepted if it matches a `SubscriptionStore.OnboardingVariant`
 case, so a typo in an ad link is ignored and the user falls back to the Remote Config

@@ -432,7 +432,7 @@ struct HomeView: View {
         // OnboardingAngle it is handed. Adding an arm is adding an angle
         // constant and an enum case, not another view.
         case .outcomes, .warfare, .promises, .command, .healing, .provision, .anxiety, .renewal,
-             .grief, .mortality, .prodigal, .purity:
+             .grief, .mortality, .prodigal, .purity, .depression:
             if let angle = subscriptionStore.resolvedOnboardingVariant.angle {
                 AngleOnboardingView(angle: angle, size: UIScreen.main.bounds.size) { finishOnboarding() }
                     .ignoresSafeArea()

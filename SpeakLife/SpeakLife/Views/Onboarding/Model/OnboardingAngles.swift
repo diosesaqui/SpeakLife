@@ -13,7 +13,8 @@
 //  first three are ports of the hand-written views that preceded this file, copy
 //  and step order preserved exactly so the live A/B funnels still join.
 //
-//  SINGLE-ISSUE ARMS (healing / provision / anxiety / renewal) exist to be deep
+//  SINGLE-ISSUE ARMS (healing / provision / anxiety / renewal, then the second
+//  wave: grief / mortality / prodigal / purity / depression) exist to be deep
 //  linked from an angle-matched ad: `?ob=healing` on the install link and the
 //  whole arc, picker included, is about healing. Their picker rows all resolve
 //  to the SAME burden, so the feed, pushes and named plan stay on the angle the
@@ -299,9 +300,106 @@ enum OnboardingAngles {
         )
     )
 
+    // MARK: - Depression
+
+    /// Deep linked from heaviness creative. Seeds `.hope` rather than the `joy`
+    /// burden's own category on purpose: `hope` is the better stocked set (64
+    /// lines to joy's 59) and it meets someone where they actually are. A `joy`
+    /// feed on the first bad morning reads as pressure to rejoice; hope points
+    /// forward without asking them to feel something yet. The two rows that do
+    /// name joy keep it, which is why this arm's allowed set is `.hope` and
+    /// `.joy` rather than one category.
+    ///
+    /// The burden stays `joy`, its nearest neighbour, so the plan reveal still
+    /// says "Take Back My Joy" and the declaration style still resolves.
+    ///
+    /// Two limits on this arm's copy. It never diagnoses: it speaks to the
+    /// weight someone is carrying, never tells them what they have, and the
+    /// shared quiz it runs into already offers "therapy or counseling" as an
+    /// answer, so nothing here reads as a reason to stop getting help. And it
+    /// claims only what scripture claims (nearness now, joy returned and kept,
+    /// the exchange for heaviness), never a timeline.
+    ///
+    /// Psalm 42:11 is why this angle belongs to SpeakLife: the man who wrote the
+    /// psalm talked back to his own soul out loud before the heaviness lifted.
+    /// The mechanism is demonstrated rather than argued.
+    static let depression = OnboardingAngle(
+        id: "depression",
+        flow: "depression",
+        flowSchema: 1,
+        opensWithStormScreen: true,
+        scenes: [
+            AngleScene(
+                symbol: "cloud.fill",
+                // The hook is the felt experience, not a fact about God. The
+                // nearness sits under it as the verse, the way grief's opener
+                // does, so screen one meets them before it teaches them.
+                eyebrow: "NOBODY LOOKING AT YOU WOULD GUESS",
+                title: "Everything still works.\nNothing lands.",
+                body: "You get up, you answer the messages, you do the day. It just costs everything now, and the things that used to lift you do not touch it. He is not far from this. He is closest to it.",
+                verse: "The Lord is close to the brokenhearted and saves those who are crushed in spirit.",
+                reference: "Psalm 34:18",
+                analyticsEvent: "depression_scene_shown",
+                analyticsParameters: ["scene": "flat"]
+            ),
+            AngleScene(
+                symbol: "waveform",
+                // The mechanism, and the permission slip: the man who wrote the
+                // psalm spoke to his own soul while he was still down. This is
+                // the screen to protect if the arm ever gets cut further.
+                eyebrow: "DAVID DID NOT WAIT TO FEEL BETTER",
+                title: "He talked back\nto his own soul.",
+                body: "Why, my soul, are you downcast? David said it out loud, then told his own soul where to put its hope. He did not wait for the weight to lift first. He spoke to it.",
+                verse: "Why, my soul, are you downcast? Put your hope in God, for I will yet praise him.",
+                reference: "Psalm 42:11",
+                analyticsEvent: "depression_scene_shown",
+                analyticsParameters: ["scene": "speak_to_it"]
+            ),
+            AngleScene(
+                symbol: "sunrise.fill",
+                // Carries the exchange (Isaiah 61:3) in the body and the
+                // permanence promise as the verse, so the close is the daily
+                // mechanism plus what it is standing on.
+                eyebrow: "RIGHT NOW THE HEAVINESS IS TALKING",
+                title: "Sixty seconds where\nGod gets the last word.",
+                body: "You say what He says instead. Beauty for ashes, a garment of praise for the heaviness, and joy that comes back and does not get taken again. Out loud, daily, on the days your voice shakes too.",
+                verse: "Your grief will turn to joy, and no one will take away your joy.",
+                reference: "John 16:22",
+                buttonLabel: "I'm Ready to Speak to It →",
+                analyticsEvent: "depression_scene_shown",
+                analyticsParameters: ["scene": "daily"]
+            )
+        ],
+        picker: AnglePicker(
+            headline: "What do you want\nback first?",
+            subtitle: "We will build your sixty seconds around it\nand have it ready every morning when you wake up.",
+            analyticsEvent: "depression_picker_shown",
+            choices: [
+                AnglePickerChoice(id: "joy_back", burden: .joy,
+                    statement: "My joy back", subtitle: "Gladness that actually holds",
+                    symbol: "sun.max.fill", segmentLabel: "joy_back", seedCategory: .joy),
+                AnglePickerChoice(id: "hope", burden: .joy,
+                    statement: "Hope for tomorrow", subtitle: "A future I can look forward to again",
+                    symbol: "sunrise.fill", segmentLabel: "hope", seedCategory: .hope),
+                AnglePickerChoice(id: "mornings", burden: .joy,
+                    statement: "Mornings I can face", subtitle: "Getting up with strength again",
+                    symbol: "bolt.heart.fill", segmentLabel: "mornings", seedCategory: .hope),
+                AnglePickerChoice(id: "feeling", burden: .joy,
+                    statement: "My heart awake again", subtitle: "Feeling His nearness, not nothing",
+                    symbol: "heart.fill", segmentLabel: "feeling", seedCategory: .joy),
+                AnglePickerChoice(id: "thoughts", burden: .joy,
+                    statement: "Thoughts that lift me", subtitle: "A mind that agrees with God about me",
+                    symbol: "brain.head.profile", segmentLabel: "thoughts", seedCategory: .hope),
+                AnglePickerChoice(id: "loved_one", burden: .joy,
+                    statement: "Someone I love", subtitle: "Standing in faith for their joy",
+                    symbol: "person.2.fill", segmentLabel: "loved_one", seedCategory: .hope)
+            ]
+        )
+    )
+
     static let all: [String: OnboardingAngle] = Dictionary(
         uniqueKeysWithValues: [promises, warfare, outcomes, command, healing, provision, anxiety, renewal,
-                               grief, mortality, prodigal, purity]
+                               grief, mortality, prodigal, purity, depression]
             .map { ($0.id, $0) }
     )
 
