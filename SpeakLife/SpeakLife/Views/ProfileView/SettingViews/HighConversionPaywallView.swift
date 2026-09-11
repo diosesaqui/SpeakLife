@@ -238,13 +238,19 @@ enum UserPain: String, CaseIterable {
         }
     }
 
-    /// The four mechanics. Row one is written for this pain; the other three
-    /// are the same three capabilities every time, aimed at this pain's domain
-    /// — which is what keeps fifteen sets of copy honest instead of fifteen
-    /// sets of invented differences.
+    /// The mechanics. Row one is written for this pain; the rest are the same
+    /// capabilities every time, aimed at this pain's domain — which is what
+    /// keeps fifteen sets of copy honest instead of fifteen sets of invented
+    /// differences.
+    ///
+    /// Row two is the sixty-second morning promise, and it sits second on
+    /// purpose: it is the one row that answers "what does this actually cost me
+    /// each day?", and the clean layout only renders the first three. Every
+    /// user sees it, on every variant, whatever they came in for.
     var solutions: [(icon: String, title: String, detail: String)] {
         [
             leadSolution,
+            ("sunrise.fill", "Command your day in 60 seconds", "Take charge the moment you wake up: one minute of speaking over \(domain) sets the tone for everything after it."),
             ("headphones", "His Word in your ears", "Guided declarations over \(domain) for the morning, the commute, and before bed."),
             ("calendar", "Thirty days, not one good day", "A daily plan so you're speaking over \(domain) on the ordinary days too."),
             ("bubble.left.and.bubble.right.fill", "Ask the Bible anything", "Every promise about \(domain), chapter and verse, in seconds.")
@@ -876,19 +882,59 @@ struct HighConversionPaywallView: View {
     }
 
     // MARK: - Plan Selector
+    // Two side-by-side cards when there is an actual choice to make. Under
+    // `onlyShowYearly` there isn't one, so the card stops pretending to be a
+    // selector: stretching the annual card to full width kept the 90pt selector
+    // height and the 22pt price, which read as a second button competing with
+    // the real CTA directly under it. Yearly-only gets one slim price row
+    // instead — the price stays visible, the tap stays on the CTA.
+    @ViewBuilder
     private var planSelectorSection: some View {
-        GeometryReader { geo in
-            let cardWidth = (geo.size.width - 10) / 2
-            HStack(spacing: 10) {
-                if !onlyShowYearly {
+        if onlyShowYearly {
+            yearlyOnlyPriceRow
+        } else {
+            GeometryReader { geo in
+                let cardWidth = (geo.size.width - 10) / 2
+                HStack(spacing: 10) {
                     planCard(plan: nonAnnualPlan, topLabel: nil, title: nonAnnualTitle, price: nonAnnualPrice, sub: nonAnnualSub)
                         .frame(width: cardWidth)
+                    planCard(plan: .annual, topLabel: annualSavingsPercent.map { "SAVE \($0)%" } ?? "BEST VALUE", title: "Annual", price: annualPrice, sub: "per month \(annualPerMonth)")
+                        .frame(width: cardWidth)
                 }
-                planCard(plan: .annual, topLabel: annualSavingsPercent.map { "SAVE \($0)%" } ?? "BEST VALUE", title: "Annual", price: annualPrice, sub: "per month \(annualPerMonth)")
-                    .frame(width: onlyShowYearly ? geo.size.width : cardWidth)
+            }
+            .frame(height: 90)
+        }
+    }
+
+    /// The yearly-only price line. Not a button — Annual is already the pinned
+    /// selection (onAppear) and there is nothing to switch to, so a tap target
+    /// here would only steal taps from the CTA.
+    private var yearlyOnlyPriceRow: some View {
+        HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Annual")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white)
+                Text("\(annualPrice) per year · \(annualPerMonth)/mo")
+                    .font(.system(size: 12))
+                    .foregroundColor(.white.opacity(0.65))
+            }
+            Spacer(minLength: 0)
+            if let pct = annualSavingsPercent {
+                Text("SAVE \(pct)%")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, DS.Spacing.xs).padding(.vertical, 3)
+                    .background(Capsule().fill(Color.green))
             }
         }
-        .frame(height: 90)
+        .padding(.horizontal, 14).padding(.vertical, 11)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Constants.DAMidBlue.opacity(0.18))
+                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Constants.DAMidBlue.opacity(0.7), lineWidth: 1))
+        )
     }
 
     private func planCard(plan: PlanType, topLabel: String?, title: String, price: String, sub: String) -> some View {
