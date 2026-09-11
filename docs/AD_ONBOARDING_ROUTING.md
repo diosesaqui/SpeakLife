@@ -71,6 +71,28 @@ the granularity to optimise creative against.
 | Provision, bills, debt, a job, business increase | `provision` | `wealth` | "What are you believing God to provide?" |
 | Anxiety, overwhelm, sleepless nights, waiting on news | `anxiety` | `anxiety` | "Where do you most need His peace?" |
 | Renew your mind, self-talk, how you see yourself | `renewal` | `identity` | "Where does your mind most need renewing?" |
+| Loss, bereavement, an anniversary coming up | `grief` | `grief` | "Where does it hurt most right now?" |
+| Fear of death, a diagnosis, losing someone, what comes after | `mortality` | `fear` / `heaven` | "What does the fear circle back to?" |
+| A prodigal child, an unsaved spouse or parent, a whole household | `prodigal` | `salvation` | "Who are you standing in the gap for?" |
+| Lust, temptation, the late night cycle, the shame after | `purity` | `purity` / `grace` | "Where does it usually get you?" |
+
+**The second wave seeds from the ROW, not the burden.** `HeaviestBurden` has seven
+cases and maps to seven categories, which covered every arm while they were all
+some flavour of peace, health, joy, identity, purpose or money. It cannot name
+grief, purity, salvation or the fear of death. Those four arms therefore carry a
+`seedCategory` on each `AnglePickerChoice`, and `AngleOnboardingView` prefers it
+over `responses.seedCategory`. Without it a grief ad would seed an anxiety feed on
+the first morning, which is the exact failure single-issue arms exist to prevent.
+`OnboardingAngleTests.testSingleIssueAnglesSeedTheirOwnSubject` holds every row to
+its subject, and `testOnlySecondWaveArmsOverrideTheSeed` stops the override
+spreading to arms meant to follow their burden.
+
+Two of these need care beyond the wiring. **`prodigal` never promises the outcome**:
+Scripture does not promise that another free person will change, so its copy stands
+on God's mercy and the intercessor's own footing, never on what the prodigal will
+choose. **`mortality` is the only arm that names death**, which is deliberate (it is
+the fear underneath the others and nobody in the category advertises to it) but
+makes it the most likely of the four to draw a Meta review.
 
 An `ob=` value is only accepted if it matches a `SubscriptionStore.OnboardingVariant`
 case, so a typo in an ad link is ignored and the user falls back to the Remote Config

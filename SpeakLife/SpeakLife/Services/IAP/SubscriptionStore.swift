@@ -131,6 +131,10 @@ final class SubscriptionStore: ObservableObject {
         // from angle-matched creative, so the whole arc matches the ad.
         case outcomes, warfare, promises, command
         case healing, provision, anxiety, renewal
+        // Second wave of single-issue arms. These four name subjects
+        // `HeaviestBurden` cannot, so their picker rows carry their own
+        // `seedCategory`. See `AnglePickerChoice.seedCategory`.
+        case grief, mortality, prodigal, purity
         init?(code: String) { self.init(rawValue: code.lowercased()) }
 
         /// The angle this arm renders, or nil for a bespoke flow with its own view.

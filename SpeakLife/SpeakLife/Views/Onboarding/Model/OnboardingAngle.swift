@@ -295,6 +295,22 @@ struct AnglePickerChoice: Identifiable {
     let statement: String
     let subtitle: String
     let symbol: String
+    /// The feed/notification category this row seeds, when `HeaviestBurden`
+    /// cannot name it.
+    ///
+    /// `HeaviestBurden` has seven cases and maps to seven categories, which was
+    /// enough while every arm was some flavour of peace, health, joy, identity,
+    /// purpose or money. It cannot express grief, purity, salvation or the fear
+    /// of death, and a single-issue arm that cannot name its own subject defeats
+    /// the point of having one: a grief ad would seed an anxiety feed on the
+    /// first morning, which is the exact failure these arms exist to prevent.
+    ///
+    /// Nil on every broad arm and on the four original single-issue arms, whose
+    /// burden already names the right category. Set it only when the row's real
+    /// subject has no burden of its own, and keep the burden itself as the
+    /// closest neighbour, since it still drives declaration style and the plan
+    /// reveal's domain wording.
+    let seedCategory: DeclarationCategory?
     /// Suffix for `appState.onboardingSegment` (`"<flow>_<segmentLabel>"`).
     /// Defaults to the burden's short label, which is what the broad arms have
     /// always written; scoped pickers override it so rows sharing a burden stay
@@ -307,7 +323,8 @@ struct AnglePickerChoice: Identifiable {
         statement: String,
         subtitle: String,
         symbol: String,
-        segmentLabel: String? = nil
+        segmentLabel: String? = nil,
+        seedCategory: DeclarationCategory? = nil
     ) {
         self.id = id
         self.burden = burden
@@ -315,5 +332,13 @@ struct AnglePickerChoice: Identifiable {
         self.subtitle = subtitle
         self.symbol = symbol
         self.segmentLabel = segmentLabel ?? burden.shortLabel
+        self.seedCategory = seedCategory
+    }
+
+    /// What this row actually seeds: its own category when it has one, otherwise
+    /// the burden's. Read this rather than `burden.seedCategory` anywhere the
+    /// answer decides what the user is shown.
+    var resolvedSeedCategory: DeclarationCategory {
+        seedCategory ?? burden.seedCategory
     }
 }
