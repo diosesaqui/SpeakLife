@@ -37,6 +37,7 @@ enum AnalyticsSemantic {
     case trialStarted(productId: String, currency: String)
     case trialConverted(productId: String, price: Double?, currency: String)
     case subscriptionRenewal(price: Double, currency: String)
+    case qualifiedTrial(productId: String)
     case featureUsage(name: String)
     case engagement(action: String, category: String?)
 }
@@ -677,6 +678,20 @@ final class AnalyticsService: AnalyticsTracking {
                  semantic: .trialConverted(productId: productId, price: price, currency: "USD"))
     }
 
+    /// A free trial still set to auto-renew at least 24h after it started.
+    /// Fired once per trial by `QualifiedTrialTracker`; Meta receives it as
+    /// Add Payment Info.
+    func trackQualifiedTrial(productId: String, hoursSinceTrialStart: Int) {
+        let params: [String: Any] = [
+            "product_id": productId,
+            "hours_since_trial_start": hoursSinceTrialStart,
+            "timestamp": Date().iso8601String
+        ]
+
+        dispatch("qualified_trial", parameters: params,
+                 semantic: .qualifiedTrial(productId: productId))
+    }
+
     func trackPaywallImpression(paywallId: String, metadata: [String: Any] = [:]) {
         var params: [String: Any] = [
             "paywall_id": paywallId,
@@ -792,6 +807,8 @@ final class TikTokAnalyticsProvider: AnalyticsProvider {
             Event.trackTikTokEngagement(action: action, category: category)
         case .subscriptionRenewal:
             break // TikTok does not track renewals.
+        case .qualifiedTrial:
+            break // Meta-only optimization event.
         }
     }
 }
@@ -833,6 +850,22 @@ final class MetaAnalyticsProvider: AnalyticsProvider {
         case .subscriptionRenewal(let price, let currency):
             // Log renewals as purchases for LTV tracking.
             AppEvents.shared.logPurchase(amount: price, currency: currency)
+
+        case .qualifiedTrial(let productId):
+            // A trial still set to renew 24h after it started. Sent as the
+            // standard Add Payment Info event, which the app does not otherwise
+            // use, so campaigns can select it as their optimization event.
+            // In Ads Manager this column reads "Qualified trials".
+            AppEvents.shared.logEvent(
+                .addedPaymentInfo,
+                parameters: [
+                    .contentID: productId,
+                    .currency: "USD"
+                ]
+            )
+            // This usually fires on a foreground, and the person may leave
+            // seconds later; don't leave it sitting in the batch queue.
+            AppEvents.shared.flush()
 
         case .screenView, .contentView, .share, .purchase, .featureUsage, .engagement:
             break // Not optimized via Meta App Events.

@@ -375,6 +375,7 @@
 		MD00DECL0000000001BUILDFL /* MyDeclarationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = MD00DECL0000000001FILEREF /* MyDeclarationsView.swift */; };
 		MD00DECL0000000002BUILDFL /* DeletePersonalDeclarationUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = MD00DECL0000000002FILEREF /* DeletePersonalDeclarationUseCase.swift */; };
 		RC00000001294E382700CD2103 /* RevenueCatManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = RC00000002294E382700CD2103 /* RevenueCatManager.swift */; };
+		QT00000001294E382700CD2103 /* QualifiedTrialTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = QT00000002294E382700CD2103 /* QualifiedTrialTracker.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -764,6 +765,7 @@
 		MD00DECL0000000001FILEREF /* MyDeclarationsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MyDeclarationsView.swift; sourceTree = "<group>"; };
 		MD00DECL0000000002FILEREF /* DeletePersonalDeclarationUseCase.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeletePersonalDeclarationUseCase.swift; sourceTree = "<group>"; };
 		RC00000002294E382700CD2103 /* RevenueCatManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevenueCatManager.swift; sourceTree = "<group>"; };
+		QT00000002294E382700CD2103 /* QualifiedTrialTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QualifiedTrialTracker.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -1451,6 +1453,7 @@
 				7AA8707928DACC8300134ADB /* InAppPurchases.swift */,
 				7A60143E294E382700CD2103 /* SubscriptionStore.swift */,
 				RC00000002294E382700CD2103 /* RevenueCatManager.swift */,
+				QT00000002294E382700CD2103 /* QualifiedTrialTracker.swift */,
 			);
 			path = IAP;
 			sourceTree = "<group>";
@@ -2147,6 +2150,7 @@
 				45ED72C62BA64C3F00F5F5E3 /* StreakInfoBottomSheet.swift in Sources */,
 				7A60143F294E382700CD2103 /* SubscriptionStore.swift in Sources */,
 				RC00000001294E382700CD2103 /* RevenueCatManager.swift in Sources */,
+				QT00000001294E382700CD2103 /* QualifiedTrialTracker.swift in Sources */,
 				45567D6B2F29E40000382072 /* TimerButtonView.swift in Sources */,
 				45567D6C2F29E40000382072 /* NotificationObserversModifier.swift in Sources */,
 				7ABA50C529E4D818002699F1 /* Prayer.swift in Sources */,
