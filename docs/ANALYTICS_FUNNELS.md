@@ -194,7 +194,7 @@ it, plus `closer`; the `flow` property says which arm the impression came from.
 
 | Event | Properties | Why it matters |
 |-------|-----------|----------------|
-| `storm_opener_shown` | `flow` (`outcomes` / `promises` / `closer` / `healing` / `provision` / `anxiety` / `renewal`) | Screen-one reach; the denominator for everything after it |
+| `storm_opener_shown` | `flow` (`outcomes` / `promises` / `closer` / `healing` / `provision` / `anxiety` / `renewal` / `grief` / `mortality` / `prodigal` / `purity` / `depression`) | Screen-one reach; the denominator for everything after it |
 
 Because the opener is prepended as step 0, every step raw value in those three
 arms shifted by one. **`flow_schema` was bumped on all three** — `outcomes` 3→4,

@@ -1,6 +1,6 @@
 ---
 name: onboarding-ab-ranking
-description: Query PostHog for the onboarding A/B funnel and rank the variants (product / identity / quiz / outcomes / warfare / promises / command / closer / direct, plus the deep-linked healing / provision / anxiety / renewal arms) to pick a winner. Use when asked which onboarding is winning, onboarding A/B results, onboarding funnel rankings, or "which onboarding should we ship".
+description: Query PostHog for the onboarding A/B funnel and rank the variants (product / identity / quiz / outcomes / warfare / promises / command / closer / direct, plus the deep-linked healing / provision / anxiety / renewal / grief / mortality / prodigal / purity / depression arms) to pick a winner. Use when asked which onboarding is winning, onboarding A/B results, onboarding funnel rankings, or "which onboarding should we ship".
 ---
 
 # Onboarding A/B Ranking
@@ -14,7 +14,8 @@ variant is winning, with the numbers behind it.
   `onboardingVariant`: `product`, `identity`, `quiz`, `outcomes`, `warfare`,
   `promises`, `command`, `closer`, `direct`. `warfare` is the default arm from app
   **v4.28+**.
-- `healing`, `provision`, `anxiety` and `renewal` are **single-issue arms**, added
+- `healing`, `provision`, `anxiety`, `renewal`, `grief`, `mortality`, `prodigal`,
+  `purity` and `depression` are **single-issue arms**, added
   to be deep linked from angle-matched creative (`ob=healing` and friends). They are
   targeted, not random-assigned, so **do not rank them against the random arms** —
   their traffic is self-selected by the ad that sent it. Compare a single-issue arm
