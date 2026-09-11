@@ -30,8 +30,278 @@ import Foundation
 enum OnboardingAngles {
 
     /// Every angle, keyed by `id` (which is also the `?ob=` deep-link code).
+    // MARK: - Grief
+
+    /// Deep linked from grief creative. The most acute event a person can be in,
+    /// and the one no competitor in the category advertises to. It seeds `.grief`
+    /// rather than the nearest burden, because comfort in loss is its own feed.
+    static let grief = OnboardingAngle(
+        id: "grief",
+        flow: "grief",
+        flowSchema: 1,
+        opensWithStormScreen: true,
+        scenes: [
+            AngleScene(
+                symbol: "moon.stars.fill",
+                eyebrow: "THE MORNINGS ARE THE WORST PART",
+                title: "You wake up, and\nfor a second you forget.",
+                body: "Then it lands again. Everyone said the first weeks would be hardest, and nobody warned you about the ordinary Tuesday four months in, when the world has moved on and you have not.",
+                verse: "The Lord is close to the brokenhearted and saves those who are crushed in spirit.",
+                reference: "Psalm 34:18",
+                analyticsEvent: "grief_scene_shown",
+                analyticsParameters: ["scene": "mornings"]
+            ),
+            AngleScene(
+                symbol: "drop.fill",
+                eyebrow: "JESUS DID NOT RUSH ANYONE THROUGH IT",
+                title: "He wept first.\nHe raised him after.",
+                body: "He was minutes from the miracle and He still stood at the grave and cried. Grief is not a lack of faith. It is what love does when it has nowhere to go, and God never once asked you to be finished with it.",
+                verse: "Jesus wept.",
+                reference: "John 11:35",
+                analyticsEvent: "grief_scene_shown",
+                analyticsParameters: ["scene": "jesus_wept"]
+            ),
+            AngleScene(
+                symbol: "sunrise.fill",
+                eyebrow: "SOMETHING GETS SAID OVER YOU EVERY DAY",
+                title: "Right now grief is\ndoing all the talking.",
+                body: "Sixty seconds where you say what God says instead. Not that it did not happen. That He is near, that He keeps what you handed Him, and that joy is still promised to you on the other side of this.",
+                verse: "Those who sow with tears will reap with songs of joy.",
+                reference: "Psalm 126:5",
+                analyticsEvent: "grief_scene_shown",
+                analyticsParameters: ["scene": "spoken_over"]
+            )
+        ],
+        picker: AnglePicker(
+            headline: "Where does it hurt most right now?",
+            subtitle: "We will build your sixty seconds around it\nand have it ready every morning when you wake up.",
+            analyticsEvent: "grief_picker_shown",
+            choices: [
+                AnglePickerChoice(id: "recent", burden: .peace,
+                    statement: "It just happened", subtitle: "The days are still a blur",
+                    symbol: "cloud.rain.fill", segmentLabel: "recent", seedCategory: .grief),
+                AnglePickerChoice(id: "spouse", burden: .peace,
+                    statement: "I lost my husband or wife", subtitle: "The other half of everything",
+                    symbol: "heart.slash.fill", segmentLabel: "spouse", seedCategory: .grief),
+                AnglePickerChoice(id: "parent", burden: .peace,
+                    statement: "I lost a parent", subtitle: "The person who knew me first",
+                    symbol: "figure.2.arms.open", segmentLabel: "parent", seedCategory: .grief),
+                AnglePickerChoice(id: "child", burden: .peace,
+                    statement: "I lost a child", subtitle: "The one nobody has words for",
+                    symbol: "heart.fill", segmentLabel: "child", seedCategory: .grief),
+                AnglePickerChoice(id: "anniversary", burden: .peace,
+                    statement: "A date is coming up", subtitle: "Birthdays, holidays, the anniversary",
+                    symbol: "calendar", segmentLabel: "anniversary", seedCategory: .grief),
+                AnglePickerChoice(id: "long_ago", burden: .peace,
+                    statement: "It was years ago and it still sits on me", subtitle: "Everyone assumes you are fine",
+                    symbol: "clock.arrow.circlepath", segmentLabel: "long_ago", seedCategory: .grief)
+            ]
+        )
+    )
+
+    // MARK: - Fear of death
+
+    static let mortality = OnboardingAngle(
+        id: "mortality",
+        flow: "mortality",
+        flowSchema: 1,
+        opensWithStormScreen: true,
+        scenes: [
+            AngleScene(
+                symbol: "moon.zzz.fill",
+                eyebrow: "THE THOUGHT THAT COMES AT NIGHT",
+                title: "It finds you\nwhen the house is quiet.",
+                body: "Not every day. But it comes, and when it does it takes the whole night with it. Most believers carry this one alone because it feels like the one fear you are not allowed to admit you still have.",
+                verse: "Since the children have flesh and blood, he too shared in their humanity so that by his death he might free those who all their lives were held in slavery by their fear of death.",
+                reference: "Hebrews 2:14 to 15",
+                analyticsEvent: "mortality_scene_shown",
+                analyticsParameters: ["scene": "night"]
+            ),
+            AngleScene(
+                symbol: "key.fill",
+                eyebrow: "HE WENT IN AND CAME BACK OUT",
+                title: "The grave already\nlost its argument.",
+                body: "Jesus did not explain death away. He walked into it and walked back out holding the keys, and He said the one who believes in Him will live even though he dies. That is not a comfort. That is a fact with your name on it.",
+                verse: "I am the Living One. I was dead, and now look, I am alive for ever and ever. And I hold the keys of death and Hades.",
+                reference: "Revelation 1:18",
+                analyticsEvent: "mortality_scene_shown",
+                analyticsParameters: ["scene": "keys"]
+            ),
+            AngleScene(
+                symbol: "shield.lefthalf.filled",
+                eyebrow: "SAY IT BEFORE THE NIGHT DOES",
+                title: "Fear gets quieter\nwhen it is answered.",
+                body: "Sixty seconds in the morning where you say out loud what God settled about your life, your death and what comes after. Say it in daylight, and it is already in your mouth when the dark asks again.",
+                verse: "Where, O death, is your victory? Where, O death, is your sting?",
+                reference: "1 Corinthians 15:55",
+                analyticsEvent: "mortality_scene_shown",
+                analyticsParameters: ["scene": "answered"]
+            )
+        ],
+        picker: AnglePicker(
+            headline: "What does the fear circle back to?",
+            subtitle: "We will build your sixty seconds around it\nand have it ready every morning when you wake up.",
+            analyticsEvent: "mortality_picker_shown",
+            choices: [
+                AnglePickerChoice(id: "my_own", burden: .peace,
+                    statement: "My own death", subtitle: "The thought that stops the night",
+                    symbol: "person.fill", segmentLabel: "my_own", seedCategory: .fear),
+                AnglePickerChoice(id: "diagnosis", burden: .peace,
+                    statement: "Something the doctor said", subtitle: "It made it real",
+                    symbol: "stethoscope", segmentLabel: "diagnosis", seedCategory: .fear),
+                AnglePickerChoice(id: "loved_one", burden: .peace,
+                    statement: "Losing someone I love", subtitle: "I run the scenario without meaning to",
+                    symbol: "figure.2", segmentLabel: "loved_one", seedCategory: .fear),
+                AnglePickerChoice(id: "aging", burden: .peace,
+                    statement: "Getting older", subtitle: "The years are moving faster",
+                    symbol: "hourglass", segmentLabel: "aging", seedCategory: .fear),
+                AnglePickerChoice(id: "after", burden: .peace,
+                    statement: "What comes after", subtitle: "I want to be sure",
+                    symbol: "sparkles", segmentLabel: "after", seedCategory: .heaven),
+                AnglePickerChoice(id: "children", burden: .peace,
+                    statement: "Leaving my children", subtitle: "Who would be there for them",
+                    symbol: "figure.and.child.holdinghands", segmentLabel: "children", seedCategory: .fear)
+            ]
+        )
+    )
+
+    // MARK: - Salvation and prodigals
+
+    /// The one arm where the promise has to stay on God and on the person
+    /// praying, never on the free choice of the one they are praying for.
+    static let prodigal = OnboardingAngle(
+        id: "prodigal",
+        flow: "prodigal",
+        flowSchema: 1,
+        opensWithStormScreen: true,
+        scenes: [
+            AngleScene(
+                symbol: "door.left.hand.open",
+                eyebrow: "YOU RAISED THEM IN IT",
+                title: "They know every word.\nThey just stopped saying them.",
+                body: "You taught them the songs. You watched them walk away anyway. And the hardest part is that no amount of being right about it has ever brought anybody home.",
+                verse: "While he was still a long way off, his father saw him and was filled with compassion for him.",
+                reference: "Luke 15:20",
+                analyticsEvent: "prodigal_scene_shown",
+                analyticsParameters: ["scene": "walked_away"]
+            ),
+            AngleScene(
+                symbol: "figure.stand",
+                eyebrow: "THE FATHER DID NOT GO GET HIM",
+                title: "He watched the road\nand kept the door open.",
+                body: "The father in that story never chased, never argued, never bargained. He stayed himself. He kept watching. And the son came back to a house that had not changed while he was gone.",
+                verse: "The Lord is not slow in keeping his promise, as some understand slowness. Instead he is patient with you, not wanting anyone to perish.",
+                reference: "2 Peter 3:9",
+                analyticsEvent: "prodigal_scene_shown",
+                analyticsParameters: ["scene": "watched_road"]
+            ),
+            AngleScene(
+                symbol: "sunrise.fill",
+                eyebrow: "WHAT YOU CAN ACTUALLY DO EVERY DAY",
+                title: "Stand on His heart\ninstead of their timing.",
+                body: "Sixty seconds where you say what God says about His own mercy, His reach and His patience. You are not declaring what they will choose. You are standing on who He is while they are choosing.",
+                verse: "The Lord your God is with you, the Mighty Warrior who saves.",
+                reference: "Zephaniah 3:17",
+                analyticsEvent: "prodigal_scene_shown",
+                analyticsParameters: ["scene": "stand"]
+            )
+        ],
+        picker: AnglePicker(
+            headline: "Who are you standing in the gap for?",
+            subtitle: "We will build your sixty seconds around it\nand have it ready every morning when you wake up.",
+            analyticsEvent: "prodigal_picker_shown",
+            choices: [
+                AnglePickerChoice(id: "child", burden: .allOfIt,
+                    statement: "My son or daughter", subtitle: "They walked away from it",
+                    symbol: "figure.and.child.holdinghands", segmentLabel: "child", seedCategory: .salvation),
+                AnglePickerChoice(id: "spouse", burden: .allOfIt,
+                    statement: "My husband or wife", subtitle: "We do not share this yet",
+                    symbol: "heart.circle.fill", segmentLabel: "spouse", seedCategory: .salvation),
+                AnglePickerChoice(id: "parent", burden: .allOfIt,
+                    statement: "My mother or father", subtitle: "Time feels short",
+                    symbol: "figure.2.arms.open", segmentLabel: "parent", seedCategory: .salvation),
+                AnglePickerChoice(id: "sibling", burden: .allOfIt,
+                    statement: "My brother or sister", subtitle: "We grew up in the same house",
+                    symbol: "person.2.fill", segmentLabel: "sibling", seedCategory: .salvation),
+                AnglePickerChoice(id: "friend", burden: .allOfIt,
+                    statement: "A friend I love", subtitle: "They are searching and do not know it",
+                    symbol: "hand.wave.fill", segmentLabel: "friend", seedCategory: .salvation),
+                AnglePickerChoice(id: "household", burden: .allOfIt,
+                    statement: "My whole household", subtitle: "All of them, every day",
+                    symbol: "house.fill", segmentLabel: "household", seedCategory: .salvation)
+            ]
+        )
+    )
+
+    // MARK: - Purity
+
+    static let purity = OnboardingAngle(
+        id: "purity",
+        flow: "purity",
+        flowSchema: 1,
+        opensWithStormScreen: true,
+        scenes: [
+            AngleScene(
+                symbol: "moon.fill",
+                eyebrow: "THE PART NOBODY POSTS ABOUT",
+                title: "You meant it\nthe last time too.",
+                body: "The promise was real at the time. So was the one before it. And the gap between who you are on Sunday and who you are at eleven at night is the thing that actually wears a man or a woman down.",
+                verse: "I do not understand what I do. For what I want to do I do not do, but what I hate I do.",
+                reference: "Romans 7:15",
+                analyticsEvent: "purity_scene_shown",
+                analyticsParameters: ["scene": "meant_it"]
+            ),
+            AngleScene(
+                symbol: "text.quote",
+                eyebrow: "HE WAS TEMPTED TOO",
+                title: "Jesus answered it\nout loud, every time.",
+                body: "Forty days in, starving, and His response was not willpower. It was written. Three times He opened His mouth and said what God had already said, and the enemy ran out of material.",
+                verse: "It is written: Man shall not live on bread alone, but on every word that comes from the mouth of God.",
+                reference: "Matthew 4:4",
+                analyticsEvent: "purity_scene_shown",
+                analyticsParameters: ["scene": "it_is_written"]
+            ),
+            AngleScene(
+                symbol: "shield.fill",
+                eyebrow: "BEFORE THE MOMENT, NOT DURING IT",
+                title: "The fight is won\nearlier than you think.",
+                body: "Sixty seconds in the morning where you say who you are now. Not trying harder at eleven at night. Having something already in your mouth by the time eleven arrives.",
+                verse: "I have hidden your word in my heart that I might not sin against you.",
+                reference: "Psalm 119:11",
+                analyticsEvent: "purity_scene_shown",
+                analyticsParameters: ["scene": "won_earlier"]
+            )
+        ],
+        picker: AnglePicker(
+            headline: "Where does it usually get you?",
+            subtitle: "We will build your sixty seconds around it\nand have it ready every morning when you wake up.",
+            analyticsEvent: "purity_picker_shown",
+            choices: [
+                AnglePickerChoice(id: "late_night", burden: .identity,
+                    statement: "Late at night, alone", subtitle: "When the house is quiet",
+                    symbol: "moon.stars.fill", segmentLabel: "late_night", seedCategory: .purity),
+                AnglePickerChoice(id: "phone", burden: .identity,
+                    statement: "My phone", subtitle: "It starts before I decide anything",
+                    symbol: "iphone", segmentLabel: "phone", seedCategory: .purity),
+                AnglePickerChoice(id: "stress", burden: .identity,
+                    statement: "When I am stressed or low", subtitle: "It shows up as comfort",
+                    symbol: "wind", segmentLabel: "stress", seedCategory: .purity),
+                AnglePickerChoice(id: "shame", burden: .identity,
+                    statement: "The shame after", subtitle: "That is the part that keeps the cycle going",
+                    symbol: "cloud.fill", segmentLabel: "shame", seedCategory: .grace),
+                AnglePickerChoice(id: "thoughts", burden: .identity,
+                    statement: "My thought life", subtitle: "Nothing anyone would see",
+                    symbol: "brain.head.profile", segmentLabel: "thoughts", seedCategory: .purity),
+                AnglePickerChoice(id: "marriage", burden: .identity,
+                    statement: "It is costing my marriage", subtitle: "I want to be all the way present",
+                    symbol: "heart.circle.fill", segmentLabel: "marriage", seedCategory: .purity)
+            ]
+        )
+    )
+
     static let all: [String: OnboardingAngle] = Dictionary(
-        uniqueKeysWithValues: [promises, warfare, outcomes, command, healing, provision, anxiety, renewal]
+        uniqueKeysWithValues: [promises, warfare, outcomes, command, healing, provision, anxiety, renewal,
+                               grief, mortality, prodigal, purity]
             .map { ($0.id, $0) }
     )
 
