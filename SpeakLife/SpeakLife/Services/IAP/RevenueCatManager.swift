@@ -64,6 +64,16 @@ final class RevenueCatManager {
         if let keyword = keyword { attribution.setKeyword(keyword) }
     }
 
+    /// Re-sends the device identifiers RevenueCat's Meta integration matches on.
+    ///
+    /// AppDelegate.init already calls this, but that runs before the ATT prompt
+    /// is answered, so the IDFA it sends is zeroed for everyone. Call again once
+    /// ATT resolves, whichever way it went.
+    func collectDeviceIdentifiers() {
+        guard Purchases.isConfigured else { return }
+        Purchases.shared.attribution.collectDeviceIdentifiers()
+    }
+
     /// Pushes PostHog's distinct id into RevenueCat as the reserved
     /// `$posthogUserId` attribute.
     ///

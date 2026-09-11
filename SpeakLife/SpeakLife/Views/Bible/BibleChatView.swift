@@ -585,6 +585,13 @@ struct BibleChatConversationView: View {
     /// them without widening a persisted enum that `TrialExperienceService` and
     /// the paywalls also read.
     ///
+    /// The single-issue arms widened this further: `grief`, `mortality`,
+    /// `prodigal` and `purity` override the seed per picker row, so they land on
+    /// `.grief`, `.heaven`, `.salvation`, `.purity` and `.grace` — categories no
+    /// `HeaviestBurden` can name and `CategoryType` has never had. Those arms are
+    /// the ones a wrong opener costs most: the ad said "you lost someone" and the
+    /// first screen must not ask what is heaviest.
+    ///
     /// Returns nil for everything `CategoryType` covers, so the switch above
     /// stays the single home for those lines. Internal rather than private so
     /// `OnboardingAngleTests` can assert every arm's seed reaches a personal
@@ -596,6 +603,10 @@ struct BibleChatConversationView: View {
         case .identity: return "I don't know how God actually sees me. What does His Word say about who I am?"
         case .destiny:  return "I can't tell where my life is going. What does God say about my future?"
         case .grief:    return "I lost someone. What does God say to me in this?"
+        case .heaven:   return "I've been thinking about death a lot. What does God say about what comes after?"
+        case .salvation: return "Someone I love is far from God. What does His Word say about them?"
+        case .purity:   return "I keep falling into the same sin. What does God say about walking free of it?"
+        case .grace:    return "I've messed up badly. What does God's Word say about grace for someone like me?"
         default:        return nil
         }
     }

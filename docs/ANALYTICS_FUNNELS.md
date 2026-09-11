@@ -339,6 +339,7 @@ These route through `AnalyticsService` and reach every provider:
 | `paywall_conversion` | `trackPaywallConversion` | `product_id`, `price` |
 | `trial_started` | `trackTrialStarted` / `track` (purchase) | `product_id`, `value`, `variant` |
 | `trial_activated` | `trackTrialActivated` | `product_id`, `price` |
+| `qualified_trial` | `trackQualifiedTrial` (QualifiedTrialTracker) | `product_id`, `hours_since_trial_start` |
 | `subscription_renewal` | `trackSubscriptionRenewal` | `product_id`, `price` |
 | `subscription_cancelled` | `trackSubscriptionCancelled` | `product_id` |
 | `content_interaction` | `trackContentInteraction` | `content_type`, `content_id`, `action` |

@@ -229,6 +229,14 @@ final class OnboardingAngleTests: XCTestCase {
             "provision": .abundance,
             "anxiety": .peace,
             "renewal": .identity,
+            // The second wave keeps one burden each too, but the burden is only
+            // the nearest neighbour: what these arms actually seed rides on the
+            // row. `testSingleIssueAnglesSeedTheirOwnSubject` is the one that
+            // holds them to their real subject.
+            "grief": .peace,
+            "mortality": .peace,
+            "prodigal": .allOfIt,
+            "purity": .identity,
         ]
         for (id, burden) in expected {
             guard let angle = OnboardingAngles.angle(id: id) else {
@@ -290,13 +298,18 @@ final class OnboardingAngleTests: XCTestCase {
     /// landed: `abundance` seeds `.wealth` and `identity` seeds `.identity`, and
     /// neither round-trips through `CategoryType(rawValue:)`.
     ///
+    /// It reads `resolvedSeedCategory`, not the burden, so a single-issue arm's
+    /// per-row override is what gets checked — otherwise the four second-wave
+    /// arms would test the burden they stand nearest instead of the subject they
+    /// actually seed.
+    ///
     /// `@MainActor` because `BibleChatConversationView` is a `View`, and `View` is
     /// `@MainActor` on the iOS 17+ SDK — which isolates its static members too.
     @MainActor
     func testEveryAngleSeedsAPersonalChatOpener() {
         for (id, angle) in OnboardingAngles.all {
             for choice in angle.picker.choices {
-                let seed = choice.burden.seedCategory
+                let seed = choice.resolvedSeedCategory
                 let hasExtended = BibleChatConversationView.extendedOpener(for: seed) != nil
                 // nil and `.general` are the same outcome here: the generic opener.
                 let categoryType = UserPreferencesTracker.CategoryType(rawValue: seed.rawValue)
@@ -310,6 +323,45 @@ final class OnboardingAngleTests: XCTestCase {
                     extendedOpener.
                     """
                 )
+            }
+        }
+    }
+
+    /// `HeaviestBurden` has seven cases and cannot name grief, the fear of death,
+    /// a prodigal or purity, so those arms carry the category on the picker row.
+    /// If a row ever loses its override it silently falls back to the nearest
+    /// burden, and a grief ad seeds an anxiety feed on the first morning without
+    /// anything failing. That is the whole reason single-issue arms exist, so it
+    /// is worth a test rather than a comment.
+    func testSingleIssueAnglesSeedTheirOwnSubject() {
+        let expected: [String: Set<DeclarationCategory>] = [
+            "grief": [.grief],
+            "mortality": [.fear, .heaven],
+            "prodigal": [.salvation],
+            "purity": [.purity, .grace],
+        ]
+        for (id, allowed) in expected {
+            guard let angle = OnboardingAngles.angle(id: id) else {
+                return XCTFail("missing angle '\(id)'")
+            }
+            for choice in angle.picker.choices {
+                XCTAssertNotNil(choice.seedCategory,
+                                "\(id): row '\(choice.id)' has no seedCategory and would fall back to \(choice.burden.shortLabel)")
+                XCTAssertTrue(allowed.contains(choice.resolvedSeedCategory),
+                              "\(id): row '\(choice.id)' seeds \(choice.resolvedSeedCategory.rawValue), which is off this arm's subject")
+            }
+        }
+    }
+
+    /// The original four single-issue arms and every broad arm resolve through the
+    /// burden. An override appearing there would change what they seed without
+    /// anyone intending it.
+    func testOnlySecondWaveArmsOverrideTheSeed() {
+        let overriding: Set<String> = ["grief", "mortality", "prodigal", "purity"]
+        for (id, angle) in OnboardingAngles.all where !overriding.contains(id) {
+            for choice in angle.picker.choices {
+                XCTAssertNil(choice.seedCategory,
+                             "\(id): row '\(choice.id)' overrides the seed; that arm is meant to follow its burden")
             }
         }
     }

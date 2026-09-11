@@ -267,8 +267,14 @@ struct AngleOnboardingView: View {
         if let style = responses.primaryDeclarationStyle {
             appState.selectedDeclarationStyles = [style.rawValue]
         }
-        // Seeded from the burden, not from the goal word's branding category.
-        let category = responses.seedCategory
+        // Seeded from the burden, not from the goal word's branding category,
+        // except where the chosen row names its own category. A single-issue arm
+        // whose subject has no `HeaviestBurden` (grief, purity, salvation, the
+        // fear of death) carries it on the row instead, so the ad's angle still
+        // decides the first morning's feed rather than the nearest neighbouring
+        // burden. See `AnglePickerChoice.seedCategory`.
+        let pickedChoice = angle.picker.choices.first { $0.id == selectedChoiceID }
+        let category = pickedChoice?.resolvedSeedCategory ?? responses.seedCategory
         let notificationCategoriesSet: Set<DeclarationCategory> = [category]
         appState.selectedNotificationCategories = category.rawValue
         UserDefaults.standard.set(category.rawValue, forKey: "selectedCategory")

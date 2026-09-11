@@ -131,6 +131,10 @@ final class SubscriptionStore: ObservableObject {
         // from angle-matched creative, so the whole arc matches the ad.
         case outcomes, warfare, promises, command
         case healing, provision, anxiety, renewal
+        // Second wave of single-issue arms. These four name subjects
+        // `HeaviestBurden` cannot, so their picker rows carry their own
+        // `seedCategory`. See `AnglePickerChoice.seedCategory`.
+        case grief, mortality, prodigal, purity
         init?(code: String) { self.init(rawValue: code.lowercased()) }
 
         /// The angle this arm renders, or nil for a bespoke flow with its own view.
@@ -769,6 +773,10 @@ final class SubscriptionStore: ObservableObject {
                 metadata: ["source": "rc_customer_info_update"]
             )
         }
+
+        // Meta's qualified-trial event: fires once a trial has survived 24h
+        // with auto-renew on. No-ops for everyone else.
+        Task { await QualifiedTrialTracker.shared.evaluate(info) }
     }
 
     @MainActor
