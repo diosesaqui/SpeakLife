@@ -77,6 +77,10 @@ the granularity to optimise creative against.
 | Lust, temptation, the late night cycle, the shame after | `purity` | `purity` / `grace` | "Where does it usually get you?" |
 | Heaviness, emptiness, joy gone, no hope for tomorrow | `depression` | `hope` / `joy` | "What do you want back first?" |
 | Dread, the what if, my kids' safety, losing what I have | `fear` | `fear` / `godsprotection` | "What is fear telling you is going to happen?" |
+| Raising them, the worry, the temper, a child who is struggling | `parenting` | `parenting` | "What are you carrying for your kids?" |
+| Drink, pills, the scroll, food, the bet, the relapse shame | `addiction` | `addiction` / `grace` | "What keeps pulling you back?" |
+| A marriage gone quiet or loud, broken trust, standing alone | `marriage` | `marriage` | "Where is your marriage right now?" |
+| Everything at once, running on empty, a season that will not break | `hardtimes` | `hardtimes` / `rest` | "What is hitting hardest right now?" |
 
 **The second wave seeds from the ROW, not the burden.** `HeaviestBurden` has seven
 cases and maps to seven categories, which covered every arm while they were all
@@ -90,6 +94,22 @@ the first morning, which is the exact failure single-issue arms exist to prevent
 `OnboardingAngleTests.testSingleIssueAnglesSeedTheirOwnSubject` holds every row to
 its subject, and `testOnlySecondWaveArmsOverrideTheSeed` stops the override
 spreading to arms meant to follow their burden.
+
+**The third wave are the first arms about a household or a whole season** rather
+than one person's inner state, and they inherit `prodigal`'s limit. `marriage`
+never promises a spouse will soften, come back or believe, and `parenting` never
+promises how a child turns out: both are other free people, which scripture makes
+no promise about. Each stands on God's covenant, the atmosphere of the house, and
+the speaker's own mouth. `hardtimes` keeps the matching limit on seasons: Isaiah
+43:2 promises God in the fire, not a life without one, so no timeline is given for
+the season breaking.
+
+Their borders, which are worth respecting in creative: `parenting` is the daily
+work of raising them, while a child's SAFETY belongs to `fear` and a child who has
+already walked away belongs to `prodigal`. `addiction` is substances and
+compulsions (drink, pills, the scroll, food, the bet) while lust and the late
+night cycle stay with `purity`. `hardtimes` is for several areas at once, where
+`provision` owns money alone and `healing` owns the body alone.
 
 **Three arms sit near each other and the line between them matters.** `anxiety`
 owns the STATE (sleep, racing thoughts, pressure, waiting on news) and seeds

@@ -108,7 +108,8 @@ final class SubscriptionStore: ObservableObject {
     // Remote Config key `onboardingVariant`: "quiz" | "product" | "identity" | "outcomes"
     // | "warfare" | "promises" | "command" | "closer" | "direct" | "healing" | "provision"
     // | "anxiety" | "renewal" | "grief" | "mortality" | "prodigal" | "purity"
-    // | "depression" | "fear".
+    // | "depression" | "fear" | "parenting" | "addiction" | "marriage"
+    // | "hardtimes".
     // Empty/unset falls back to the legacy useQuizOnboarding boolean so live
     // users are unaffected until the string key is set in Remote Config.
     @Published var onboardingVariant: String = ""
@@ -136,6 +137,11 @@ final class SubscriptionStore: ObservableObject {
         // `HeaviestBurden` cannot, so their picker rows carry their own
         // `seedCategory`. See `AnglePickerChoice.seedCategory`.
         case grief, mortality, prodigal, purity, depression, fear
+        // Third wave. The first arms whose subject is a household or a whole
+        // season rather than one person's inner state, so `marriage` and
+        // `parenting` carry the same limit `prodigal` does: no promise about
+        // what another free person will do.
+        case parenting, addiction, marriage, hardtimes
         init?(code: String) { self.init(rawValue: code.lowercased()) }
 
         /// The angle this arm renders, or nil for a bespoke flow with its own view.
