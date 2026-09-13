@@ -76,6 +76,7 @@ the granularity to optimise creative against.
 | A prodigal child, an unsaved spouse or parent, a whole household | `prodigal` | `salvation` | "Who are you standing in the gap for?" |
 | Lust, temptation, the late night cycle, the shame after | `purity` | `purity` / `grace` | "Where does it usually get you?" |
 | Heaviness, emptiness, joy gone, no hope for tomorrow | `depression` | `hope` / `joy` | "What do you want back first?" |
+| Dread, the what if, my kids' safety, losing what I have | `fear` | `fear` / `godsprotection` | "What is fear telling you is going to happen?" |
 
 **The second wave seeds from the ROW, not the burden.** `HeaviestBurden` has seven
 cases and maps to seven categories, which covered every arm while they were all
@@ -89,6 +90,13 @@ the first morning, which is the exact failure single-issue arms exist to prevent
 `OnboardingAngleTests.testSingleIssueAnglesSeedTheirOwnSubject` holds every row to
 its subject, and `testOnlySecondWaveArmsOverrideTheSeed` stops the override
 spreading to arms meant to follow their burden.
+
+**Three arms sit near each other and the line between them matters.** `anxiety`
+owns the STATE (sleep, racing thoughts, pressure, waiting on news) and seeds
+`anxiety`. `mortality` owns death. `fear` owns the WHAT IF: a named outcome the
+person has already rehearsed in detail and is paying for before it happens. Its
+safety rows seed `godsprotection`, the rest `fear`. Keep creative for the three
+distinct or they cannibalise each other in the same audience.
 
 `depression` is the one that seeds a category its burden could have reached and
 deliberately does not: `hope` has more material than `joy` (64 lines to 59) and
@@ -109,6 +117,13 @@ arc reads as a reason to stop getting help. Its creative needs the same care:
 Meta's Personal Attributes policy rejects ads asserting something about the
 viewer's condition, so the hook stays scripture-led or first-person, never "Are you
 depressed?".
+
+**`fear` never promises the dreaded thing cannot happen**, which scripture does not
+promise. It claims God's presence in it and His word over the outcome, and its copy
+grants the fear before answering it (David wrote "when I am afraid", not "if"),
+so the arc never shames someone for being afraid. Its creative carries the same
+Personal Attributes constraint as `depression`: no "Are you afraid of…" second
+person.
 
 An `ob=` value is only accepted if it matches a `SubscriptionStore.OnboardingVariant`
 case, so a typo in an ad link is ignored and the user falls back to the Remote Config

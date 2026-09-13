@@ -238,6 +238,7 @@ final class OnboardingAngleTests: XCTestCase {
             "prodigal": .allOfIt,
             "purity": .identity,
             "depression": .joy,
+            "fear": .peace,
         ]
         for (id, burden) in expected {
             guard let angle = OnboardingAngles.angle(id: id) else {
@@ -301,6 +302,10 @@ final class OnboardingAngleTests: XCTestCase {
             // on a bad morning to rejoice before they can. The two rows that do
             // name joy keep it, which is why this arm allows both.
             "depression": [.hope, .joy],
+            // Safety rows seed protection, the rest seed fear, the way mortality
+            // splits fear and heaven. `.confidence` would have suited the
+            // stepping-out row but holds 25 lines, too thin to seed a feed.
+            "fear": [.fear, .godsprotection],
         ]
         for (id, allowed) in expected {
             guard let angle = OnboardingAngles.angle(id: id) else {
@@ -319,7 +324,7 @@ final class OnboardingAngleTests: XCTestCase {
     /// burden. An override appearing there would change what they seed without
     /// anyone intending it.
     func testOnlySecondWaveArmsOverrideTheSeed() {
-        let overriding: Set<String> = ["grief", "mortality", "prodigal", "purity", "depression"]
+        let overriding: Set<String> = ["grief", "mortality", "prodigal", "purity", "depression", "fear"]
         for (id, angle) in OnboardingAngles.all where !overriding.contains(id) {
             for choice in angle.picker.choices {
                 XCTAssertNil(choice.seedCategory,

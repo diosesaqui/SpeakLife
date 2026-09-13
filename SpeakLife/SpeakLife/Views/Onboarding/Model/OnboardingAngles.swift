@@ -397,9 +397,95 @@ enum OnboardingAngles {
         )
     )
 
+    // MARK: - Fear and dread (the what if)
+
+    /// Deep linked from fear creative. The territory left over once `anxiety`
+    /// and `mortality` have theirs, and the line between them is worth keeping:
+    /// `anxiety` owns the STATE (sleep, racing thoughts, pressure, waiting),
+    /// `mortality` owns death, and this arm owns the WHAT IF. A named outcome
+    /// the person has already rehearsed in detail and is paying for before it
+    /// happens.
+    ///
+    /// Seeds `.fear` (47 lines) with `.godsprotection` (54) on the two rows that
+    /// are really about safety, the way `mortality` splits `.fear` and `.heaven`.
+    /// `.confidence` would have fit the stepping-out row but holds 25 lines, too
+    /// thin to seed a feed from. Burden stays `peace`, the nearest neighbour.
+    ///
+    /// The copy never shames the fear. It grants it first (David said "when I am
+    /// afraid", not "if"), then moves the authority: fear is a voice, not
+    /// information, and 2 Timothy 1:7 says where it did not come from. What it
+    /// claims is God's presence and His word over the outcome, never that the
+    /// dreaded thing cannot happen, which is not a promise scripture makes.
+    static let fear = OnboardingAngle(
+        id: "fear",
+        flow: "fear",
+        flowSchema: 1,
+        opensWithStormScreen: true,
+        scenes: [
+            AngleScene(
+                symbol: "moon.stars.fill",
+                // Grants the fear before answering it. "When I am afraid" is
+                // David's own wording, so screen one is permission, not a lecture.
+                eyebrow: "IT HAS NOT HAPPENED YET",
+                title: "You have already lived it\nonce, in your head.",
+                body: "Every version of it, in detail, at two in the morning. The thing has not happened and you have already paid for it. Fear charges you for a future God never signed off on.",
+                verse: "When I am afraid, I put my trust in you.",
+                reference: "Psalm 56:3",
+                analyticsEvent: "fear_scene_shown",
+                analyticsParameters: ["scene": "rehearsed"]
+            ),
+            AngleScene(
+                symbol: "bolt.shield.fill",
+                eyebrow: "IT WAS NEVER HANDED TO YOU",
+                title: "Fear did not\ncome from God.",
+                body: "What He gave you was power, love and a mind that holds steady. So when fear tells you what is coming, that is not information. It is a voice with no authority, and Jesus answered it out loud every time it spoke.",
+                verse: "The Spirit God gave us does not make us timid, but gives us power, love and self-discipline.",
+                reference: "2 Timothy 1:7",
+                analyticsEvent: "fear_scene_shown",
+                analyticsParameters: ["scene": "not_from_god"]
+            ),
+            AngleScene(
+                symbol: "waveform",
+                eyebrow: "ANSWER IT WHILE THE SUN IS UP",
+                title: "Answer it once,\nout loud, every morning.",
+                body: "Sixty seconds where you say what God said over your children, your safety, your future. Fear asks the same question every day. When the answer is already in your mouth, it does not get to run the day.",
+                verse: "The Lord is with me; I will not be afraid. What can mere mortals do to me?",
+                reference: "Psalm 118:6",
+                buttonLabel: "I'm Ready to Answer It →",
+                analyticsEvent: "fear_scene_shown",
+                analyticsParameters: ["scene": "answered"]
+            )
+        ],
+        picker: AnglePicker(
+            headline: "What is fear telling you\nis going to happen?",
+            subtitle: "We will build your sixty seconds around it\nand have it ready every morning when you wake up.",
+            analyticsEvent: "fear_picker_shown",
+            choices: [
+                AnglePickerChoice(id: "children", burden: .peace,
+                    statement: "Something happening to my kids", subtitle: "The scenario I never asked for",
+                    symbol: "figure.and.child.holdinghands", segmentLabel: "children", seedCategory: .godsprotection),
+                AnglePickerChoice(id: "safety", burden: .peace,
+                    statement: "Our safety where we live", subtitle: "The news makes it feel closer",
+                    symbol: "house.fill", segmentLabel: "safety", seedCategory: .godsprotection),
+                AnglePickerChoice(id: "worst_case", burden: .peace,
+                    statement: "The worst case I keep rehearsing", subtitle: "I have lived it a hundred times",
+                    symbol: "arrow.triangle.2.circlepath", segmentLabel: "worst_case", seedCategory: .fear),
+                AnglePickerChoice(id: "losing", burden: .peace,
+                    statement: "Losing what I have", subtitle: "The job, the marriage, the health",
+                    symbol: "hand.raised.fill", segmentLabel: "losing", seedCategory: .fear),
+                AnglePickerChoice(id: "people", burden: .peace,
+                    statement: "What people can do to me", subtitle: "Being talked about or found out",
+                    symbol: "eye.fill", segmentLabel: "people", seedCategory: .fear),
+                AnglePickerChoice(id: "stepping_out", burden: .peace,
+                    statement: "Stepping out and failing", subtitle: "The thing God asked me to do",
+                    symbol: "figure.walk", segmentLabel: "stepping_out", seedCategory: .fear)
+            ]
+        )
+    )
+
     static let all: [String: OnboardingAngle] = Dictionary(
         uniqueKeysWithValues: [promises, warfare, outcomes, command, healing, provision, anxiety, renewal,
-                               grief, mortality, prodigal, purity, depression]
+                               grief, mortality, prodigal, purity, depression, fear]
             .map { ($0.id, $0) }
     )
 
