@@ -438,7 +438,7 @@ enum OnboardingAngles {
                 symbol: "bolt.shield.fill",
                 eyebrow: "IT WAS NEVER HANDED TO YOU",
                 title: "Fear did not\ncome from God.",
-                body: "What He gave you was power, love and a mind that holds steady. So when fear tells you what is coming, that is not information. It is a voice with no authority, and Jesus answered it out loud every time it spoke.",
+                body: "What He gave you was power, love and a mind that holds steady. When the men came to tell Jairus his daughter was dead, Jesus did not discuss it. He turned to the father and said do not be afraid. Fear is a voice, not information, and a voice can be answered out loud.",
                 verse: "The Spirit God gave us does not make us timid, but gives us power, love and self-discipline.",
                 reference: "2 Timothy 1:7",
                 analyticsEvent: "fear_scene_shown",
@@ -448,7 +448,7 @@ enum OnboardingAngles {
                 symbol: "waveform",
                 eyebrow: "ANSWER IT WHILE THE SUN IS UP",
                 title: "Answer it once,\nout loud, every morning.",
-                body: "Sixty seconds where you say what God said over your children, your safety, your future. Fear asks the same question every day. When the answer is already in your mouth, it does not get to run the day.",
+                body: "Sixty seconds where you say what God said over your children, your safety, your future. Fear will ask again tomorrow morning. The only question is whether it gets an answer.",
                 verse: "The Lord is with me; I will not be afraid. What can mere mortals do to me?",
                 reference: "Psalm 118:6",
                 buttonLabel: "I'm Ready to Answer It →",
@@ -505,19 +505,24 @@ enum OnboardingAngles {
         scenes: [
             AngleScene(
                 symbol: "figure.and.child.holdinghands",
-                eyebrow: "NOBODY TELLS YOU THIS PART",
-                title: "You cannot make\nthem turn out right.",
-                body: "You can feed them, drive them, sit outside their door and pray. You still cannot decide who they become. That is the part that keeps parents awake, and it is the exact part God never asked you to carry alone.",
-                verse: "Children are a heritage from the Lord, offspring a reward from him.",
-                reference: "Psalm 127:3",
+                // The first version opened on what a parent CANNOT do, which is
+                // true and gives them nothing to push against. This names the
+                // antagonist instead: something is speaking over their kids all
+                // day and it is not them. Deuteronomy 6:7 is the answer to that
+                // exact problem, which is why it replaced Psalm 127:3 here.
+                eyebrow: "IT IS NOT YOU THEY HEAR MOST",
+                title: "Something talks to your\nkids all day. It is not you.",
+                body: "The group chat, the feed, the kid at school, the voice in their own head. You get the car ride and ten minutes at bedtime. That is what has you lying awake at eleven, and it is exactly why the words you put over them matter more than you think.",
+                verse: "Impress them on your children. Talk about them when you sit at home and when you walk along the road, when you lie down and when you get up.",
+                reference: "Deuteronomy 6:7",
                 analyticsEvent: "parenting_scene_shown",
-                analyticsParameters: ["scene": "cannot_control"]
+                analyticsParameters: ["scene": "voices"]
             ),
             AngleScene(
                 symbol: "hands.sparkles.fill",
                 eyebrow: "HE CALLED THEM TO HIMSELF",
                 title: "Jesus put His hands\non the children.",
-                body: "The disciples tried to move them along. He stopped everything, took them in His arms and blessed them. The God who did that is not indifferent about yours, and the words you say over them are not small.",
+                body: "The disciples tried to move them along. He stopped everything, took them in His arms and blessed them. You cannot decide who your children become. You can put them in the hands of the One who already called them to Himself, out loud, by name.",
                 verse: "He took the children in his arms, placed his hands on them and blessed them.",
                 reference: "Mark 10:16",
                 analyticsEvent: "parenting_scene_shown",
@@ -527,7 +532,7 @@ enum OnboardingAngles {
                 symbol: "waveform",
                 eyebrow: "SAY IT OVER THEM DAILY",
                 title: "Sixty seconds of blessing\nover your house.",
-                body: "You say what God says over each of them before the day gets to them. Peace on the house. Wisdom in their choices. His hand on where they go. Words spoken in faith over your children do not fall to the ground.",
+                body: "You say what God says over each of them before the day gets to them. Peace on the house. Wisdom in their choices. His hand on where they go. Somebody speaks over your children every day. You decide whether it is you first.",
                 verse: "All your children will be taught by the Lord, and great will be their peace.",
                 reference: "Isaiah 54:13",
                 buttonLabel: "I'm Ready to Speak Over Them →",
@@ -604,7 +609,7 @@ enum OnboardingAngles {
                 symbol: "waveform",
                 eyebrow: "SAY IT BEFORE THE CRAVING DOES",
                 title: "Sixty seconds before\nthe day makes its offer.",
-                body: "Out loud, in the morning, you say who you are and what has no claim on you. Not white knuckles. A mouth already full of truth when the moment arrives. And on the days you slip, grace stands you up the same morning, not next week.",
+                body: "Out loud, in the morning, you say who you are and what has no claim on you. Not white knuckles. A mouth already full of truth before the moment arrives. On the days you slip, grace stands you up the same morning. The offer comes every day. You decide what is in your mouth when it does.",
                 verse: "Sin shall no longer be your master, because you are not under the law, but under grace.",
                 reference: "Romans 6:14",
                 buttonLabel: "I'm Ready to Be Free →",
@@ -665,7 +670,7 @@ enum OnboardingAngles {
                 // decode.
                 eyebrow: "THE PART YOU DO NOT SAY OUT LOUD",
                 title: "You are still married.\nYou are not close.",
-                body: "Some days it is quiet and polite. Some days it is the same argument again. Either way there is more distance than there used to be, and you have stopped telling anyone about it.",
+                body: "You text about logistics. You go to bed at different times. Some days it is quiet and polite, some days it is the same argument again, and either way you have stopped telling anyone how far apart you actually are.",
                 verse: "Above all, love each other deeply, because love covers over a multitude of sins.",
                 reference: "1 Peter 4:8",
                 analyticsEvent: "marriage_scene_shown",
@@ -685,7 +690,7 @@ enum OnboardingAngles {
                 symbol: "waveform",
                 eyebrow: "SAY IT OVER YOUR HOUSE DAILY",
                 title: "Sixty seconds spoken\nover your marriage.",
-                body: "Peace in the house. Kindness in your own mouth. Love that covers instead of keeping score. You say it before the day starts, over the part that is yours, and you let God work on what you cannot reach.",
+                body: "Peace in the house. Kindness in your own mouth. Love that covers instead of keeping score. You cannot speak for both of you, and you can refuse to let the distance have the last word.",
                 verse: "By wisdom a house is built, and through understanding it is established.",
                 reference: "Proverbs 24:3",
                 buttonLabel: "I'm Ready to Speak Over It →",
@@ -752,8 +757,8 @@ enum OnboardingAngles {
             AngleScene(
                 symbol: "flame.fill",
                 eyebrow: "HE DOES NOT LOSE YOU IN IT",
-                title: "You pass through.\nYou do not burn.",
-                body: "He never promised a life with no water and no fire. He promised to be in it, that the water would not close over you and the flames would not set you alight. Nothing you are standing in right now gets to keep you.",
+                title: "Nothing you are in\ngets to keep you.",
+                body: "He never promised a life with no water and no fire. He promised to be in it with you, that the water would not close over your head and the flames would not touch you. You are not being left in this.",
                 verse: "When you pass through the waters, I will be with you; when you walk through the fire, you will not be burned.",
                 reference: "Isaiah 43:2",
                 analyticsEvent: "hardtimes_scene_shown",
@@ -763,7 +768,7 @@ enum OnboardingAngles {
                 symbol: "waveform",
                 eyebrow: "ONE MINUTE, WHILE IT IS STILL HARD",
                 title: "Sixty seconds before\nyou pick it back up.",
-                body: "You say what God said over this season before you carry another hour of it. Strength for today. Provision for what is due. Rest that actually restores. Say it while it is still hard, because that is when saying it counts.",
+                body: "You say what God said over this season before you carry another hour of it. Strength for today. Provision for what is due. Rest that actually restores. The season did not ask your permission. What you say inside it is the part you still hold.",
                 verse: "Come to me, all you who are weary and burdened, and I will give you rest.",
                 reference: "Matthew 11:28",
                 buttonLabel: "I'm Ready to Stand →",
