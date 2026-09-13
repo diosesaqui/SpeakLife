@@ -657,9 +657,15 @@ enum OnboardingAngles {
         scenes: [
             AngleScene(
                 symbol: "house.fill",
-                eyebrow: "IT DID NOT BLOW UP. IT COOLED.",
-                title: "You are polite,\nand you are strangers.",
-                body: "Schedules, logistics, who is picking up who. Two people being careful with each other in the same house, and a distance neither of you says out loud. Most couples carry this one quietly for years.",
+                // Plain on purpose. The first version of this screen ran a
+                // figure of speech ("you are polite, and you are strangers")
+                // and assumed the marriage had gone cold, which loses everyone
+                // whose marriage is loud instead. This names the one thing both
+                // kinds have in common and says it in words nobody has to
+                // decode.
+                eyebrow: "THE PART YOU DO NOT SAY OUT LOUD",
+                title: "You are still married.\nYou are not close.",
+                body: "Some days it is quiet and polite. Some days it is the same argument again. Either way there is more distance than there used to be, and you have stopped telling anyone about it.",
                 verse: "Above all, love each other deeply, because love covers over a multitude of sins.",
                 reference: "1 Peter 4:8",
                 analyticsEvent: "marriage_scene_shown",
