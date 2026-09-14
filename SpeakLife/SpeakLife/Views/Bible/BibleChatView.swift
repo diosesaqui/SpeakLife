@@ -592,6 +592,12 @@ struct BibleChatConversationView: View {
     /// the ones a wrong opener costs most: the ad said "you lost someone" and the
     /// first screen must not ask what is heaviest.
     ///
+    /// The `fear`, `parenting`, `addiction` and `hardtimes` arms widened it again,
+    /// to `.godsprotection`, `.parenting`, `.addiction` and `.hardtimes`. Every
+    /// new single-issue arm is a new seed this switch has to know, so adding one
+    /// without adding its opener is the standing failure mode here;
+    /// `testEveryAngleSeedsAPersonalChatOpener` is what catches it.
+    ///
     /// Returns nil for everything `CategoryType` covers, so the switch above
     /// stays the single home for those lines. Internal rather than private so
     /// `OnboardingAngleTests` can assert every arm's seed reaches a personal
@@ -607,6 +613,10 @@ struct BibleChatConversationView: View {
         case .salvation: return "Someone I love is far from God. What does His Word say about them?"
         case .purity:   return "I keep falling into the same sin. What does God say about walking free of it?"
         case .grace:    return "I've messed up badly. What does God's Word say about grace for someone like me?"
+        case .godsprotection: return "I'm scared something will happen to the people I love. What does God say about keeping us safe?"
+        case .parenting: return "I'm carrying a lot for my kids right now. What does God say over them?"
+        case .addiction: return "Something has a hold on me that I can't break on my own. What does God say about getting free?"
+        case .hardtimes: return "Everything is hitting at once and I'm worn down. What does God say to me right here?"
         default:        return nil
         }
     }
