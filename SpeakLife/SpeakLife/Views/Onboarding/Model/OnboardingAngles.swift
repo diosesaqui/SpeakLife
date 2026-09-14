@@ -397,9 +397,416 @@ enum OnboardingAngles {
         )
     )
 
+    // MARK: - Fear and dread (the what if)
+
+    /// Deep linked from fear creative. The territory left over once `anxiety`
+    /// and `mortality` have theirs, and the line between them is worth keeping:
+    /// `anxiety` owns the STATE (sleep, racing thoughts, pressure, waiting),
+    /// `mortality` owns death, and this arm owns the WHAT IF. A named outcome
+    /// the person has already rehearsed in detail and is paying for before it
+    /// happens.
+    ///
+    /// Seeds `.fear` (47 lines) with `.godsprotection` (54) on the two rows that
+    /// are really about safety, the way `mortality` splits `.fear` and `.heaven`.
+    /// `.confidence` would have fit the stepping-out row but holds 25 lines, too
+    /// thin to seed a feed from. Burden stays `peace`, the nearest neighbour.
+    ///
+    /// The copy never shames the fear. It grants it first (David said "when I am
+    /// afraid", not "if"), then moves the authority: fear is a voice, not
+    /// information, and 2 Timothy 1:7 says where it did not come from. What it
+    /// claims is God's presence and His word over the outcome, never that the
+    /// dreaded thing cannot happen, which is not a promise scripture makes.
+    static let fear = OnboardingAngle(
+        id: "fear",
+        flow: "fear",
+        flowSchema: 1,
+        opensWithStormScreen: true,
+        scenes: [
+            AngleScene(
+                symbol: "moon.stars.fill",
+                // Grants the fear before answering it. "When I am afraid" is
+                // David's own wording, so screen one is permission, not a lecture.
+                eyebrow: "IT HAS NOT HAPPENED YET",
+                title: "You have already lived it\nonce, in your head.",
+                body: "Every version of it, in detail, at two in the morning. The thing has not happened and you have already paid for it. Fear charges you for a future God never signed off on.",
+                verse: "When I am afraid, I put my trust in you.",
+                reference: "Psalm 56:3",
+                analyticsEvent: "fear_scene_shown",
+                analyticsParameters: ["scene": "rehearsed"]
+            ),
+            AngleScene(
+                symbol: "bolt.shield.fill",
+                eyebrow: "IT WAS NEVER HANDED TO YOU",
+                title: "Fear did not\ncome from God.",
+                body: "What He gave you was power, love and a mind that holds steady. When the men came to tell Jairus his daughter was dead, Jesus did not discuss it. He turned to the father and said do not be afraid. Fear is a voice, not information, and a voice can be answered out loud.",
+                verse: "The Spirit God gave us does not make us timid, but gives us power, love and self-discipline.",
+                reference: "2 Timothy 1:7",
+                analyticsEvent: "fear_scene_shown",
+                analyticsParameters: ["scene": "not_from_god"]
+            ),
+            AngleScene(
+                symbol: "waveform",
+                eyebrow: "ANSWER IT WHILE THE SUN IS UP",
+                title: "Answer it once,\nout loud, every morning.",
+                body: "Sixty seconds where you say what God said over your children, your safety, your future. Fear will ask again tomorrow morning. The only question is whether it gets an answer.",
+                verse: "The Lord is with me; I will not be afraid. What can mere mortals do to me?",
+                reference: "Psalm 118:6",
+                buttonLabel: "I'm Ready to Answer It →",
+                analyticsEvent: "fear_scene_shown",
+                analyticsParameters: ["scene": "answered"]
+            )
+        ],
+        picker: AnglePicker(
+            headline: "What is fear telling you\nis going to happen?",
+            subtitle: "We will build your sixty seconds around it\nand have it ready every morning when you wake up.",
+            analyticsEvent: "fear_picker_shown",
+            choices: [
+                AnglePickerChoice(id: "children", burden: .peace,
+                    statement: "Something happening to my kids", subtitle: "The scenario I never asked for",
+                    symbol: "figure.and.child.holdinghands", segmentLabel: "children", seedCategory: .godsprotection),
+                AnglePickerChoice(id: "safety", burden: .peace,
+                    statement: "Our safety where we live", subtitle: "The news makes it feel closer",
+                    symbol: "house.fill", segmentLabel: "safety", seedCategory: .godsprotection),
+                AnglePickerChoice(id: "worst_case", burden: .peace,
+                    statement: "The worst case I keep rehearsing", subtitle: "I have lived it a hundred times",
+                    symbol: "arrow.triangle.2.circlepath", segmentLabel: "worst_case", seedCategory: .fear),
+                AnglePickerChoice(id: "losing", burden: .peace,
+                    statement: "Losing what I have", subtitle: "The job, the marriage, the health",
+                    symbol: "hand.raised.fill", segmentLabel: "losing", seedCategory: .fear),
+                AnglePickerChoice(id: "people", burden: .peace,
+                    statement: "What people can do to me", subtitle: "Being talked about or found out",
+                    symbol: "eye.fill", segmentLabel: "people", seedCategory: .fear),
+                AnglePickerChoice(id: "stepping_out", burden: .peace,
+                    statement: "Stepping out and failing", subtitle: "The thing God asked me to do",
+                    symbol: "figure.walk", segmentLabel: "stepping_out", seedCategory: .fear)
+            ]
+        )
+    )
+
+    // MARK: - Parenting
+
+    /// Deep linked from parenting creative. Seeds `.parenting` on every row.
+    ///
+    /// Bordered on two sides and the borders matter. `fear` owns the safety
+    /// what-if (something happening to my kids), and `prodigal` owns a child who
+    /// has already walked away from God, where the promise has to stay off the
+    /// child's free choice. This arm owns the daily work of raising them: the
+    /// worry that never switches off, the temper, the child you cannot fix, who
+    /// they are becoming.
+    ///
+    /// It never promises how a child will turn out, for the same reason
+    /// `prodigal` does not: that is another free person. It promises God's hand
+    /// on the house and the weight of a parent's words over their own children.
+    static let parenting = OnboardingAngle(
+        id: "parenting",
+        flow: "parenting",
+        flowSchema: 1,
+        opensWithStormScreen: true,
+        scenes: [
+            AngleScene(
+                symbol: "figure.and.child.holdinghands",
+                // The first version opened on what a parent CANNOT do, which is
+                // true and gives them nothing to push against. This names the
+                // antagonist instead: something is speaking over their kids all
+                // day and it is not them. Deuteronomy 6:7 is the answer to that
+                // exact problem, which is why it replaced Psalm 127:3 here.
+                eyebrow: "IT IS NOT YOU THEY HEAR MOST",
+                title: "Something talks to your\nkids all day. It is not you.",
+                body: "The group chat, the feed, the kid at school, the voice in their own head. You get the car ride and ten minutes at bedtime. That is what has you lying awake at eleven, and it is exactly why the words you put over them matter more than you think.",
+                verse: "Impress them on your children. Talk about them when you sit at home and when you walk along the road, when you lie down and when you get up.",
+                reference: "Deuteronomy 6:7",
+                analyticsEvent: "parenting_scene_shown",
+                analyticsParameters: ["scene": "voices"]
+            ),
+            AngleScene(
+                symbol: "hands.sparkles.fill",
+                eyebrow: "HE CALLED THEM TO HIMSELF",
+                title: "Jesus put His hands\non the children.",
+                body: "The disciples tried to move them along. He stopped everything, took them in His arms and blessed them. You cannot decide who your children become. You can put them in the hands of the One who already called them to Himself, out loud, by name.",
+                verse: "He took the children in his arms, placed his hands on them and blessed them.",
+                reference: "Mark 10:16",
+                analyticsEvent: "parenting_scene_shown",
+                analyticsParameters: ["scene": "blessed"]
+            ),
+            AngleScene(
+                symbol: "waveform",
+                eyebrow: "SAY IT OVER THEM DAILY",
+                title: "Sixty seconds of blessing\nover your house.",
+                body: "You say what God says over each of them before the day gets to them. Peace on the house. Wisdom in their choices. His hand on where they go. Somebody speaks over your children every day. You decide whether it is you first.",
+                verse: "All your children will be taught by the Lord, and great will be their peace.",
+                reference: "Isaiah 54:13",
+                buttonLabel: "I'm Ready to Speak Over Them →",
+                analyticsEvent: "parenting_scene_shown",
+                analyticsParameters: ["scene": "daily"]
+            )
+        ],
+        picker: AnglePicker(
+            headline: "What are you carrying\nfor your kids?",
+            subtitle: "We will build your sixty seconds around it\nand have it ready every morning when you wake up.",
+            analyticsEvent: "parenting_picker_shown",
+            choices: [
+                AnglePickerChoice(id: "worry", burden: .peace,
+                    statement: "Worry that never switches off", subtitle: "Even on the days they are fine",
+                    symbol: "moon.stars.fill", segmentLabel: "worry", seedCategory: .parenting),
+                AnglePickerChoice(id: "patience", burden: .peace,
+                    statement: "My patience in this house", subtitle: "I do not want to be the one yelling",
+                    symbol: "flame.fill", segmentLabel: "patience", seedCategory: .parenting),
+                AnglePickerChoice(id: "struggling", burden: .peace,
+                    statement: "One of them is struggling", subtitle: "And I cannot fix it for them",
+                    symbol: "figure.and.child.holdinghands", segmentLabel: "struggling", seedCategory: .parenting),
+                AnglePickerChoice(id: "future", burden: .peace,
+                    statement: "Who they are becoming", subtitle: "The choices coming at them",
+                    symbol: "sunrise.fill", segmentLabel: "future", seedCategory: .parenting),
+                AnglePickerChoice(id: "faith", burden: .peace,
+                    statement: "Their faith of their own", subtitle: "I want it to be theirs, not mine",
+                    symbol: "book.closed.fill", segmentLabel: "faith", seedCategory: .parenting),
+                AnglePickerChoice(id: "enough", burden: .peace,
+                    statement: "Whether I am getting it right", subtitle: "The guilt that shows up at bedtime",
+                    symbol: "person.fill", segmentLabel: "enough", seedCategory: .parenting)
+            ]
+        )
+    )
+
+    // MARK: - Addiction
+
+    /// Deep linked from freedom creative. Seeds `.addiction`, with `.grace` on
+    /// the relapse row, the way `purity` splits `.purity` and `.grace`.
+    ///
+    /// Distinct from `purity`, which owns lust and the late-night cycle. This arm
+    /// is the substance and compulsion side: drink, pills, the scroll, food, the
+    /// bet. Romans 7:15 is deliberately screen one, because Paul naming the exact
+    /// experience is the only opener that does not read as judgement.
+    ///
+    /// It promises freedom in Christ, which scripture does promise, and never a
+    /// date by which the craving stops.
+    static let addiction = OnboardingAngle(
+        id: "addiction",
+        flow: "addiction",
+        flowSchema: 1,
+        opensWithStormScreen: true,
+        scenes: [
+            AngleScene(
+                symbol: "arrow.triangle.2.circlepath",
+                eyebrow: "YOU HAVE QUIT MORE THAN ONCE",
+                title: "You meant it\nevery time.",
+                body: "The promise you made at two in the morning was real. So was the one before it. Willpower keeps running out before the craving does, and that is not proof you are weak. It is proof you have been fighting the wrong way.",
+                verse: "For I do not do what I want, but I do the very thing I hate.",
+                reference: "Romans 7:15",
+                analyticsEvent: "addiction_scene_shown",
+                analyticsParameters: ["scene": "quit_before"]
+            ),
+            AngleScene(
+                symbol: "lock.open.fill",
+                eyebrow: "IT DOES NOT OWN YOU",
+                title: "Whoever the Son sets\nfree is free indeed.",
+                body: "Jesus did not come to help you manage it. He came to break its claim. An appetite that keeps winning is not stronger than the blood that bought you, and it has no authority over a son or a daughter.",
+                verse: "So if the Son sets you free, you will be free indeed.",
+                reference: "John 8:36",
+                analyticsEvent: "addiction_scene_shown",
+                analyticsParameters: ["scene": "free_indeed"]
+            ),
+            AngleScene(
+                symbol: "waveform",
+                eyebrow: "SAY IT BEFORE THE CRAVING DOES",
+                title: "Sixty seconds before\nthe day makes its offer.",
+                body: "Out loud, in the morning, you say who you are and what has no claim on you. Not white knuckles. A mouth already full of truth before the moment arrives. On the days you slip, grace stands you up the same morning. The offer comes every day. You decide what is in your mouth when it does.",
+                verse: "Sin shall no longer be your master, because you are not under the law, but under grace.",
+                reference: "Romans 6:14",
+                buttonLabel: "I'm Ready to Be Free →",
+                analyticsEvent: "addiction_scene_shown",
+                analyticsParameters: ["scene": "daily"]
+            )
+        ],
+        picker: AnglePicker(
+            headline: "What keeps\npulling you back?",
+            subtitle: "We will build your sixty seconds around it\nand have it ready every morning when you wake up.",
+            analyticsEvent: "addiction_picker_shown",
+            choices: [
+                AnglePickerChoice(id: "drink", burden: .identity,
+                    statement: "Drinking", subtitle: "It stopped being a choice a while ago",
+                    symbol: "drop.fill", segmentLabel: "drink", seedCategory: .addiction),
+                AnglePickerChoice(id: "substances", burden: .identity,
+                    statement: "Pills or substances", subtitle: "It started as something I needed",
+                    symbol: "pills.fill", segmentLabel: "substances", seedCategory: .addiction),
+                AnglePickerChoice(id: "scrolling", burden: .identity,
+                    statement: "Hours on my phone", subtitle: "Nights I will never get back",
+                    symbol: "iphone", segmentLabel: "scrolling", seedCategory: .addiction),
+                AnglePickerChoice(id: "food", burden: .identity,
+                    statement: "Food and the comfort in it", subtitle: "I eat to turn the feeling off",
+                    symbol: "fork.knife", segmentLabel: "food", seedCategory: .addiction),
+                AnglePickerChoice(id: "betting", burden: .identity,
+                    statement: "Betting or spending", subtitle: "The chase that never pays out",
+                    symbol: "creditcard.fill", segmentLabel: "betting", seedCategory: .addiction),
+                AnglePickerChoice(id: "shame", burden: .identity,
+                    statement: "The shame after I slip", subtitle: "That is what starts it again",
+                    symbol: "cloud.fill", segmentLabel: "shame", seedCategory: .grace)
+            ]
+        )
+    )
+
+    // MARK: - Marriage
+
+    /// Deep linked from marriage creative. Seeds `.marriage` on every row, and
+    /// the first arm about a household rather than one person's inner life.
+    ///
+    /// This is the second arm after `prodigal` where the promise has to stay off
+    /// another free person. Scripture does not promise a spouse will soften,
+    /// come back or believe, so nothing here says they will. It stands on the
+    /// covenant God made, on the atmosphere of the house, and on the speaker's
+    /// own mouth, which is the only part they actually hold.
+    static let marriage = OnboardingAngle(
+        id: "marriage",
+        flow: "marriage",
+        flowSchema: 1,
+        opensWithStormScreen: true,
+        scenes: [
+            AngleScene(
+                symbol: "house.fill",
+                // Plain on purpose. The first version of this screen ran a
+                // figure of speech ("you are polite, and you are strangers")
+                // and assumed the marriage had gone cold, which loses everyone
+                // whose marriage is loud instead. This names the one thing both
+                // kinds have in common and says it in words nobody has to
+                // decode.
+                eyebrow: "THE PART YOU DO NOT SAY OUT LOUD",
+                title: "You are still married.\nYou are not close.",
+                body: "You text about logistics. You go to bed at different times. Some days it is quiet and polite, some days it is the same argument again, and either way you have stopped telling anyone how far apart you actually are.",
+                verse: "Above all, love each other deeply, because love covers over a multitude of sins.",
+                reference: "1 Peter 4:8",
+                analyticsEvent: "marriage_scene_shown",
+                analyticsParameters: ["scene": "distance"]
+            ),
+            AngleScene(
+                symbol: "link",
+                eyebrow: "IT IS NOT ONLY BETWEEN YOU TWO",
+                title: "God joined it.\nHe is still in it.",
+                body: "A covenant He made is not fragile because it is tired. You cannot make another person change, and He never asked you to. Your part is to stand in your own place and speak His Word over this house until the air in it changes.",
+                verse: "Therefore what God has joined together, let no one separate.",
+                reference: "Mark 10:9",
+                analyticsEvent: "marriage_scene_shown",
+                analyticsParameters: ["scene": "joined"]
+            ),
+            AngleScene(
+                symbol: "waveform",
+                eyebrow: "SAY IT OVER YOUR HOUSE DAILY",
+                title: "Sixty seconds spoken\nover your marriage.",
+                body: "Peace in the house. Kindness in your own mouth. Love that covers instead of keeping score. You cannot speak for both of you, and you can refuse to let the distance have the last word.",
+                verse: "By wisdom a house is built, and through understanding it is established.",
+                reference: "Proverbs 24:3",
+                buttonLabel: "I'm Ready to Speak Over It →",
+                analyticsEvent: "marriage_scene_shown",
+                analyticsParameters: ["scene": "daily"]
+            )
+        ],
+        picker: AnglePicker(
+            headline: "Where is your marriage\nright now?",
+            subtitle: "We will build your sixty seconds around it\nand have it ready every morning when you wake up.",
+            analyticsEvent: "marriage_picker_shown",
+            choices: [
+                AnglePickerChoice(id: "distance", burden: .peace,
+                    statement: "We have gone quiet", subtitle: "Polite, and far apart",
+                    symbol: "house.fill", segmentLabel: "distance", seedCategory: .marriage),
+                AnglePickerChoice(id: "conflict", burden: .peace,
+                    statement: "The same fight on repeat", subtitle: "It starts over nothing",
+                    symbol: "flame.fill", segmentLabel: "conflict", seedCategory: .marriage),
+                AnglePickerChoice(id: "trust", burden: .peace,
+                    statement: "Trust that got broken", subtitle: "I want to breathe in my own house again",
+                    symbol: "heart.slash.fill", segmentLabel: "trust", seedCategory: .marriage),
+                AnglePickerChoice(id: "alone", burden: .peace,
+                    statement: "I am the only one praying", subtitle: "Standing for both of us right now",
+                    symbol: "person.fill", segmentLabel: "alone", seedCategory: .marriage),
+                AnglePickerChoice(id: "closeness", burden: .peace,
+                    statement: "We are more roommates than married", subtitle: "I miss being wanted",
+                    symbol: "bed.double.fill", segmentLabel: "closeness", seedCategory: .marriage),
+                AnglePickerChoice(id: "season", burden: .peace,
+                    statement: "A hard season hit us", subtitle: "Money, kids and work all at once",
+                    symbol: "calendar", segmentLabel: "season", seedCategory: .marriage)
+            ]
+        )
+    )
+
+    // MARK: - Hard times
+
+    /// Deep linked from hard-season creative. Seeds `.hardtimes`, with `.rest` on
+    /// the running-on-empty row.
+    ///
+    /// The arm for when it is not one thing. `anxiety` owns the state, `provision`
+    /// owns money, `healing` owns the body; this one is for the person carrying
+    /// several of those at once, which is a different pitch: not a fix for one
+    /// area, strength to stand while all of them are in motion.
+    ///
+    /// Isaiah 43:2 sets the limit it keeps: not a life with no fire, but God in
+    /// it and nothing in it getting to keep you. No timeline on the season
+    /// breaking, because scripture does not give one.
+    static let hardtimes = OnboardingAngle(
+        id: "hardtimes",
+        flow: "hardtimes",
+        flowSchema: 1,
+        opensWithStormScreen: true,
+        scenes: [
+            AngleScene(
+                symbol: "cloud.heavyrain.fill",
+                eyebrow: "IT IS NOT ONE THING",
+                title: "It all came\nat the same time.",
+                body: "The money, the body, the family, the work. One of them you could carry. All of them at once is why you are counting days instead of living them.",
+                verse: "We are hard pressed on every side, but not crushed.",
+                reference: "2 Corinthians 4:8",
+                analyticsEvent: "hardtimes_scene_shown",
+                analyticsParameters: ["scene": "all_at_once"]
+            ),
+            AngleScene(
+                symbol: "flame.fill",
+                eyebrow: "HE DOES NOT LOSE YOU IN IT",
+                title: "Nothing you are in\ngets to keep you.",
+                body: "He never promised a life with no water and no fire. He promised to be in it with you, that the water would not close over your head and the flames would not touch you. You are not being left in this.",
+                verse: "When you pass through the waters, I will be with you; when you walk through the fire, you will not be burned.",
+                reference: "Isaiah 43:2",
+                analyticsEvent: "hardtimes_scene_shown",
+                analyticsParameters: ["scene": "through_it"]
+            ),
+            AngleScene(
+                symbol: "waveform",
+                eyebrow: "ONE MINUTE, WHILE IT IS STILL HARD",
+                title: "Sixty seconds before\nyou pick it back up.",
+                body: "You say what God said over this season before you carry another hour of it. Strength for today. Provision for what is due. Rest that actually restores. The season did not ask your permission. What you say inside it is the part you still hold.",
+                verse: "Come to me, all you who are weary and burdened, and I will give you rest.",
+                reference: "Matthew 11:28",
+                buttonLabel: "I'm Ready to Stand →",
+                analyticsEvent: "hardtimes_scene_shown",
+                analyticsParameters: ["scene": "daily"]
+            )
+        ],
+        picker: AnglePicker(
+            headline: "What is hitting\nhardest right now?",
+            subtitle: "We will build your sixty seconds around it\nand have it ready every morning when you wake up.",
+            analyticsEvent: "hardtimes_picker_shown",
+            choices: [
+                AnglePickerChoice(id: "everything", burden: .peace,
+                    statement: "All of it at once", subtitle: "I cannot tell where to start",
+                    symbol: "cloud.heavyrain.fill", segmentLabel: "everything", seedCategory: .hardtimes),
+                AnglePickerChoice(id: "money", burden: .peace,
+                    statement: "Money that will not stretch", subtitle: "The math does not work this month",
+                    symbol: "creditcard.fill", segmentLabel: "money", seedCategory: .hardtimes),
+                AnglePickerChoice(id: "empty", burden: .peace,
+                    statement: "I am running on empty", subtitle: "Tired in a way sleep does not fix",
+                    symbol: "bed.double.fill", segmentLabel: "empty", seedCategory: .rest),
+                AnglePickerChoice(id: "waiting", burden: .peace,
+                    statement: "Waiting for it to break", subtitle: "It has gone on longer than I can explain",
+                    symbol: "hourglass", segmentLabel: "waiting", seedCategory: .hardtimes),
+                AnglePickerChoice(id: "faith", burden: .peace,
+                    statement: "My faith is thin right now", subtitle: "I still show up, barely",
+                    symbol: "book.closed.fill", segmentLabel: "faith", seedCategory: .hardtimes),
+                AnglePickerChoice(id: "alone", burden: .peace,
+                    statement: "Carrying it by myself", subtitle: "Nobody around me knows how bad it is",
+                    symbol: "person.fill", segmentLabel: "alone", seedCategory: .hardtimes)
+            ]
+        )
+    )
+
     static let all: [String: OnboardingAngle] = Dictionary(
         uniqueKeysWithValues: [promises, warfare, outcomes, command, healing, provision, anxiety, renewal,
-                               grief, mortality, prodigal, purity, depression]
+                               grief, mortality, prodigal, purity, depression, fear,
+                               parenting, addiction, marriage, hardtimes]
             .map { ($0.id, $0) }
     )
 
