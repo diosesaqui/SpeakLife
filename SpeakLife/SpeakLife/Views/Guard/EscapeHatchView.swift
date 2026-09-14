@@ -28,6 +28,18 @@
 //     to the reviewed library, and a sentence the library cannot place falls
 //     back to the bank. Someone who just typed a real thought must never be
 //     handed "we couldn't understand that" and left holding it.
+//  4. **The CTA is always reachable with the keyboard up.** This screen raises
+//     the keyboard the moment it appears and never lowers it, so anything laid
+//     out below the field is laid out behind the keypad. It shipped as one
+//     fixed-height VStack — header, question, privacy line, a 120pt editor,
+//     hint, button — which overflows the ~450pt a phone leaves above the
+//     keyboard, and the half that spills is the bottom half: the button.
+//     Users typed their thought and had no way to submit it, no way to put the
+//     keyboard away, and closed the app. Hence three things below, and all
+//     three stay: the action lives in a `safeAreaInset` so the keyboard lifts
+//     it instead of covering it, the body scrolls so nothing can be clipped
+//     out of reach, and the keyboard can always be dismissed — a Done key and
+//     a tap on the backdrop.
 //
 
 import SwiftUI
@@ -157,171 +169,224 @@ struct AskForThoughtView: View {
                            startPoint: .top, endPoint: .bottom)
                 .ignoresSafeArea()
 
-            VStack(alignment: .leading, spacing: DS.Spacing.md) {
-                HStack {
-                    Text("TAKE IT CAPTIVE")
-                        .font(.system(size: 11, weight: .bold))
-                        .tracking(2.6)
-                        .foregroundColor(.white.opacity(0.38))
-                    Spacer()
-                    Button(action: onClose) {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.32))
-                            .frame(width: 32, height: 32)
+            ScrollView {
+                VStack(alignment: .leading, spacing: DS.Spacing.md) {
+                    HStack {
+                        Text("TAKE IT CAPTIVE")
+                            .font(.system(size: 11, weight: .bold))
+                            .tracking(2.6)
+                            .foregroundColor(.white.opacity(0.38))
+                        Spacer()
+                        Button(action: onClose) {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.32))
+                                .frame(width: 32, height: 32)
+                        }
+                        .accessibilityLabel("Close")
                     }
-                    .accessibilityLabel("Close")
-                }
 
-                Spacer(minLength: 0)
-
-                // Five words, and every one of them is load-bearing.
-                //
-                // This question was narrowed once, on purpose, to thoughts
-                // about YOURSELF and YOUR FUTURE, and the note here said why:
-                // anything broader "invited thoughts about other people and
-                // circumstances the drill has no answer for". That was true of
-                // the drill that existed then — forty-five bank lines across
-                // nine terrains. It is not true of this one, which answers a
-                // biopsy, a mortgage and a daughter who stopped calling out of
-                // the whole reviewed library, and rebukes the thing by name. So
-                // the fence came down, because it had started turning away the
-                // exact sentences the app is now best at.
-                //
-                // "Up against" does three things at once. It costs nothing to
-                // answer — no self-diagnosis, no measuring your own thought
-                // against your standing in Christ before you are allowed to
-                // type, which is a two-step task at 2am and was the old
-                // question's real failure. It takes a thought or a circumstance
-                // equally, and the engine behind it no longer cares which. And
-                // it puts the thing OUTSIDE them: something is against them,
-                // which is the frame rule 2 in `TakeItCaptive.swift` insists on
-                // — never "your thought", never anything that indicts them —
-                // and it is the same thing the rebuke is about to speak to.
-                //
-                // "Right now", not "today". The four-year thing is welcome here.
-                Text("What are you up against right now?")
-                    // Bigger than the sixteen-word question it replaced, which
-                    // could not afford the size. Six words can carry it, and a
-                    // question this short should land like one.
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
-                    // The keyboard is up the whole time this screen is on
-                    // screen. It shrinks rather than pushing the field off a
-                    // small phone at large type sizes.
-                    .minimumScaleFactor(0.75)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                Text(privacyLine)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(.white.opacity(0.45))
-                    .fixedSize(horizontal: false, vertical: true)
-
-                TextEditor(text: $text)
-                    .focused($focused)
-                    .font(.system(size: 17, weight: .regular))
-                    .foregroundColor(.white)
-                    .scrollContentBackground(.hidden)
-                    .frame(height: 120)
-                    .padding(10)
-                    .background(
-                        RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
-                            .fill(Color.white.opacity(0.06))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
-                            .stroke(Color.white.opacity(0.12), lineWidth: 1)
-                    )
-
-                // Only once they have started, and never before. A hint on an
-                // empty field reads as a rule to clear; a hint under two typed
-                // words reads as the app waiting for the rest, which is what it
-                // is doing — and it is phrased that way rather than as them
-                // getting it wrong. The bar is low enough that almost everything
-                // under it really is a fragment, but "write the whole sentence"
-                // would be a false accusation the one time it isn't.
-                if !entry.isEmpty, !canSubmit, !showReachOut {
-                    Text("A few more words, and we'll hand you the one that answers it.")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.white.opacity(0.42))
+                    // Five words, and every one of them is load-bearing.
+                    //
+                    // This question was narrowed once, on purpose, to thoughts
+                    // about YOURSELF and YOUR FUTURE, and the note here said why:
+                    // anything broader "invited thoughts about other people and
+                    // circumstances the drill has no answer for". That was true of
+                    // the drill that existed then — forty-five bank lines across
+                    // nine terrains. It is not true of this one, which answers a
+                    // biopsy, a mortgage and a daughter who stopped calling out of
+                    // the whole reviewed library, and rebukes the thing by name. So
+                    // the fence came down, because it had started turning away the
+                    // exact sentences the app is now best at.
+                    //
+                    // "Up against" does three things at once. It costs nothing to
+                    // answer — no self-diagnosis, no measuring your own thought
+                    // against your standing in Christ before you are allowed to
+                    // type, which is a two-step task at 2am and was the old
+                    // question's real failure. It takes a thought or a circumstance
+                    // equally, and the engine behind it no longer cares which. And
+                    // it puts the thing OUTSIDE them: something is against them,
+                    // which is the frame rule 2 in `TakeItCaptive.swift` insists on
+                    // — never "your thought", never anything that indicts them —
+                    // and it is the same thing the rebuke is about to speak to.
+                    //
+                    // "Right now", not "today". The four-year thing is welcome here.
+                    Text("What are you up against right now?")
+                        // Bigger than the sixteen-word question it replaced, which
+                        // could not afford the size. Six words can carry it, and a
+                        // question this short should land like one.
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                        // The keyboard is up the whole time this screen is on
+                        // screen. It shrinks rather than pushing the field off a
+                        // small phone at large type sizes.
+                        .minimumScaleFactor(0.75)
                         .fixedSize(horizontal: false, vertical: true)
-                        .transition(.opacity)
+
+                    Text(privacyLine)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.white.opacity(0.45))
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    TextEditor(text: $text)
+                        .focused($focused)
+                        .font(.system(size: 17, weight: .regular))
+                        .foregroundColor(.white)
+                        .scrollContentBackground(.hidden)
+                        .frame(height: 120)
+                        .padding(10)
+                        .background(
+                            RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
+                                .fill(Color.white.opacity(0.06))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
+                                .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                        )
+
+                    // Only once they have started, and never before. A hint on an
+                    // empty field reads as a rule to clear; a hint under two typed
+                    // words reads as the app waiting for the rest, which is what it
+                    // is doing — and it is phrased that way rather than as them
+                    // getting it wrong. The bar is low enough that almost everything
+                    // under it really is a fragment, but "write the whole sentence"
+                    // would be a false accusation the one time it isn't.
+                    if !entry.isEmpty, !canSubmit, !showReachOut {
+                        Text("A few more words, and we'll hand you the one that answers it.")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.white.opacity(0.42))
+                            .fixedSize(horizontal: false, vertical: true)
+                            .transition(.opacity)
+                    }
+
+                    if showReachOut {
+                        reachOutNotice
+                    }
+
+                    if let remaining, !showReachOut {
+                        Text(remaining > 0
+                             ? "\(remaining) more this month"
+                             : "You've used this month's extra entries.")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(.white.opacity(0.4))
+                    }
                 }
+                .padding(.horizontal, 24)
+                .padding(.vertical, 20)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                // Tapping the page puts the keyboard away. The CTA rides above
+                // the keyboard without this now, but a full-screen typing state
+                // with no way out is what made the bug unrecoverable. Buttons
+                // and the field take their own taps first, so this only ever
+                // catches the empty space around them.
+                .contentShape(Rectangle())
+                .onTapGesture { focused = false }
+                .animation(DS.Motion.quick, value: canSubmit)
+                .animation(DS.Motion.quick, value: entry.isEmpty)
+            }
+            // Nothing on this screen may be taller than the space the keyboard
+            // leaves. It scrolls instead — at large type sizes, or on a small
+            // phone, the question and the field stay reachable rather than
+            // spilling off the bottom behind the keypad.
+            .scrollBounceBehavior(.basedOnSize)
+            .scrollDismissesKeyboard(.interactively)
+        }
+        // The action never moves behind the keyboard: a bottom safe-area inset
+        // is lifted by the keyboard rather than covered by it, whatever the
+        // body above it costs in height.
+        .safeAreaInset(edge: .bottom, spacing: 0) { actionFooter }
+        // The last way out, for anyone who wants the keyboard gone before they
+        // tap anything.
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") { focused = false }
+                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+            }
+        }
+        .onAppear { focused = true }
+    }
 
-                if showReachOut {
-                    reachOutNotice
+    // MARK: - Action footer
+
+    /// The CTA and its alternative, pinned above the keyboard.
+    ///
+    /// Kept out of the scrolling body on purpose. These two are the only way
+    /// off this screen, and a control you have to scroll to find while the
+    /// keyboard is up is a control that is not there.
+    @ViewBuilder
+    private var actionFooter: some View {
+        if !showReachOut {
+            VStack(spacing: 0) {
+                Button {
+                    Task { await submit() }
+                } label: {
+                    HStack(spacing: 8) {
+                        if isWriting {
+                            ProgressView()
+                                .progressViewStyle(.circular)
+                                .tint(Color(hex: "#1A264D"))
+                        }
+                        Text(isWriting ? "Answering it" : "Take it captive")
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .foregroundColor(canSubmit ? Color(hex: "#1A264D") : .white.opacity(0.4))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(Capsule().fill(submitFill))
                 }
+                .buttonStyle(.dsPressable(feel: .tapSolid))
+                .disabled(!canSubmit || isWriting)
 
-                if let remaining, !showReachOut {
-                    Text(remaining > 0
-                         ? "\(remaining) more this month"
-                         : "You've used this month's extra entries.")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.white.opacity(0.4))
-                }
-
-                Spacer(minLength: 0)
-
-                if !showReachOut {
+                // The answer to the blank field. Deliberately a real option
+                // rather than a hidden fallback: some mornings nothing is
+                // loud, and the drill still works — that was the whole
+                // premise of the bank. It just no longer goes first.
+                //
+                // Gated on `!canSubmit`, which is exactly when the button
+                // above it is dead — so this screen always has at least one
+                // live way forward. Gating it on an empty field instead left
+                // a half-typed entry with a disabled CTA and no other door,
+                // which is the same dead end this whole change is fixing.
+                //
+                // It still goes away the moment the entry is real. Sitting
+                // under a finished sentence with the CTA lit, "Nothing
+                // specific" reads as the app's verdict on what was just
+                // written rather than as the other door, and that is
+                // precisely how it was read.
+                if !canSubmit {
                     Button {
-                        Task { await submit() }
+                        focused = false
+                        AnalyticsService.shared.track("guard_nothing_specific_tapped")
+                        onNothingSpecific()
                     } label: {
-                        HStack(spacing: 8) {
-                            if isWriting {
-                                ProgressView()
-                                    .progressViewStyle(.circular)
-                                    .tint(Color(hex: "#1A264D"))
-                            }
-                            Text(isWriting ? "Answering it" : "Take it captive")
-                                .font(.system(size: 16, weight: .bold, design: .rounded))
-                                .foregroundColor(canSubmit ? Color(hex: "#1A264D") : .white.opacity(0.4))
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(Capsule().fill(submitFill))
+                        Text("Can't name one? Give me one to work with.")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.5))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 6)
                     }
-                    .buttonStyle(.dsPressable(feel: .tapSolid))
-                    .disabled(!canSubmit || isWriting)
-
-                    // The answer to the blank field. Deliberately a real option
-                    // rather than a hidden fallback: some mornings nothing is
-                    // loud, and the drill still works — that was the whole
-                    // premise of the bank. It just no longer goes first.
-                    //
-                    // Gated on `!canSubmit`, which is exactly when the button
-                    // above it is dead — so this screen always has at least one
-                    // live way forward. Gating it on an empty field instead left
-                    // a half-typed entry with a disabled CTA and no other door,
-                    // which is the same dead end this whole change is fixing.
-                    //
-                    // It still goes away the moment the entry is real. Sitting
-                    // under a finished sentence with the CTA lit, "Nothing
-                    // specific" reads as the app's verdict on what was just
-                    // written rather than as the other door, and that is
-                    // precisely how it was read.
-                    if !canSubmit {
-                        Button {
-                            focused = false
-                            AnalyticsService.shared.track("guard_nothing_specific_tapped")
-                            onNothingSpecific()
-                        } label: {
-                            Text("Can't name one? Give me one to work with.")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.5))
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 6)
-                        }
-                        .buttonStyle(.plain)
-                        .transition(.opacity)
-                    }
+                    .buttonStyle(.plain)
+                    .transition(.opacity)
+                    .padding(.top, 4)
                 }
             }
             .padding(.horizontal, 24)
-            .padding(.vertical, 20)
+            .padding(.top, DS.Spacing.md)
+            .padding(.bottom, 20)
+            // Body text scrolls underneath this, so it needs a floor. The fade
+            // matches the bottom of the screen gradient and runs past the home
+            // indicator, where the scroll view still draws.
+            .background(
+                LinearGradient(
+                    colors: [Color(hex: "#101216").opacity(0), Color(hex: "#101216")],
+                    startPoint: .top,
+                    endPoint: .center
+                )
+                .ignoresSafeArea(edges: .bottom)
+            )
             .animation(DS.Motion.quick, value: canSubmit)
-            .animation(DS.Motion.quick, value: entry.isEmpty)
         }
-        .onAppear { focused = true }
     }
 
     // MARK: - Reach out
