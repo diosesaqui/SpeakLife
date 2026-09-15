@@ -37,7 +37,7 @@ Confirm you actually have it:
 
 ```bash
 ls functions/standTogether.js        # must exist
-grep -c isFullAccount firestore.rules # must print 8
+grep -c isFullAccount firestore.rules # must print 9
 ```
 
 Then run the suite. Needs the `firebase` CLI on your PATH (you have it) and a JDK
