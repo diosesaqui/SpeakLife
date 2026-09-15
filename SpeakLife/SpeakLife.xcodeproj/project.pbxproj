@@ -46,6 +46,7 @@
 		452D17DB2D703E9E000AB1D1 /* FirebaseRemoteConfig in Frameworks */ = {isa = PBXBuildFile; productRef = 452D17DA2D703E9E000AB1D1 /* FirebaseRemoteConfig */; };
 		452D17DD2D703E9E000AB1D1 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 452D17DC2D703E9E000AB1D1 /* FirebaseStorage */; };
 		452D17DF2D703F3A000AB1D1 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 452D17DE2D703F3A000AB1D1 /* FirebaseFirestore */; };
+		STANDFN00000000000000002 /* FirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = STANDFN00000000000000001 /* FirebaseFunctions */; };
 		452D17E22D725F87000AB1D1 /* RatingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 452D17E12D725F84000AB1D1 /* RatingView.swift */; };
 		452F6ACA2E87BA8300A27856 /* AnalyticsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 452F6AC92E87BA8200A27856 /* AnalyticsService.swift */; };
 		45C0A1112F2A0B0100A27856 /* AnalyticsContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C0A1102F2A0B0100A27856 /* AnalyticsContext.swift */; };
@@ -824,6 +825,7 @@
 				452D17DB2D703E9E000AB1D1 /* FirebaseRemoteConfig in Frameworks */,
 				7AF18CA22A0DB126005A6E31 /* SwiftUICharts in Frameworks */,
 				452D17DF2D703F3A000AB1D1 /* FirebaseFirestore in Frameworks */,
+				STANDFN00000000000000002 /* FirebaseFunctions in Frameworks */,
 				452D17DD2D703E9E000AB1D1 /* FirebaseStorage in Frameworks */,
 				45F6D87E2F2AD75200C0B98D /* FirebaseAuth in Frameworks */,
 				4553AE002FD2DDA70000D657 /* PostHog in Frameworks */,
@@ -1893,6 +1895,7 @@
 				452D17DA2D703E9E000AB1D1 /* FirebaseRemoteConfig */,
 				452D17DC2D703E9E000AB1D1 /* FirebaseStorage */,
 				452D17DE2D703F3A000AB1D1 /* FirebaseFirestore */,
+				STANDFN00000000000000001 /* FirebaseFunctions */,
 				45AE76702D7960BD0037EE12 /* FirebaseMessaging */,
 				45A4A3D72D8918BB00DFCEB7 /* FirebaseFirestoreCombine-Community */,
 				457CD38D2E84A11000F435EC /* TikTokBusinessSDK */,
@@ -2841,6 +2844,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 452D17D72D703E9E000AB1D1 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseFirestore;
+		};
+		STANDFN00000000000000001 /* FirebaseFunctions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 452D17D72D703E9E000AB1D1 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFunctions;
 		};
 		4553ADFF2FD2DDA70000D657 /* PostHog */ = {
 			isa = XCSwiftPackageProductDependency;
