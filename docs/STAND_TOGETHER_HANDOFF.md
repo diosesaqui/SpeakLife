@@ -19,10 +19,10 @@ client-side needs a Mac.
 | `firestore.rules` — Prayer Wall hardening + Stand rules | ✅ 23 emulator tests green |
 | `functions/standTogether.js` — 11 functions | ✅ 35 emulator tests green |
 | `firestore.indexes.json` — 3 composite indexes | ✅ |
-| **Deploy to `speaklife-3e5c4`** | ❌ **not done** (see Step 2) |
+| **Deploy to `speaklife-3e5c4`** | ✅ rules, indexes, 11/11 functions live |
 | All Swift (items 5–13) | ✅ **builds** |
 | Xcode project registration | ✅ done in `project.pbxproj` |
-| Package tests (`swift test`) | ❌ **not yet run** |
+| Package tests (`swift test`) | ✅ 32/32 |
 | Gating `hasFullAccess` at content sites | ❌ **one decision left — see below** |
 | QA (item 14) | ❌ not started |
 
@@ -126,42 +126,37 @@ the existing prayerWall and bibleChat functions down with it. Separate task.
 
 ---
 
-## Step 3 — The Swift: written, NOT compiled
-
-Every Swift file for items 5–13 is on the branch. **None of it has been built.**
-It was written in a Linux container with no Swift toolchain and no Xcode, so
-treat it as a very detailed first draft by someone who could not run the
-compiler — expect real errors, not a clean build.
-
-### Do these three things in order
-
-**1. Run the package tests first — no Xcode needed.**
+## Step 3 — The Swift: builds and tests green
 
 ```bash
-swift test --package-path Packages/SpeakLifeKit --filter Stand
+swift test --package-path Packages/SpeakLifeKit --filter Stand   # 32/32
 ```
 
-This covers `StandRoom` and `StandDayStamp` in isolation: day stamps across DST
-in both directions and over the date line, lenient decoding of a room that came
-from another app version, and `StandJoinResolver`, which decides whether
-somebody keeps the week they are holding. It is the logic most worth trusting
-and the cheapest to verify.
+Covers `StandRoom` and `StandDayStamp`: day stamps across DST in both
+directions and over the date line, lenient decoding of a room from another app
+version, and `StandJoinResolver`, which decides whether somebody keeps the week
+they are holding.
 
-**2. Register the new app-target files in Xcode.** Drag `Services/Stand/` and
-`Views/Stand/` into the project. Only `SpeakLifeQuiz` is a
-`PBXFileSystemSynchronizedRootGroup`, so nothing in those folders compiles until
-it is added. The `SpeakLifeCore` and `SpeakLifeServices` files need nothing —
-SwiftPM globs them.
+File registration and the `FirebaseFunctions` product link are already in
+`project.pbxproj` — no dragging needed.
 
-**3. Build, and expect these first.** Ranked by how likely they are:
+### What the first real build cost, for the record
 
-| Likely error | Where |
+Five rounds, all in the same two families, worth knowing because the next
+person writing Swift against this will hit them too:
+
+| Error | Cause |
 |---|---|
-| Swift 6 concurrency — `@MainActor` class with a `nonisolated` protocol method, and a `deinit` touching isolated state | `StandService.swift` |
-| `FirebaseFunctions` not in `Package.resolved` — add it in Xcode or every callable fails to resolve | `StandService`, `StandAuthCoordinator` |
-| `PremiumHaptics.success()` — used without verifying that exact method name | `StandInviteSheet`, `StandCompletionView` |
-| `.navigationDestination(item:)` and `.onChange(of:_:)` two-parameter form are iOS 17+ | `StandJoinView`, `StandDiscovery` |
-| `DS.Gradient.ember` / `.dsPressable` style helpers assumed to exist | the views generally |
+| Main-actor property from a nonisolated context | `StandDiscovery` reading `StandService.shared.rooms` |
+| `async` call in an autoclosure | `?? (await …)` — an autoclosure cannot be async |
+| Main-actor property in a nonisolated autoclosure | `isPremium \|\| standPass.isActive` — same shape, `\|\|` also autocloses |
+| `deinit` touching isolated state | dead code on a singleton whose deinit never runs |
+| No `ObservableObject of type AppState` | a modifier applied ABOVE the `.environmentObject` calls it read from |
+| `DeclarationCategory has no member 'peace'` | invented a category; the real theme is `.anxiety` |
+
+The last one is the cautionary tale: the catalog ships `Enforcing Peace` as id
+`"peace"` with theme `"anxiety"`, and `EnforcementServiceTests` already had it
+right. Check the existing tests before inventing a fixture.
 
 ### Files
 
