@@ -26,6 +26,11 @@ import SpeakLifeCore
 
 // MARK: - Prompt budget
 
+// `shouldPrompt` reads `StandService.shared.rooms`, which is main-actor
+// isolated, and every caller is a SwiftUI view body. Isolating the whole enum
+// is simpler and more honest than making one function nonisolated and then
+// hopping actors inside it.
+@MainActor
 enum StandDiscovery {
 
     private static let promptCountKey = "standInvitePromptCount"
@@ -224,8 +229,14 @@ struct StandInvitePromptSheet: View {
                 Button {
                     Task {
                         isCreating = true
-                        room = StandInviteLauncher.existingRoom(for: enforcement)
-                            ?? (await StandInviteLauncher.createRoom(for: enforcement))
+                        // Written out rather than with `??`: the right-hand
+                        // side of nil-coalescing is an autoclosure, which
+                        // cannot be async, so `?? (await …)` does not compile.
+                        if let existing = StandInviteLauncher.existingRoom(for: enforcement) {
+                            room = existing
+                        } else {
+                            room = await StandInviteLauncher.createRoom(for: enforcement)
+                        }
                         isCreating = false
                     }
                 } label: {

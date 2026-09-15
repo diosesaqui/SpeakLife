@@ -54,12 +54,13 @@ final class StandService: ObservableObject, StandMirroring {
 
     private init() {}
 
-    deinit {
-        // `listeners` is main-actor isolated; detach on the main actor without
-        // capturing self, which is already going away.
-        let registrations = listeners.values
-        Task { @MainActor in registrations.forEach { $0.remove() } }
-    }
+    // No deinit.
+    //
+    // `listeners` is main-actor isolated and a deinit is nonisolated, so
+    // reading it there does not compile under strict concurrency. There is also
+    // nothing to clean up: this is a `static let` singleton that lives for the
+    // process, so its deinit would never run. Listener teardown happens in
+    // `stopListening()`, which the screens call.
 
     // MARK: - Firestore date bridge
     //
