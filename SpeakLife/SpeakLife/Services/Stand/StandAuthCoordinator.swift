@@ -93,6 +93,9 @@ final class StandAuthCoordinator: ObservableObject {
             "trigger": "stand",
         ])
         await registerPushToken(uid: result.user.uid)
+        // The pass is server-written on join, so start watching for it as soon
+        // as there is an account to watch it for.
+        StandPassStore.shared.startObserving()
         return result.user.uid
     }
 

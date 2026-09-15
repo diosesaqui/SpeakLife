@@ -20,9 +20,28 @@ client-side needs a Mac.
 | `functions/standTogether.js` — 11 functions | ✅ 35 emulator tests green |
 | `firestore.indexes.json` — 3 composite indexes | ✅ |
 | **Deploy to `speaklife-3e5c4`** | ❌ **not done** (see Step 2) |
-| All Swift (items 5–13) | ⚠️ **written, never compiled** (see Step 3) |
-| Xcode project registration | ❌ yours to do |
+| All Swift (items 5–13) | ✅ **builds** |
+| Xcode project registration | ✅ done in `project.pbxproj` |
+| Package tests (`swift test`) | ❌ **not yet run** |
+| Gating `hasFullAccess` at content sites | ❌ **one decision left — see below** |
 | QA (item 14) | ❌ not started |
+
+### The one deliberately unfinished thing
+
+`SubscriptionStore.hasFullAccess` (`isPremium || StandPassStore.shared.isActive`)
+exists but **nothing gates on it yet**. Content checks still read `isPremium`,
+so an invitee's seven-day pass currently unlocks nothing.
+
+It was left that way on purpose rather than folded into `isPremium`:
+`isPremium` has a `didSet` that stamps the monetization dimension onto every
+analytics event, so OR-ing a free pass into it would report pass holders as
+subscribers and quietly corrupt every revenue cut. `isPremium` stays
+RevenueCat's truth.
+
+Adopting `hasFullAccess` means choosing, per gate, whether a Stand Pass should
+open that door. Audio and the burst almost certainly yes; anything that offers
+to sell a subscription, no. That is a product call on surfaces already shipping,
+so it is yours.
 
 ---
 

@@ -196,6 +196,15 @@ final class AppDelegate: NSObject, MessagingDelegate {
             UNUserNotificationCenter.current()
                 .removePendingNotificationRequests(withIdentifiers: identifiers)
         }
+        // Stand With Me's write path. Without this the seam stays nil and a
+        // completed Enforcement day is never mirrored into the shared room —
+        // the feature builds, runs, and silently does nothing.
+        //
+        // Installed rather than referenced directly for the same reason as the
+        // hooks above: SpeakLifeServices has no Firebase dependency and must
+        // not gain one.
+        StandMirror.shared = StandService.shared
+
         PersonalDeclarationProgressBridge.todayProgress = {
             PersonalDeclarationRepository.todayProgress()
         }
