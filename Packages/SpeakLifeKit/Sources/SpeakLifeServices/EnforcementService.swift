@@ -402,6 +402,29 @@ public final class EnforcementService: ObservableObject {
     /// indexes, not text — so this is the same content with a better ordering
     /// and a better fit to what they described.
     @discardableResult
+    /// Adopt a campaign that arrived from a Stand.
+    ///
+    /// A room carries its campaign whole, which is the only way this can work:
+    /// `EnforcementAssembler` and `EnforcementCurator` mint ids
+    /// ("assembled_…", "curated_…") that exist in no catalog and whose content
+    /// lives only in the originating user's UserDefaults, so an invitee could
+    /// never resolve one by id.
+    ///
+    /// Deliberately NOT premium-gated, unlike `startEnforcement`. Somebody who
+    /// accepted an invitation has been granted a Stand Pass server-side by
+    /// `joinStand`; gating here would reject them a beat before the grant is
+    /// read back, and would eject an invitee whose pass expires mid-week — the
+    /// same asymmetry that already keeps `advanceIfNeeded` ungated so a lapsed
+    /// subscriber finishes the campaign they started.
+    ///
+    /// Callers must have resolved a `StandJoinConflict` first. This routes
+    /// through `begin`, which clears `completedDayNumbers`, `startedOn` and
+    /// `lastAdvancedOn` — so reaching it without the user having agreed
+    /// silently destroys the week they were holding.
+    public func startShared(_ enforcement: Enforcement) {
+        begin(id: enforcement.id, assembled: enforcement)
+    }
+
     public func startCurated(_ curated: [Declaration],
                              primary: DeclarationCategory,
                              isPremium: Bool) -> Enforcement? {

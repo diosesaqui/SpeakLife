@@ -35,6 +35,24 @@ final class AppState: ObservableObject {
     /// drives the `.sheet(item:)` in HomeView. Not persisted — it lives only for
     /// the duration of the presentation.
     @Published var remoteMessage: RemoteMessage?
+
+    /// An invite code from a Stand link, waiting to be redeemed.
+    ///
+    /// @AppStorage, not @Published-only, because a DEFERRED Branch link
+    /// resolves during didFinishLaunching — on a fresh install that is before
+    /// or during onboarding, and the app can be killed in between. Persisting
+    /// it is the difference between "my son's invite worked" and the highest
+    /// intent install in the whole feature landing on a blank home screen.
+    ///
+    /// Never present the join sheet straight from the link handler: let
+    /// onboarding finish first, then redeem. Cleared on success or explicit
+    /// dismissal.
+    @AppStorage("pendingStandCode") var pendingStandCode = ""
+
+    /// A room to open, from a stand push. In memory only, deliberately: a room
+    /// id is only meaningful while the app is running, and a persisted one
+    /// would yank somebody into a room on next launch without them asking.
+    @Published var pendingStandRoomId: String?
     @Published var showIntentBar = true
     @Published var onBoardingTest = true
     @Published var showScreenshotLabel = false {

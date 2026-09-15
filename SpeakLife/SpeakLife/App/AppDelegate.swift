@@ -678,6 +678,24 @@ enum BranchAttribution {
     #if canImport(BranchSDK)
     private static func apply(_ params: [String: Any]?) {
         guard let params = params else { return }
+
+        // Stand invite, resolved from a DEFERRED link — the invitee did not
+        // have the app and just installed it from the App Store. This is the
+        // highest-intent install the feature produces, so it is read before
+        // anything else here can fail.
+        //
+        // Stash it, never present from here: this runs inside
+        // didFinishLaunching, which on a fresh install is before onboarding has
+        // finished. A join sheet fighting onboarding is how the invitee
+        // bounces on their first launch.
+        if let code = (params["stand"] as? String)
+            ?? (params["~referring_link"] as? String).flatMap({ URL(string: $0) })
+                .flatMap(StandLink.code(from:)) {
+            UserDefaults.standard.set(code, forKey: "pendingStandCode")
+            AnalyticsService.shared.track("stand_invite_opened", parameters: [
+                "source": "deferred"
+            ])
+        }
         // Prefer an explicit `ob` key set on the Branch link's deep-link data;
         // otherwise recover it from the referring link URL.
         if let ob = params["ob"] as? String {

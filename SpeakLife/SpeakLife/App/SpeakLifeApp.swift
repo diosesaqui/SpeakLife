@@ -146,6 +146,15 @@ struct SpeakLifeApp: App {
                         // Ad-matched onboarding: owned channels (email, push, IG bio,
                         // QR, landing page) carrying `ob=<variant>` route here when the
                         // app opens directly (vs. a deferred install link).
+                        // Stand invite, checked first: the code is the only
+                        // thing on this link that expires, and attribution
+                        // parsing below must not be able to swallow it.
+                        if let code = StandLink.code(from: url) {
+                            appState.pendingStandCode = code
+                            AnalyticsService.shared.track("stand_invite_opened", parameters: [
+                                "source": "universal_link"
+                            ])
+                        }
                         SubscriptionStore.handleIncomingURL(url, source: "deeplink")
                         // Same link, read for channel rather than for the arm:
                         // utm_source/campaign/term land on the person so paid
@@ -411,6 +420,21 @@ struct SpeakLifeApp: App {
         // Prayer wall, streak-at-risk, and streak-complete notifications surface as banners only —
         // never navigate away from whatever tab the user is on.
         let notifType = content.userInfo["notificationType"] as? String
+
+        // A stand push is the one social notification that DOES navigate. It
+        // was sent because somebody the user invited just spoke, so the whole
+        // point is arriving in the room — unlike the prayer wall, which is a
+        // broadcast and stays a banner.
+        if notifType == "stand" {
+            if let roomId = content.userInfo["roomId"] as? String, !roomId.isEmpty {
+                appState.pendingStandRoomId = roomId
+                AnalyticsService.shared.track("stand_nudge_opened", parameters: [
+                    "room_id": roomId
+                ])
+            }
+            return
+        }
+
         if notifType == "prayerWall" ||
            notifType == "streakAtRisk" ||
            notifType == "streakComplete" {
