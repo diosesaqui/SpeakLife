@@ -969,7 +969,12 @@ struct DailyDeclarationBurstView: View {
         burstDayCount = burstTracker.getUniqueDaysCount()
 
         // Arms only. Both prompts are raised on the way out, in completeBurst.
+        //
+        // Both arm HERE, before completeTask below, because completeTask is
+        // what makes EnforcementCard evaluate the Stand invite prompt — and
+        // that prompt has to be able to see that one of these is coming.
         WelcomeOfferPresenter.shared.armAfterBurst(dayCount: burstDayCount)
+        PersonalDeclarationPrompt.shared.armForBurst(dayCount: burstDayCount)
 
         // Automatically complete the daily burst task
         streakViewModel.completeTask(taskId: "complete_daily_burst")

@@ -1361,10 +1361,6 @@ public struct TaskLibrary {
     /// - Parameter connectStyle: how the user said they connect best with
     ///   scripture. Defaults to whatever onboarding persisted; pass an explicit
     ///   value in tests. nil leaves the ordering exactly as it was.
-    /// - Parameter offerDeclarationSetup: when the user carries NO declaration,
-    ///   offer a row that invites them to write one. Defaults to false, which
-    ///   is the old behaviour exactly: no declaration, no row. The app passes
-    ///   true; tests that do not care keep the smaller board.
     /// - Parameter timeBudget: how much time the user said they have each day.
     ///   Defaults to whatever onboarding persisted; pass an explicit value in
     ///   tests. nil serves the whole board, exactly as before. See
@@ -1373,7 +1369,6 @@ public struct TaskLibrary {
                                              foundationAudioDay: Int? = nil,
                                              enforcementDay: EnforcementDay? = nil,
                                              personalDeclarations: PersonalDeclaration.Progress? = nil,
-                                             offerDeclarationSetup: Bool = false,
                                              guardCompletedToday: Bool? = nil,
                                              totalDaysCompleted: Int = 0,
                                              connectStyle: ConnectStyle? = ConnectStyle.stored(),
@@ -1387,8 +1382,7 @@ public struct TaskLibrary {
             let led = leadWithPreferredModality(owned, style: connectStyle, streakDay: streakDay)
             let guarded = withGuard(burstFirst(led), completedToday: guardCompletedToday,
                                     totalDaysCompleted: totalDaysCompleted)
-            return capToTimeBudget(withPersonalDeclaration(guarded, progress: personalDeclarations,
-                                                            offerSetup: offerDeclarationSetup),
+            return capToTimeBudget(withPersonalDeclaration(guarded, progress: personalDeclarations),
                                    budget: timeBudget, style: connectStyle)
         }
 
@@ -1446,8 +1440,7 @@ public struct TaskLibrary {
         let led = leadWithPreferredModality(tasks, style: connectStyle, streakDay: streakDay)
         let guarded = withGuard(burstFirst(led), completedToday: guardCompletedToday,
                                 totalDaysCompleted: totalDaysCompleted)
-        return capToTimeBudget(withPersonalDeclaration(guarded, progress: personalDeclarations,
-                                                        offerSetup: offerDeclarationSetup),
+        return capToTimeBudget(withPersonalDeclaration(guarded, progress: personalDeclarations),
                                budget: timeBudget, style: connectStyle)
     }
 
@@ -1522,26 +1515,9 @@ public struct TaskLibrary {
     /// public phase mix drops the Burst, so that branch is otherwise unreachable
     /// from a test and would rot silently.
     static func withPersonalDeclaration(_ tasks: [DailyTask],
-                                        progress: PersonalDeclaration.Progress?,
-                                        offerSetup: Bool = false) -> [DailyTask] {
+                                        progress: PersonalDeclaration.Progress?) -> [DailyTask] {
         var result = tasks.filter { $0.id != personalDeclarationTaskId }
-
-        // No declaration yet.
-        //
-        // This used to return here, which meant the one row that could invite
-        // somebody to write their first declaration only appeared once they
-        // already had one. The ask lived in onboarding instead, where it was
-        // shown to 571 people over 30 days and skipped by 39% of them: we were
-        // asking for it before they had ever heard a declaration, and then
-        // never asking again anywhere they would look.
-        //
-        // The invitation now lives in the same slot the real row occupies, so
-        // it inherits the list's ordering and is there tomorrow if they pass on
-        // it today.
-        guard let progress else {
-            guard offerSetup else { return result }
-            return inserted(personalDeclarationSetupTask(), into: result)
-        }
+        guard let progress else { return result }
 
         // Second, directly behind the Burst.
         //
@@ -1558,41 +1534,13 @@ public struct TaskLibrary {
         // Anchored to the Burst's index rather than inserted at 0, so it lands
         // behind the Burst on every path — including the phases where
         // `burstFirst` had nothing to move.
-        return inserted(personalDeclarationTask(progress), into: result)
-    }
-
-    /// Second, directly behind the Burst, or leading when the phase has none.
-    /// Shared so the invitation and the real row can never drift apart.
-    private static func inserted(_ task: DailyTask, into tasks: [DailyTask]) -> [DailyTask] {
-        var result = tasks
         if let burstIndex = result.firstIndex(where: { $0.id == "complete_daily_burst" }) {
-            result.insert(task, at: min(burstIndex + 1, result.count))
+            result.insert(personalDeclarationTask(progress), at: min(burstIndex + 1, result.count))
         } else {
-            result.insert(task, at: 0)
+            // No Burst in this phase's mix: the declaration leads on its own.
+            result.insert(personalDeclarationTask(progress), at: 0)
         }
         return result
-    }
-
-    /// The row for somebody who has no declaration yet.
-    ///
-    /// Never completed, because there is nothing to speak. Tapping it opens the
-    /// writing flow, the same one onboarding used to run before anybody had
-    /// heard a declaration out loud.
-    private static func personalDeclarationSetupTask() -> DailyTask {
-        var task = DailyTask(
-            id: personalDeclarationTaskId,
-            title: "Name What You're Believing For",
-            description: "One line, in your own words. Speak it every day.",
-            icon: "hands.sparkles.fill",
-            category: .foundation,
-            type: .speak,
-            difficulty: .beginner,
-            minimumStreakDay: 1,
-            estimatedMinutes: 2,
-            navigationDestination: .personalDeclaration
-        )
-        task.isCompleted = false
-        return task
     }
 
     public static let guardTaskId = "take_it_captive"

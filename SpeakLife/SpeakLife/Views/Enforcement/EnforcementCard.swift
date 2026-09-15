@@ -119,6 +119,10 @@ struct EnforcementCard: View {
             // simply lets a suppressed day-1 land on day 2.
             .onChange(of: service.progress.completedDayNumbers.count) { _, count in
                 guard (1...3).contains(count), let _ = service.activeEnforcement,
+                      // Never asked before. Without this, widening the window
+                      // asks EVERYBODY on days 1, 2 and 3 and spends the whole
+                      // lifetime budget of three prompts in three days.
+                      StandDiscovery.hasNeverPrompted,
                       StandDiscovery.shouldPrompt(forDay: count) else { return }
                 StandDiscovery.markPrompted(day: count)
                 showStandPrompt = true

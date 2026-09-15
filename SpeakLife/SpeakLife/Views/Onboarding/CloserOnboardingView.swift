@@ -264,6 +264,23 @@ struct CloserOnboardingView: View {
             applyResponsesAndComplete()
         default:
             var nextRaw = currentStep.rawValue + 1
+            // FIRST, before the belief and rating gates below.
+            //
+            // Those gates test only the step immediately after the current one.
+            // Run after them, this skip would step onto .personalDeclaration
+            // (passing the rating gate, since it is not .rating), then advance
+            // ONTO .rating with that gate already spent — showing the rating
+            // ask to users whose remote kill switch is off.
+            //
+            // The personal declaration ask has moved out of onboarding to after
+            // the user's first Daily Burst. Skipped, not deleted: these raw
+            // values are the `step` dimension on the onboarding funnel and must
+            // not be renumbered, and a removed case leaves a hole that
+            // CloserStep(rawValue:) resolves to nil.
+            while let candidate = CloserStep(rawValue: nextRaw),
+                  candidate == .personalDeclaration {
+                nextRaw += 1
+            }
             // Quiz v1 has no belief step — jump straight from connect style
             // to daily minutes, exactly the pre-v2 sequence.
             if !quizV2, CloserStep(rawValue: nextRaw) == .belief {
@@ -278,20 +295,6 @@ struct CloserOnboardingView: View {
             // no-pledge cell; when off, the plan reveal leads straight into the
             // testimonial wall.
             if CloserStep(rawValue: nextRaw) == .pledge, !pledgeEnabled {
-                nextRaw += 1
-            }
-            // The personal declaration ask has moved out of onboarding to
-            // after the user's first Daily Burst. Asking somebody to compose
-            // their own declaration before they have ever heard one gave us
-            // 571 shown / 249 saved over 30 days: 39% skipped it and 24%
-            // abandoned onboarding on it outright.
-            //
-            // SKIPPED, NOT DELETED, for the same reason as every other skip in
-            // this function: these raw values are the `step` dimension on the
-            // onboarding funnel and must not be renumbered, and a removed case
-            // leaves a hole that Step(rawValue:) resolves to nil.
-            while let candidate = CloserStep(rawValue: nextRaw),
-                  candidate == .personalDeclaration {
                 nextRaw += 1
             }
             guard let next = CloserStep(rawValue: nextRaw) else {

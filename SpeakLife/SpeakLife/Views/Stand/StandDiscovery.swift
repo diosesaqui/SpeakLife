@@ -59,8 +59,16 @@ enum StandDiscovery {
         // revenue, and a sheet it collides with is simply gone. This one can
         // wait — `EnforcementCard` re-asks on the next campaign day, and the
         // persistent row on the card is there the whole time either way.
-        guard !WelcomeOfferPresenter.shared.isPendingOrShowing else { return false }
+        guard !WelcomeOfferPresenter.shared.isPendingOrShowing,
+              !PersonalDeclarationPrompt.shared.isPendingOrShowing else { return false }
         return UserDefaults.standard.integer(forKey: lastPromptedDayKey) != day
+    }
+
+    /// Nobody has ever been asked. The day-1 ask can be suppressed by a
+    /// post-Burst prompt, so `EnforcementCard` retries on days 2 and 3 — but
+    /// only for somebody who was never asked, not as three asks for everyone.
+    static var hasNeverPrompted: Bool {
+        UserDefaults.standard.integer(forKey: lastPromptedDayKey) == 0
     }
 
     static func markPrompted(day: Int) {

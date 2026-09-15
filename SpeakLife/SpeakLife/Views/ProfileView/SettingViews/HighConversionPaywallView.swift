@@ -1399,11 +1399,6 @@ struct HighConversionPaywallView: View {
         .font(.system(size: 12)).foregroundColor(cleanSubInk)
     }
 
-    // MARK: - Welcome Offer Gate
-    /// True when dismissing this paywall should show the one-time welcome
-    /// offer instead of immediately advancing onboarding. All must hold:
-    /// onboarding source, never shown before (persisted once-ever flag), soft
-    /// paywall (hard mode has no close button, but gate it anyway), AND the
     // MARK: - Post-Purchase Mission Screen Routing
     /// Swaps in the mission screen after a successful purchase, remembering
     /// which success path to run when it continues. Callers clear the purchase

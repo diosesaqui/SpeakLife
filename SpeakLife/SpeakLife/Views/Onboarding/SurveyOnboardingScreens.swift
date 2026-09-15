@@ -1861,14 +1861,23 @@ struct SurveyPlanRevealScreen: View {
         return false
     }
 
-    /// "Free for 7 days. Cancel anytime." — built from the real trial length,
-    /// never hardcoded, for the same reason `trialDays` itself is not: the SKU
-    /// is Remote Config resolved and a fixed 7 starts lying the moment it is
-    /// repointed.
+    /// Names what happens next, without promising a free trial.
+    ///
+    /// ⚠️ IT DOES NOT SAY "FREE", AND MUST NOT until this screen knows the
+    /// user's own eligibility. `trialDays` comes from
+    /// `TrialExperienceService.introTrialDays`, which reads the SKU's
+    /// introductory offer — a property of the PRODUCT, not of the person.
+    /// Somebody who already used their trial and reinstalled gets the same 7
+    /// back, so "Free for 7 days" would tell them it costs nothing and then
+    /// charge them. `WelcomeOfferView` does this correctly, with an async
+    /// `subscription?.isEligibleForIntroOffer` check; this screen has no
+    /// SubscriptionStore to ask.
+    ///
+    /// The line still does its real job, which is removing the surprise: the
+    /// paywall is where this funnel loses 48-61%, and a large part of that is
+    /// arriving somewhere they did not expect.
     private var trialPreface: String {
-        guard trialDays > 0 else { return "Cancel anytime." }
-        let dayWord = trialDays == 1 ? "day" : "days"
-        return "Free for \(trialDays) \(dayWord). Cancel anytime."
+        "You'll choose your plan next. Cancel anytime."
     }
 
     private var dailyRhythmDetail: String {

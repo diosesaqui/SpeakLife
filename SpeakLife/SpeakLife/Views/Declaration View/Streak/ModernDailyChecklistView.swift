@@ -81,7 +81,8 @@ struct ModernDailyChecklistView: View {
     /// At the limit it falls back to the list, which is where the count and the
     /// upgrade path live.
     private var declarationTileLabel: String {
-        canAddDeclaration
+        if activeDeclarations.isEmpty { return "Name what you're believing for" }
+        return canAddDeclaration
             ? "Write a new declaration"
             : "See all \(activeDeclarations.count)"
     }
@@ -220,12 +221,21 @@ struct ModernDailyChecklistView: View {
     /// Today to a second one at all.
     ///
     /// It now WRITES rather than routing to the list a second time — see
-    /// `declarationTileLabel`. nil when they carry none, because the checklist
-    /// row is the invitation at that point and two invitations stacked is one
-    /// too many.
+    /// `declarationTileLabel`.
+    ///
+    /// ALWAYS SHOWN, including when they carry none. That empty case is the
+    /// whole point: the create path used to live two taps inside My
+    /// Declarations, reachable only from a tile that itself only appeared once
+    /// you already had a declaration. Somebody with none had no route to one
+    /// from Today at all.
+    ///
+    /// This was briefly a checklist TASK instead. It cannot be: the row would
+    /// never be completable (there is nothing to speak yet) and
+    /// `DailyChecklist.isCompleted` is `allSatisfy`, so every user without a
+    /// declaration could never complete a day — killing the completion
+    /// celebration for exactly the people this was meant to help.
     private var personalDeclarationTile: AnyView? {
-        guard appState.hasPersonalDeclaration, !activeDeclarations.isEmpty else { return nil }
-        return AnyView(
+        AnyView(
             Button {
                 Juice.play(.tapLight)
                 guard canAddDeclaration else {
@@ -917,14 +927,6 @@ struct ModernDailyChecklistView: View {
                 .environmentObject(viewModel)
                 .environmentObject(subscriptionStore)
         }
-        // The one-time welcome offer, raised here rather than at the app root:
-        // it appears as the burst's own cover is dismissing, and a
-        // fullScreenCover from an ancestor of a still-presented cover is
-        // dropped silently. This view owns that cover, so it is the right host.
-        .welcomeOffer()
-        // The declaration ask that used to live in onboarding. Same host,
-        // same reason: it appears as the Burst's own cover is dismissing.
-        .personalDeclarationPrompt()
         // Personal Declaration card — presented modally on Today. onBreakthrough
         // dismisses this card, then surfaces the breakthrough flow (attached to
         // the root below so it survives this sheet's dismissal).

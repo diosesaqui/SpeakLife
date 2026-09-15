@@ -46,9 +46,21 @@ final class PersonalDeclarationPrompt: ObservableObject {
 
     private var hasAsked: Bool { UserDefaults.standard.bool(forKey: askedKey) }
 
-    /// True while this is on screen. Read by `WelcomeOfferPresenter` so the two
-    /// can never both fire on one Burst.
-    var isPendingOrShowing: Bool { isPresented }
+    /// True from the moment a Burst marks this owed until that Burst's
+    /// presentation attempt has run, and while it is on screen.
+    ///
+    /// The window matters as much as the cover: `StandDiscovery.shouldPrompt`
+    /// is evaluated inside `finishBurst`, which is BEFORE either post-Burst
+    /// cover can present. Without a pending window the Stand sheet would be
+    /// scheduled first and then collide.
+    private(set) var isPendingThisBurst = false
+
+    var isPendingOrShowing: Bool { isPresented || isPendingThisBurst }
+
+    /// Called from `finishBurst`, alongside the offer's arm.
+    func armForBurst(dayCount: Int) {
+        isPendingThisBurst = (dayCount == 1 && !hasAsked && !hasDeclaration)
+    }
 
     /// Whether the user already has a declaration.
     ///
@@ -63,6 +75,7 @@ final class PersonalDeclarationPrompt: ObservableObject {
 
     /// Call on the way out of the first Daily Burst.
     func presentIfOwed(burstDayCount: Int) {
+        defer { isPendingThisBurst = false }
         guard burstDayCount == 1, !hasAsked, !hasDeclaration else { return }
         UserDefaults.standard.set(true, forKey: askedKey)
         isPresented = true
@@ -79,7 +92,10 @@ final class PersonalDeclarationPrompt: ObservableObject {
 struct PersonalDeclarationPromptModifier: ViewModifier {
 
     @ObservedObject private var prompt = PersonalDeclarationPrompt.shared
-    @EnvironmentObject private var appState: AppState
+
+    /// Passed in, NOT read from the environment — see
+    /// `WelcomeOfferModifier.subscriptionStore` for why.
+    @ObservedObject var appState: AppState
 
     func body(content: Content) -> some View {
         content
@@ -101,8 +117,8 @@ struct PersonalDeclarationPromptModifier: ViewModifier {
 }
 
 extension View {
-    /// Attach wherever `DailyDeclarationBurstView` is presented from.
-    func personalDeclarationPrompt() -> some View {
-        modifier(PersonalDeclarationPromptModifier())
+    /// Attach once, at the app root, next to `welcomeOffer`.
+    func personalDeclarationPrompt(appState: AppState) -> some View {
+        modifier(PersonalDeclarationPromptModifier(appState: appState))
     }
 }

@@ -411,7 +411,6 @@ public final class EnhancedStreakViewModel: ObservableObject {
                                                            foundationAudioDay: workingStreakDay,
                                                            enforcementDay: EnforcementService.shared.enabledActiveDay,
                                                            personalDeclarations: PersonalDeclarationProgressBridge.todayProgress(),
-                                                           offerDeclarationSetup: true,
                                                            guardCompletedToday: TakeItCaptiveService.shared.enabledCompletedToday,
                                                            totalDaysCompleted: totalDaysCompleted)
 
@@ -480,7 +479,6 @@ public final class EnhancedStreakViewModel: ObservableObject {
                                                            foundationAudioDay: workingStreakDay,
                                                            enforcementDay: EnforcementService.shared.enabledActiveDay,
                                                            personalDeclarations: PersonalDeclarationProgressBridge.todayProgress(),
-                                                           offerDeclarationSetup: true,
                                                            guardCompletedToday: TakeItCaptiveService.shared.enabledCompletedToday,
                                                            totalDaysCompleted: totalDaysCompleted)
 
@@ -768,7 +766,6 @@ public final class EnhancedStreakViewModel: ObservableObject {
                                                              foundationAudioDay: workingStreakDay,
                                                            enforcementDay: EnforcementService.shared.enabledActiveDay,
                                                            personalDeclarations: PersonalDeclarationProgressBridge.todayProgress(),
-                                                           offerDeclarationSetup: true,
                                                            guardCompletedToday: TakeItCaptiveService.shared.enabledCompletedToday,
                                                            totalDaysCompleted: totalDaysCompleted)
 
@@ -800,7 +797,6 @@ public final class EnhancedStreakViewModel: ObservableObject {
                                                       foundationAudioDay: workingStreakDay,
                                                            enforcementDay: EnforcementService.shared.enabledActiveDay,
                                                            personalDeclarations: PersonalDeclarationProgressBridge.todayProgress(),
-                                                           offerDeclarationSetup: true,
                                                            guardCompletedToday: TakeItCaptiveService.shared.enabledCompletedToday,
                                                            totalDaysCompleted: totalDaysCompleted)
 

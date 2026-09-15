@@ -241,6 +241,16 @@ struct AngleOnboardingView: View {
         }
 
         var next = stepIndex + 1
+        // FIRST, before the gates below, which only test the immediately next
+        // step: skipping onto .rating after its gate has been evaluated would
+        // show the rating ask with the remote kill switch off.
+        //
+        // The personal declaration ask moved out of onboarding to after the
+        // first Daily Burst. It stays in `angle.steps` so the analytics indices
+        // of every later step are unchanged; it is simply never entered.
+        while next < steps.count, steps[next] == .personalDeclaration {
+            next += 1
+        }
         // Quiz v1 has no belief step — jump straight from connect style to
         // daily minutes, exactly the pre-v2 sequence.
         if !quizV2, next < steps.count, steps[next] == .belief {

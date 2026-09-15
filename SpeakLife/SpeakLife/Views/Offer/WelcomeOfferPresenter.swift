@@ -87,11 +87,14 @@ final class WelcomeOfferPresenter: ObservableObject {
     func armAfterBurst(dayCount: Int) {
         guard dayCount >= 1, !hasBeenShown else { return }
         UserDefaults.standard.set(true, forKey: armedKey)
+        isPendingThisBurst = true
     }
 
     /// Raises the offer if this user is armed and everything else lines up.
     /// Call once the burst's own cover has finished dismissing.
     func presentIfReady(subscriptionStore: SubscriptionStore) {
+        // Whatever happens below, this Burst's window is over.
+        defer { isPendingThisBurst = false }
         // Never over the declaration prompt.
         //
         // This is load-bearing, not defensive: both are armed on Burst day one
@@ -105,13 +108,19 @@ final class WelcomeOfferPresenter: ObservableObject {
         isPresented = true
     }
 
-    /// True while an offer is waiting to be shown or is on screen.
+    /// True from the moment a Burst arms this until that Burst's presentation
+    /// attempt has run, and while it is on screen.
     ///
-    /// Read by `StandDiscovery.shouldPrompt` so the two day-one sheets cannot
-    /// fight over the same moment.
-    var isPendingOrShowing: Bool {
-        isPresented || (isArmed && !hasBeenShown)
-    }
+    /// IN-MEMORY AND TRANSIENT ON PURPOSE. This read `isArmed && !hasBeenShown`
+    /// first, which is persisted and only ever cleared when the offer actually
+    /// SHOWS. A user who can never see one — already premium, or an install
+    /// where the discount SKU never resolves — armed on their first Burst and
+    /// stayed armed for life, so `StandDiscovery.shouldPrompt` yielded to an
+    /// offer that was never coming and killed every Stand invite prompt
+    /// permanently.
+    private(set) var isPendingThisBurst = false
+
+    var isPendingOrShowing: Bool { isPresented || isPendingThisBurst }
 
     // MARK: - Eligibility
 
@@ -147,8 +156,15 @@ final class WelcomeOfferPresenter: ObservableObject {
 struct WelcomeOfferModifier: ViewModifier {
 
     @ObservedObject private var presenter = WelcomeOfferPresenter.shared
-    @EnvironmentObject private var subscriptionStore: SubscriptionStore
-    @EnvironmentObject private var declarationStore: DeclarationViewModel
+
+    /// Passed in, NOT read from the environment.
+    ///
+    /// This is attached at the app root, ABOVE the `.environmentObject` calls,
+    /// so it wraps the view those inject into and never sees them. Reading
+    /// `@EnvironmentObject` here crashes at launch. `debugFlagPanel` and
+    /// `standRedemption` sit two lines away carrying the same warning.
+    @ObservedObject var subscriptionStore: SubscriptionStore
+    @ObservedObject var declarationStore: DeclarationViewModel
 
     func body(content: Content) -> some View {
         content
@@ -166,8 +182,11 @@ struct WelcomeOfferModifier: ViewModifier {
 }
 
 extension View {
-    /// Attach wherever `DailyDeclarationBurstView` is presented from.
-    func welcomeOffer() -> some View {
-        modifier(WelcomeOfferModifier())
+    /// Attach once, at the app root. Takes its stores explicitly for the reason
+    /// on `WelcomeOfferModifier.subscriptionStore`.
+    func welcomeOffer(subscriptionStore: SubscriptionStore,
+                      declarationStore: DeclarationViewModel) -> some View {
+        modifier(WelcomeOfferModifier(subscriptionStore: subscriptionStore,
+                                      declarationStore: declarationStore))
     }
 }
