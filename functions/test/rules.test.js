@@ -280,3 +280,14 @@ test('client CANNOT read nudges or merge tickets', async () => {
   await assertFails(getDoc(doc(db, 'standNudges/a')));
   await assertFails(getDoc(doc(db, 'accountMerges/t1')));
 });
+
+test('member CANNOT forge server notification bookkeeping', async () => {
+  await seedRoom(['a', 'b']);
+  const db = anon('a').firestore();
+  // lastNotifiedDay caps one push per sender per day. A client that can write
+  // it can silence its partner's nudges — or replay them.
+  await assertFails(updateDoc(doc(db, 'standRooms/r_test'),
+    { lastNotifiedDay: { a: '2026-09-15' }, lastActivityAt: serverTimestamp() }));
+  await assertFails(updateDoc(doc(db, 'standRooms/r_test'),
+    { notifiedMilestones: ['all_day_7'], lastActivityAt: serverTimestamp() }));
+});

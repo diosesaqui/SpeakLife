@@ -274,13 +274,16 @@ service cloud.firestore {
       return signedIn() && request.auth.uid in roomData.memberUids;
     }
 
-    // Fields no client may ever touch. Membership changes, the campaign
-    // itself, and milestone bookkeeping are server-only: joining runs through
-    // the joinStand callable precisely so a client cannot add itself to a room
-    // whose id it happened to learn.
-    function standServerOnlyFields() {
-      return ['id', 'createdAt', 'createdBy', 'enforcement', 'memberUids',
-              'status', 'completedAt', 'notifiedMilestones', 'schemaVersion'];
+    // The ONLY two top-level fields a client may affect. Everything else on a
+    // room — the campaign, the roster, status, and every piece of notification
+    // bookkeeping — is server-owned.
+    //
+    // Deliberately a whitelist, not a list of forbidden fields. A blacklist
+    // leaves every field added later unprotected until someone remembers to
+    // extend it, and the fields this feature keeps adding (nudge bookkeeping,
+    // milestone state) are exactly the ones a client must never forge.
+    function standClientWritableFields() {
+      return ['members', 'lastActivityAt'];
     }
 
     // Day stamps are validated for SHAPE ONLY, deliberately.
@@ -318,9 +321,10 @@ service cloud.firestore {
 
       allow update: if isStandMember(resource.data)
 
-        // Nobody rewrites the campaign, the roster, or the status.
-        && !request.resource.data.diff(resource.data)
-              .affectedKeys().hasAny(standServerOnlyFields())
+        // Nobody rewrites the campaign, the roster, the status, or any of the
+        // server's notification bookkeeping.
+        && request.resource.data.diff(resource.data)
+              .affectedKeys().hasOnly(standClientWritableFields())
 
         // A member may only ever modify their OWN entry in the members map.
         // This is the rule that makes a 12-person room safe: everyone can
