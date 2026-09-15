@@ -158,12 +158,15 @@ struct ModernDailyChecklistView: View {
         } else if personalDeclaration != nil {
             showPersonalDeclarationCard = true
         } else {
-            // The row can briefly outlive the list: the async load hasn't
-            // returned yet, or the last one was just closed out or deleted. The
-            // card sheet renders nothing without a declaration, so a tap would
-            // present an empty sheet. The list handles empty properly and offers
-            // a way to start a new one.
-            showMyDeclarations = true
+            // Nothing to speak yet, so this is the invitation row: send them
+            // straight to writing one rather than to a list whose only content
+            // is a button that does the same thing.
+            //
+            // This also covers the case the comment here used to describe — the
+            // row briefly outliving the list while the async load returns, or
+            // the last declaration just being closed out. Opening the writing
+            // flow is the right answer to both.
+            showNewDeclarationSheet = true
         }
     }
 
