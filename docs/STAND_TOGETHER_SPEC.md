@@ -626,23 +626,50 @@ matching `PrayerWallViewModel`'s `cachedPrayerWallPosts` approach.
 **Link:** `https://speaklife.app.link/stand/<CODE>` — the Branch domain already in
 `SpeakLife.entitlements`.
 
-Branch SDK **is** now in `Package.resolved` (`ios-branch-sdk-spm`), but
-`BranchAttribution.isConfigured` returns `false` until a `branch_key` is present in
-Info.plist, so the SDK is currently a no-op and deferred deep linking does not work.
-(`docs/ANALYTICS_DATA_QUALITY.md` still says the SDK is absent — that line is stale.)
+**Branch is fully live**, all three halves in place: the SDK (`ios-branch-sdk-spm`) is in
+`Package.resolved`, the live key is at `Info.plist:58`, and `applinks:speaklife.app.link`
+is in `SpeakLife.entitlements`. `BranchAttribution.isConfigured` therefore returns `true`,
+and `initSession` (`AppDelegate.swift:221`) already resolves deferred deep links on fresh
+installs. Deferred deep linking is available to this feature on day one.
 
-**Therefore the feature must not depend on Branch.** Three paths, in order:
+(Two docs claim otherwise — `docs/ATTRIBUTION_MMP.md:20` and the doc comment at
+`AppDelegate.swift:602` both say the wrapper no-ops until the key is set.
+`docs/ATTRIBUTION_SHIP_CHECKLIST.md:12` is the accurate one. The stale comments should be
+corrected in a separate pass.)
+
+Three paths, in order:
 
 1. **App installed** → universal link opens the app, `onOpenURL`
    (`SpeakLife/SpeakLife/App/SpeakLifeApp.swift:145`) parses `/stand/<CODE>` and routes
-   to `StandJoinView`. Works today with zero configuration.
-2. **App not installed, Branch configured** → App Store → deferred link delivers the
-   code on first launch. Requires only the dashboard key; ship-ready when it lands.
-3. **App not installed, Branch not configured** → App Store → the invite message the
-   sender shared *also contains the human code*, and the post-onboarding screen asks
-   *"Were you invited to stand with someone?"* with a code field. **This is the fallback
-   that makes the feature shippable this sprint**, and it is why the code alphabet is
-   readable out loud over the phone.
+   to `StandJoinView`.
+2. **App not installed** → App Store → Branch's deferred link delivers the code on first
+   launch. This is the primary path for the invitee who doesn't have SpeakLife yet, which
+   is the highest-value install in the whole feature.
+3. **Deferred match misses** → the invite message the sender shared *also contains the
+   human code*, and the post-onboarding screen asks *"Were you invited to stand with
+   someone?"* with a code field. Branch's deferred matching is probabilistic, not
+   guaranteed, so this fallback stays — it is why the code alphabet is readable out loud
+   over the phone.
+
+### Wiring the code through Branch
+
+`BranchAttribution.apply(_:)` currently handles only `ob=` onboarding variants and
+attribution keys. It needs one more branch, reading a `stand` key set on the link's
+deep-link data (falling back to parsing `/stand/<CODE>` out of `~referring_link`):
+
+```swift
+if let code = params["stand"] as? String {
+    AppState.shared.pendingStandCode = code
+}
+```
+
+**Do not present the join UI from here.** A deferred link resolves during
+`didFinishLaunching`, which on a fresh install is *before or during onboarding*. Stash the
+code, let onboarding finish, then present `StandJoinView`. A join sheet fighting the
+onboarding flow is how the invitee bounces on their first launch.
+
+`pendingStandCode` persists (`@AppStorage`) so a kill mid-onboarding doesn't lose the
+invite, and is cleared on successful join or explicit dismissal.
 
 Share text (via `ShareLink`, already used in 12 views):
 
@@ -713,6 +740,7 @@ without explicit user confirmation is a data-loss bug.
 | Room full (12) | `resource-exhausted`, clear copy, offer to start their own stand. |
 | Owner leaves | Ownership transfers to earliest-joined remaining member. |
 | Last member leaves | Room and invites deleted. |
+| Deferred link resolves mid-onboarding | Code is stashed in `pendingStandCode`, never presented over onboarding. `StandJoinView` opens once onboarding completes (§9). |
 | Member joins and never speaks | No nudges after 3 misses (§7.7). They are not shamed and the room's other members are not told. |
 | Member deletes the app | Nothing breaks. Their row freezes. Nudges stop when the FCM token goes stale. |
 | Invited person already in the room under another identity | Merge table, §4.3. |
@@ -836,7 +864,7 @@ minutes apart; leave as owner; delete account while in two stands.
 | 7 | `StandService` + `StandMirror` seam + write hook | `Services/Stand/`, `EnhancedStreakViewModel.swift` | 1.5d |
 | 8 | Room UI | `StandRoomView.swift` + components | 2d |
 | 9 | Invite / join / conflict UI | `StandInviteSheet`, `StandJoinView`, `StandConflictSheet` | 1.5d |
-| 10 | Deep link + notification routing | `SpeakLifeApp.swift` | 0.5d |
+| 10 | Deep link + notification routing + `BranchAttribution.apply` stand key | `SpeakLifeApp.swift`, `AppDelegate.swift` | 0.5d |
 | 11 | Stand Pass | `StandPassStore.swift`, premium check | 0.5d |
 | 12 | Completion + shared share card | `StandCompletionView.swift`, `StandShareCardRenderer.swift` | 1d |
 | 13 | Analytics + flag + rollout | various | 0.5d |
@@ -851,9 +879,10 @@ minutes apart; leave as owner; delete account while in two stands.
 1. **Room cap of 12.** Chosen so one document holds the room and one listener serves it.
    A small-group ministry use case wanting 30 needs a subcollection refactor. Confirm 12
    is right before building.
-2. **Branch key.** Without it, invitees who don't have the app must type a code (§9).
-   Worth ~2 hours of dashboard configuration to remove that step from the highest-intent
-   funnel in the feature.
+2. **Deferred-match rate.** Branch is live (§9), so invitees without the app land
+   straight in the room. Branch's deferred matching is probabilistic, though — instrument
+   `stand_invite_opened.source` from day one and watch the `manual_code` share. If it runs
+   high, the fallback prompt needs to be more prominent, not less.
 3. **Stand Pass length.** 7 days matches the campaign. 14 would cover a slow starter and
    land the paywall after a *completed* stand rather than during one.
 4. **Nudge time.** 19:00 local is a guess. The app already models time slots in
