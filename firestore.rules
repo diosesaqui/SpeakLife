@@ -9,6 +9,14 @@ rules_version = '2';
 //   - prayerWall/{postId}/flags/{userId}        (one moderation flag per user)
 //   - users/{uid}                               (FCM token + deviceId field)
 //
+// ...and the Stand With Me (shared 7-day Enforcement) data model:
+//   - standRooms/{roomId}                       (one doc per stand)
+//   - standInvites/{code}                       (server-only)
+//   - standNudges/{uid}                         (server-only)
+//   - accountMerges/{ticket}                    (server-only)
+//
+// See docs/STAND_TOGETHER_SPEC.md.
+//
 // Apply via:
 //   1. Firebase Console → Firestore → Rules → paste this block, OR
 //   2. firebase deploy --only firestore:rules
@@ -26,10 +34,27 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // Signed in with a REAL identity — not an anonymous account.
+    //
+    // Stand With Me introduced anonymous auth so someone can accept a family
+    // member's invite without hitting a Sign in with Apple wall. That silently
+    // widened `signedIn()`, which every Prayer Wall write rule below is built
+    // on: without this helper, the moment anonymous auth shipped, anyone could
+    // post to the Prayer Wall — a surface that has always been gated behind
+    // Sign in with Apple precisely because it carries free text to strangers.
+    //
+    // So: the Prayer Wall requires a full account. Stand rules and the user's
+    // own document accept `signedIn()`, since a stand is invite-only, carries
+    // no free text, and is the reason anonymous accounts exist at all.
+    function isFullAccount() {
+      return request.auth != null
+             && request.auth.token.firebase.sign_in_provider != 'anonymous';
+    }
+
     function isPostOwner(postData) {
       // Posts created before authorUid was added (legacy v1 posts) have
       // no recorded owner — owner-gated writes are denied on those.
-      return signedIn()
+      return isFullAccount()
              && 'authorUid' in postData
              && postData.authorUid == request.auth.uid;
     }
@@ -72,9 +97,10 @@ service cloud.firestore {
       // `where("isHidden", "==", false)`.
       allow read: if true;
 
-      // Create: signed-in users only. We require authorUid to match the
-      // signed-in user so the post has an enforceable owner from day one.
-      allow create: if signedIn()
+      // Create: full accounts only (never anonymous — see isFullAccount).
+      // We require authorUid to match the signed-in user so the post has an
+      // enforceable owner from day one.
+      allow create: if isFullAccount()
                     && request.resource.data.authorUid == request.auth.uid
                     && request.resource.data.text is string
                     && request.resource.data.text.size() > 0
@@ -87,7 +113,7 @@ service cloud.firestore {
       // Neither path may touch isHidden or reports — those are
       // exclusively driven by the onPostFlagged Cloud Function via the
       // admin SDK (which bypasses these rules).
-      allow update: if signedIn()
+      allow update: if isFullAccount()
                     && (
                       (isPostOwner(resource.data)
                        && onlyAllowsFields(ownerOnlyMutableFields()))
@@ -109,7 +135,7 @@ service cloud.firestore {
       match /agreements/{userId} {
         allow read: if true;
 
-        allow create: if signedIn()
+        allow create: if isFullAccount()
                       && request.auth.uid == userId
                       && request.resource.data.userId == userId
                       && request.resource.data.displayName is string
@@ -130,7 +156,7 @@ service cloud.firestore {
         // Agreement text is immutable — no edits — but the author may
         // delete their own agreement (doc id == auth uid → simple match).
         allow update: if false;
-        allow delete: if signedIn() && request.auth.uid == userId;
+        allow delete: if isFullAccount() && request.auth.uid == userId;
       }
 
       // ─── Moderation flags ──────────────────────────────────────────
@@ -142,9 +168,9 @@ service cloud.firestore {
       match /flags/{userId} {
         // Reporters cannot list other reports. Hidden surface area for
         // moderation: a future admin tool reads via admin SDK.
-        allow read: if signedIn() && request.auth.uid == userId;
+        allow read: if isFullAccount() && request.auth.uid == userId;
 
-        allow create: if signedIn()
+        allow create: if isFullAccount()
                       && request.auth.uid == userId
                       && request.resource.data.userId == userId
                       && request.resource.data.reason is string
@@ -161,8 +187,35 @@ service cloud.firestore {
     // (`where('deviceId', '==', ...)`). Previously we also wrote tokens
     // to `users/{deviceId}` which had no auth gate — that path is closed.
 
+    // Anonymous accounts are allowed here: an anonymous user still needs an
+    // FCM token and a timezone on file for stand nudges to reach them.
+    //
+    // `write` was previously blanket-granted to the owner. It no longer is,
+    // because two server-owned fields now live on this document:
+    //   standPass     — the 7-day full-access grant issued by joinStand. A
+    //                   client that can write it can mint itself premium.
+    //   standRoomIds  — the list the app reads rooms by. A client that can
+    //                   write it can point itself at an arbitrary room id.
+    // Both are written exclusively by Cloud Functions via the admin SDK.
+    function usersServerOnlyFields() {
+      return ['standPass', 'standRoomIds'];
+    }
+
     match /users/{uid} {
-      allow read, write: if signedIn() && request.auth.uid == uid;
+      allow read: if signedIn() && request.auth.uid == uid;
+
+      allow create: if signedIn()
+                    && request.auth.uid == uid
+                    && !request.resource.data.keys().hasAny(usersServerOnlyFields());
+
+      allow update: if signedIn()
+                    && request.auth.uid == uid
+                    && !request.resource.data.diff(resource.data)
+                          .affectedKeys().hasAny(usersServerOnlyFields());
+
+      // Account deletion runs through the deleteAccount callable so stand
+      // memberships are cleaned up in the same transaction.
+      allow delete: if false;
     }
 
     // ─── Bible Chat usage metering ─────────────────────────────────────
@@ -205,5 +258,114 @@ service cloud.firestore {
       allow read: if true;
       allow write: if false;
     }
+
+    // ═══ Stand With Me ═════════════════════════════════════════════════
+    //
+    // A "stand" is one seven-day Enforcement run by 2-12 people at once.
+    // Full model and rationale: docs/STAND_TOGETHER_SPEC.md.
+    //
+    // The invariant that makes these rules safe to keep tight: the room is a
+    // MIRROR of each member's local EnforcementProgress, never the source of
+    // truth. A write rejected here costs a dot on someone's week strip. It can
+    // never cost a campaign day, so nothing below needs to be lenient to
+    // protect user progress.
+
+    function isStandMember(roomData) {
+      return signedIn() && request.auth.uid in roomData.memberUids;
+    }
+
+    // Fields no client may ever touch. Membership changes, the campaign
+    // itself, and milestone bookkeeping are server-only: joining runs through
+    // the joinStand callable precisely so a client cannot add itself to a room
+    // whose id it happened to learn.
+    function standServerOnlyFields() {
+      return ['id', 'createdAt', 'createdBy', 'enforcement', 'memberUids',
+              'status', 'completedAt', 'notifiedMilestones', 'schemaVersion'];
+    }
+
+    // Day stamps are validated for SHAPE ONLY, deliberately.
+    //
+    // Rules have no date formatting, so comparing a "yyyy-MM-dd" string
+    // against request.time would mean hand-building a zero-padded stamp out of
+    // nested ternaries. That is fragile, and it would reject any write that sat
+    // in the offline queue overnight — a real case, since the whole point is
+    // that someone can speak a declaration on a plane.
+    //
+    // It is also unnecessary. The stamp drives the week strip and nothing else.
+    // What actually protects progress is dayNumber monotonicity, the 0..7 cap,
+    // one new stamp per write, and the mirror invariant above. The worst a
+    // clock-manipulated client achieves is misplaced dots on its own row.
+    function isWellFormedDayStamp(stamp) {
+      return stamp is string && stamp.size() == 10;
+    }
+
+    function standMemberEntry(data) {
+      return data.members[request.auth.uid];
+    }
+
+    match /standRooms/{roomId} {
+
+      // Members only. There is no client query path against this collection —
+      // the app reads rooms by id from users/{uid}.standRoomIds — so a room id
+      // alone reveals nothing to a non-member.
+      allow read: if isStandMember(resource.data);
+
+      // Rooms are minted by the createStand callable (the admin SDK bypasses
+      // rules), which validates the embedded campaign before it is served to
+      // other people's devices. Deletion runs through leaveStand/deleteAccount.
+      allow create: if false;
+      allow delete: if false;
+
+      allow update: if isStandMember(resource.data)
+
+        // Nobody rewrites the campaign, the roster, or the status.
+        && !request.resource.data.diff(resource.data)
+              .affectedKeys().hasAny(standServerOnlyFields())
+
+        // A member may only ever modify their OWN entry in the members map.
+        // This is the rule that makes a 12-person room safe: everyone can
+        // write to one document, and nobody can touch anyone else's row.
+        && request.resource.data.members.diff(resource.data.members)
+              .affectedKeys().hasOnly([request.auth.uid])
+
+        // Progress is monotonic and bounded. Ground taken is never given back —
+        // the same principle that already stops the daily checklist unticking
+        // its Guard row.
+        && standMemberEntry(request.resource.data).dayNumber is int
+        && standMemberEntry(request.resource.data).dayNumber >= 0
+        && standMemberEntry(request.resource.data).dayNumber <= 7
+        && standMemberEntry(request.resource.data).dayNumber
+             >= standMemberEntry(resource.data).dayNumber
+
+        // At most one new day stamp per write, capped at 14 total (7 days plus
+        // slack). Caps the blast radius of a client farming stamps to its own
+        // row, and keeps the document small enough to stay a single read.
+        && standMemberEntry(request.resource.data).daysSpoken.size()
+             <= standMemberEntry(resource.data).daysSpoken.size() + 1
+        && standMemberEntry(request.resource.data).daysSpoken.size() <= 14
+
+        // The name is rendered to other people, so bound it here too, not only
+        // in the UI. A rule is the only layer an edited client cannot skip.
+        && standMemberEntry(request.resource.data).name is string
+        && standMemberEntry(request.resource.data).name.size() <= 24
+
+        // Server clock, not the device's.
+        && standMemberEntry(request.resource.data).lastSpokeAt == request.time
+        && request.resource.data.lastActivityAt == request.time;
+    }
+
+    // ─── Invites, nudges, merge tickets ────────────────────────────────
+    //
+    // Closed to clients entirely.
+    //
+    // standInvites is the important one: if a client could read it, an eight
+    // character code could be probed for validity offline and enumerated.
+    // Redemption is the joinStand callable, which throttles attempts per uid
+    // and audits them. Nudge scheduling and account-merge tickets are pure
+    // server bookkeeping and a client has no business reading either.
+
+    match /standInvites/{code}    { allow read, write: if false; }
+    match /standNudges/{uid}      { allow read, write: if false; }
+    match /accountMerges/{ticket} { allow read, write: if false; }
   }
 }

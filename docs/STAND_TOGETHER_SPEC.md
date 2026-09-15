@@ -684,6 +684,60 @@ carries `deepLink: "stand"`, in which case open the room.
 
 ---
 
+## 9.5 Discovery: how anyone finds out this exists
+
+A share feature nobody finds is dead. The link mechanics above are worthless without
+this section.
+
+**The rule: ask at peak emotional payoff, not at peak convenience.**
+
+This is usually a trade — asking later means partners start out of sync — but not here.
+`dayNumber` is per-member and campaigns wait rather than expire (§2), so a partner who
+joins on day 3 is not *behind*, they are on their own day 1. There is no sync to protect,
+which frees the ask to land at the moment with the most emotional charge instead of the
+moment that keeps a calendar tidy. This is a direct payoff of the mirror invariant and
+should not be traded away later for a "start together" flow.
+
+### Entry points, in priority order
+
+| # | Surface | Copy / moment | Rationale |
+|---|---|---|---|
+| 1 | **Burst completion, day 1** (`DailyDeclarationBurstView` → `DayCelebrationView`) | *"Day 1 done. Who needs this with you?"* | **Primary.** They just spoke it out loud and felt it. Highest-charge moment in the loop. Fires once, on day 1 only — not every day. |
+| 2 | **`EnforcementCard.activeCard`** — a row under the existing `DAY n OF 7 · ENFORCING …` eyebrow | *"Stand with me"* + member avatars once joined | **The durable home.** Always findable, and the only path by which users *already mid-campaign when this ships* discover the feature at all. |
+| 3 | **Campaign start**, right after `startEnforcement` | Optional *"Invite someone"* step | Lower conversion — no value felt yet — but partners begin day 1 together. **Never blocking**; a skipped invite must not delay the first burst. |
+| 4 | **`EnforcementCompletionView`**, beside `ENFORCE THE NEXT ONE` | *"Run the next one with someone."* | Converts finishers into inviters at the moment they have proof it works. |
+| 5 | **Launch broadcast** — one push + one `speakLifeMessages` timeline entry via `personalMessage.js` | *"You can run your next seven days with someone now."* | The **only** way the existing install base learns this exists. One send, not a campaign. |
+| 6 | **Onboarding** — *"Were you invited to stand with someone?"* code field | — | Catches the invitee whose deferred Branch match missed (§9, path 3). |
+| 7 | **Profile → "My Stands"** | Durable list of active and past stands | Low discovery, but the feature needs a permanent address once the campaign card is gone. |
+
+Surfaces 1, 3 and 4 are one-shot per campaign and must respect a global
+`standInvitePromptCount` cap (3) so someone who is never going to invite anyone stops
+being asked. Surface 2 is passive and always present, and does not count against the cap.
+
+### The share itself
+
+`ShareLink` (already used across 12 views) opens the iOS share sheet, which surfaces
+iMessage and WhatsApp first — where family invites actually happen, as opposed to a
+copy-link button that lands nowhere.
+
+**Share an image, not a bare URL.** `StreakShareCardRenderer` already renders a 1080x1920
+card; a `StandInviteCardRenderer` built the same way ("I'm speaking God's word over peace
+for 7 days. Stand with me.") lands far harder in a text thread than a naked link, and the
+drawing code to copy already exists. The link and the human code ride in the message body
+underneath it.
+
+### Room creation timing
+
+Tapping Invite must call `createStand` *before* there is a code to render, so the room is
+minted at first tap, not at first join. Consequence: a user who taps Invite and never
+sends anything leaves a one-member orphan room. These are swept by the same archive job
+as §5.7 but on a shorter clock — 14 days with one member and zero invite uses.
+
+Do not pre-create rooms speculatively at campaign start; an unshared room is cheap but a
+room per campaign per user is not.
+
+---
+
 ## 10. Premium gating & the Stand Pass
 
 - **Creating** a Stand requires premium — consistent with
@@ -867,10 +921,12 @@ minutes apart; leave as owner; delete account while in two stands.
 | 10 | Deep link + notification routing + `BranchAttribution.apply` stand key | `SpeakLifeApp.swift`, `AppDelegate.swift` | 0.5d |
 | 11 | Stand Pass | `StandPassStore.swift`, premium check | 0.5d |
 | 12 | Completion + shared share card | `StandCompletionView.swift`, `StandShareCardRenderer.swift` | 1d |
+| 12b | Discovery surfaces (§9.5) + `StandInviteCardRenderer` | `EnforcementCard.swift`, `DayCelebrationView`, `EnforcementCompletionView.swift`, onboarding, Profile | 1.5d |
+| 12c | Launch broadcast | `functions/personalMessage.js` (content only) | 0.25d |
 | 13 | Analytics + flag + rollout | various | 0.5d |
 | 14 | QA matrix | — | 1.5d |
 
-**≈ 16 working days.** Items 1–4 are independent of the client and can ship first.
+**≈ 18 working days.** Items 1–4 are independent of the client and can ship first.
 
 ---
 
