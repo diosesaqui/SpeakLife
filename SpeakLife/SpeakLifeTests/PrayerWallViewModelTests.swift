@@ -10,6 +10,7 @@
 //
 
 import XCTest
+import FirebaseFirestore
 @testable import SpeakLife
 
 final class PrayerWallViewModelTests: XCTestCase {
@@ -120,5 +121,83 @@ final class PrayerWallViewModelTests: XCTestCase {
         // the implementation's `guard oldValue != categoryFilter` keeps
         // this side-effect free in a way that's hard to assert without DI.
         XCTAssertEqual(viewModel.categoryFilter, .healing)
+    }
+
+    // MARK: - Agreement chain copy
+    //
+    // The collapsed row used to derive its label from the lazily-loaded
+    // chain, so every card read "View those standing in agreement" until
+    // it was tapped — including cards with zero agreements. The count is
+    // now prefetched, and nil (not yet resolved) must never be rendered
+    // as zero.
+
+    func testAgreementChainTitleIsNeutralWhenCountIsUnknown() {
+        XCTAssertEqual(PrayerWallViewModel.agreementChainTitle(count: nil),
+                       "View those standing in agreement")
+    }
+
+    func testAgreementChainTitleSaysSoWhenChainIsEmpty() {
+        XCTAssertEqual(PrayerWallViewModel.agreementChainTitle(count: 0),
+                       "No one has stood in agreement yet")
+    }
+
+    func testAgreementChainTitleIsSingularForOneVoice() {
+        XCTAssertEqual(PrayerWallViewModel.agreementChainTitle(count: 1),
+                       "1 voice in agreement")
+    }
+
+    func testAgreementChainTitlePluralizesBeyondOne() {
+        XCTAssertEqual(PrayerWallViewModel.agreementChainTitle(count: 4),
+                       "4 voices in agreement")
+    }
+
+    func testAgreementChainTitleTreatsNegativeCountsAsEmpty() {
+        // Defensive: an optimistic decrement should never be able to print
+        // "-1 voices in agreement".
+        XCTAssertEqual(PrayerWallViewModel.agreementChainTitle(count: -2),
+                       "No one has stood in agreement yet")
+    }
+
+    // MARK: - Agreement count resolution
+
+    func testAgreementCountIsNilBeforeItIsResolved() {
+        let viewModel = PrayerWallViewModel()
+        var post = PrayerWallPost(text: "Stand with me",
+                                  displayName: "A sister in Christ",
+                                  deviceId: "device")
+        post.id = "post-unresolved"
+        XCTAssertNil(viewModel.agreementCount(for: post))
+    }
+
+    func testAgreementCountUsesPrefetchedValueBeforeTheChainLoads() {
+        let viewModel = PrayerWallViewModel()
+        var post = PrayerWallPost(text: "Stand with me",
+                                  displayName: "A sister in Christ",
+                                  deviceId: "device")
+        post.id = "post-prefetched"
+        viewModel.agreementCountsByPost["post-prefetched"] = 3
+        XCTAssertEqual(viewModel.agreementCount(for: post), 3)
+        XCTAssertFalse(viewModel.isAgreementChainLoaded(post))
+    }
+
+    func testAgreementCountIgnoresAnOptimisticInsertOnAnUnloadedChain() {
+        // A local insert puts one entry in agreementsByPost without the
+        // chain ever having been fetched. Counting that dictionary would
+        // report "1 voice" on a post that actually has three.
+        let viewModel = PrayerWallViewModel()
+        var post = PrayerWallPost(text: "Stand with me",
+                                  displayName: "A sister in Christ",
+                                  deviceId: "device")
+        post.id = "post-optimistic"
+        viewModel.agreementCountsByPost["post-optimistic"] = 3
+        viewModel.agreementsByPost["post-optimistic"] = [
+            Agreement(id: nil,
+                      userId: "me",
+                      displayName: "A brother in Christ",
+                      reactionType: "standing",
+                      text: "Standing with you.",
+                      timestamp: Timestamp())
+        ]
+        XCTAssertEqual(viewModel.agreementCount(for: post), 3)
     }
 }
