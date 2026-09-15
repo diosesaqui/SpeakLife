@@ -361,9 +361,6 @@ match /standRooms/{roomId} {
     && request.resource.data.members[request.auth.uid].daysSpoken.size()
          <= resource.data.members[request.auth.uid].daysSpoken.size() + 1
     && request.resource.data.members[request.auth.uid].daysSpoken.size() <= 14
-    && isWellFormedDayStamp(
-         request.resource.data.members[request.auth.uid].daysSpoken[
-           request.resource.data.members[request.auth.uid].daysSpoken.size() - 1])
     // The name is shown to other people; bound it here too, not only in the UI.
     && request.resource.data.members[request.auth.uid].name is string
     && request.resource.data.members[request.auth.uid].name.size() <= 24

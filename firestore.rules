@@ -286,21 +286,26 @@ service cloud.firestore {
       return ['members', 'lastActivityAt'];
     }
 
-    // Day stamps are validated for SHAPE ONLY, deliberately.
+    // Day stamps are NOT validated here, deliberately.
     //
-    // Rules have no date formatting, so comparing a "yyyy-MM-dd" string
-    // against request.time would mean hand-building a zero-padded stamp out of
-    // nested ternaries. That is fragile, and it would reject any write that sat
-    // in the offline queue overnight — a real case, since the whole point is
-    // that someone can speak a declaration on a plane.
+    // Two reasons. Rules have no date formatting, so bounding a "yyyy-MM-dd"
+    // string against request.time means hand-building a zero-padded stamp out
+    // of nested ternaries — fragile, and it would reject any write that sat in
+    // the offline queue overnight, which is a real case since the whole point
+    // is that someone can speak a declaration on a plane.
     //
-    // It is also unnecessary. The stamp drives the week strip and nothing else.
-    // What actually protects progress is dayNumber monotonicity, the 0..7 cap,
-    // one new stamp per write, and the mirror invariant above. The worst a
-    // clock-manipulated client achieves is misplaced dots on its own row.
-    function isWellFormedDayStamp(stamp) {
-      return stamp is string && stamp.size() == 10;
-    }
+    // And validating even the SHAPE would mean indexing the last element of
+    // daysSpoken, which throws on an empty array. A rules evaluation error is
+    // a denial, so that would reject legitimate writes that do not add a stamp
+    // at all. An earlier revision defined such a helper and never called it;
+    // the compiler's unused-function warning is what surfaced the gap.
+    //
+    // None of it is needed. The stamp drives the week strip and nothing else.
+    // What protects progress is dayNumber monotonicity, the 0..7 cap, one new
+    // stamp per write, the 14 entry cap, and the mirror invariant above — the
+    // worst a clock-manipulated client achieves is misplaced dots on its own
+    // row. The client drops malformed stamps at decode (StandRoom.init), which
+    // is covered by a test.
 
     function standMemberEntry(data) {
       return data.members[request.auth.uid];
