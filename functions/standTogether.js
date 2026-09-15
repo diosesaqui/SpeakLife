@@ -235,7 +235,8 @@ function validateEnforcement(e) {
   if (!e || typeof e !== 'object') {
     throw new HttpsError('invalid-argument', 'Missing campaign.');
   }
-  const str = (v, max) => typeof v === 'string' && v.length > 0 && v.length <= max;
+  const str    = (v, max) => typeof v === 'string' && v.length > 0 && v.length <= max;
+  const optStr = (v, max) => typeof v === 'string' && v.length <= max;
   if (!str(e.id, 128) || !str(e.title, 120) || !str(e.theme, 64)) {
     throw new HttpsError('invalid-argument', 'Malformed campaign.');
   }
@@ -254,7 +255,17 @@ function validateEnforcement(e) {
       throw new HttpsError('invalid-argument', 'Duplicate campaign day.');
     }
     seen.add(d.dayNumber);
-    if (!str(d.anchorText, 600) || !str(d.anchorVerse, 1200) || !str(d.anchorBook, 120)) {
+    // anchorText must exist — it is the line everybody speaks. The verse and
+    // the reference are display-only and are ALLOWED TO BE EMPTY: an assembled
+    // campaign fills them from `declaration.bibleVerseText ?? ""` and
+    // `declaration.book ?? ""`, so one declaration without a reference would
+    // otherwise hard-fail createStand for the whole week — and the client maps
+    // invalid-argument onto join copy, so the user would be told to check a
+    // code they never typed.
+    if (!str(d.anchorText, 600)) {
+      throw new HttpsError('invalid-argument', 'Malformed campaign day.');
+    }
+    if (!optStr(d.anchorVerse, 1200) || !optStr(d.anchorBook, 120)) {
       throw new HttpsError('invalid-argument', 'Malformed campaign day.');
     }
   }

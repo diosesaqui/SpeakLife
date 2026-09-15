@@ -59,7 +59,7 @@ struct StandInviteSheet: View {
     @State private var code: String?
     @State private var shareImage: UIImage?
     @State private var isWorking = true
-    @State private var errorText: String?
+    @State private var failureShown: InviteFailure?
     @Environment(\.dismiss) private var dismiss
 
     private var enforcement: Enforcement { source.enforcement }
@@ -102,8 +102,8 @@ struct StandInviteSheet: View {
                 VStack(spacing: DS.Spacing.lg) {
                     if isWorking {
                         working
-                    } else if let errorText {
-                        failure(errorText)
+                    } else if let failureShown {
+                        failureView(failureShown)
                     } else {
                         ready
                     }
@@ -203,16 +203,34 @@ struct StandInviteSheet: View {
         }
     }
 
-    private func failure(_ message: String) -> some View {
+    /// User copy on top, the underlying reason underneath in small type.
+    ///
+    /// The detail line is deliberate. Without it a "couldn't create the invite"
+    /// is unactionable for the person hitting it AND for whoever they send the
+    /// screenshot to — and the first real failure of this feature was a
+    /// disabled auth provider, which is invisible from the outside but names
+    /// itself precisely in the underlying error.
+    private func failureView(_ failure: InviteFailure) -> some View {
         VStack(spacing: DS.Spacing.sm) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 28))
                 .foregroundColor(DS.Palette.gold.opacity(0.8))
-            Text(message)
+
+            Text(failure.text)
                 .font(DS.Typography.body)
                 .foregroundColor(DS.Palette.textPrimary)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
+
+            if let detail = failure.detail {
+                Text(detail)
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundColor(DS.Palette.textSecondary.opacity(0.7))
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .textSelection(.enabled)
+            }
+
             Button("Try again") {
                 Task { await prepare() }
             }
@@ -244,16 +262,25 @@ struct StandInviteSheet: View {
     @MainActor
     private func prepare() async {
         isWorking = true
-        errorText = nil
+        failureShown = nil
         do {
-            let id = try await resolveRoomId()
+            let id: String
+            do {
+                id = try await resolveRoomId()
+            } catch {
+                throw InviteFailure.creating(error)
+            }
             roomId = id
 
             let resolved: String
             if let cached = Self.codesByRoom[id] {
                 resolved = cached
             } else {
-                resolved = try await StandService.shared.createInvite(roomId: id)
+                do {
+                    resolved = try await StandService.shared.createInvite(roomId: id)
+                } catch {
+                    throw InviteFailure.minting(error)
+                }
                 Self.codesByRoom[id] = resolved
             }
             code = resolved
@@ -262,11 +289,14 @@ struct StandInviteSheet: View {
                 title: enforcement.displayTitle,
                 code: Self.formatted(resolved)
             )
-        } catch {
-            errorText = Self.message(for: error)
+        } catch let failure as InviteFailure {
+            failureShown = failure
             AnalyticsService.shared.track("stand_invite_failed", parameters: [
-                "reason": (error as? StandError)?.analyticsReason ?? "unknown",
+                "stage": failure.stage,
+                "reason": failure.reason,
             ])
+        } catch {
+            failureShown = InviteFailure.creating(error)
         }
         isWorking = false
     }
@@ -293,17 +323,106 @@ struct StandInviteSheet: View {
             return result.roomId
         }
     }
+}
 
-    /// Never shows a bare NSError dump. Anything unrecognised gets plain copy
-    /// plus the underlying reason, so support can still act on a screenshot.
-    private static func message(for error: Error) -> String {
-        if let stand = error as? StandError, let text = stand.errorDescription {
-            return text
+// MARK: - Failure copy
+
+/// A failure with copy already chosen for the stage it happened in.
+///
+/// `StandError`'s own `errorDescription` is written for the JOIN path — where
+/// every code the server returns really is about a typed invite code. On the
+/// create path the same codes mean different things, and using the join copy
+/// tells somebody who never typed anything to "check that code". So the mapping
+/// happens here, where the call site is known.
+struct InviteFailure: LocalizedError {
+
+    /// What the user reads.
+    let text: String
+    /// The underlying reason, shown small. Nil when `text` already is it.
+    let detail: String?
+    /// Analytics only.
+    let stage: String
+    let reason: String
+
+    var errorDescription: String? { text }
+
+    /// `ensureAccount` or `createStand` failed — there is no stand yet.
+    static func creating(_ error: Error) -> InviteFailure {
+        let raw = raw(error)
+        if isOffline(error) {
+            return InviteFailure(text: "You're offline. Reconnect and try again.",
+                                 detail: nil, stage: "create", reason: "offline")
         }
+        guard let stand = error as? StandError else {
+            // Almost always Firebase Auth. The raw message names the cause
+            // precisely — a disabled provider says so in as many words — and
+            // nothing generic here could replace it.
+            return InviteFailure(text: "Couldn't start the stand.",
+                                 detail: raw, stage: "create", reason: "auth")
+        }
+        switch stand {
+        case .full:
+            return InviteFailure(
+                text: "You're running as many stands as you can at once. Finish or leave one first.",
+                detail: nil, stage: "create", reason: stand.analyticsReason)
+        case .badCode:
+            return InviteFailure(
+                text: "We couldn't build an invite for this week. Try switching to a different one.",
+                detail: raw, stage: "create", reason: stand.analyticsReason)
+        case .throttled:
+            return InviteFailure(text: "Too many tries. Give it a minute.",
+                                 detail: nil, stage: "create", reason: stand.analyticsReason)
+        case .needsAuth:
+            return InviteFailure(text: "We couldn't sign you in. Try again in a moment.",
+                                 detail: raw, stage: "create", reason: stand.analyticsReason)
+        default:
+            return InviteFailure(text: "Couldn't start the stand.",
+                                 detail: raw, stage: "create", reason: stand.analyticsReason)
+        }
+    }
+
+    /// The stand exists; minting its invite code failed.
+    static func minting(_ error: Error) -> InviteFailure {
+        let raw = raw(error)
+        if isOffline(error) {
+            return InviteFailure(text: "You're offline. Reconnect and try again.",
+                                 detail: nil, stage: "invite", reason: "offline")
+        }
+        guard let stand = error as? StandError else {
+            return InviteFailure(text: "Couldn't create the invite code.",
+                                 detail: raw, stage: "invite", reason: "unknown")
+        }
+        switch stand {
+        case .revoked:
+            // permission-denied here is "Only the owner can invite.", not a
+            // revoked invite.
+            return InviteFailure(text: "Only the person who started this stand can invite others.",
+                                 detail: nil, stage: "invite", reason: stand.analyticsReason)
+        case .full:
+            // resource-exhausted here is "Too many open invites.", not a full room.
+            return InviteFailure(text: "This stand already has too many open invites.",
+                                 detail: nil, stage: "invite", reason: stand.analyticsReason)
+        case .alreadyFinished:
+            return InviteFailure(text: "This stand already finished.",
+                                 detail: nil, stage: "invite", reason: stand.analyticsReason)
+        case .notFound:
+            return InviteFailure(text: "This stand no longer exists.",
+                                 detail: nil, stage: "invite", reason: stand.analyticsReason)
+        default:
+            return InviteFailure(text: "Couldn't create the invite code.",
+                                 detail: raw, stage: "invite", reason: stand.analyticsReason)
+        }
+    }
+
+    private static func isOffline(_ error: Error) -> Bool {
         let ns = error as NSError
-        if ns.domain == NSURLErrorDomain {
-            return "You're offline. Reconnect and try again."
-        }
-        return "Couldn't create the invite. \(error.localizedDescription)"
+        return ns.domain == NSURLErrorDomain
+            || ns.localizedDescription.localizedCaseInsensitiveContains("offline")
+    }
+
+    private static func raw(_ error: Error) -> String {
+        let ns = error as NSError
+        let text = error.localizedDescription
+        return text.isEmpty ? "\(ns.domain) \(ns.code)" : text
     }
 }
