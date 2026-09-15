@@ -45,6 +45,9 @@ struct DailyDeclarationBurstView: View {
     @StateObject private var burstTracker = BurstCompletionTracker.shared
     @State private var currentDeclarationIndex = 0
     @State private var showCompletionView = false
+    /// Distinct days this user has completed a Burst, read once the completion
+    /// is written. Paces the two post-Burst prompts.
+    @State private var burstDayCount = 0
     @State private var startTime = Date()
     /// True once the intro has been dismissed and there is a line on screen to
     /// speak. Gates the ambient power effect, which should not run over the
@@ -955,19 +958,18 @@ struct DailyDeclarationBurstView: View {
         Juice.play(.success)
         burstActive = false
 
-        // Read BEFORE recording, because recordBurstCompletion appends to
-        // `completions` in place. This is the only moment in the app where
-        // "this is their first burst ever" is knowable.
-        let isFirstEverBurst = burstTracker.completions.isEmpty
-
         let timeSpent = Date().timeIntervalSince(startTime)
         burstTracker.recordBurstCompletion(
             declarationCount: morningDeclarations.count,
             timeSpent: timeSpent
         )
 
-        // Arms only. The offer is raised on the way out, in completeBurst.
-        WelcomeOfferPresenter.shared.armIfFirstBurst(isFirstEverBurst: isFirstEverBurst)
+        // Distinct Burst DAYS, not completions: two bursts in one afternoon is
+        // still day one, and the prompts below are paced by day.
+        burstDayCount = burstTracker.getUniqueDaysCount()
+
+        // Arms only. Both prompts are raised on the way out, in completeBurst.
+        WelcomeOfferPresenter.shared.armAfterBurst(dayCount: burstDayCount)
 
         // Automatically complete the daily burst task
         streakViewModel.completeTask(taskId: "complete_daily_burst")
@@ -1056,15 +1058,21 @@ struct DailyDeclarationBurstView: View {
 
         dismiss()
 
-        // The one-time welcome offer, if this user is owed one.
+        // The post-Burst prompts, at most one of them.
         //
-        // After `dismiss()`, and on a delay, for a concrete reason: the offer's
-        // cover belongs to whichever view presented this burst, and a
-        // fullScreenCover raised from an ancestor while a descendant's cover is
-        // still on screen is dropped silently. This one is mid-dismissal right
-        // now. The wait is the dismissal animation, nothing more.
+        // After `dismiss()`, and on a delay, for a concrete reason: both covers
+        // belong to whichever view presented this Burst, and a fullScreenCover
+        // raised from an ancestor while a descendant's cover is still on screen
+        // is dropped silently. This one is mid-dismissal right now. The wait is
+        // the dismissal animation, nothing more.
+        //
+        // Day one asks for their own declaration — they have just spoken seven
+        // and finally have a model to copy, which is why that ask moved here
+        // out of onboarding. Day two onward can carry the welcome offer.
         let store = subscriptionStore
+        let days = burstDayCount
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            PersonalDeclarationPrompt.shared.presentIfOwed(burstDayCount: days)
             WelcomeOfferPresenter.shared.presentIfReady(subscriptionStore: store)
         }
     }

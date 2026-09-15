@@ -888,6 +888,9 @@ struct ModernDailyChecklistView: View {
         // fullScreenCover from an ancestor of a still-presented cover is
         // dropped silently. This view owns that cover, so it is the right host.
         .welcomeOffer()
+        // The declaration ask that used to live in onboarding. Same host,
+        // same reason: it appears as the Burst's own cover is dismissing.
+        .personalDeclarationPrompt()
         // Personal Declaration card — presented modally on Today. onBreakthrough
         // dismisses this card, then surfaces the breakthrough flow (attached to
         // the root below so it survives this sheet's dismissal).

@@ -158,7 +158,11 @@ extension OnboardingAngle {
         steps.append(.picker)
         if burdenScene != nil { steps.append(.burdenScene) }
         steps.append(contentsOf: quizSteps)
-        steps.append(contentsOf: [AngleStep.firstDeclaration, .personalDeclaration, .rating])
+        // `.personalDeclaration` moved out of onboarding to after the first
+        // Daily Burst: asking someone to write their own declaration before
+        // they have heard one produced 39% skips and 24% outright abandons.
+        // This arm builds its steps as an array, so here it is a real removal.
+        steps.append(contentsOf: [AngleStep.firstDeclaration, .rating])
         if showsPlanBuilding { steps.append(.planBuilding) }
         steps.append(contentsOf: [AngleStep.planReveal, .testimonials, .paywall, .notificationTime])
         return steps

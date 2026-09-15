@@ -280,6 +280,20 @@ struct CloserOnboardingView: View {
             if CloserStep(rawValue: nextRaw) == .pledge, !pledgeEnabled {
                 nextRaw += 1
             }
+            // The personal declaration ask has moved out of onboarding to
+            // after the user's first Daily Burst. Asking somebody to compose
+            // their own declaration before they have ever heard one gave us
+            // 571 shown / 249 saved over 30 days: 39% skipped it and 24%
+            // abandoned onboarding on it outright.
+            //
+            // SKIPPED, NOT DELETED, for the same reason as every other skip in
+            // this function: these raw values are the `step` dimension on the
+            // onboarding funnel and must not be renumbered, and a removed case
+            // leaves a hole that Step(rawValue:) resolves to nil.
+            while let candidate = CloserStep(rawValue: nextRaw),
+                  candidate == .personalDeclaration {
+                nextRaw += 1
+            }
             guard let next = CloserStep(rawValue: nextRaw) else {
                 assertionFailure("CloserOnboardingView.advance(): no successor for \(currentStep). .notificationTime should be terminal.")
                 onComplete()

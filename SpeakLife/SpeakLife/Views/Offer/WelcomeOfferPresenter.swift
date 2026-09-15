@@ -64,22 +64,27 @@ final class WelcomeOfferPresenter: ObservableObject {
 
     // MARK: - Trigger
 
-    /// Arms the offer, at the moment the user's first burst is recorded.
+    /// Arms the offer, from the user's SECOND Burst day onward.
     ///
-    /// `isFirstEverBurst` is passed in rather than read here: the only honest
-    /// place to know it is inside the burst, immediately BEFORE the completion
-    /// is written.
+    /// Day one belongs to `PersonalDeclarationPrompt`, which moved out of
+    /// onboarding onto that same moment; two sheets on one tap is one too many.
+    /// Deferring is not a cost here — somebody who came back for a second day
+    /// is a stronger buy than somebody who just finished their first.
     ///
     /// Separate from `presentIfReady` so the arm survives a user who finishes
     /// the burst and then force-quits on the celebration screen.
-    func armIfFirstBurst(isFirstEverBurst: Bool) {
-        guard isFirstEverBurst, !hasBeenShown else { return }
+    func armAfterBurst(dayCount: Int) {
+        guard dayCount >= 2, !hasBeenShown else { return }
         UserDefaults.standard.set(true, forKey: armedKey)
     }
 
     /// Raises the offer if this user is armed and everything else lines up.
     /// Call once the burst's own cover has finished dismissing.
     func presentIfReady(subscriptionStore: SubscriptionStore) {
+        // Never over the declaration prompt. It owns Burst day one and this
+        // arms from day two, so they should not overlap — but if the prompt is
+        // ever retimed, the offer yields rather than fighting it for a cover.
+        guard !PersonalDeclarationPrompt.shared.isPendingOrShowing else { return }
         guard isArmed, isEligible(subscriptionStore) else { return }
         UserDefaults.standard.set(true, forKey: shownKey)
         UserDefaults.standard.set(false, forKey: armedKey)
