@@ -51,6 +51,25 @@ final class SubscriptionStore: ObservableObject {
     @Published var isPremium: Bool = false {
         didSet { syncAnalyticsSubscriptionContext() }
     }
+
+    /// Premium, OR an active Stand Pass — the seven days of access granted to
+    /// somebody who accepted an invitation to a stand (docs/STAND_TOGETHER_SPEC.md §10).
+    ///
+    /// Deliberately a SEPARATE property rather than folded into `isPremium`.
+    /// `isPremium` has a `didSet` that stamps the monetization dimension onto
+    /// every analytics event, so OR-ing a free pass into it would report pass
+    /// holders as subscribers and quietly corrupt every revenue cut.
+    ///
+    /// `isPremium` stays RevenueCat's truth. This is the one to gate CONTENT on.
+    /// `@MainActor` because `StandPassStore` is, and `SubscriptionStore` is not.
+    /// Written as an `if` rather than `isPremium || standPass.isActive`: the
+    /// right-hand side of `||` is an autoclosure, which stays nonisolated and
+    /// cannot reach a main-actor property.
+    @MainActor
+    var hasFullAccess: Bool {
+        if isPremium { return true }
+        return StandPassStore.shared.isActive
+    }
     /// True iff the active premium entitlement is currently in its free-trial
     /// introductory period (vs a paid period). Powers the onboarding conversion
     /// analytics. Source of truth: RevenueCat, refreshed in applyCustomerInfo.

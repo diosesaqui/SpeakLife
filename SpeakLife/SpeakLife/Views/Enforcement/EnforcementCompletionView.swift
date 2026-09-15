@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import SpeakLifeCore
 
 struct EnforcementCompletionView: View {
     let completed: Enforcement
@@ -17,6 +18,8 @@ struct EnforcementCompletionView: View {
     let onDone: () -> Void
 
     @State private var showConfetti = false
+    /// Set once a stand has been minted for the next campaign.
+    @State private var standRoom: StandRoom?
 
     var body: some View {
         ZStack {
@@ -95,6 +98,23 @@ struct EnforcementCompletionView: View {
                     .padding(.horizontal, DS.Spacing.lg)
                 }
 
+                // They have just held seven days and have proof it works.
+                // This is where a finisher becomes an inviter (spec §9.5).
+                if FeatureFlag.standTogetherEnabled, isPremium, let next = nextOptions.first {
+                    Button {
+                        Task {
+                            standRoom = await StandInviteLauncher.createRoom(for: next)
+                        }
+                    } label: {
+                        Label("Run the next one with someone",
+                              systemImage: "person.2.fill")
+                            .font(.system(size: 15, weight: .semibold, design: .rounded))
+                            .foregroundColor(DS.Palette.gold)
+                            .padding(.vertical, 10)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+
                 Button(action: onDone) {
                     Text("Done")
                         .font(.system(size: 16, weight: .semibold, design: .rounded))
@@ -104,6 +124,7 @@ struct EnforcementCompletionView: View {
                 .padding(.bottom, DS.Spacing.md)
             }
         }
+        .sheet(item: $standRoom) { StandInviteSheet(room: $0) }
         .onAppear {
             withAnimation(.easeOut(duration: 0.3)) { showConfetti = true }
         }

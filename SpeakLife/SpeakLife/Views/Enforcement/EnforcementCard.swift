@@ -80,6 +80,8 @@ struct EnforcementCard: View {
     @State private var redirect: SituationScreen.Redirect?
     /// Someone said they want to end their life. Not a campaign state.
     @State private var showReachOut = false
+    /// Stand With Me's day-1 ask (spec §9.5, surface 1).
+    @State private var showStandPrompt = false
 
     var body: some View {
         if service.isEligible(totalDaysCompleted: totalDaysCompleted) {
@@ -99,6 +101,20 @@ struct EnforcementCard: View {
             }
             .padding(DS.Spacing.md)
             .dsGlass(cornerRadius: DS.Radius.lg, strokeOpacity: 0.16, elevation: DS.Elevation.medium)
+            // Asked once, after the first day is actually banked — they have
+            // just spoken it out loud and felt it, which is the whole reason
+            // the ask lands here rather than at campaign start.
+            .sheet(isPresented: $showStandPrompt) {
+                if let active = service.activeEnforcement {
+                    StandInvitePromptSheet(enforcement: active)
+                }
+            }
+            .onChange(of: service.progress.completedDayNumbers.count) { _, count in
+                guard count == 1, let _ = service.activeEnforcement,
+                      StandDiscovery.shouldPrompt(forDay: 1) else { return }
+                StandDiscovery.markPrompted(day: 1)
+                showStandPrompt = true
+            }
         }
     }
 
@@ -126,6 +142,12 @@ struct EnforcementCard: View {
 
             todayCTA
                 .padding(.top, 2)
+
+            // Stand With Me's durable home (spec §9.5, surface 2). Always
+            // present, never a prompt, and the only path by which someone
+            // already mid-campaign when the feature shipped discovers it.
+            // Renders nothing while the flag is off.
+            StandInviteRow(enforcement: enforcement)
 
             HStack(spacing: DS.Spacing.xs) {
                 // Nothing sits here on purpose.
