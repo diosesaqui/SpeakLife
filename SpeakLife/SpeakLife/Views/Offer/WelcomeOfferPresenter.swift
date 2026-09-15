@@ -64,26 +64,40 @@ final class WelcomeOfferPresenter: ObservableObject {
 
     // MARK: - Trigger
 
-    /// Arms the offer, from the user's SECOND Burst day onward.
+    /// Arms the offer from the user's FIRST Burst day.
     ///
-    /// Day one belongs to `PersonalDeclarationPrompt`, which moved out of
-    /// onboarding onto that same moment; two sheets on one tap is one too many.
-    /// Deferring is not a cost here — somebody who came back for a second day
-    /// is a stronger buy than somebody who just finished their first.
+    /// It does not necessarily SHOW on day one: `presentIfReady` yields to
+    /// `PersonalDeclarationPrompt`, which owns that moment when it is owed.
+    /// Arming early and yielding late is better than deferring to day two
+    /// outright, because it splits on what is actually true of each user
+    /// rather than on the calendar:
     ///
-    /// Separate from `presentIfReady` so the arm survives a user who finishes
+    ///  - Somebody owed the declaration ask gets that on day one, and the
+    ///    offer on day two. They are also a returning user by then, which is a
+    ///    stronger buy than a first-day finisher.
+    ///  - Somebody NOT owed it (they already have a declaration, or they
+    ///    onboarded before this moved) has nothing competing, so they get the
+    ///    offer on day one, at the earliest honest moment.
+    ///
+    /// Neither user ever sees two covers on one tap, and nobody waits a day for
+    /// no reason. The arm persists, so a yielded offer is never a lost one.
+    ///
+    /// Separate from `presentIfReady` so it also survives a user who finishes
     /// the burst and then force-quits on the celebration screen.
     func armAfterBurst(dayCount: Int) {
-        guard dayCount >= 2, !hasBeenShown else { return }
+        guard dayCount >= 1, !hasBeenShown else { return }
         UserDefaults.standard.set(true, forKey: armedKey)
     }
 
     /// Raises the offer if this user is armed and everything else lines up.
     /// Call once the burst's own cover has finished dismissing.
     func presentIfReady(subscriptionStore: SubscriptionStore) {
-        // Never over the declaration prompt. It owns Burst day one and this
-        // arms from day two, so they should not overlap — but if the prompt is
-        // ever retimed, the offer yields rather than fighting it for a cover.
+        // Never over the declaration prompt.
+        //
+        // This is load-bearing, not defensive: both are armed on Burst day one
+        // and `presentIfOwed` runs first in the same closure, so on a day where
+        // the declaration is owed it is already presenting when we get here.
+        // The offer stays armed and lands on the next Burst instead.
         guard !PersonalDeclarationPrompt.shared.isPendingOrShowing else { return }
         guard isArmed, isEligible(subscriptionStore) else { return }
         UserDefaults.standard.set(true, forKey: shownKey)

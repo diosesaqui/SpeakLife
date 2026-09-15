@@ -1066,9 +1066,10 @@ struct DailyDeclarationBurstView: View {
         // is dropped silently. This one is mid-dismissal right now. The wait is
         // the dismissal animation, nothing more.
         //
-        // Day one asks for their own declaration — they have just spoken seven
-        // and finally have a model to copy, which is why that ask moved here
-        // out of onboarding. Day two onward can carry the welcome offer.
+        // ORDER MATTERS. The declaration ask goes first and the offer yields
+        // to it, so a user owed the declaration gets that on day one and the
+        // offer on their next Burst, while a user who already has one gets the
+        // offer straight away. Never both on one tap.
         let store = subscriptionStore
         let days = burstDayCount
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
