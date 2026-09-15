@@ -99,15 +99,36 @@ enum BibleChatLocal {
     }
 }
 
+/// A declaration the chat gave, returned as data rather than left as prose.
+///
+/// The model tags any declaration it writes with a machine-readable copy, which
+/// the Cloud Function strips out of the reply and returns here. That is what
+/// lets the app offer to save it: a line of text inside a chat bubble cannot be
+/// turned into a real personal declaration, but this can.
+struct ChatDeclaration: Equatable {
+    let text: String
+    let verse: String
+    let reference: String
+    /// Raw category string from the server. Resolved to a `DeclarationCategory`
+    /// at the save site, falling back to `.general`, so an unrecognized value
+    /// costs the categorization and never the save.
+    let categoryRaw: String
+}
+
 struct ChatMessage: Identifiable, Equatable {
     enum Role: String { case user, assistant }
     let id = UUID()
     let role: Role
     var text: String
+    /// Set only on assistant messages that gave one. Lives on the message
+    /// rather than the view model so the save button stays attached to the
+    /// reply it came from as the conversation grows.
+    var declaration: ChatDeclaration? = nil
 }
 
 struct BibleChatResponse {
     let reply: String?
+    let declaration: ChatDeclaration?
     let needsPaywall: Bool
     let remainingFree: Int?
 }
@@ -163,9 +184,26 @@ final class BibleChatAIService {
         let reply = json["reply"] as? String
         let remaining = (json["remainingFree"] as? NSNumber)?.intValue
 
+        // A declaration with no line to speak is not a declaration. Everything
+        // else is optional: a missing verse just means the save card shows none.
+        var declaration: ChatDeclaration? = nil
+        if let raw = json["declaration"] as? [String: Any],
+           let text = (raw["text"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !text.isEmpty {
+            declaration = ChatDeclaration(
+                text: text,
+                verse: (raw["verse"] as? String) ?? "",
+                reference: (raw["reference"] as? String) ?? "",
+                categoryRaw: (raw["category"] as? String) ?? "general"
+            )
+        }
+
         let isBlankReply = reply?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true
         if !needsPaywall && isBlankReply { throw BibleChatAIError.empty }
-        return BibleChatResponse(reply: reply, needsPaywall: needsPaywall, remainingFree: remaining)
+        return BibleChatResponse(reply: reply,
+                                 declaration: declaration,
+                                 needsPaywall: needsPaywall,
+                                 remainingFree: remaining)
     }
 }
 
