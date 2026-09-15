@@ -380,6 +380,8 @@
 		STANDB000000000000000001 /* StandCompletionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = STAND0000000000000000001 /* StandCompletionView.swift */; };
 		STANDB000000000000000002 /* StandConflictSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = STAND0000000000000000002 /* StandConflictSheet.swift */; };
 		STANDB000000000000000003 /* StandDiscovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = STAND0000000000000000003 /* StandDiscovery.swift */; };
+		OFFERB000000000000000001 /* WelcomeOfferPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = OFFER0000000000000000001 /* WelcomeOfferPresenter.swift */; };
+		OFFERB000000000000000002 /* PersonalDeclarationPrompt.swift in Sources */ = {isa = PBXBuildFile; fileRef = OFFER0000000000000000002 /* PersonalDeclarationPrompt.swift */; };
 		STANDB000000000000000004 /* StandInviteCardRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = STAND0000000000000000004 /* StandInviteCardRenderer.swift */; };
 		STANDB000000000000000005 /* StandInviteSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = STAND0000000000000000005 /* StandInviteSheet.swift */; };
 		STANDB000000000000000006 /* StandJoinView.swift in Sources */ = {isa = PBXBuildFile; fileRef = STAND0000000000000000006 /* StandJoinView.swift */; };
@@ -782,6 +784,8 @@
 		STAND0000000000000000001 /* StandCompletionView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StandCompletionView.swift; sourceTree = "<group>"; };
 		STAND0000000000000000002 /* StandConflictSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StandConflictSheet.swift; sourceTree = "<group>"; };
 		STAND0000000000000000003 /* StandDiscovery.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StandDiscovery.swift; sourceTree = "<group>"; };
+		OFFER0000000000000000001 /* WelcomeOfferPresenter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WelcomeOfferPresenter.swift; sourceTree = "<group>"; };
+		OFFER0000000000000000002 /* PersonalDeclarationPrompt.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PersonalDeclarationPrompt.swift; sourceTree = "<group>"; };
 		STAND0000000000000000004 /* StandInviteCardRenderer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StandInviteCardRenderer.swift; sourceTree = "<group>"; };
 		STAND0000000000000000005 /* StandInviteSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StandInviteSheet.swift; sourceTree = "<group>"; };
 		STAND0000000000000000006 /* StandJoinView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StandJoinView.swift; sourceTree = "<group>"; };
@@ -1342,6 +1346,7 @@
 			isa = PBXGroup;
 			children = (
 				STANDG000000000000000001 /* Stand */,
+				OFFERG000000000000000001 /* Offer */,
 				TIC00GRP000000000000002A /* Guard */,
 				458510D82B159B0D00230EE5 /* LandingView.swift */,
 				7A601440294E574500CD2103 /* HomeView.swift */,
@@ -1821,6 +1826,16 @@
 			path = Enforcement;
 			sourceTree = "<group>";
 		};
+		OFFERG000000000000000001 /* Offer */ = {
+			isa = PBXGroup;
+			children = (
+				OFFER0000000000000000001 /* WelcomeOfferPresenter.swift */,
+				OFFER0000000000000000002 /* PersonalDeclarationPrompt.swift */,
+			);
+			name = Offer;
+			path = Offer;
+			sourceTree = "<group>";
+		};
 		STANDG000000000000000001 /* Stand */ = {
 			isa = PBXGroup;
 			children = (
@@ -2053,6 +2068,8 @@
 				STANDB000000000000000001 /* StandCompletionView.swift in Sources */,
 				STANDB000000000000000002 /* StandConflictSheet.swift in Sources */,
 				STANDB000000000000000003 /* StandDiscovery.swift in Sources */,
+				OFFERB000000000000000001 /* WelcomeOfferPresenter.swift in Sources */,
+				OFFERB000000000000000002 /* PersonalDeclarationPrompt.swift in Sources */,
 				STANDB000000000000000004 /* StandInviteCardRenderer.swift in Sources */,
 				STANDB000000000000000005 /* StandInviteSheet.swift in Sources */,
 				STANDB000000000000000006 /* StandJoinView.swift in Sources */,

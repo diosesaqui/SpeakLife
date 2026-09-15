@@ -708,7 +708,20 @@ struct QuizOnboardingView: View {
             "declaration_id": matchedDeclarationVerse,
             "time_on_screen_seconds": timeOnScreen
         ])
-        transition(to: .personalDeclaration)
+        // Straight past `.personalDeclaration`, which has moved out of
+        // onboarding to after the first Daily Burst. The rating gate below is
+        // lifted verbatim from advanceFromPersonalDeclaration, which is now
+        // unreachable but kept so the step and its analytics are one edit from
+        // coming back.
+        guard subscriptionStore.onboardingRatingEnabled else {
+            transition(to: .commitmentHold)
+            return
+        }
+        AnalyticsService.shared.track("onboarding_rating_step_shown", parameters: [
+            "segment": segment.rawValue,
+            "position": "post_matched_declaration"
+        ])
+        transition(to: .rating)
     }
 
     private func advanceFromPersonalDeclaration() {

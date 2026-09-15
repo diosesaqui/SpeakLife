@@ -109,10 +109,18 @@ struct EnforcementCard: View {
                     StandInvitePromptSheet(enforcement: active)
                 }
             }
+            // Days 1 to 3 rather than day 1 only.
+            //
+            // The one-time welcome offer now fires on the same first burst and
+            // takes precedence (StandDiscovery.shouldPrompt yields to it), so a
+            // day-1-only trigger meant anyone who got the offer never saw this
+            // ask at all. `shouldPrompt` already dedupes per day and caps at
+            // three prompts for life, so widening the window costs nothing and
+            // simply lets a suppressed day-1 land on day 2.
             .onChange(of: service.progress.completedDayNumbers.count) { _, count in
-                guard count == 1, let _ = service.activeEnforcement,
-                      StandDiscovery.shouldPrompt(forDay: 1) else { return }
-                StandDiscovery.markPrompted(day: 1)
+                guard (1...3).contains(count), let _ = service.activeEnforcement,
+                      StandDiscovery.shouldPrompt(forDay: count) else { return }
+                StandDiscovery.markPrompted(day: count)
                 showStandPrompt = true
             }
         }

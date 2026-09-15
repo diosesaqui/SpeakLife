@@ -1861,6 +1861,16 @@ struct SurveyPlanRevealScreen: View {
         return false
     }
 
+    /// "Free for 7 days. Cancel anytime." — built from the real trial length,
+    /// never hardcoded, for the same reason `trialDays` itself is not: the SKU
+    /// is Remote Config resolved and a fixed 7 starts lying the moment it is
+    /// repointed.
+    private var trialPreface: String {
+        guard trialDays > 0 else { return "Cancel anytime." }
+        let dayWord = trialDays == 1 ? "day" : "days"
+        return "Free for \(trialDays) \(dayWord). Cancel anytime."
+    }
+
     private var dailyRhythmDetail: String {
         switch dailyMinutes {
         case "one":   return "1 minute, morning and evening"
@@ -1936,7 +1946,7 @@ struct SurveyPlanRevealScreen: View {
         if let minutes = minutesPerDay {
             return "\(trialDays) \(dayWord), \(minutes * trialDays) minutes, spoken over \(burden.planDomain)."
         }
-        return "\(trialDays) \(dayWord) spoken over \(burden.planDomain). You hear the difference."
+        return "\(trialDays) \(dayWord) spoken over \(burden.planDomain). I hear the difference."
     }
 
     var body: some View {
@@ -1946,7 +1956,7 @@ struct SurveyPlanRevealScreen: View {
                     Spacer().frame(height: size.height * 0.09)
 
                     VStack(spacing: 12) {
-                        Text("YOUR PLAN IS READY")
+                        Text("BUILT FROM WHAT YOU TOLD US")
                             .font(.system(size: 12, weight: .bold, design: .rounded))
                             .foregroundColor(DS.Palette.gold.opacity(0.9))
                             .kerning(1.4)
@@ -1972,13 +1982,13 @@ struct SurveyPlanRevealScreen: View {
                         cardDivider
                         planRow(
                             icon: "book.fill",
-                            title: "Scripture-backed",
+                            title: "Where it's written",
                             detail: "Every word stands on the Word, starting with \(burden.previewDeclaration.reference)."
                         )
                         cardDivider
                         planRow(
                             icon: "bell.badge.fill",
-                            title: "Daily rhythm",
+                            title: "When you'll speak it",
                             detail: dailyRhythmDetail
                         )
                     }
@@ -1989,24 +1999,16 @@ struct SurveyPlanRevealScreen: View {
                     // The arc runs inside the trial on purpose. Every beat
                     // here is something the user can check for themselves
                     // before the card is charged.
-                    VStack(alignment: .leading, spacing: 10) {
-                        if trialDays > 1 {
-                            weekLine("DAY 1", "You speak it out loud. Out loud is the part that works.")
-                        }
-                        if let mid = midDay {
-                            weekLine("DAY \(mid)", "You reach for the Word before you reach for the worry.")
-                        }
-                        weekLine("DAY \(trialDays)", finalDayLine)
-                    }
-                    .padding(.horizontal, 32)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .planRevealStagger(v, delay: 0.3)
-
-                    // The horizon, deliberately demoted. It used to be this
-                    // screen's climax in gold at 18pt, directly above the price,
-                    // which made a four-week outcome read as the thing being
-                    // bought on a seven-day trial. It is still true and still
-                    // here; it is no longer what the eye lands on.
+                    // The horizon, now ABOVE the arc rather than below it.
+                    //
+                    // It was demoted once already, for making a four-week
+                    // outcome read as the thing being bought on a seven-day
+                    // trial. Demoting it did not fix that: it was still the
+                    // last thing on screen before the CTA. Moving it above the
+                    // arc leaves the Day \(trialDays) beat as the final word,
+                    // which is a promise the user can check before the card is
+                    // charged. Their own words are still here, which is why it
+                    // moved instead of going away.
                     VStack(spacing: 4) {
                         Text("AND BY WEEK FOUR")
                             .font(.system(size: 10, weight: .bold, design: .rounded))
@@ -2021,22 +2023,60 @@ struct SurveyPlanRevealScreen: View {
                     }
                     .padding(.horizontal, 28)
                     .padding(.top, 4)
+                    .planRevealStagger(v, delay: 0.3)
+
+                    // FIRST PERSON, deliberately.
+                    //
+                    // These three lines used to read "You speak it out loud."
+                    // Every declaration in this app is first person and spoken
+                    // aloud — that is the product. Read in the user's own voice
+                    // the arc stops describing the product and becomes a
+                    // rehearsal of it, one screen before they are asked to pay
+                    // for it. It costs three words.
+                    VStack(alignment: .leading, spacing: 10) {
+                        if trialDays > 1 {
+                            weekLine("DAY 1", "I speak it out loud. Out loud is the part that works.")
+                        }
+                        if let mid = midDay {
+                            weekLine("DAY \(mid)", "I reach for the Word before I reach for the worry.")
+                        }
+                        weekLine("DAY \(trialDays)", finalDayLine)
+                    }
+                    .padding(.horizontal, 32)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .planRevealStagger(v, delay: 0.36)
 
                     Spacer().frame(height: 8)
                 }
             }
 
-            SurveyContinueButton(label: "Unlock My Plan →") {
+            // The shape of the ask, said before the ask.
+            //
+            // The next screen is the paywall, and it is where this funnel loses
+            // 48-61% of everyone who reaches it. A large part of that is
+            // surprise. One quiet line here costs nothing and means nobody
+            // arrives at the price without knowing it was coming.
+            Text(trialPreface)
+                .font(.system(size: 13, weight: .medium, design: .rounded))
+                .foregroundColor(.white.opacity(0.55))
+                .planRevealStagger(v, delay: 0.38)
+
+            // "Unlock My Plan" announced a lock one tap before the lock. Same
+            // destination, opposite expectation: they now arrive at the paywall
+            // having just committed to starting, rather than having just been
+            // told they are blocked.
+            SurveyContinueButton(label: "Start Day 1 →") {
                 AnalyticsService.shared.track("plan_reveal_continue", parameters: [
                     "flow": flow,
                     "burden": burden.shortLabel,
-                    "plan_arc": "day_based_v2",
+                    // Bumped per the note below: the arc changed voice and
+                    // order, and the CTA changed intent. Do not reuse v2.
+                    "plan_arc": "first_person_v3",
                     "trial_days": trialDays as NSNumber
                 ])
                 onContinue()
             }
-            .padding(.top, 8).padding(.bottom, 36)
+            .padding(.top, 6).padding(.bottom, 36)
             .planRevealStagger(v, delay: 0.4)
         }
         .onAppear {
@@ -2051,7 +2091,7 @@ struct SurveyPlanRevealScreen: View {
                 "flow": flow,
                 "burden": burden.shortLabel,
                 "has_personal_declaration": hasPersonalDeclaration as NSNumber,
-                "plan_arc": "day_based_v2",
+                "plan_arc": "first_person_v3",
                 "trial_days": trialDays as NSNumber
             ])
             withAnimation { v = true }

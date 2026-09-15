@@ -30,6 +30,10 @@ struct DailyDeclarationBurstView: View {
     @EnvironmentObject var themeViewModel: ThemeViewModel
     @EnvironmentObject var timerViewModel: TimerViewModel
     @EnvironmentObject var streakViewModel: EnhancedStreakViewModel
+    /// Read only to decide whether the one-time welcome offer is owed on the
+    /// way out. Already injected at both callsites, so nothing had to change
+    /// to add it.
+    @EnvironmentObject var subscriptionStore: SubscriptionStore
     @Environment(\.dismiss) var dismiss
     @Environment(\.colorScheme) var colorScheme
     /// Honoured the way `LandingView` already honours it. The burst is the
@@ -41,6 +45,9 @@ struct DailyDeclarationBurstView: View {
     @StateObject private var burstTracker = BurstCompletionTracker.shared
     @State private var currentDeclarationIndex = 0
     @State private var showCompletionView = false
+    /// Distinct days this user has completed a Burst, read once the completion
+    /// is written. Paces the two post-Burst prompts.
+    @State private var burstDayCount = 0
     @State private var startTime = Date()
     /// True once the intro has been dismissed and there is a line on screen to
     /// speak. Gates the ambient power effect, which should not run over the
@@ -957,6 +964,13 @@ struct DailyDeclarationBurstView: View {
             timeSpent: timeSpent
         )
 
+        // Distinct Burst DAYS, not completions: two bursts in one afternoon is
+        // still day one, and the prompts below are paced by day.
+        burstDayCount = burstTracker.getUniqueDaysCount()
+
+        // Arms only. Both prompts are raised on the way out, in completeBurst.
+        WelcomeOfferPresenter.shared.armAfterBurst(dayCount: burstDayCount)
+
         // Automatically complete the daily burst task
         streakViewModel.completeTask(taskId: "complete_daily_burst")
 
@@ -1043,5 +1057,24 @@ struct DailyDeclarationBurstView: View {
         streakViewModel.showCompletionCelebration = false
 
         dismiss()
+
+        // The post-Burst prompts, at most one of them.
+        //
+        // After `dismiss()`, and on a delay, for a concrete reason: both covers
+        // belong to whichever view presented this Burst, and a fullScreenCover
+        // raised from an ancestor while a descendant's cover is still on screen
+        // is dropped silently. This one is mid-dismissal right now. The wait is
+        // the dismissal animation, nothing more.
+        //
+        // ORDER MATTERS. The declaration ask goes first and the offer yields
+        // to it, so a user owed the declaration gets that on day one and the
+        // offer on their next Burst, while a user who already has one gets the
+        // offer straight away. Never both on one tap.
+        let store = subscriptionStore
+        let days = burstDayCount
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            PersonalDeclarationPrompt.shared.presentIfOwed(burstDayCount: days)
+            WelcomeOfferPresenter.shared.presentIfReady(subscriptionStore: store)
+        }
     }
 }
