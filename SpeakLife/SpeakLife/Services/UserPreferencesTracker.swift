@@ -12,7 +12,7 @@ import SwiftUI
 /// survey, and paywall copy. Keep every surface citing the same (truthful)
 /// figure — update it here, never inline.
 enum SocialProof {
-    static let believersCount = "100,000+"
+    static let believersCount = "50,000+"
 }
 
 final class UserPreferencesTracker: ObservableObject {
