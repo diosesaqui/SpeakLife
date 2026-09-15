@@ -18,8 +18,10 @@ struct EnforcementCompletionView: View {
     let onDone: () -> Void
 
     @State private var showConfetti = false
-    /// Set once a stand has been minted for the next campaign.
-    @State private var standRoom: StandRoom?
+    /// The campaign they chose to run with somebody. The invite sheet creates
+    /// the stand itself, so a failure has a screen to land on instead of
+    /// leaving this button doing nothing.
+    @State private var standInviteFor: Enforcement?
 
     var body: some View {
         ZStack {
@@ -102,9 +104,7 @@ struct EnforcementCompletionView: View {
                 // This is where a finisher becomes an inviter (spec §9.5).
                 if FeatureFlag.standTogetherEnabled, isPremium, let next = nextOptions.first {
                     Button {
-                        Task {
-                            standRoom = await StandInviteLauncher.createRoom(for: next)
-                        }
+                        standInviteFor = next
                     } label: {
                         Label("Run the next one with someone",
                               systemImage: "person.2.fill")
@@ -124,7 +124,7 @@ struct EnforcementCompletionView: View {
                 .padding(.bottom, DS.Spacing.md)
             }
         }
-        .sheet(item: $standRoom) { StandInviteSheet(room: $0) }
+        .sheet(item: $standInviteFor) { StandInviteSheet(source: .newStand($0)) }
         .onAppear {
             withAnimation(.easeOut(duration: 0.3)) { showConfetti = true }
         }

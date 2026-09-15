@@ -105,6 +105,23 @@ firebase deploy --only functions:createStand,functions:createStandInvite,functio
   Eleven of them. If it jumps from `functions folder uploaded successfully`
   straight to `Deploy complete!`, nothing was created.
 
+### Step 2b — Turn on Anonymous sign-in (console, not the CLI)
+
+**This is not optional and the CLI cannot do it.** Firebase Console →
+Authentication → Sign-in method → **Anonymous** → Enable.
+
+Anonymous is **off by default on every Firebase project**. `ensureAccount()`
+calls `signInAnonymously()` the instant somebody taps Invite, and with the
+provider disabled it throws `ERROR_OPERATION_NOT_ALLOWED` — "The given sign-in
+provider is disabled for this Firebase project." Every Stand entry point runs
+through that call, so with it off the whole feature is dead on arrival while
+the rules, the indexes and all eleven functions look perfectly healthy.
+
+This was missing from the original handoff, and the first TestFlight build hit
+exactly this: the invite row did nothing at all. It is also why
+`StandInviteSheet` now shows the failure on screen instead of printing it —
+see "Nothing fails silently" below.
+
 ### Why the rules go first
 
 There is no hole today — nothing in the app calls `signInAnonymously`, so
@@ -291,6 +308,28 @@ or one line, and the tests will tell you what you broke.
 The fan-out rule is the one worth re-reading before changing: ten people each
 completing a day is ninety pushes if you fan out immediately. That is an uninstall,
 not accountability.
+
+---
+
+## Nothing fails silently
+
+Every entry point — the row on the campaign card, the day-1 prompt, the "run
+the next one with someone" button on the completion screen — now presents
+`StandInviteSheet` **immediately** and hands it a `StandInviteSource`. The sheet
+creates the stand itself.
+
+Before this, each caller minted the room first through a helper that returned
+`nil` on every failure after a `print`, and only presented the sheet if it got
+one back. So no network, a Cloud Function error, or Anonymous sign-in being off
+all produced the same thing on screen: nothing. The button looked broken
+because, from the user's side, it was.
+
+The sheet has three states — working, ready, and a failure with the reason and
+a Try again. There is now exactly one place a failure can surface, and it is a
+screen the user is already looking at.
+
+Creating also no longer mints two invites: `createStand` returns a first code,
+which is cached rather than discarded and immediately re-minted.
 
 ---
 

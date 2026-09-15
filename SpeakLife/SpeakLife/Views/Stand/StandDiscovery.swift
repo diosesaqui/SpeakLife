@@ -68,120 +68,155 @@ enum StandDiscovery {
 // Surface 2 in spec §9.5, and the most important one: it is always findable,
 // and it is the ONLY way users who are already mid-campaign when this ships
 // discover the feature at all.
+//
+// It shipped once as a 13pt line of text with no background, tucked under the
+// card's full-width gold CTA. It did not read as a control, the tap target was
+// only as wide as the words, and "Stand with me" is what you say TO somebody
+// else — on your own card it is addressed to the wrong person. It is now a
+// full-width row with a surface, a chevron and a 44pt tap target, and it says
+// what tapping it does.
 
 struct StandInviteRow: View {
 
     let enforcement: Enforcement
+
     @ObservedObject private var service = StandService.shared
+    @ObservedObject private var auth = StandAuthCoordinator.shared
+
     @State private var showInvite = false
-    @State private var isCreating = false
-    @State private var createdRoom: StandRoom?
+    @State private var showRoom = false
 
     private var existingRoom: StandRoom? {
         service.rooms.first { $0.status == .active && $0.enforcement.id == enforcement.id }
     }
 
+    /// Somebody else is actually in it. A stand of one is still an invite row.
+    private var companions: [StandMember] {
+        guard let existingRoom else { return [] }
+        return existingRoom.activeMembers.filter { $0.uid != auth.currentUid }
+    }
+
     var body: some View {
         if FeatureFlag.standTogetherEnabled {
             Button {
-                if existingRoom != nil {
-                    showInvite = true
-                } else {
-                    Task { await createStand() }
-                }
+                PremiumHaptics.light()
+                if companions.isEmpty { showInvite = true } else { showRoom = true }
             } label: {
-                HStack(spacing: DS.Spacing.xs) {
-                    if let room = existingRoom, room.activeMembers.count > 1 {
-                        avatars(room)
-                        Text(room.presenceSummary(todayStamp: StandDayStamp.stamp()))
+                HStack(spacing: DS.Spacing.sm) {
+                    leading
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(title)
+                            .font(.system(size: 15, weight: .semibold, design: .rounded))
+                            .foregroundColor(.white)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.85)
+                        Text(subtitle)
                             .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(.white.opacity(0.7))
-                    } else {
-                        Image(systemName: isCreating ? "hourglass" : "person.2.fill")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(DS.Palette.gold.opacity(0.9))
-                        Text(existingRoom == nil ? "Stand with me" : "Invite someone")
-                            .font(.system(size: 13, weight: .semibold, design: .rounded))
-                            .foregroundColor(.white.opacity(0.85))
+                            .foregroundColor(.white.opacity(0.55))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.85)
                     }
-                    Spacer(minLength: 0)
+                    Spacer(minLength: DS.Spacing.xs)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(.white.opacity(0.4))
                 }
-                .padding(.vertical, DS.Spacing.xxs)
+                .padding(.horizontal, DS.Spacing.sm)
+                .padding(.vertical, 12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
+                        .fill(Color.white.opacity(0.07))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
+                        .stroke(Color.white.opacity(0.14), lineWidth: 1)
+                )
+                // Without this the Spacer and the padding are not hit-testable,
+                // so most of a full-width row ignores taps.
+                .contentShape(RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous))
             }
             .buttonStyle(PlainButtonStyle())
-            .disabled(isCreating)
+            .padding(.top, DS.Spacing.xxs)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(title). \(subtitle)")
+            .accessibilityAddTraits(.isButton)
+            // Presented for a campaign, not a room: the sheet creates the stand
+            // itself and shows any failure on its own face. Nothing here can
+            // fail silently.
             .sheet(isPresented: $showInvite) {
-                if let room = existingRoom ?? createdRoom {
-                    StandInviteSheet(room: room)
+                StandInviteSheet(source: .newStand(enforcement))
+            }
+            .sheet(isPresented: $showRoom) {
+                if let existingRoom {
+                    NavigationStack { StandRoomView(roomId: existingRoom.id) }
                 }
             }
         }
     }
 
+    // MARK: - Copy
+    //
+    // Plain, and in the right voice. The row belongs to the person running the
+    // campaign, so it names what THEY are about to do.
+
+    private var title: String {
+        guard let first = companions.first else {
+            return "Invite someone to stand with you"
+        }
+        if companions.count == 1 {
+            return "\(first.displayName) is standing with you"
+        }
+        return "\(companions.count) people are standing with you"
+    }
+
+    private var subtitle: String {
+        guard let existingRoom, !companions.isEmpty else {
+            return "They speak the same words, all 7 days."
+        }
+        return existingRoom.presenceSummary(todayStamp: StandDayStamp.stamp())
+    }
+
+    @ViewBuilder
+    private var leading: some View {
+        if let existingRoom, !companions.isEmpty {
+            avatars(existingRoom)
+        } else {
+            Image(systemName: "person.2.fill")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(DS.Palette.gold.opacity(0.9))
+                .frame(width: 28, height: 28)
+                .background(Circle().fill(DS.Palette.gold.opacity(0.12)))
+        }
+    }
+
     private func avatars(_ room: StandRoom) -> some View {
-        HStack(spacing: -6) {
-            ForEach(room.activeMembers.prefix(4)) { member in
+        HStack(spacing: -8) {
+            ForEach(room.activeMembers.prefix(3)) { member in
                 ZStack {
                     Circle()
                         .fill(StandMemberRow.palette[member.colorIndex % StandMemberRow.palette.count])
-                        .frame(width: 20, height: 20)
+                        .frame(width: 26, height: 26)
                     Text(member.displayInitial)
-                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
                 }
                 .overlay(Circle().stroke(Color.black.opacity(0.35), lineWidth: 1.5))
             }
         }
     }
-
-    private func createStand() async {
-        isCreating = true
-        defer { isCreating = false }
-        if let room = await StandInviteLauncher.createRoom(for: enforcement) {
-            createdRoom = room
-            showInvite = true
-        }
-    }
 }
 
-// MARK: - Shared launch flow
+// MARK: - Shared lookup
 
-/// Creating a stand and getting to something shareable, in one place.
+/// Finding the stand a campaign already has, in one place.
 ///
-/// Both the persistent row and the day-1 prompt need it. An earlier version had
-/// the row own it while the prompt set a flag the row was supposed to notice —
-/// which was never wired up, so the prompt's only button would have done
-/// nothing at all.
+/// Creating one used to live here too, behind a call that returned nil on every
+/// failure after a `print`. Every caller then had a button that could silently
+/// do nothing. Creation now belongs to `StandInviteSheet`, which has a screen to
+/// put the failure on.
 @MainActor
 enum StandInviteLauncher {
-
-    /// Mints a room and returns it once the listener has delivered it.
-    ///
-    /// Tapping Invite has to create the room, because there is no code to share
-    /// until one exists. Somebody who taps and never sends leaves a one-member
-    /// orphan, which `standSweep` collects after 14 days.
-    ///
-    /// Waits for the listener rather than building a local stand-in, so every
-    /// surface renders the same object.
-    static func createRoom(for enforcement: Enforcement) async -> StandRoom? {
-        do {
-            _ = try await StandAuthCoordinator.shared.ensureAccount()
-            let name = UserDefaults.standard.string(forKey: "userName") ?? "Friend"
-            let result = try await StandService.shared.createStand(
-                enforcement: enforcement, name: name)
-
-            for _ in 0..<20 {
-                if let room = StandService.shared.rooms.first(where: { $0.id == result.roomId }) {
-                    return room
-                }
-                try? await Task.sleep(nanoseconds: 150_000_000)
-            }
-            return nil
-        } catch {
-            print("⚠️ Stand create failed: \(error.localizedDescription)")
-            return nil
-        }
-    }
 
     /// An existing active stand for this campaign, if there is one.
     static func existingRoom(for enforcement: Enforcement) -> StandRoom? {
@@ -201,8 +236,7 @@ struct StandInvitePromptSheet: View {
     let enforcement: Enforcement
     @Environment(\.dismiss) private var dismiss
 
-    @State private var isCreating = false
-    @State private var room: StandRoom?
+    @State private var showInvite = false
 
     var body: some View {
         ZStack {
@@ -226,31 +260,20 @@ struct StandInvitePromptSheet: View {
 
                 Spacer()
 
+                // Opens the invite sheet and lets it do the work. This button
+                // used to create the room itself and set `room` from a call
+                // that returned nil on any failure, so a bad network turned the
+                // only button on this screen into a no-op.
                 Button {
-                    Task {
-                        isCreating = true
-                        // Written out rather than with `??`: the right-hand
-                        // side of nil-coalescing is an autoclosure, which
-                        // cannot be async, so `?? (await …)` does not compile.
-                        if let existing = StandInviteLauncher.existingRoom(for: enforcement) {
-                            room = existing
-                        } else {
-                            room = await StandInviteLauncher.createRoom(for: enforcement)
-                        }
-                        isCreating = false
-                    }
+                    showInvite = true
                 } label: {
-                    HStack {
-                        if isCreating { ProgressView().tint(.black) }
-                        Text(isCreating ? "One moment…" : "Invite someone")
-                            .font(.system(size: 17, weight: .semibold, design: .rounded))
-                    }
-                    .foregroundColor(.black)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, DS.Spacing.sm)
-                    .background(Capsule().fill(DS.Palette.gold))
+                    Text("Invite someone")
+                        .font(.system(size: 17, weight: .semibold, design: .rounded))
+                        .foregroundColor(.black)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, DS.Spacing.sm)
+                        .background(Capsule().fill(DS.Palette.gold))
                 }
-                .disabled(isCreating)
 
                 Button("Maybe later") { dismiss() }
                     .font(.system(size: 16, weight: .medium, design: .rounded))
@@ -260,7 +283,9 @@ struct StandInvitePromptSheet: View {
             .padding(DS.Spacing.md)
         }
         .presentationDetents([.medium])
-        .sheet(item: $room) { StandInviteSheet(room: $0) }
+        .sheet(isPresented: $showInvite) {
+            StandInviteSheet(source: .newStand(enforcement))
+        }
         .onAppear {
             AnalyticsService.shared.track("stand_invite_prompted", parameters: [
                 "enforcement_id": enforcement.id,
