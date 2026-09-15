@@ -24,8 +24,15 @@ final class StandRoomTests: XCTestCase {
     /// Tests only ever put `Date`s in, so this is the identity case.
     private let passthroughDate: (Any?) -> Date? = { $0 as? Date }
 
+    /// Mirrors the real catalog entry: enforcements.json ships id "peace" with
+    /// theme "anxiety". There is no `.peace` category — an earlier version of
+    /// this fixture invented one.
+    ///
+    /// Using a valid theme that is NOT `.faith` is also what gives the
+    /// lenient-decoding test below any meaning: with `.faith` as the fixture it
+    /// would pass whether the fallback worked or not.
     private func enforcementDict(id: String = "peace",
-                                 theme: String = "peace") -> [String: Any] {
+                                 theme: String = "anxiety") -> [String: Any] {
         [
             "id": id, "title": "Enforcing Peace", "tagline": "Seven days.",
             "theme": theme,
@@ -70,7 +77,7 @@ final class StandRoomTests: XCTestCase {
 
     private func enforcement(_ id: String) -> Enforcement {
         Enforcement(id: id, title: "Enforcing \(id)", tagline: "t",
-                    theme: .peace,
+                    theme: .anxiety,
                     days: (1...Enforcement.length).map {
                         EnforcementDay(dayNumber: $0, anchorText: "a", anchorVerse: "v",
                                        anchorBook: "B 1:1", anchorTranslation: "NIV",
