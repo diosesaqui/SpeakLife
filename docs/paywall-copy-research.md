@@ -218,23 +218,79 @@ parsing, and works for the quiz arm whose segment names don't map by string. The
 cut worth making first: does a named pain convert better than `none`? If not, the
 personalization is decoration and only the generic pain-led headline is earning.
 
+## 5b. September 2026 pass — what shipped
+
+Four changes, all unconditional (no new flags). 30-day baseline they were
+measured against, person-level, `high_conversion_pain_*`:
+
+| Cut | Shown | CTA | Purchased |
+|---|---|---|---|
+| Onboarding | 237 | 54 (22.8%) | 39 (**16.5%**) |
+| Settings | 191 | 27 (14.1%) | 5 (**2.6%**) |
+
+**1. Both plan cards now quote the same cadence.** The dark selector put the
+annual card's *yearly total* ($59.99) beside the monthly card's *monthly* price
+($9.99), so the eye compared two numbers that were never comparable and the
+cheaper plan read as six times the price. Annual now shows the per-month (or
+per-week, under `useWeeklyPlan`) figure with the real
+`nonAnnualYearlyEquivalent` struck through beside "$59.99 per year". This is
+what the clean layout already did, and it is a candidate explanation for why
+that layout converted at 19.6% against 11.6% — the gap may have been pricing
+legibility rather than minimalism. 29 of the 54 onboarding CTA tappers cancelled
+at the Apple sheet at least once, which is where a price surprise shows up.
+
+**2. The trial timeline shipped** ("How your free trial works", both layouts,
+directly above the price). Today → day n−1 → day n, built from the real
+StoreKit day count, and the reminder row is only drawn from n ≥ 3 so it never
+describes a push landing on a day already on screen. Every claim is backed by
+`TrialExperienceService`: `trial_d2` at 9am on day n−1, `trial_d3` on the last
+day, both scheduled at trial start and deliverable even though the notification
+permission ask comes after this screen. The dark layout's `trialCallout` and the
+clean layout's day-count line stood down to avoid saying the same sentence
+twice; the clean layout's reassurance moved under the CTA where the pattern puts
+it.
+
+**3. The featured testimonial is pain-matched.** It was a fixed anxiety review
+shown to all fifteen pains — fifteen lines of tailored copy followed by somebody
+else's problem, immediately above the price. `PaywallTestimonial` tags real
+reviews by the pains they actually speak to and falls back to the quote that
+claims least. **It never invents one.** Eight pains still have no real review
+(health, abundance, shame, purpose, grief, loneliness, marriage, family) and
+currently fall back; sourcing a real provision or healing review is the highest
+-value copy task left on this screen. The clean layout, which shipped with no
+social proof at all, now carries a compact rating + matched quote.
+
+**4. Returning users get a returning-user screen.** 135 of 191 settings
+impressions were being served the cold-open pain headline "You've prayed about
+it. It hasn't moved." — a stranger's guess at someone whose behaviour we can
+see. Settings and feature-gate entries now resolve pain from
+`UserPreferencesTracker.topCategories` when the top category has ≥3 selections
+("You keep coming back for healing."), fall back to the onboarding segment, then
+to "You've been reading it. Start speaking it." Behaviour beats the segment for
+returning users only; at the end of onboarding there is no behaviour yet.
+
+`paywall_cta_tapped` now carries `pain` and `source`, so the cut that matters —
+does a named pain convert better than `none`, and separately by entry point —
+no longer needs a person-level join against `paywall_shown`.
+
+**Reading it out.** Variant names did not change, so the release date is the
+comparison line, exactly as the pain rollout was read. Split by `source` before
+anything else: onboarding and settings convert 6x apart and blending them hides
+both. Guardrails unchanged — `paywall_dismissed` seconds-on-paywall, and
+trial→paid (a change that lifts trials and drops paid conversion is a loss).
+
 ## 6. Recommendations not implemented here (next levers, in order)
 
 1. **Send more traffic to the clean light layout** — it's beating the dark layout
    19.6% vs 11.6% on shown→trial. Confirm with ~2 more weeks of volume, then make
    it the default. Stop testing the clean-dark skin (5.1%, losing).
-2. **Blinkist trial timeline** — "How your free trial works": 🔓 Today full
-   access · 🔔 Day 2 we remind you (true — TrialExperienceService schedules the
-   pushes) · ⭐ Day 3 trial ends, cancel before and pay nothing. Strongest
-   documented paywall pattern (+23% trials). A build was drafted and removed with
-   the no-more-flags decision (recoverable from git history at commit efb37ab);
-   ship it unconditionally if wanted.
+2. ~~**Blinkist trial timeline**~~ — shipped, see 5b.
 3. **Trial structure test before any price test** — highest documented win-rate
    category (59.6%). E.g. 7-day vs 3-day trial on annual.
-4. **Behavior-change testimonial** — if a real review exists in the vein of "this
-   app got me speaking God's Word every day when nothing else did," lead the
-   featured-testimonial slot with it (behavior proof beats outcome proof in the
-   faith category). Do not fabricate one.
+4. **Behavior-change testimonial** — the matching mechanism shipped (see 5b);
+   what is left is sourcing. Eight pains have no real review and fall back.
+   Real reviews for provision, healing and marriage would cover the three
+   highest-volume unmatched segments. Do not fabricate one.
 5. **Seasonal challenge engine (Hallow's real machine)** — a named, dated, free
    communal challenge ("40 Days of Speaking to the Storm") with the content inside
    the trial; Lent/Advent function as twice-yearly Black Fridays (Hallow: 25x
