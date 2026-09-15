@@ -30,6 +30,10 @@ struct DailyDeclarationBurstView: View {
     @EnvironmentObject var themeViewModel: ThemeViewModel
     @EnvironmentObject var timerViewModel: TimerViewModel
     @EnvironmentObject var streakViewModel: EnhancedStreakViewModel
+    /// Read only to decide whether the one-time welcome offer is owed on the
+    /// way out. Already injected at both callsites, so nothing had to change
+    /// to add it.
+    @EnvironmentObject var subscriptionStore: SubscriptionStore
     @Environment(\.dismiss) var dismiss
     @Environment(\.colorScheme) var colorScheme
     /// Honoured the way `LandingView` already honours it. The burst is the
@@ -951,11 +955,19 @@ struct DailyDeclarationBurstView: View {
         Juice.play(.success)
         burstActive = false
 
+        // Read BEFORE recording, because recordBurstCompletion appends to
+        // `completions` in place. This is the only moment in the app where
+        // "this is their first burst ever" is knowable.
+        let isFirstEverBurst = burstTracker.completions.isEmpty
+
         let timeSpent = Date().timeIntervalSince(startTime)
         burstTracker.recordBurstCompletion(
             declarationCount: morningDeclarations.count,
             timeSpent: timeSpent
         )
+
+        // Arms only. The offer is raised on the way out, in completeBurst.
+        WelcomeOfferPresenter.shared.armIfFirstBurst(isFirstEverBurst: isFirstEverBurst)
 
         // Automatically complete the daily burst task
         streakViewModel.completeTask(taskId: "complete_daily_burst")
@@ -1043,5 +1055,17 @@ struct DailyDeclarationBurstView: View {
         streakViewModel.showCompletionCelebration = false
 
         dismiss()
+
+        // The one-time welcome offer, if this user is owed one.
+        //
+        // After `dismiss()`, and on a delay, for a concrete reason: the offer's
+        // cover belongs to whichever view presented this burst, and a
+        // fullScreenCover raised from an ancestor while a descendant's cover is
+        // still on screen is dropped silently. This one is mid-dismissal right
+        // now. The wait is the dismissal animation, nothing more.
+        let store = subscriptionStore
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            WelcomeOfferPresenter.shared.presentIfReady(subscriptionStore: store)
+        }
     }
 }

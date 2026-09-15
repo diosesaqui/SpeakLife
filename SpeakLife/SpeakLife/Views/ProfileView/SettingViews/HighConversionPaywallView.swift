@@ -289,15 +289,20 @@ struct HighConversionPaywallView: View {
     /// global bit checked only against the annual product mislabels the others.
     @State private var trialEligibility: [String: Bool] = [:]
 
-    // MARK: - Welcome Offer State (decline path)
-    // One recovery screen shown when an onboarding user dismisses this paywall
-    // without buying. Exactly one step deep (Apple 5.6): once it resolves we
-    // run the original callback/dismiss path and never show another offer.
-    @State private var showWelcomeOffer = false
-    @State private var welcomeOfferResolved = false
-    /// Once-ever persistence: flips true the moment the offer is presented and
-    /// never resets, so the user sees the welcome offer at most once for life.
-    @AppStorage("welcomeOfferShown") private var welcomeOfferShown = false
+    // MARK: - Welcome Offer
+    //
+    // MOVED OUT OF THIS SCREEN. The welcome offer used to appear here, as a
+    // state swap when an onboarding user tapped the X without buying. It now
+    // fires after the user's first Daily Burst — see WelcomeOfferPresenter.
+    //
+    // The reason is what the user has at each moment. On the decline path they
+    // had opened the app minutes ago and just said no to paying; a cheaper
+    // price is the one thing a person who has felt nothing yet has no way to
+    // judge. After a burst they have spoken seven declarations out loud and
+    // felt it, and the offer is an answer to something they now want.
+    //
+    // WelcomeOfferView itself is unchanged and still lives in this file. Only
+    // where it is presented from moved.
 
     // MARK: - Post-Purchase Mission State
     // Brief mission/thank-you state shown after a successful purchase from the
@@ -305,7 +310,7 @@ struct HighConversionPaywallView: View {
     // success path runs. Reframes the subscription as mission (the Bible Chat
     // pattern). Settings / feature-gate purchases keep the immediate dismiss —
     // those users are mid-task.
-    private enum MissionResolution { case mainPurchase, welcomeOfferPurchase }
+    private enum MissionResolution { case mainPurchase }
     @State private var showMissionScreen = false
     /// Exactly-once guard: the CTA tap and the 6-second auto-advance can race.
     @State private var missionContinued = false
@@ -550,7 +555,7 @@ struct HighConversionPaywallView: View {
             // The clean variant is light unless its dark theme is on; the
             // mission and welcome screens keep the dark gradient regardless.
             Group {
-                if isCleanVariant && !isCleanDarkTheme && !showMissionScreen && !showWelcomeOffer {
+                if isCleanVariant && !isCleanDarkTheme && !showMissionScreen {
                     cleanBackground
                 } else {
                     backgroundGradient
@@ -564,18 +569,6 @@ struct HighConversionPaywallView: View {
                 // only ever appears after a successful purchase.
                 PostPurchaseMissionView(onContinue: continueMission)
                     .transition(.opacity)
-            } else if showWelcomeOffer {
-                // Decline-path recovery screen. State-swap (not a modal): this
-                // paywall is embedded as a step inside the onboarding flows,
-                // so swapping content in place is safer than layering a
-                // fullScreenCover on a non-presented view.
-                WelcomeOfferView(
-                    variant: paywallVariant,
-                    segment: segmentParam,
-                    onResolve: resolveWelcomeOffer,
-                    onPurchaseSuccess: { presentMissionScreen(.welcomeOfferPurchase) }
-                )
-                .transition(.opacity)
             } else {
                 if isCleanVariant {
                     cleanVariantLayout
@@ -1137,12 +1130,11 @@ struct HighConversionPaywallView: View {
                         "seconds_on_paywall": Int(Date().timeIntervalSince(timeOnPaywall)),
                         "segment": segmentParam
                     ])
-                    if canShowWelcomeOffer {
-                        welcomeOfferShown = true
-                        withAnimation(.easeInOut(duration: 0.3)) { showWelcomeOffer = true }
-                    } else {
-                        callback?(); dismiss()
-                    }
+                    // Always the plain dismissal path now. The welcome offer
+                    // that used to intercept this tap moved to the first Daily
+                    // Burst (WelcomeOfferPresenter).
+                    callback?()
+                    dismiss()
                 }) {
                     Image(systemName: "xmark.circle.fill").font(.system(size: 28))
                         .foregroundColor(isCleanVariant && !isCleanDarkTheme ? Color.gray.opacity(0.45) : .white.opacity(0.6))
@@ -1412,35 +1404,6 @@ struct HighConversionPaywallView: View {
     /// offer instead of immediately advancing onboarding. All must hold:
     /// onboarding source, never shown before (persisted once-ever flag), soft
     /// paywall (hard mode has no close button, but gate it anyway), AND the
-    /// Remote Config `discountID` product actually loaded from StoreKit as an
-    /// annual SKU priced below the regular annual. The product checks are the
-    /// same anti-phantom-price stance as the plan cards: if the discount
-    /// product is unset, unloaded, not annual, or not actually cheaper, the
-    /// offer never shows at all.
-    private var canShowWelcomeOffer: Bool {
-        guard source == "onboarding",
-              !welcomeOfferShown,
-              !effectiveIsHardPaywall,
-              let discount = subscriptionStore.currentOfferedDiscount,
-              let regular = subscriptionStore.currentOfferedPremium,
-              discount.subscription?.subscriptionPeriod.unit == .year,
-              let discountValue = Double(discount.price.description),
-              let regularValue = Double(regular.price.description),
-              discountValue < regularValue else { return false }
-        return true
-    }
-
-    /// Runs the original dismissal path (advance onboarding + dismiss) exactly
-    /// once after the welcome offer resolves, whether by purchase success or
-    /// "No thanks, continue". Guarded so a purchase completion racing a
-    /// decline tap can't fire the onboarding callback twice.
-    private func resolveWelcomeOffer() {
-        guard !welcomeOfferResolved else { return }
-        welcomeOfferResolved = true
-        callback?()
-        dismiss()
-    }
-
     // MARK: - Post-Purchase Mission Screen Routing
     /// Swaps in the mission screen after a successful purchase, remembering
     /// which success path to run when it continues. Callers clear the purchase
@@ -1460,8 +1423,6 @@ struct HighConversionPaywallView: View {
 
     /// Runs the original purchase success path exactly once, whether triggered
     /// by the mission CTA tap or the 6-second auto-advance (both can fire).
-    /// The welcome-offer path goes through resolveWelcomeOffer, preserving its
-    /// own exactly-once guard.
     private func continueMission() {
         guard !missionContinued else { return }
         missionContinued = true
@@ -1472,8 +1433,6 @@ struct HighConversionPaywallView: View {
         case .mainPurchase:
             callback?()
             dismiss()
-        case .welcomeOfferPurchase:
-            resolveWelcomeOffer()
         }
     }
 
@@ -1685,16 +1644,22 @@ fileprivate func perMonthString(yearlyProduct: Product) -> String? {
     localizedPrice(yearlyProduct.price / 12, in: yearlyProduct)
 }
 
-// MARK: - Welcome Offer (decline-path recovery screen)
-/// Shown at most once ever (UserDefaults `welcomeOfferShown`) when an
-/// onboarding user dismisses the soft paywall without buying, and only when
-/// the Remote Config discount annual product actually loaded from StoreKit at
-/// a price below the regular annual (gate: HighConversionPaywallView
-/// .canShowWelcomeOffer — the anti-phantom-price guard). Exactly one step
-/// deep per Apple Guideline 5.6: purchase and "No thanks" both resolve to the
-/// original callback/dismiss path and no further offers follow. No countdown
-/// timer or fake urgency — the framing line states plainly that it's a
-/// one-time offer. All prices come straight from StoreKit.
+// MARK: - Welcome Offer
+/// Shown at most once ever (UserDefaults `welcomeOfferShown`), after the
+/// user's first Daily Burst, to somebody who does not already have full
+/// access. Presented by `WelcomeOfferPresenter`, which owns the trigger and
+/// carries the anti-phantom-price guard this screen depends on: the Remote
+/// Config discount annual must have actually loaded from StoreKit at a price
+/// below the regular annual, or the offer never appears at all.
+///
+/// It used to fire on the onboarding paywall's decline path instead. Nothing
+/// in this view changed when it moved — it takes its callbacks from whoever
+/// presents it, which is the whole reason the move was cheap.
+///
+/// Exactly one step deep per Apple Guideline 5.6: purchase and "No thanks"
+/// both resolve and no further offers follow. No countdown timer or fake
+/// urgency; the framing line states plainly that it is a one-time offer. All
+/// prices come straight from StoreKit.
 struct WelcomeOfferView: View {
     @EnvironmentObject var declarationStore: DeclarationViewModel
     @EnvironmentObject var subscriptionStore: SubscriptionStore

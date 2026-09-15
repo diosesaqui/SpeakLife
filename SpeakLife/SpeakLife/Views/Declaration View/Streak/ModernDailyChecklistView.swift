@@ -883,6 +883,11 @@ struct ModernDailyChecklistView: View {
                 .environmentObject(viewModel)
                 .environmentObject(subscriptionStore)
         }
+        // The one-time welcome offer, raised here rather than at the app root:
+        // it appears as the burst's own cover is dismissing, and a
+        // fullScreenCover from an ancestor of a still-presented cover is
+        // dropped silently. This view owns that cover, so it is the right host.
+        .welcomeOffer()
         // Personal Declaration card — presented modally on Today. onBreakthrough
         // dismisses this card, then surfaces the breakthrough flow (attached to
         // the root below so it survives this sheet's dismissal).

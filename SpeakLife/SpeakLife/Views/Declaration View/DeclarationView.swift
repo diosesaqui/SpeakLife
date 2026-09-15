@@ -416,6 +416,10 @@ struct DeclarationView: View {
                 .environmentObject(streakViewModel)
                 .environmentObject(subscriptionStore)
         }
+        // Same as on the checklist: a burst finished from the reminder
+        // notification owes the same one-time offer, and this view owns the
+        // cover it has to appear over.
+        .welcomeOffer()
         // Presented from the "Today" checklist tab: it switches to this feed tab
         // and posts this so the burst opens here, where its cover is fully wired.
         .onReceive(NotificationCenter.default.publisher(for: Notification.Name("ShowDailyDeclarationBurst"))) { _ in
