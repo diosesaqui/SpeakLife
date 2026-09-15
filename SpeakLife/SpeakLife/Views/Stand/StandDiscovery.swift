@@ -277,7 +277,14 @@ struct StandInvitePromptSheet: View {
 
 struct StandRedemptionModifier: ViewModifier {
 
-    @EnvironmentObject var appState: AppState
+    /// Passed in, NOT read from the environment.
+    ///
+    /// This modifier is applied above the `.environmentObject` calls in
+    /// SpeakLifeApp, so it wraps the view those inject into and never sees
+    /// them — reading `@EnvironmentObject` here crashes at launch with "No
+    /// ObservableObject of type AppState found". `debugFlagPanel` right above
+    /// it carries a comment saying exactly this; it is the same trap.
+    @ObservedObject var appState: AppState
     @State private var showJoin = false
 
     func body(content: Content) -> some View {
@@ -309,8 +316,9 @@ struct StandRedemptionModifier: ViewModifier {
 }
 
 extension View {
-    /// Attach once, at the root, below onboarding.
-    func standRedemption() -> some View {
-        modifier(StandRedemptionModifier())
+    /// Attach once, at the root. Takes `appState` explicitly for the reason on
+    /// `StandRedemptionModifier.appState`.
+    func standRedemption(appState: AppState) -> some View {
+        modifier(StandRedemptionModifier(appState: appState))
     }
 }

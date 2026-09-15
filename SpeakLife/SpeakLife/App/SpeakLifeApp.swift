@@ -147,7 +147,7 @@ struct SpeakLifeApp: App {
                     // through the app; it self-gates on `isOnboarded` so a
                     // deferred link resolved during didFinishLaunching cannot
                     // land on top of onboarding.
-                    .standRedemption()
+                    .standRedemption(appState: appState)
                     .onOpenURL { url in
                         // Ad-matched onboarding: owned channels (email, push, IG bio,
                         // QR, landing page) carrying `ob=<variant>` route here when the
