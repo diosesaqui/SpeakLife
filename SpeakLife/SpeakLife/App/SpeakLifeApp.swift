@@ -142,6 +142,12 @@ struct SpeakLifeApp: App {
                     // onboarding cover cannot sit on top of the gate. Inert
                     // unless `forceUpdateEnabled` is on with a published floor.
                     .forceUpdateGate(subscriptionStore: subscriptionStore)
+                    // Turns a pending Stand invite code into the join screen.
+                    // Applied here, above HomeView, so it survives every route
+                    // through the app; it self-gates on `isOnboarded` so a
+                    // deferred link resolved during didFinishLaunching cannot
+                    // land on top of onboarding.
+                    .standRedemption()
                     .onOpenURL { url in
                         // Ad-matched onboarding: owned channels (email, push, IG bio,
                         // QR, landing page) carrying `ob=<variant>` route here when the

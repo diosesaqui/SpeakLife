@@ -59,6 +59,8 @@ struct ProfileView: View {
     @State private var showFCMTokenCopied = false
     @State private var showHowToUse = false
     @State private var showCommunity = false
+    @State private var showStands = false
+    @ObservedObject private var standService = StandService.shared
     let url = URL(string:APP.Product.urlID)
     
     
@@ -129,6 +131,7 @@ struct ProfileView: View {
                       //  dailyBurstStatsRow
                             quizRow
                            communityRow
+                           standsRow
                        // }
 
                         remindersRow
@@ -439,7 +442,38 @@ struct ProfileView: View {
         }
     }
 
-    
+    // The feature's permanent address. Discovery happens on the campaign card
+    // and at day 1 (spec §9.5), but both of those disappear when a campaign
+    // ends — and a past stand is still worth getting back to.
+    @MainActor
+    private var standsRow: some View {
+        Group {
+            if FeatureFlag.standTogetherEnabled, !standService.rooms.isEmpty {
+                Button {
+                    AnalyticsService.shared.trackUserAction("stands_opened", category: "profile")
+                    showStands = true
+                } label: {
+                    HStack {
+                        Image(systemName: "person.2.fill")
+                            .foregroundColor(Constants.DAMidBlue)
+                        Text("My Stands", comment: "Stand With Me row title")
+                        Spacer()
+                        if let active = standService.rooms.first(where: { $0.status == .active }) {
+                            Text(active.presenceSummary(todayStamp: StandDayStamp.stamp()))
+                                .font(.system(size: 12))
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .sheet(isPresented: $showStands) {
+                    NavigationStack { StandListView() }
+                }
+            }
+        }
+    }
+
     @MainActor
     private var tipsRow: some View {
         HStack {

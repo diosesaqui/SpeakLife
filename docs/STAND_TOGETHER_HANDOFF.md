@@ -20,7 +20,9 @@ client-side needs a Mac.
 | `functions/standTogether.js` — 11 functions | ✅ 35 emulator tests green |
 | `firestore.indexes.json` — 3 composite indexes | ✅ |
 | **Deploy to `speaklife-3e5c4`** | ❌ **not done** (see Step 2) |
-| All Swift (items 5–14) | ❌ not started |
+| All Swift (items 5–13) | ⚠️ **written, never compiled** (see Step 3) |
+| Xcode project registration | ❌ yours to do |
+| QA (item 14) | ❌ not started |
 
 ---
 
@@ -105,75 +107,91 @@ the existing prayerWall and bibleChat functions down with it. Separate task.
 
 ---
 
-## Step 3 — The Swift (items 5–14, ~14 days)
+## Step 3 — The Swift: written, NOT compiled
 
-Build order. **5 → 7 → 8 is the spine**: after those three you have a working stand
-testable on two devices with everything else stubbed. 6, 9, 10, 11, 12 hang off it
-in any order.
+Every Swift file for items 5–13 is on the branch. **None of it has been built.**
+It was written in a Linux container with no Swift toolchain and no Xcode, so
+treat it as a very detailed first draft by someone who could not run the
+compiler — expect real errors, not a clean build.
 
-| # | Work | Files | Est. |
-|---|---|---|---|
-| 5 | Core models + day stamps + tests | `SpeakLifeCore/StandRoom.swift`, `StandDayStamp.swift` | 1d |
-| 7 | `StandService` + `StandMirror` seam + write hook | `Services/Stand/`, `EnhancedStreakViewModel.swift` | 1.5d |
-| 8 | Room UI | `Views/Stand/StandRoomView.swift` | 2d |
-| 6 | Anonymous auth + Apple linking + merge | `StandAuthCoordinator.swift`, `AppleSignInService.swift` | 2d |
-| 9 | Invite / join / conflict UI | `StandInviteSheet`, `StandJoinView`, `StandConflictSheet` | 1.5d |
-| 10 | Deep link + notification routing + Branch stand key | `SpeakLifeApp.swift`, `AppDelegate.swift` | 0.5d |
-| 11 | Stand Pass client | `StandPassStore.swift` + premium check | 0.5d |
-| 12 | Day-7 completion + shared share card | `StandCompletionView.swift` | 1d |
-| 12b | Discovery surfaces (spec §9.5) | `EnforcementCard.swift`, `DayCelebrationView`, … | 1.5d |
-| 13 | Analytics + feature flag | various | 0.5d |
-| 14 | QA matrix | — | 1.5d |
+### Do these three things in order
 
-### Four things that will bite
+**1. Run the package tests first — no Xcode needed.**
 
-1. **New app-target files need `project.pbxproj` registration.** Only `SpeakLifeQuiz`
-   is a `PBXFileSystemSynchronizedRootGroup`; the rest of the target uses explicit
-   file references, so files dropped in `Services/Stand/` and `Views/Stand/` will
-   **not** be compiled until added. Drag the folders into Xcode rather than
-   hand-editing the pbxproj — `docs/CLEANUP_AND_HARDENING_PLAN.md` is right that
-   hand-editing it is fragile. Anything that can live in `Packages/SpeakLifeKit`
-   (item 5) is auto-globbed by SwiftPM and needs no registration, which is why the
-   models go there.
-
-2. **Do not import Firebase into `EnhancedStreakViewModel`.** The write hook at
-   `EnhancedStreakViewModel.swift:629` must call through a `StandMirror` protocol
-   declared in `SpeakLifeServices` and implemented by `StandService` in the app
-   target. This is the same seam `StreakShareCardRenderer` uses to keep UIKit out of
-   Core, and breaking it blocks the package extraction already in progress.
-
-3. **The room is a mirror, never the source of truth** (spec §2). `recordDay` is
-   fire-and-forget and non-throwing. A failed write costs a dot on someone's week
-   strip and must never touch `EnforcementProgress`. If you find yourself making the
-   room authoritative, stop — that reintroduces every failure mode the spec dismisses.
-
-4. **Branch is live** — SDK in `Package.resolved`, key at `Info.plist:58`,
-   `applinks:speaklife.app.link` in the entitlements. Deferred deep links work on day
-   one. Note `docs/ATTRIBUTION_MMP.md:20` and the doc comment at
-   `AppDelegate.swift:602` both claim otherwise; they are stale.
-
-### Handing item 5 to a local Claude Code session
-
+```bash
+swift test --package-path Packages/SpeakLifeKit --filter Stand
 ```
-Read docs/STAND_TOGETHER_SPEC.md sections 2, 5.1 and 11.2, then implement item 5
-of docs/STAND_TOGETHER_HANDOFF.md: StandRoom.swift and StandDayStamp.swift in
-Packages/SpeakLifeKit/Sources/SpeakLifeCore, plus tests in
-Packages/SpeakLifeKit/Tests/SpeakLifeCoreTests.
 
-Foundation only — no Firebase, no UIKit. The models must decode the exact
-document shape in spec §5.1. Mirror the lenient decoding in
-SpeakLifeCore/Enforcement.swift: an unknown theme degrades to .faith rather
-than throwing, because a room's campaign blob comes off another person's device.
+This covers `StandRoom` and `StandDayStamp` in isolation: day stamps across DST
+in both directions and over the date line, lenient decoding of a room that came
+from another app version, and `StandJoinResolver`, which decides whether
+somebody keeps the week they are holding. It is the logic most worth trusting
+and the cheapest to verify.
 
-Day stamps are "yyyy-MM-dd" from Calendar.current — never an interval divided by
-86400. Cover DST boundaries, the date line, and 23:59:59 in the tests.
+**2. Register the new app-target files in Xcode.** Drag `Services/Stand/` and
+`Views/Stand/` into the project. Only `SpeakLifeQuiz` is a
+`PBXFileSystemSynchronizedRootGroup`, so nothing in those folders compiles until
+it is added. The `SpeakLifeCore` and `SpeakLifeServices` files need nothing —
+SwiftPM globs them.
 
-The server-side equivalents are in functions/standTogether.js (localDayStamp,
-the merge logic in completeAccountMerge) — match their semantics exactly, and
-check functions/test/standTogether.test.js for the cases already pinned down.
+**3. Build, and expect these first.** Ranked by how likely they are:
 
-Run: swift test --package-path Packages/SpeakLifeKit
-```
+| Likely error | Where |
+|---|---|
+| Swift 6 concurrency — `@MainActor` class with a `nonisolated` protocol method, and a `deinit` touching isolated state | `StandService.swift` |
+| `FirebaseFunctions` not in `Package.resolved` — add it in Xcode or every callable fails to resolve | `StandService`, `StandAuthCoordinator` |
+| `PremiumHaptics.success()` — used without verifying that exact method name | `StandInviteSheet`, `StandCompletionView` |
+| `.navigationDestination(item:)` and `.onChange(of:_:)` two-parameter form are iOS 17+ | `StandJoinView`, `StandDiscovery` |
+| `DS.Gradient.ember` / `.dsPressable` style helpers assumed to exist | the views generally |
+
+### Files
+
+| # | Item | Files |
+|---|---|---|
+| 5 | Core models | `SpeakLifeCore/StandRoom.swift`, `StandDayStamp.swift`, + 2 test files |
+| 6 | Auth | `Services/Stand/StandAuthCoordinator.swift` |
+| 7 | Mirror seam | `SpeakLifeServices/StandMirror.swift`, `Services/Stand/StandService.swift`, hook in `EnhancedStreakViewModel.swift` |
+| 8 | Room | `Views/Stand/StandRoomView.swift` |
+| 9 | Invite / join | `StandInviteSheet.swift`, `StandJoinView.swift`, `StandConflictSheet.swift` |
+| 10 | Links | `Services/Stand/StandLink.swift`, edits to `SpeakLifeApp.swift`, `AppDelegate.swift`, `AppState.swift` |
+| 11 | Pass + flag | `Services/Stand/StandPassStore.swift` |
+| 12 | Completion | `StandCompletionView.swift`, `StandInviteCardRenderer.swift` |
+| 12b | Discovery | `StandDiscovery.swift`, `StandListView.swift`, edits to `EnforcementCard.swift`, `EnforcementCompletionView.swift`, `ProfileView.swift` |
+
+### Edits to existing files — review these closely
+
+New files are contained; these touch code you already ship:
+
+- `EnhancedStreakViewModel.swift` — two `StandMirror.recordDay` calls in the existing `advanceIfNeeded` switch.
+- `EnforcementService.swift` — new `startShared(_:)`.
+- `EnforcementCard.swift` — a `StandInviteRow`, a day-1 prompt sheet, two `@State` vars.
+- `EnforcementCompletionView.swift` — "Run the next one with someone".
+- `ProfileView.swift` — a `standsRow`.
+- `SpeakLifeApp.swift` — `/stand/` parsing, `standRedemption()`, stand push routing.
+- `AppDelegate.swift` — deferred-link code in `BranchAttribution.apply`.
+- `AppState.swift` — `pendingStandCode`, `pendingStandRoomId`.
+
+Everything user-visible is behind `FeatureFlag.standTogetherEnabled`, default
+**false**, so a merge with the flag off changes nothing for users.
+
+### One deliberate compromise
+
+The day-1 prompt fires from `EnforcementCard` when `completedDayNumbers` first
+reaches 1, not from inside the burst's completion sequence. Spec §9.5 wants it
+at the instant the burst ends; hanging it off the card puts it a beat later, on
+the Today tab. That was chosen because splicing into `DailyDeclarationBurstView`
+blind — unable to compile or see the result — risks breaking a flow you already
+ship. **Moving it into the burst completion is a worthwhile follow-up** once
+somebody can run the app.
+
+### Launch broadcast (12c)
+
+Not code — a send you trigger from your own tooling when the flag goes on.
+Suggested copy:
+
+> **You don't have to stand alone.**
+> Your next seven days can be run with someone. Your wife, your mom, your
+> small group. Same word, same week, spoken together.
 
 ---
 
