@@ -72,7 +72,17 @@ Language must be spiritually rich, resonant, and precise. Declarations should fe
 ```
 
 ### 10. Declaration Count
-Do not reduce the count of any category. If you replace a declaration, the total number stays the same.
+Never drop a declaration to save effort, and never let a rewrite quietly lose
+one. If you replace a declaration, the total stays the same.
+
+**The one reason to remove one: its verse undercuts the category.** Some
+declarations sit on a scripture that argues against the very thing the category
+promises. 2 Corinthians 4:16 under a healing declaration reads "outwardly we are
+wasting away". Psalm 73:26 opens "My flesh and my heart may fail". A speaker
+declaring health should not be handed decay in the same breath. Where no part of
+the verse carries the category's promise, delete the declaration rather than
+bolting a better verse onto it. The count drops, and that is correct. Say in the
+commit which categories lost how many and why.
 
 ### 11. Emotional Resonance (Never Apathy)
 The one reaction a declaration must never produce is apathy. Every declaration is spoken over the speaker's own heart, and if it leaves them indifferent, it has failed — no matter how doctrinally correct it is. The eye should not be able to skim past it unmoved.
@@ -88,7 +98,10 @@ This rule works with Rules 6 and 8, not against them: power and vocabulary are t
 ### 12. Call Higher (Declare the Greater Reality)
 A declaration does not argue with the problem, name it, or rebuke it. It declares the higher truth that makes the problem irrelevant, and calls the speaker up into it.
 
-- **Never name the low thing.** Do not call out worry, fear, sickness, lack, or shame, even to overrule it. Skip straight to the higher reality that displaces it. The mind ruled by Christ has no room for anxiety, so you never have to mention anxiety at all.
+- **Never name the low thing as the speaker's present reality.** Do not declare worry, fear, sickness, lack, or shame over yourself, and do not argue with them. Skip to the higher reality that displaces them.
+- **You may name it when the same sentence declares it already defeated.** Healing needs something concrete to have healed. "You took all my sickness, and strength rises in this body every morning" names sickness only as the thing Jesus carried off, which is the gospel, not a complaint. Same for "my joints pain free" and "You heal my pain and keep me whole." The test is the tense and the owner: the low thing is named as gone, carried, or healed, never as something the speaker currently holds.
+- ❌ "Sickness keeps coming back to this body." → names it as present and owned.
+- ✅ "You took all my sickness, and strength rises in this body every morning." → names it as carried away.
 - **Declare exactly what is to come to pass, as already true.** Say the concrete reality the speaker is stepping into, not the thing they are leaving. Specific and scriptural, never vague.
 - **Hit the exact domain.** Declare over the real place the issue lives. Anxiety is in the mind, so declare a sound mind. Sickness is in the body, provision in the finances. Name the place plainly.
 - ❌ "Worry, settle down. My heart grows quiet in Him." → names the low thing, vague, wrong domain.
