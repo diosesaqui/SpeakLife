@@ -122,6 +122,51 @@ exactly this: the invite row did nothing at all. It is also why
 `StandInviteSheet` now shows the failure on screen instead of printing it —
 see "Nothing fails silently" below.
 
+### Step 2c — Check the invoker binding on every callable
+
+A v2 `onCall` is a Cloud Run service. The Firebase CLI grants it `allUsers` →
+`roles/run.invoker` as a **post-deploy step**, and if the deploy run dies partway
+that grant never happens. The function still builds, still reports ACTIVE, still
+shows a URL — and every call is rejected by Cloud Run with a 401 before the
+function body runs. The iOS SDK maps that 401 onto `unauthenticated`, which is
+indistinguishable from a real sign-in failure unless you read the logs.
+
+This is not hypothetical. `createStandInvite`'s first `CreateFunction` failed
+with `Could not authenticate 'service-…@gcf-admin-robot.iam.gserviceaccount.com':
+Deadline Exceeded.` A later `UpdateFunction` brought the service up but did not
+redo the create-time grant, so the stand was created and then the invite code
+could never be minted.
+
+Check all eight callables:
+
+```bash
+for f in createstand createstandinvite revokestandinvite joinstand \
+         leavestand beginaccountmerge completeaccountmerge deleteaccount; do
+  printf '%-22s ' "$f"
+  gcloud run services get-iam-policy "$f" --region=us-central1 \
+    --project=speaklife-3e5c4 --format='value(bindings.members)' 2>/dev/null \
+    | grep -q allUsers && echo OK || echo MISSING
+done
+```
+
+Grant whatever is missing:
+
+```bash
+gcloud run services add-iam-policy-binding <service> --region=us-central1 \
+  --member=allUsers --role=roles/run.invoker --project=speaklife-3e5c4
+```
+
+No redeploy is needed — this is IAM only, and it takes effect in seconds.
+
+**"Allow unauthenticated" here does not mean the function is unauthenticated.**
+It means Cloud Run stops gate-keeping at the edge so the request can reach the
+function, where `requireAuth(request)` verifies the Firebase ID token exactly as
+before. This is the required configuration for every Firebase callable; without
+it a callable cannot work at all.
+
+`joinStand` is the one to check hardest. Missing there, the entire receiving
+half of the feature is dead: every invite link opens and then fails.
+
 ### Why the rules go first
 
 There is no hole today — nothing in the app calls `signInAnonymously`, so
