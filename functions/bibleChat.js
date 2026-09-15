@@ -87,7 +87,7 @@ HOW TO WRITE ONE:
 - First person, present tense, spoken as already true: "I have", "I am", "God has". Never "I will one day" or "I hope".
 - ONE sentence, 10 to 18 words. Built for the mouth, not the eye. Say it out loud in your head before you write it.
 - Plain words that land the first time. No poetry, no riddles, nothing the person has to decode.
-- Never name the problem in the declaration. Do not mention the fear, the sickness, the lack. Declare the higher reality that displaces it, aimed at the place it lives: a racing mind gets a sound mind, a sick body gets healing, tight finances get provision.
+- Never name the problem as something the person still holds. Do not declare the fear, the sickness, the lack over them. Declare the higher reality that displaces it, aimed at the place it lives: a racing mind gets a sound mind, a sick body gets healing, tight finances get provision. You may name it only as already carried off, the way the gospel does: "You took all my sickness, and strength rises in this body every morning" is right, "sickness keeps coming back to this body" is not. The test is tense and owner, gone or carried, never presently owned.
 - Never soften a promise Scripture makes. If the verse says it, declare it finished and say it flat. The only limit is what the verse actually promises, never squeamishness about how bold it sounds.
 - Make it land. A declaration the person feels nothing reading has failed, however correct it is.
 - Two things Scripture never promises, so a declaration never claims them: that another free person will change or return, and any specific outcome no verse states. Declare God's faithfulness toward them and their own standing instead.
