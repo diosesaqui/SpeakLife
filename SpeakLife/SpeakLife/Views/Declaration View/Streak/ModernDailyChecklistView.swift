@@ -61,10 +61,29 @@ struct ModernDailyChecklistView: View {
     }
     /// The link under the task: a way into the full list when they carry more
     /// than one. The count itself now lives on the checklist row's subtitle.
-    private var seeAllDeclarationsLabel: String {
-        activeDeclarations.count > 1
-            ? "See all \(activeDeclarations.count)"
-            : "Believing for something else too?"
+    /// Whether they can carry another declaration right now.
+    private var canAddDeclaration: Bool {
+        activeDeclarations.count
+            < PersonalDeclarationLimits.maxDeclarations(isPremium: subscriptionStore.isPremium)
+    }
+
+    /// The tile under the checklist, which is now a WRITE affordance rather
+    /// than a second route into the list.
+    ///
+    /// Seeing the list was already reachable: tapping the row itself opens the
+    /// card with one declaration and the full list with several. So the tile
+    /// was the only always-visible slot in Today with no job of its own, and
+    /// "Believing for something else too?" asked a question instead of naming
+    /// an action. Creating a declaration is now one tap from Today at every
+    /// point in the product: no declaration yet and the checklist row itself is
+    /// the invitation; one or more and this is.
+    ///
+    /// At the limit it falls back to the list, which is where the count and the
+    /// upgrade path live.
+    private var declarationTileLabel: String {
+        canAddDeclaration
+            ? "Write a new declaration"
+            : "See all \(activeDeclarations.count)"
     }
     // Modal presentations surfaced directly on the Today tab (instead of routing
     // the user over to the Speak feed and presenting there).
@@ -197,19 +216,31 @@ struct ModernDailyChecklistView: View {
     /// and the audio pointer were removed for. This is a doorway, not a copy.
     ///
     /// Shown whenever they carry at least one, not only when they carry several.
-    /// Gating on `count > 1` made `seeAllDeclarationsLabel`'s other branch
-    /// unreachable and left single-declaration users with no route from Today
-    /// into the list at all — which is also where they'd go to add a second.
+    /// Gating on `count > 1` left single-declaration users with no route from
+    /// Today to a second one at all.
     ///
-    /// nil when they carry none, so the slot collapses instead of leaving a gap.
+    /// It now WRITES rather than routing to the list a second time — see
+    /// `declarationTileLabel`. nil when they carry none, because the checklist
+    /// row is the invitation at that point and two invitations stacked is one
+    /// too many.
     private var personalDeclarationTile: AnyView? {
         guard appState.hasPersonalDeclaration, !activeDeclarations.isEmpty else { return nil }
         return AnyView(
             Button {
                 Juice.play(.tapLight)
-                showMyDeclarations = true
+                guard canAddDeclaration else {
+                    showMyDeclarations = true
+                    return
+                }
+                // `createYourOwnTapped` has been declared in Events.swift and
+                // never fired by anything. This is the event it was written for.
+                AnalyticsService.shared.track(Event.createYourOwnTapped, parameters: [
+                    "source": "today_checklist",
+                    "existing_count": activeDeclarations.count
+                ])
+                showNewDeclarationSheet = true
             } label: {
-                Text(seeAllDeclarationsLabel)
+                Text(declarationTileLabel)
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
                     .foregroundColor(.white.opacity(0.5))
                     .frame(maxWidth: .infinity)
@@ -955,7 +986,13 @@ struct ModernDailyChecklistView: View {
                 PersonalDeclarationOnboardingView(
                     viewModel: DIContainer.shared.makePersonalDeclarationViewModel(),
                     size: geo.size,
-                    flow: "app"
+                    flow: "app",
+                    // Was omitted, so it defaulted to PersonalDeclarationLimits
+                    // .premium — the premium allowance, for everybody, on the
+                    // one create route that does not go through My
+                    // Declarations. That view has always passed it.
+                    limit: PersonalDeclarationLimits.maxDeclarations(
+                        isPremium: subscriptionStore.isPremium)
                 ) { newDeclaration in
                     if newDeclaration != nil {
                         appState.hasPersonalDeclaration = true
