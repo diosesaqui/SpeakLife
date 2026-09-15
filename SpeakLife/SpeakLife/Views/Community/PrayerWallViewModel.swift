@@ -36,6 +36,23 @@ class PrayerWallViewModel: ObservableObject {
     @Published var agreementsByPost: [String: [Agreement]] = [:]
     @Published var loadingAgreementsForPost: Set<String> = []
 
+    /// How many agreements each post has, resolved WITHOUT loading the chain.
+    /// Filled by `prefetchAgreementCounts` (a Firestore count aggregation,
+    /// which bills one read per 1000 index entries rather than one per doc)
+    /// so a collapsed card can say "3 voices in agreement" before anyone
+    /// taps it. A missing key means "not resolved yet" — the UI shows
+    /// neutral copy in that case rather than claiming the chain is empty.
+    @Published var agreementCountsByPost: [String: Int] = [:]
+
+    /// Post ids with a count aggregation already in flight, so a feed
+    /// refresh mid-fetch doesn't fire duplicate requests.
+    private var pendingAgreementCountFetches: Set<String> = []
+
+    /// Post ids whose full agreement chain has been fetched. An optimistic
+    /// insert also writes into `agreementsByPost`, so the dictionary alone
+    /// can't tell a complete chain from a single local entry.
+    @Published private(set) var loadedAgreementChains: Set<String> = []
+
     private let db = Firestore.firestore()
     private let collection = "prayerWall"
     private let batchSize = 15
@@ -137,6 +154,7 @@ class PrayerWallViewModel: ObservableObject {
         if let data = UserDefaults.standard.data(forKey: cacheKey),
            let decoded = try? JSONDecoder().decode([PrayerWallPost].self, from: data) {
             self.posts = decoded
+            prefetchAgreementCounts(for: decoded)
         }
     }
 
@@ -242,12 +260,16 @@ class PrayerWallViewModel: ObservableObject {
 
                 if reset {
                     self.posts = newPosts
+                    // A reset is the user asking for the current truth, so
+                    // re-resolve counts even for posts we've already seen.
+                    self.prefetchAgreementCounts(for: newPosts, force: true)
                 } else {
                     // Deduplicate before appending — safety net against any
                     // edge case where the same page could be fetched twice.
                     let existingIds = Set(self.posts.compactMap { $0.id })
                     let uniqueNew = newPosts.filter { $0.id == nil || !existingIds.contains($0.id!) }
                     self.posts.append(contentsOf: uniqueNew)
+                    self.prefetchAgreementCounts(for: uniqueNew)
                 }
 
                 self.cachePosts()
@@ -276,6 +298,7 @@ class PrayerWallViewModel: ObservableObject {
                     self.myPosts = (snapshot?.documents ?? []).compactMap {
                         try? $0.data(as: PrayerWallPost.self)
                     }
+                    self.prefetchAgreementCounts(for: self.myPosts, force: true)
                 }
             }
     }
@@ -557,6 +580,8 @@ class PrayerWallViewModel: ObservableObject {
         posts.removeAll { $0.id == postId }
         myPosts.removeAll { $0.id == postId }
         agreementsByPost.removeValue(forKey: postId)
+        agreementCountsByPost.removeValue(forKey: postId)
+        loadedAgreementChains.remove(postId)
 
         db.collection(collection).document(postId).delete { [weak self] error in
             DispatchQueue.main.async {
@@ -578,6 +603,89 @@ class PrayerWallViewModel: ObservableObject {
     func hasAgreed(on post: PrayerWallPost) -> Bool {
         guard let id = post.id else { return false }
         return userAgreementPostIds.contains(id)
+    }
+
+    /// How many agreements a post has, or nil when that isn't known yet.
+    ///
+    /// A loaded chain is the most accurate answer; otherwise we fall back to
+    /// the prefetched aggregation. nil is meaningful and must not be
+    /// flattened to 0 — the card shows neutral copy for nil and a real
+    /// "no one yet" line for 0.
+    func agreementCount(for post: PrayerWallPost) -> Int? {
+        guard let id = post.id else { return nil }
+        if loadedAgreementChains.contains(id) {
+            return agreementsByPost[id]?.count ?? 0
+        }
+        return agreementCountsByPost[id]
+    }
+
+    /// True once the post's full chain has been fetched, so the card knows
+    /// whether tapping to expand still needs a network round trip.
+    func isAgreementChainLoaded(_ post: PrayerWallPost) -> Bool {
+        guard let id = post.id else { return false }
+        return loadedAgreementChains.contains(id)
+    }
+
+    /// The label for a card's collapsed agreement row. Pure logic so the
+    /// empty / unknown / populated wording is unit-testable.
+    static func agreementChainTitle(count: Int?) -> String {
+        guard let count else { return "View those standing in agreement" }
+        switch count {
+        case ..<1:  return "No one has stood in agreement yet"
+        case 1:     return "1 voice in agreement"
+        default:    return "\(count) voices in agreement"
+        }
+    }
+
+    /// Resolves agreement counts for a batch of posts with count
+    /// aggregations, which never download the agreement docs themselves.
+    /// Posts whose count is already known are skipped unless `force`.
+    func prefetchAgreementCounts(for posts: [PrayerWallPost], force: Bool = false) {
+        for post in posts {
+            guard let id = post.id else { continue }
+            // A fully loaded chain already holds the exact count. A
+            // dictionary entry alone doesn't qualify — an optimistic insert
+            // leaves one local agreement there on an unloaded chain.
+            if loadedAgreementChains.contains(id) { continue }
+            if !force && agreementCountsByPost[id] != nil { continue }
+            refreshAgreementCount(for: id)
+        }
+    }
+
+    /// Re-resolves a single post's agreement count. Failures leave the
+    /// previous value (or "unknown") in place — a count is a nicety, never
+    /// worth surfacing an error banner over.
+    func refreshAgreementCount(for postId: String) {
+        guard !postId.isEmpty else { return }
+        guard !pendingAgreementCountFetches.contains(postId) else { return }
+        pendingAgreementCountFetches.insert(postId)
+
+        db.collection(collection).document(postId).collection("agreements")
+            .count
+            .getAggregation(source: .server) { [weak self] snapshot, error in
+                DispatchQueue.main.async {
+                    guard let self = self else { return }
+                    self.pendingAgreementCountFetches.remove(postId)
+                    guard error == nil, let snapshot = snapshot else { return }
+                    self.agreementCountsByPost[postId] = max(0, snapshot.count.intValue)
+                }
+            }
+    }
+
+    /// Optimistically nudges a known count. Unknown stays unknown — guessing
+    /// "1" for a post that already has five agreements would be worse than
+    /// the neutral copy.
+    private func adjustAgreementCount(postId: String, by delta: Int) {
+        guard let current = agreementCountsByPost[postId] else { return }
+        agreementCountsByPost[postId] = max(0, current + delta)
+    }
+
+    /// Prefetch the counts for whatever the feed is currently showing.
+    /// Called on appear so a card that loaded from cache, or one whose
+    /// aggregation failed earlier, still resolves its number.
+    func prefetchVisibleAgreementCounts() {
+        prefetchAgreementCounts(for: posts)
+        prefetchAgreementCounts(for: myPosts)
     }
 
     /// Lazily load the agreements subcollection for a post on expand.
@@ -607,6 +715,8 @@ class PrayerWallViewModel: ObservableObject {
                         try? $0.data(as: Agreement.self)
                     }
                     self.agreementsByPost[id] = items
+                    self.agreementCountsByPost[id] = items.count
+                    self.loadedAgreementChains.insert(id)
 
                     // Self-heal: reconcile the local "I agreed" flag
                     // against what's actually on the server.
@@ -631,6 +741,7 @@ class PrayerWallViewModel: ObservableObject {
 
         // Optimistic local removal — feed updates immediately.
         agreementsByPost[postId]?.removeAll { $0.userId == userId }
+        adjustAgreementCount(postId: postId, by: -1)
         var ids = userAgreementPostIds
         ids.remove(postId)
         userAgreementPostIds = ids
@@ -645,6 +756,8 @@ class PrayerWallViewModel: ObservableObject {
                         // Reload agreements for the post so local state
                         // reconciles to whatever's still on the server.
                         self.loadAgreements(for: post, currentUserId: userId)
+                    } else {
+                        self.refreshAgreementCount(for: postId)
                     }
                 }
             }
@@ -684,6 +797,7 @@ class PrayerWallViewModel: ObservableObject {
         var existing = agreementsByPost[postId] ?? []
         existing.append(agreement)
         agreementsByPost[postId] = existing
+        adjustAgreementCount(postId: postId, by: 1)
 
         do {
             // Document id = userId enforces "max 1 agreement per user per post".
@@ -703,8 +817,14 @@ class PrayerWallViewModel: ObservableObject {
                             var current = self.agreementsByPost[postId] ?? []
                             current.removeAll { $0.userId == userId && $0.id == nil }
                             self.agreementsByPost[postId] = current
+                            self.adjustAgreementCount(postId: postId, by: -1)
 
                             self.errorMessage = "Couldn't save your agreement: \(error.localizedDescription)"
+                        } else {
+                            // Resolves the count for posts whose aggregation
+                            // never landed, so the card stops saying
+                            // "View those standing in agreement".
+                            self.refreshAgreementCount(for: postId)
                         }
                     }
                 }
@@ -714,6 +834,7 @@ class PrayerWallViewModel: ObservableObject {
             ids.remove(postId)
             userAgreementPostIds = ids
             agreementsByPost[postId]?.removeAll { $0.userId == userId && $0.id == nil }
+            adjustAgreementCount(postId: postId, by: -1)
             DispatchQueue.main.async {
                 self.errorMessage = "Unexpected error saving agreement."
             }
