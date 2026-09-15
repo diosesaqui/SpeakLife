@@ -59,6 +59,7 @@ struct StandInviteSheet: View {
     @State private var code: String?
     @State private var shareImage: UIImage?
     @State private var isWorking = true
+    @State private var showShareSheet = false
     @State private var failureShown: InviteFailure?
     @Environment(\.dismiss) private var dismiss
 
@@ -155,8 +156,14 @@ struct StandInviteSheet: View {
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
 
-            ShareLink(item: shareText,
-                      preview: SharePreview("Stand with me", image: previewImage)) {
+            Button {
+                AnalyticsService.shared.track("stand_invite_shared", parameters: [
+                    "room_id": roomId ?? "",
+                    "channel": "share_sheet",
+                    "has_image": shareImage != nil,
+                ])
+                showShareSheet = true
+            } label: {
                 Label("Send the invite", systemImage: "square.and.arrow.up")
                     .font(.system(size: 17, weight: .semibold, design: .rounded))
                     .foregroundColor(.black)
@@ -164,11 +171,9 @@ struct StandInviteSheet: View {
                     .padding(.vertical, DS.Spacing.sm)
                     .background(Capsule().fill(DS.Palette.gold))
             }
-            .simultaneousGesture(TapGesture().onEnded {
-                AnalyticsService.shared.track("stand_invite_shared", parameters: [
-                    "room_id": roomId ?? "", "channel": "share_sheet",
-                ])
-            })
+            .sheet(isPresented: $showShareSheet) {
+                ShareSheet(activityItems: shareItems)
+            }
 
             codeRow
         }
@@ -244,8 +249,30 @@ struct StandInviteSheet: View {
         .padding(.horizontal, DS.Spacing.sm)
     }
 
-    private var previewImage: Image {
-        shareImage.map { Image(uiImage: $0) } ?? Image(systemName: "hands.and.sparkles")
+    /// The card FIRST, then the message body.
+    ///
+    /// ⚠️ THIS IS WHY IT IS NOT A `ShareLink`. `ShareLink(item:preview:)` sends
+    /// `item` and nothing else — `preview` is only the thumbnail drawn inside
+    /// the share sheet, never part of the payload. So `item: shareText` shipped
+    /// text alone, which is the single thing this screen exists not to do: the
+    /// rendered card is what makes an invite land in a thread rather than read
+    /// as a link somebody forwarded.
+    ///
+    /// A `Transferable` with both an image and a text representation does not
+    /// fix it either — the receiving app picks ONE, so Messages would attach the
+    /// card and silently drop the typed code underneath it. Both have to travel,
+    /// because the code is the fallback for everybody Branch's deferred matching
+    /// misses. `UIActivityViewController` is what carries an image and a string
+    /// together, so the invite goes as a card with the link and the code beneath
+    /// it.
+    ///
+    /// Text-only when the render failed, which is the old behavior and still
+    /// better than sending nothing.
+    private var shareItems: [Any] {
+        var items: [Any] = []
+        if let shareImage { items.append(shareImage) }
+        items.append(shareText)
+        return items
     }
 
     // MARK: - Work
