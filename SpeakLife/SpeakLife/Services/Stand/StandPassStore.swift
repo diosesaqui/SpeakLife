@@ -90,6 +90,6 @@ enum FeatureFlag {
     /// user's campaign keeps running locally — because the room was only ever
     /// a mirror of it.
     static var standTogetherEnabled: Bool {
-        DefaultFeatureFlags.shared.bool("stand_together_enabled", default: false)
+        DefaultFeatureFlags.shared.bool("standTogetherEnabled", default: false)
     }
 }

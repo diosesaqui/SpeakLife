@@ -309,7 +309,7 @@ both week strips. Then the cases that actually break things:
 - leave as the owner
 - delete the account while in two stands
 
-Ship behind `stand_together_enabled` (default `false`, Firebase Remote Config via the
+Ship behind `standTogetherEnabled` (default `false`, Firebase Remote Config via the
 existing `RemoteConfigFlags`). Internal → 5% → 50% → 100%, watching
 `stand_join_failed` reasons and push opt-out rate at each step. Flipping the flag off
 hides all Stand UI and the campaign keeps running locally, because the room was only

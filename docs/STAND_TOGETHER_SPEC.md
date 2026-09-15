@@ -1,7 +1,7 @@
 # Stand With Me — Implementation Spec
 
 **Status:** proposed, not built
-**Feature flag:** `stand_together_enabled` (default `false`)
+**Feature flag:** `standTogetherEnabled` (default `false`)
 **Branch:** `claude/speaklife-sharing-accountability-7kgso3`
 
 ---
@@ -852,7 +852,7 @@ Enforcements (the hypothesis is that it roughly doubles).
 
 ## 13. Rollout
 
-1. `stand_together_enabled` defaults `false` via `DefaultFeatureFlags`; flip through
+1. `standTogetherEnabled` defaults `false` via `DefaultFeatureFlags`; flip through
    Firebase Remote Config, which `RemoteConfigFlags` already backs.
 2. Deploy rules + functions **before** the client build reaches TestFlight. The
    `isFullAccount()` Prayer Wall change (§4.2) is backward-compatible with every shipped
