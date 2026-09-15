@@ -248,11 +248,16 @@ final class StandRoomTests: XCTestCase {
     // MARK: - Join conflict
 
     private func progress(active id: String?, completedDays: Int) -> EnforcementProgress {
-        EnforcementProgress(
+        // `Set(1...completedDays)` traps when completedDays is 0 — a closed
+        // range requires lowerBound <= upperBound, so `1...0` is a fatal error,
+        // not an empty set. Day 0 is a real case (a member who joined and has
+        // not spoken), so build it with a stride instead.
+        let days = Set(stride(from: 1, through: max(completedDays, 0), by: 1))
+        return EnforcementProgress(
             activeEnforcementId: id,
             assembledEnforcement: nil,
             startedOn: id == nil ? nil : Date(),
-            completedDayNumbers: Set(1...max(completedDays, 0)).filter { $0 <= completedDays },
+            completedDayNumbers: days,
             lastAdvancedOn: nil,
             completedEnforcementIds: []
         )
