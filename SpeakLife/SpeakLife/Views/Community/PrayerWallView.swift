@@ -138,6 +138,9 @@ struct PrayerWallView: View {
                 viewModel.fetchPosts(reset: true)
             }
             viewModel.fetchMyPosts()
+            // Cards restored from cache (or whose count request failed while
+            // offline) still need their agreement counts resolved.
+            viewModel.prefetchVisibleAgreementCounts()
             if appleSignIn.isSignedIn {
                 viewModel.registerForPrayerWallNotifications(
                     uid: appleSignIn.uid,
@@ -338,6 +341,9 @@ struct PrayerPostCard: View {
 
     private var postId: String { post.id ?? "" }
     private var agreements: [Agreement] { viewModel.agreementsByPost[postId] ?? [] }
+    /// nil until the count is resolved — the row shows neutral copy then,
+    /// rather than claiming nobody has stood in agreement.
+    private var agreementCount: Int? { viewModel.agreementCount(for: post) }
     private var agreementsLoading: Bool { viewModel.loadingAgreementsForPost.contains(postId) }
 
     var body: some View {
@@ -569,61 +575,62 @@ struct PrayerPostCard: View {
 
     @ViewBuilder
     private var agreementChainRow: some View {
-        let count = agreements.count
-        let title: String = {
-            if count > 0 {
-                return count == 1
-                    ? "1 voice in agreement"
-                    : "\(count) voices in agreement"
-            }
-            return "View those standing in agreement"
-        }()
+        let count = agreementCount
+        let title = PrayerWallViewModel.agreementChainTitle(count: count)
 
         VStack(alignment: .leading, spacing: 6) {
-            Button {
-                if !isAgreementsExpanded && agreements.isEmpty {
-                    // Pass uid so loadAgreements can self-heal local
-                    // "I agreed" state if there's no matching server doc.
-                    viewModel.loadAgreements(for: post, currentUserId: appleSignIn.uid)
-                }
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    isAgreementsExpanded.toggle()
-                }
-            } label: {
-                HStack(spacing: DS.Spacing.xxs) {
-                    Text(title)
-                        .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
-                        .foregroundColor(.white.opacity(0.55))
-                    Image(systemName: isAgreementsExpanded ? "chevron.up" : "chevron.down")
-                        .font(.system(size: 10))
-                        .foregroundColor(.white.opacity(0.45))
-                }
-            }
-
-            if isAgreementsExpanded {
-                if agreementsLoading && agreements.isEmpty {
-                    ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: .white.opacity(0.5)))
-                        .scaleEffect(0.8)
-                } else if agreements.isEmpty {
-                    Text(emptyAgreementHint)
-                        .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
-                        .foregroundColor(.white.opacity(0.4))
-                        .italic()
-                } else {
-                    let preview = Array(agreements.prefix(3))
-                    ForEach(preview) { agreement in
-                        AgreementRow(
-                            agreement: agreement,
-                            onDelete: agreement.userId == appleSignIn.uid
-                                ? { viewModel.deleteAgreement(from: post, userId: appleSignIn.uid) }
-                                : nil
-                        )
+            if count == 0 {
+                // Nothing to expand into. Say so plainly instead of
+                // offering a disclosure that opens onto an empty list.
+                Text(emptyAgreementHint)
+                    .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
+                    .foregroundColor(.white.opacity(0.4))
+            } else {
+                Button {
+                    if !isAgreementsExpanded && !viewModel.isAgreementChainLoaded(post) {
+                        // Pass uid so loadAgreements can self-heal local
+                        // "I agreed" state if there's no matching server doc.
+                        viewModel.loadAgreements(for: post, currentUserId: appleSignIn.uid)
                     }
-                    if agreements.count > 3 {
-                        Text("+ \(agreements.count - 3) more")
-                            .font(Font.custom("AppleSDGothicNeo-Regular", size: 11, relativeTo: .caption2))
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        isAgreementsExpanded.toggle()
+                    }
+                } label: {
+                    HStack(spacing: DS.Spacing.xxs) {
+                        Text(title)
+                            .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
+                            .foregroundColor(.white.opacity(0.55))
+                        Image(systemName: isAgreementsExpanded ? "chevron.up" : "chevron.down")
+                            .font(.system(size: 10))
+                            .foregroundColor(.white.opacity(0.45))
+                    }
+                }
+
+                if isAgreementsExpanded {
+                    if agreementsLoading && agreements.isEmpty {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white.opacity(0.5)))
+                            .scaleEffect(0.8)
+                    } else if agreements.isEmpty {
+                        Text(emptyAgreementHint)
+                            .font(Font.custom("AppleSDGothicNeo-Regular", size: 12, relativeTo: .caption))
                             .foregroundColor(.white.opacity(0.4))
+                            .italic()
+                    } else {
+                        let preview = Array(agreements.prefix(3))
+                        ForEach(preview) { agreement in
+                            AgreementRow(
+                                agreement: agreement,
+                                onDelete: agreement.userId == appleSignIn.uid
+                                    ? { viewModel.deleteAgreement(from: post, userId: appleSignIn.uid) }
+                                    : nil
+                            )
+                        }
+                        if agreements.count > 3 {
+                            Text("+ \(agreements.count - 3) more")
+                                .font(Font.custom("AppleSDGothicNeo-Regular", size: 11, relativeTo: .caption2))
+                                .foregroundColor(.white.opacity(0.4))
+                        }
                     }
                 }
             }
@@ -635,9 +642,9 @@ struct PrayerPostCard: View {
     }
 
     private var emptyAgreementHint: String {
-        // Shown only when the chain is expanded and there are no
-        // agreements yet. The "Stand in agreement" CTA is always visible
-        // above the chain — this row just explains the empty state.
+        // Shown in place of the disclosure row once we know the chain is
+        // empty, and as a fallback if an expanded chain loads empty. The
+        // "Stand in agreement" CTA sits right above it.
         appleSignIn.isSignedIn
             ? "Be the first to stand in agreement."
             : "Sign in to stand in agreement."
