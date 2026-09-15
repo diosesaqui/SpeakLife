@@ -1956,7 +1956,7 @@ struct SurveyPlanRevealScreen: View {
                     Spacer().frame(height: size.height * 0.09)
 
                     VStack(spacing: 12) {
-                        Text("BUILT FROM WHAT YOU TOLD US")
+                        Text("YOUR PLAN, BUILT ON HIS WORD")
                             .font(.system(size: 12, weight: .bold, design: .rounded))
                             .foregroundColor(DS.Palette.gold.opacity(0.9))
                             .kerning(1.4)
@@ -1982,13 +1982,13 @@ struct SurveyPlanRevealScreen: View {
                         cardDivider
                         planRow(
                             icon: "book.fill",
-                            title: "Where it's written",
-                            detail: "Every word stands on the Word, starting with \(burden.previewDeclaration.reference)."
+                            title: "God's unshakable promises",
+                            detail: "Every line is God's own word, starting with \(burden.previewDeclaration.reference)."
                         )
                         cardDivider
                         planRow(
                             icon: "bell.badge.fill",
-                            title: "When you'll speak it",
+                            title: "When you speak it",
                             detail: dailyRhythmDetail
                         )
                     }
