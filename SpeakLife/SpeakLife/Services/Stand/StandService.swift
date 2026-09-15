@@ -41,6 +41,8 @@ final class StandService: ObservableObject, StandMirroring {
 
     /// Set when a stand finishes so the Today tab can present the celebration,
     /// mirroring how `EnforcementService.justCompleted` works.
+    ///
+    /// Presented by `standCompletionCover()` at the root. The view clears it.
     @Published var justCompletedRoom: StandRoom?
 
     // MARK: - Dependencies
@@ -144,8 +146,24 @@ final class StandService: ObservableObject, StandMirroring {
         // membership — the cache is only ever a head start.
         attach(to: cachedRoomIds())
 
-        db.collection("users").document(uid).getDocument { [weak self] snap, _ in
-            let ids = snap?.data()?["standRoomIds"] as? [String] ?? []
+        db.collection("users").document(uid).getDocument { [weak self] snap, error in
+            // A failed read must NOT be read as "you are in no stands". Treating
+            // nil as an empty list tore down every listener, cleared `rooms` and
+            // overwrote the cache with nothing — so one offline launch emptied
+            // the UI and the mirror stopped working for the whole session.
+            if let error {
+                print("⚠️ Stand membership read failed: \(error.localizedDescription)")
+                Task { @MainActor in self?.isLoading = false }
+                return
+            }
+            guard let data = snap?.data() else {
+                // The document genuinely does not exist yet — a brand-new
+                // account that has not joined anything. Nothing to attach, and
+                // nothing to tear down either.
+                Task { @MainActor in self?.isLoading = false }
+                return
+            }
+            let ids = data["standRoomIds"] as? [String] ?? []
             Task { @MainActor in
                 self?.attach(to: ids)
                 self?.saveCache()

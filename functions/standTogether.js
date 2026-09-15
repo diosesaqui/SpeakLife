@@ -956,17 +956,26 @@ exports.standSweep = onSchedule('every 24 hours', async () => {
 
   // Archive: names cleared, the room kept as a shell so a share card that
   // already went out still resolves to something.
-  const old = await db.collection('standRooms')
-    .where('lastActivityAt', '<=', cutoff(ARCHIVE_AFTER_DAYS))
-    .limit(200).get();
-  for (const d of old.docs) {
-    if (d.data().status === 'archived') continue;
-    const cleared = {};
-    for (const uid of Object.keys(d.data().members || {})) {
-      cleared[`members.${uid}.name`] = '';
-      cleared[`members.${uid}.initial`] = '';
+  //
+  // The status filter is load-bearing. Without it the query returned the
+  // oldest 200 rooms by lastActivityAt regardless of whether they were already
+  // archived — and since archiving does not touch lastActivityAt, the same 200
+  // came back every single day and nothing past them was ever archived.
+  // Filtering on status means archived rooms drop out of the result and the
+  // sweep advances.
+  for (const status of ['dormant', 'completed']) {
+    const old = await db.collection('standRooms')
+      .where('status', '==', status)
+      .where('lastActivityAt', '<=', cutoff(ARCHIVE_AFTER_DAYS))
+      .limit(200).get();
+    for (const d of old.docs) {
+      const cleared = {};
+      for (const uid of Object.keys(d.data().members || {})) {
+        cleared[`members.${uid}.name`] = '';
+        cleared[`members.${uid}.initial`] = '';
+      }
+      await d.ref.update({ status: 'archived', ...cleared });
     }
-    await d.ref.update({ status: 'archived', ...cleared });
   }
 });
 

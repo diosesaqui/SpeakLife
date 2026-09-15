@@ -666,3 +666,23 @@ test('sweep marks a silent room dormant instead of deleting it', async () => {
   assert.strictEqual(room.status, 'dormant');
   assert.ok(room.members.mom, 'a dormant room keeps its members');
 });
+
+test('sweep archives past the first page instead of re-reading it', async () => {
+  // The bug: no status filter, and archiving does not touch lastActivityAt, so
+  // the same rooms came back every day forever and nothing new was archived.
+  const { roomId, code } = await createStand('owner');
+  await fns.joinStand.run(req('mom', { code, name: 'Mom' }));
+  const longAgo = Timestamp.fromMillis(Date.now() - 90 * 86400000);
+  await db.collection('standRooms').doc(roomId)
+    .update({ status: 'dormant', lastActivityAt: longAgo });
+
+  await fns.standSweep.run({});
+  const first = (await db.collection('standRooms').doc(roomId).get()).data();
+  assert.strictEqual(first.status, 'archived');
+  assert.strictEqual(first.members.mom.name, '', 'names are cleared on archive');
+
+  // A second pass must not pick it up again — that is what starved the queue.
+  await fns.standSweep.run({});
+  const second = (await db.collection('standRooms').doc(roomId).get()).data();
+  assert.strictEqual(second.status, 'archived');
+});

@@ -402,6 +402,17 @@ public final class EnforcementService: ObservableObject {
     /// indexes, not text — so this is the same content with a better ordering
     /// and a better fit to what they described.
     @discardableResult
+    public func startCurated(_ curated: [Declaration],
+                             primary: DeclarationCategory,
+                             isPremium: Bool) -> Enforcement? {
+        guard isPremium,
+              let enforcement = EnforcementAssembler.assemble(curated: curated, primary: primary)
+        else { return nil }
+        begin(id: enforcement.id, assembled: enforcement)
+        return enforcement
+    }
+
+    /// The reviewed declarations to put in front of the curator.
     /// Adopt a campaign that arrived from a Stand.
     ///
     /// A room carries its campaign whole, which is the only way this can work:
@@ -425,17 +436,6 @@ public final class EnforcementService: ObservableObject {
         begin(id: enforcement.id, assembled: enforcement)
     }
 
-    public func startCurated(_ curated: [Declaration],
-                             primary: DeclarationCategory,
-                             isPremium: Bool) -> Enforcement? {
-        guard isPremium,
-              let enforcement = EnforcementAssembler.assemble(curated: curated, primary: primary)
-        else { return nil }
-        begin(id: enforcement.id, assembled: enforcement)
-        return enforcement
-    }
-
-    /// The reviewed declarations to put in front of the curator.
     public func curationCandidates(primary: DeclarationCategory,
                                    secondaries: [DeclarationCategory],
                                    pool: [Declaration]) -> [Declaration] {

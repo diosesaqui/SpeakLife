@@ -28,6 +28,12 @@ enum NotificationWindow {
     static let defaultPersonalDeclarationIndex = 16
 }
 
+/// One room id, made presentable by `.sheet(item:)`.
+struct StandRoomRoute: Identifiable, Equatable {
+    let value: String
+    var id: String { value }
+}
+
 final class AppState: ObservableObject {
     @Published var rootViewId = UUID()
     /// A personalized message delivered via push notification, awaiting display in
@@ -52,7 +58,10 @@ final class AppState: ObservableObject {
     /// A room to open, from a stand push. In memory only, deliberately: a room
     /// id is only meaningful while the app is running, and a persisted one
     /// would yank somebody into a room on next launch without them asking.
-    @Published var pendingStandRoomId: String?
+    ///
+    /// Boxed because `.sheet(item:)` needs `Identifiable` and a bare `String?`
+    /// is not one.
+    @Published var pendingStandRoomId: StandRoomRoute?
     @Published var showIntentBar = true
     @Published var onBoardingTest = true
     @Published var showScreenshotLabel = false {

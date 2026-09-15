@@ -353,10 +353,29 @@ service cloud.firestore {
              <= standMemberEntry(resource.data).daysSpoken.size() + 1
         && standMemberEntry(request.resource.data).daysSpoken.size() <= 14
 
-        // The name is rendered to other people, so bound it here too, not only
-        // in the UI. A rule is the only layer an edited client cannot skip.
+        // The name and initial are rendered to other people, so bound them here
+        // too, not only in the UI. A rule is the only layer an edited client
+        // cannot skip.
         && standMemberEntry(request.resource.data).name is string
         && standMemberEntry(request.resource.data).name.size() <= 24
+        && standMemberEntry(request.resource.data).initial is string
+        && standMemberEntry(request.resource.data).initial.size() <= 2
+
+        // Everything else on the entry is server-owned and must survive the
+        // write untouched. Without this a member could set their OWN isOwner to
+        // true and gain createStandInvite, or rewrite joinedAt to take
+        // ownership on the next leaveStand handover. Bounding only the fields a
+        // client is supposed to change leaves every field nobody thought about
+        // wide open, which is the same blacklist mistake the top-level rule
+        // already avoids.
+        && standMemberEntry(request.resource.data).isOwner
+             == standMemberEntry(resource.data).isOwner
+        && standMemberEntry(request.resource.data).left
+             == standMemberEntry(resource.data).left
+        && standMemberEntry(request.resource.data).colorIndex
+             == standMemberEntry(resource.data).colorIndex
+        && standMemberEntry(request.resource.data).joinedAt
+             == standMemberEntry(resource.data).joinedAt
 
         // Server clock, not the device's.
         && standMemberEntry(request.resource.data).lastSpokeAt == request.time

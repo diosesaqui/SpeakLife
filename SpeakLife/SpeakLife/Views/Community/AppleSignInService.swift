@@ -158,8 +158,25 @@ extension AppleSignInService: ASAuthorizationControllerDelegate {
 
         Task { @MainActor in
             do {
-                let result = try await Auth.auth().signIn(with: credential)
-                let user = result.user
+                // Routed through StandAuthCoordinator rather than calling
+                // Auth.signIn directly.
+                //
+                // Signing in straight to Firebase REPLACES an anonymous session
+                // rather than upgrading it, which silently abandons that uid —
+                // and with it every stand the person joined and their standPass.
+                // The coordinator links in place when it can, and when Apple
+                // reports credentialAlreadyInUse it takes a server-issued merge
+                // ticket first so the memberships follow them across.
+                //
+                // A no-op for anyone with no anonymous session, which is every
+                // user until Stand With Me ships.
+                try await StandAuthCoordinator.shared.link(with: credential)
+
+                guard let user = Auth.auth().currentUser else {
+                    throw NSError(domain: "AppleSignIn", code: -1, userInfo: [
+                        NSLocalizedDescriptionKey: "Sign in did not produce a user.",
+                    ])
+                }
 
                 // Build display name from Apple credential (only provided on first sign-in)
                 let name: String

@@ -47,9 +47,18 @@ struct StandInviteSheet: View {
     }
 
     private var formattedCode: String {
-        guard let code, code.count == 8 else { return code ?? "" }
-        let mid = code.index(code.startIndex, offsetBy: 4)
-        return "\(code[code.startIndex..<mid])-\(code[mid...])"
+        Self.formatted(code)
+    }
+
+    /// Takes the value directly rather than reading `code`.
+    ///
+    /// `prepare()` assigns `code` and then needs the formatted form in the same
+    /// pass to render the card. Reading the `@State` it just wrote is not
+    /// reliably the new value, so the card could be drawn with an empty code.
+    private static func formatted(_ raw: String?) -> String {
+        guard let raw, raw.count == StandLink.codeLength else { return raw ?? "" }
+        let mid = raw.index(raw.startIndex, offsetBy: 4)
+        return "\(raw[raw.startIndex..<mid])-\(raw[mid...])"
     }
 
     var body: some View {
@@ -168,18 +177,31 @@ struct StandInviteSheet: View {
 
     // MARK: - Work
 
+    /// Codes already minted this session, by room.
+    ///
+    /// Opening the sheet twice used to mint two invites, and the sixth open hit
+    /// MAX_ACTIVE_INVITES — which surfaced as "This stand is full.", the copy
+    /// for an entirely different failure. Reusing the code within a session is
+    /// also just correct: it is the same invitation.
+    @MainActor
+    private static var codesByRoom: [String: String] = [:]
+
     private func prepare() async {
         isWorking = true
         errorText = nil
         do {
-            // A fresh code per send, so revoking one does not kill the others.
-            // The owner is capped at five live invites server-side.
-            let fresh = try await StandService.shared.createInvite(roomId: room.id)
-            code = fresh
+            let resolved: String
+            if let cached = Self.codesByRoom[room.id] {
+                resolved = cached
+            } else {
+                resolved = try await StandService.shared.createInvite(roomId: room.id)
+                Self.codesByRoom[room.id] = resolved
+            }
+            code = resolved
             shareImage = StandInviteCardRenderer.render(
                 theme: room.enforcement.theme.name,
                 title: room.enforcement.displayTitle,
-                code: formattedCode
+                code: Self.formatted(resolved)
             )
         } catch {
             errorText = (error as? StandError)?.errorDescription

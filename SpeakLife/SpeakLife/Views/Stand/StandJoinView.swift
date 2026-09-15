@@ -33,6 +33,10 @@ struct StandJoinView: View {
     @State private var errorText: String?
     @State private var conflict: StandJoinConflict?
     @State private var joinedRoomId: String?
+    /// The campaign `joinStand` returned. Held because the conflict sheet
+    /// resolves asynchronously, and by the time the user answers, this is still
+    /// the only copy of the campaign the client has.
+    @State private var joinedEnforcement: Enforcement?
 
     @Environment(\.dismiss) private var dismiss
 
@@ -79,7 +83,7 @@ struct StandJoinView: View {
         )) { box in
             StandConflictSheet(conflict: box.value) { decision in
                 conflict = nil
-                Task { await finishJoin(decision: decision) }
+                finishJoin(decision: decision)
             }
         }
         .navigationDestination(item: $joinedRoomId) { id in
@@ -186,6 +190,15 @@ struct StandJoinView: View {
             // Already in it — a second tap, or a second device. Straight in.
             if outcome.alreadyMember {
                 joinedRoomId = outcome.roomId
+                joinedEnforcement = outcome.enforcement
+                // A rejoin still needs the campaign if they are not running it —
+                // after a reinstall they are a member of a room with nothing to
+                // speak. Only when it is genuinely absent: never over a campaign
+                // already in flight, which is the conflict sheet's job.
+                if !EnforcementService.shared.progressSnapshot.isActive,
+                   let enforcement = outcome.enforcement {
+                    EnforcementService.shared.startShared(enforcement)
+                }
                 isWorking = false
                 return
             }
@@ -197,10 +210,11 @@ struct StandJoinView: View {
                 hasUnseenCelebration: EnforcementService.shared.justCompleted != nil)
 
             joinedRoomId = outcome.roomId
+            joinedEnforcement = outcome.enforcement
             if case .clear = decision {
-                await finishJoin(decision: .clear)
+                finishJoin(decision: .clear)
             } else if case .sameCampaign = decision {
-                await finishJoin(decision: .sameCampaign)
+                finishJoin(decision: .sameCampaign)
             } else {
                 // Anything that would disturb a campaign in flight is the
                 // user's call, never the app's.
@@ -222,14 +236,18 @@ struct StandJoinView: View {
     /// campaign, and calling `startEnforcement` would route through `begin`,
     /// which clears `completedDayNumbers` and resets them to day 1 for the
     /// crime of joining a stand running the very week they are on.
-    private func finishJoin(decision: StandJoinConflict) async {
+    private func finishJoin(decision: StandJoinConflict) {
         switch decision {
         case .sameCampaign, .awaitingCelebration:
             break
         case .clear, .replaceEarly, .replaceLate:
-            if let room = StandService.shared.rooms.first(where: { $0.id == joinedRoomId }) {
-                EnforcementService.shared.startShared(room.enforcement)
-            }
+            // The campaign comes from the callable's own response, NOT from
+            // StandService.rooms. The listener has not delivered the room yet
+            // at this point, so looking it up there found nothing and the
+            // invitee joined a stand with no campaign at all — silently, since
+            // the lookup was an `if let`.
+            guard let enforcement = joinedEnforcement else { return }
+            EnforcementService.shared.startShared(enforcement)
         }
     }
 }

@@ -148,6 +148,10 @@ struct SpeakLifeApp: App {
                     // deferred link resolved during didFinishLaunching cannot
                     // land on top of onboarding.
                     .standRedemption(appState: appState)
+                    // Presents the shared day-7 celebration and opens the room a
+                    // stand push points at. Both were previously set by code that
+                    // nothing read.
+                    .standPresentation(appState: appState)
                     .onOpenURL { url in
                         // Ad-matched onboarding: owned channels (email, push, IG bio,
                         // QR, landing page) carrying `ob=<variant>` route here when the
@@ -433,7 +437,7 @@ struct SpeakLifeApp: App {
         // broadcast and stays a banner.
         if notifType == "stand" {
             if let roomId = content.userInfo["roomId"] as? String, !roomId.isEmpty {
-                appState.pendingStandRoomId = roomId
+                appState.pendingStandRoomId = StandRoomRoute(value: roomId)
                 AnalyticsService.shared.track("stand_nudge_opened", parameters: [
                     "room_id": roomId
                 ])

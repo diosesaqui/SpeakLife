@@ -205,6 +205,28 @@ final class AppDelegate: NSObject, MessagingDelegate {
         // not gain one.
         StandMirror.shared = StandService.shared
 
+        // Start the room listener and the pass observer for anybody who ALREADY
+        // has an account. Without this `rooms` stayed empty for the whole
+        // session, so `mirrorDay` early-returned and a completed day was never
+        // mirrored — the feature's core loop, silently dead. It also left the
+        // Profile row hidden and let `StandInviteRow` mint a duplicate room
+        // because it could not see the existing one.
+        //
+        // No account is created here: `StandService.startListening` and
+        // `StandPassStore.startObserving` both no-op without a current user, and
+        // an anonymous account is still only minted on Invite or on opening an
+        // invite link.
+        Task { @MainActor in
+            StandAuthCoordinator.shared.refresh()
+            guard StandAuthCoordinator.shared.currentUid != nil else { return }
+            StandService.shared.startListening()
+            StandPassStore.shared.startObserving()
+            // Finish a migration that was started but never confirmed — the app
+            // can be killed between signing in with Apple and telling the
+            // server. Idempotent server-side, so retrying is free.
+            await StandAuthCoordinator.shared.completePendingMergeIfNeeded()
+        }
+
         PersonalDeclarationProgressBridge.todayProgress = {
             PersonalDeclarationRepository.todayProgress()
         }
@@ -697,7 +719,12 @@ enum BranchAttribution {
         // didFinishLaunching, which on a fresh install is before onboarding has
         // finished. A join sheet fighting onboarding is how the invitee
         // bounces on their first launch.
-        if let code = (params["stand"] as? String)
+        // Normalized, never stored raw. StandJoinView hides the code field when
+        // a code is prefilled, so a malformed value left the user staring at a
+        // disabled button with no way to correct it. StandLink.normalize
+        // returns nil for anything that is not a valid code, which falls back
+        // to the manual-entry path instead.
+        if let code = (params["stand"] as? String).flatMap(StandLink.normalize)
             ?? (params["~referring_link"] as? String).flatMap({ URL(string: $0) })
                 .flatMap(StandLink.code(from:)) {
             UserDefaults.standard.set(code, forKey: "pendingStandCode")

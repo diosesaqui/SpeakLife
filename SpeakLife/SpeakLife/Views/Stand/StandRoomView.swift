@@ -62,6 +62,10 @@ struct StandRoomView: View {
         .sheet(isPresented: $showInvite) {
             if let room { StandInviteSheet(room: room) }
         }
+        // Was set, and the 3-prompt budget spent, with nothing presenting it.
+        .sheet(isPresented: $showUpgradePrompt) {
+            StandUpgradePromptSheet()
+        }
         .confirmationDialog("Leave this stand?",
                             isPresented: $showLeaveConfirm, titleVisibility: .visible) {
             Button("Leave", role: .destructive) { leave() }

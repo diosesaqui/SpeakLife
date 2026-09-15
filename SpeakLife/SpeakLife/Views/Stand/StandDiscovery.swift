@@ -322,3 +322,97 @@ extension View {
         modifier(StandRedemptionModifier(appState: appState))
     }
 }
+
+// MARK: - Completion and push routing
+//
+// Both of these were written and then never presented: `justCompletedRoom` was
+// set by the listener and read by nothing, and `pendingStandRoomId` was written
+// by the push handler and read by nothing. A day-7 celebration that never
+// appears and a notification that opens nothing are worse than not having them,
+// because the server still sends the push.
+
+struct StandPresentationModifier: ViewModifier {
+
+    @ObservedObject var appState: AppState
+    @ObservedObject private var service = StandService.shared
+
+    func body(content: Content) -> some View {
+        content
+            // The shared day-7 celebration. A full-screen cover rather than a
+            // sheet: finishing seven days with someone is not a detail view.
+            .fullScreenCover(item: $service.justCompletedRoom) { room in
+                StandCompletionView(room: room) {
+                    service.justCompletedRoom = nil
+                }
+            }
+            // A stand push carries the room it is about. Opening it is the
+            // entire point of the notification.
+            .sheet(item: $appState.pendingStandRoomId) { roomId in
+                NavigationStack {
+                    StandRoomView(roomId: roomId.value)
+                }
+            }
+    }
+}
+
+extension View {
+    /// Attach once, at the root, next to `standRedemption`.
+    func standPresentation(appState: AppState) -> some View {
+        modifier(StandPresentationModifier(appState: appState))
+    }
+}
+
+// MARK: - Save your stand
+
+/// Offered after somebody's first day inside a stand, at most three times ever.
+///
+/// An anonymous account lives in this device's Keychain. It survives a
+/// reinstall but does NOT move to a new phone, so without this the stand they
+/// just started is one lost phone away from gone — and they would never know
+/// until it was.
+struct StandUpgradePromptSheet: View {
+
+    @ObservedObject private var auth = StandAuthCoordinator.shared
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        ZStack {
+            Gradients().speakLifeCYOCell.ignoresSafeArea()
+            VStack(spacing: DS.Spacing.lg) {
+                Spacer()
+                Text("🔒").font(.system(size: 48))
+                Text("Save your stand")
+                    .font(.system(size: 26, weight: .bold, design: .rounded))
+                    .foregroundColor(DS.Palette.textPrimary)
+                Text("Sign in so this follows you to any device. Right now it only lives on this phone.")
+                    .font(DS.Typography.body)
+                    .foregroundColor(DS.Palette.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, DS.Spacing.md)
+                Spacer()
+
+                Button {
+                    // AppleSignInService routes through StandAuthCoordinator,
+                    // so the anonymous uid is linked rather than abandoned.
+                    AppleSignInService.shared.signIn()
+                    dismiss()
+                } label: {
+                    Label("Sign in with Apple", systemImage: "apple.logo")
+                        .font(.system(size: 17, weight: .semibold, design: .rounded))
+                        .foregroundColor(.black)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, DS.Spacing.sm)
+                        .background(Capsule().fill(.white))
+                }
+
+                Button("Not now") { dismiss() }
+                    .font(.system(size: 16, weight: .medium, design: .rounded))
+                    .foregroundColor(DS.Palette.textSecondary)
+                    .padding(.bottom, DS.Spacing.md)
+            }
+            .padding(DS.Spacing.md)
+        }
+        .presentationDetents([.medium])
+    }
+}

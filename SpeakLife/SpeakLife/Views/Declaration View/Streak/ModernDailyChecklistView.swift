@@ -512,10 +512,20 @@ struct ModernDailyChecklistView: View {
                         if subscriptionStore.enforcementEnabled {
                             EnforcementCard(
                                 service: enforcementService,
-                                isPremium: subscriptionStore.isPremium,
+                                // hasFullAccess, not isPremium: an invitee
+                                // holding a Stand Pass must see the campaign
+                                // they were invited into, not `lockedCard`.
+                                // This is the ONE gate the pass exists for —
+                                // the burst itself is already free, and
+                                // startShared is deliberately ungated.
+                                isPremium: subscriptionStore.hasFullAccess,
                                 totalDaysCompleted: viewModel.totalDaysCompleted,
                                 burstCompletedToday: isBurstCompletedToday,
                                 onStart: { enforcement in
+                                    // Still isPremium, deliberately. A pass
+                                    // lets an invitee run the campaign they
+                                    // were invited into; starting a brand new
+                                    // one of your own is what premium buys.
                                     guard enforcementService.startEnforcement(id: enforcement.id,
                                                                   isPremium: subscriptionStore.isPremium) else { return }
                                     AnalyticsService.shared.track("enforcement_started",

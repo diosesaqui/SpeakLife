@@ -291,3 +291,43 @@ test('member CANNOT forge server notification bookkeeping', async () => {
   await assertFails(updateDoc(doc(db, 'standRooms/r_test'),
     { notifiedMilestones: ['all_day_7'], lastActivityAt: serverTimestamp() }));
 });
+
+test('member CANNOT promote themselves to owner', async () => {
+  // isOwner gates createStandInvite. A member who can set it mints invites to
+  // somebody else's stand.
+  //
+  // Asserted as 'b', NOT 'a': roomFixture makes the first uid the owner, so an
+  // 'a' writing isOwner:true is a no-op the rule rightly allows, and the test
+  // would pass without proving anything.
+  const room = await seedRoom(['a', 'b']);
+  assert.strictEqual(room.members.b.isOwner, false, 'b must start as a non-owner');
+  const db = anon('b').firestore();
+  const w = dayWrite('b', room);
+  w['members.b.isOwner'] = true;
+  await assertFails(updateDoc(doc(db, 'standRooms/r_test'), w));
+});
+
+test('member CANNOT rewrite their own joinedAt or colorIndex', async () => {
+  // joinedAt decides who inherits ownership when the owner leaves.
+  const room = await seedRoom(['a', 'b']);
+  const db = anon('a').firestore();
+  const early = dayWrite('a', room);
+  early['members.a.joinedAt'] = new Date(0);
+  await assertFails(updateDoc(doc(db, 'standRooms/r_test'), early));
+
+  const recolor = dayWrite('a', room);
+  recolor['members.a.colorIndex'] = 7;
+  await assertFails(updateDoc(doc(db, 'standRooms/r_test'), recolor));
+});
+
+test('member CANNOT un-leave themselves or write a long initial', async () => {
+  const room = await seedRoom(['a', 'b']);
+  const db = anon('a').firestore();
+  const rejoin = dayWrite('a', room);
+  rejoin['members.a.left'] = true;
+  await assertFails(updateDoc(doc(db, 'standRooms/r_test'), rejoin));
+
+  const initial = dayWrite('a', room);
+  initial['members.a.initial'] = 'X'.repeat(50);
+  await assertFails(updateDoc(doc(db, 'standRooms/r_test'), initial));
+});
