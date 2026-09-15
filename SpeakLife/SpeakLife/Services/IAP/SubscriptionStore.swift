@@ -61,8 +61,14 @@ final class SubscriptionStore: ObservableObject {
     /// holders as subscribers and quietly corrupt every revenue cut.
     ///
     /// `isPremium` stays RevenueCat's truth. This is the one to gate CONTENT on.
+    /// `@MainActor` because `StandPassStore` is, and `SubscriptionStore` is not.
+    /// Written as an `if` rather than `isPremium || standPass.isActive`: the
+    /// right-hand side of `||` is an autoclosure, which stays nonisolated and
+    /// cannot reach a main-actor property.
+    @MainActor
     var hasFullAccess: Bool {
-        isPremium || StandPassStore.shared.isActive
+        if isPremium { return true }
+        return StandPassStore.shared.isActive
     }
     /// True iff the active premium entitlement is currently in its free-trial
     /// introductory period (vs a paid period). Powers the onboarding conversion
