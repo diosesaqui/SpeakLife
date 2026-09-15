@@ -348,17 +348,19 @@ struct InviteFailure: LocalizedError {
 
     /// `ensureAccount` or `createStand` failed — there is no stand yet.
     static func creating(_ error: Error) -> InviteFailure {
-        let raw = raw(error)
+        let raw = detail(for: error, call: "createStand")
         if isOffline(error) {
             return InviteFailure(text: "You're offline. Reconnect and try again.",
                                  detail: nil, stage: "create", reason: "offline")
         }
         guard let stand = error as? StandError else {
-            // Almost always Firebase Auth. The raw message names the cause
-            // precisely — a disabled provider says so in as many words — and
-            // nothing generic here could replace it.
+            // Not a callable error, so it came from `ensureAccount` — Firebase
+            // Auth. The raw message names the cause precisely (a disabled
+            // provider says so in as many words) and nothing generic here could
+            // replace it, so it is labelled for what it actually is.
             return InviteFailure(text: "Couldn't start the stand.",
-                                 detail: raw, stage: "create", reason: "auth")
+                                 detail: detail(for: error, call: "signIn"),
+                                 stage: "create", reason: "auth")
         }
         switch stand {
         case .full:
@@ -383,7 +385,7 @@ struct InviteFailure: LocalizedError {
 
     /// The stand exists; minting its invite code failed.
     static func minting(_ error: Error) -> InviteFailure {
-        let raw = raw(error)
+        let raw = detail(for: error, call: "createStandInvite")
         if isOffline(error) {
             return InviteFailure(text: "You're offline. Reconnect and try again.",
                                  detail: nil, stage: "invite", reason: "offline")
@@ -408,6 +410,14 @@ struct InviteFailure: LocalizedError {
         case .notFound:
             return InviteFailure(text: "This stand no longer exists.",
                                  detail: nil, stage: "invite", reason: stand.analyticsReason)
+        case .needsAuth:
+            // The account already worked one call earlier — createStand ran, or
+            // there would be no stand to invite into. So this is the server
+            // refusing THIS callable, not a sign-in the user can do anything
+            // about, and the copy must not send them chasing one. The detail
+            // line carries what actually matters.
+            return InviteFailure(text: "The server turned this down. Try again in a moment.",
+                                 detail: raw, stage: "invite", reason: stand.analyticsReason)
         default:
             return InviteFailure(text: "Couldn't create the invite code.",
                                  detail: raw, stage: "invite", reason: stand.analyticsReason)
@@ -420,9 +430,19 @@ struct InviteFailure: LocalizedError {
             || ns.localizedDescription.localizedCaseInsensitiveContains("offline")
     }
 
-    private static func raw(_ error: Error) -> String {
+    /// The small line under the copy: which call failed, and what it said.
+    ///
+    /// Deliberately NOT `StandError.errorDescription` — that is join-path prose
+    /// ("That code doesn't exist.") and pasting it under create-path copy is how
+    /// the last two failures read as the wrong problem. The wire reason and the
+    /// callable name are what make a screenshot worth receiving.
+    private static func detail(for error: Error, call: String) -> String {
+        if let stand = error as? StandError {
+            if case .unknown(let message) = stand { return "\(call) · \(message)" }
+            return "\(call) · \(stand.analyticsReason)"
+        }
         let ns = error as NSError
         let text = error.localizedDescription
-        return text.isEmpty ? "\(ns.domain) \(ns.code)" : text
+        return text.isEmpty ? "\(call) · \(ns.domain) \(ns.code)" : "\(call) · \(text)"
     }
 }
