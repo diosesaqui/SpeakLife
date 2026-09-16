@@ -111,12 +111,20 @@ existing classifier matters because it proves the fifteen pains are real categor
 sort into, not because the web page has to run it.
 
 **The operational argument, which is the one that actually decides it.** A PDF download
-returns an email address. The audit returns an email address **plus the resolved pain**,
-which routes the install to the matching onboarding arm and pre-resolves the paywall
-headline. `paywall_impression` already carries `pain`, and the open question in
-`paywall-copy-research.md` §5 is whether a named pain converts better than `none` — 169
-people hit `none` in 90 days against 63 for the largest named pain. The audit is the only
-acquisition asset that can arrive with that field already filled.
+returns an email address. The audit returns an email address **plus the storm**, which
+routes the install to the matching onboarding arm, which is the arm whose every screen and
+picker stays on that one subject. `paywall_impression` already carries `pain`, and the open
+question in `paywall-copy-research.md` §5 is whether a named pain converts better than
+`none` — 169 people hit `none` in 90 days against 63 for the largest named pain. An install
+that lands in the arm matched to its storm cannot resolve to a generic pain the way an
+untargeted one can.
+
+**One correction to an earlier draft of this doc, because it changes what to expect.** The
+deep link does **not** carry the pain. `SubscriptionStore.handleIncomingURL` reads exactly
+one parameter, `ob`, and ignores everything else; the pain is resolved in-app from what the
+user picks inside the arm. So the audit narrows the paywall headline by routing, not by
+setting it. Setting it directly is a small iOS change (accept `pain=`, stamp the segment)
+and it is worth doing only once the audit proves out. Do not budget for the stronger claim.
 
 **All three types still ship, stacked, in one funnel:** the audit reveals the problem, the
 personalized 7-day plan is one step of many, and the trial at the end is the taste. The
@@ -384,10 +392,15 @@ Then: App Store badge, QR, the 4.9 rating (verifiable on the listing — do **no
 subscriber count, per `paywall-copy-research.md` §4), and one line of risk reversal: *"Free
 to start. No card to look around."*
 
-**The QR and every result-page link must carry the resolved pain**, deep-linked to the
-matching onboarding arm (`AD_ONBOARDING_ROUTING.md`) with UTMs attached. This is the entire
-operational payoff of choosing a diagnostic over a download. A magnet install landing as
-`organic` with `pain = none` is a magnet that threw away the only thing it was better at.
+**The QR and every result-page link must carry the `ob=` code for their storm**,
+deep-linked to the matching onboarding arm (`AD_ONBOARDING_ROUTING.md`) with UTMs attached.
+The eleven-way mapping is in `storm-audit-web-spec.md` §3. This is the entire operational
+payoff of choosing a diagnostic over a download. A magnet install landing as `organic` on a
+random onboarding arm is a magnet that threw away the only thing it was better at.
+
+Note that first assignment wins: once a user has an ad-matched variant it is stable, so the
+audit's link has to be the first one they tap. Do not put a different `ob=` link earlier in
+the same email.
 
 ---
 
@@ -449,7 +462,8 @@ Do not measure this on completions. Completions are cheap and prove nothing.
 |---|---|---|
 | Audit start → complete | Klaviyo / audit events | Below ~60% means the audit is too long or Q2 is scaring people off |
 | Complete → install | `acquisition_channel = 'owned_deeplink'` + the audit's UTM campaign, person-level | The only number that says the magnet works |
-| **Install → `paywall_impression` carrying a named `pain`** | existing property | The unique claim of this format. If audit installs still land on `pain = none`, the deep-link handoff is broken and the whole reason for choosing a diagnostic is gone. Check this first. |
+| **Install → `onboarding_variant_assigned` with the expected `ob=` variant** | existing event, `{variant, source}` | The handoff check, and the one to run first. If audit installs are not landing in the arm their storm mapped to, the link is wrong and the diagnostic is an expensive PDF. |
+| **Install → `paywall_impression` carrying a named `pain`** | existing property | Downstream of the above. Routing into the matched arm should lift the share of named pains against the 169-to-63 `none` baseline. It cannot be forced by the link (§2), so read it as an outcome, not a handoff test. |
 | Install → `user_activated` vs. baseline | existing activation event | The audit pre-trains the speaking habit, so these installs should activate faster. If not, the result page is not landing. |
 | Install → trial → paid vs. baseline | `paywall_impression` → `trial_started` → RevenueCat, split by `source` | Whether a diagnosed reader converts better |
 | Cost per install vs. direct-response ads | Meta + `acquisition_channel` | An audit funnel costing more per install than a straight install campaign is a content programme, not an acquisition channel. Say so if that is what it turns out to be. |
@@ -472,17 +486,19 @@ was ever a quarter was the matcher call in Q2, and that is cut (§3b).
 |---|---|---|
 | **1** | Lock all the copy: eight questions, the seven storms mapped to `UserPain`, the three method labels, six gap lines, seven result pages. | Copy is the whole product. A designer cannot rescue a weak beat 2. |
 | **2** | Build the audit as one static page. Eight screens, client-side branching, no backend. Storm comes from Q1, gaps from a lookup table, Q2 is stored and echoed, never parsed. | Nothing here needs a server. |
-| **2** | **Wire the deep link and UTMs carrying the resolved pain.** | Skipped, this silently degrades back into a PDF download and forfeits the entire reason the diagnostic beat the download (§2). Do it the same day the page exists, not after the ads are booked. |
+| **2** | **Wire the deep link and UTMs carrying the `ob=` code for their storm.** | Skipped, this silently degrades back into a PDF download and forfeits the entire reason the diagnostic beat the download (§2). Do it the same day the page exists, not after the ads are booked. |
 | **3** | Design one PDF template: seven shared pages plus the three branched ones. | Per §7 and the standard in §2, designed rather than typeset. This is the page that makes a free asset read as a paid one. |
 | **4** | Render seven variants by swapping the three branched pages. Pull the seven declarations per storm from `declarationsv10.json`. | Not seven documents. One document, one page swapped. |
 | **5** | Klaviyo capture, the five-email sequence branched by storm, delivery tested. | |
 | **6** | Ship to the email list. Nothing paid yet. | Cheapest read on whether the argument lands before money goes behind it, and it re-segments a list we hold no pain data on. |
 | **7** | Read it, fix the weakest beat, then open the ads. The 1-page printable and the carousel cutdown fall out of the same source. | |
 
-**The one thing to check before spending on ads**, ahead of any conversion number: do audit
-installs arrive at `paywall_impression` carrying a named `pain`? If they land on `none`,
-the handoff is broken and the audit is an expensive PDF. That is a day-7 check, not a
-month-2 one.
+**The one thing to check before spending on ads**, ahead of any conversion number: does
+`onboarding_variant_assigned` fire with the variant the audit sent them to? If audit
+installs are landing on a random Remote Config arm, the link is wrong and the audit is an
+expensive PDF. That is a day-7 check, not a month-2 one. **Test all eleven routes**, not
+one happy path, because a typo in a single `ob=` value fails silently by design: the app
+ignores an unrecognised code rather than erroring.
 
 ---
 
