@@ -183,16 +183,39 @@ invite evaporates. No error, no App Store prompt, nothing for the recipient to
 act on. The typed code is not a fallback either — `StandJoinView` ships in the
 same build as the link handling.
 
-Measured over 14 days, active users, simulator excluded:
+**Who this actually affects.** Not everyone. An invite sent to somebody WITHOUT
+SpeakLife already works and always did: no app claims the domain, so iOS opens
+Safari, Branch's page sends them to the App Store, and they install the current
+build. That is the growth path and it is fine.
 
-| Build | Users | What a stand link does |
-|---|---|---|
-| 4.57, 4.58 | 40 (2%) | Does not claim the domain → opens in Safari → Branch page → App Store. Correct. |
-| 4.59 – 4.64 | **2,026 (98%)** | Claims the domain, cannot route it → **app opens, nothing happens** |
+The broken population is narrower and less obvious: **recipients who already
+have SpeakLife, on a build between 4.59 and the Stand release.** Over 14 days
+that is 2,026 of 2,067 active users — so while it is a minority of INVITES, it
+is nearly everyone who already has the app, which is exactly who a user is most
+likely to invite first.
 
-The fix is a host those builds do not claim. iOS then cannot match it to any
-installed app, so it opens in Safari and Branch's own page offers the App Store
-— which is exactly the behaviour the 2% already get.
+| Recipient | What a stand link does |
+|---|---|
+| No app | Safari → Branch → App Store → installs current build. **Works.** |
+| App, 4.57–4.58 (40 users) | Does not claim the domain → same as above. **Works.** |
+| App, 4.59–4.64 (2,026 users) | Claims it, cannot route it → **app opens, nothing happens** |
+
+The fix is a host those builds do not claim. iOS cannot match it to any
+installed app, so it opens in Safari instead of dead-ending inside one.
+
+**⚠️ THE DOMAIN MOVE ALONE IS NOT ENOUGH.** By default a Branch link tries to
+open an installed app before falling back to the web, which for a 4.59–4.64
+recipient means bouncing them straight back into the same silent no-op — now
+with an extra redirect. Configure the stand link so it does **not** auto-open an
+installed app: either web-only, or a deepview page whose copy says to update,
+with the App Store link on it. That page is the only thing in the whole chain
+that can actually tell an old build's owner what to do, because their app cannot
+say anything and they have no code-entry screen to type into.
+
+This is also why step 3 below says not to claim the new host in the build that
+ships Stand. While nobody claims it, the page runs for everybody, and the new
+build still gets in through `speaklife://stand/<code>` — the custom scheme the
+page's own button fires.
 
 1. In the Branch dashboard, configure a **custom link domain** (for example
    `go.speaklife.app`) and point DNS at Branch as its setup flow instructs.
