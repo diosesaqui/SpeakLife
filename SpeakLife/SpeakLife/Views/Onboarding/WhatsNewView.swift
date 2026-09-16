@@ -14,6 +14,7 @@ struct WhatsNewBottomSheet: View {
        // "NEW Bible Tab",
         "Multiple personal declaration",
         "New Weekly Enforcement",
+        "Invite a friend to enforce victory",
        // "New Spiritual Faith Tree 🌳"
     ]
 
