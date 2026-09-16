@@ -1,9 +1,9 @@
 # Lead Magnet — The Storm Audit → "UNSHAKABLE"
 
 **Status:** plan, nothing built yet
-**Deliverable:** a free, scored diagnostic that names the storm someone is standing in and
-what they have been doing with their mouth about it, delivering a personalized 7-day
-speaking plan.
+**Deliverable:** a free diagnostic that names the storm someone is standing in, their top
+three gaps, and their next step, delivering a personalized 7-day speaking plan.
+**Build target:** v1 live in a week, not a quarter. See §10.
 **Audience:** cold-to-warm believers off Meta / IG / TikTok, plus the email list.
 
 Everything here is pulled from live app copy, the live declaration set, and PostHog, so
@@ -95,16 +95,20 @@ mind does not hold steady, it deepens the groove it has been running (Rom 12:2).
 waiting cost is real, so naming it is honest rather than a pressure tactic.
 
 **Why SpeakLife specifically can run it.** A diagnostic magnet is usually expensive because
-the scoring has to be invented. Here it already exists and is in production:
+the vocabulary and the result copy have to be invented. Here they already exist and are in
+production:
 
-- The `direct` onboarding arm takes free text and the matcher classifies it into 47
-  life-situation categories.
-- `UserPain.from(categoryRaw:)` collapses those into 15 pains, exhaustively.
-- Every pain already has a headline, a subhead, a domain and mechanism copy written.
+- `UserPain` is a settled 15-way model of what people actually walk in, sized against the
+  matcher rather than guessed.
+- Every pain already has a headline, a subhead, a domain and mechanism copy written and
+  live on the paywall.
 - `AD_ONBOARDING_ROUTING.md` already deep-links a segment to the matching onboarding arm.
 
-So the audit is not new machinery. It is a web front end onto a classifier we ship, and
-its output is exactly the variable the rest of the funnel is built to consume.
+So the audit is not new machinery. It is a questionnaire onto a vocabulary we ship, and its
+output is exactly the variable the rest of the funnel is built to consume. Note it does not
+need to *call* the app's matcher to do this: Q1 resolves the storm directly (§3b). The
+existing classifier matters because it proves the fifteen pains are real categories people
+sort into, not because the web page has to run it.
 
 **The operational argument, which is the one that actually decides it.** A PDF download
 returns an email address. The audit returns an email address **plus the resolved pain**,
@@ -118,14 +122,45 @@ acquisition asset that can arrive with that field already filled.
 personalized 7-day plan is one step of many, and the trial at the end is the taste. The
 question was never whether each type works. It is which one goes at the front.
 
+### The standard it has to clear
+
+> **It has to feel like they could have paid for it.** People judge what you sell by what
+> you give away. If the free thing is thin, they assume the paid thing is thin too, and
+> the price on the next step becomes a question instead of a formality.
+
+This is the acceptance test, and it is worth being concrete about what passes, because
+"make it good" is not a spec. The audit clears the bar if and only if all five are true:
+
+1. **It quotes their own words back.** Q2 appears verbatim on the result page. Nothing else
+   in the asset is as cheap or as convincing.
+2. **It tells them something they had not put into words themselves.** The Asker finding is
+   the one that does this: *you have been praying about it for years, which is exactly what
+   you were taught, and it is half the instruction.* If a reader could have written the
+   result themselves, we have built a mirror, not an assessment.
+3. **It is arithmetic, not adjectives.** 540 mornings. The input ledger in §3d. Numbers a
+   reader can check make a free diagnostic feel measured rather than written.
+4. **The deliverable is addressed to them.** Their storm on the cover, their seven
+   declarations, not a table of contents with their problem somewhere inside it.
+5. **It ends with something doable tomorrow at 7am in sixty seconds.** An assessment that
+   ends in a pitch is a funnel. One that ends in a next step is a product.
+
+The inverse is the failure mode to watch: a result page everyone gets, a PDF that is
+visibly a brochure, and a CTA that arrives before the value does. Any one of those and the
+reader correctly downgrades the paid thing on the other side of it.
+
+**This standard is also why the PDF is designed, not typeset.** A framework in our voice
+and our colours, laid out like something off a shelf. The design spec in §7 is not
+decoration, it is the part that makes a free asset read as a paid one.
+
 ---
 
 ## 3. The magnet: The Storm Audit
 
 **Name:** *The Storm Audit*. Alternate: *What Have You Been Agreeing With?*
-**Promise on the button:** "60 seconds. Find out which storm you're standing in, and why
-it hasn't moved."
-**Length:** 9 questions.
+**Promise on the button:** "Eight questions. Find out which storm you're standing in, why
+it hasn't moved, and the one thing to do tomorrow morning."
+**Length:** 8 questions, then the email. Sixty seconds.
+**Output:** your storm · your top three gaps · your next step.
 
 ### 3a. Two axes, deliberately
 
@@ -144,45 +179,89 @@ half nobody handed you.*
 
 | # | Question | Feeds |
 |---|---|---|
-| 1 | What is heaviest right now? (seven storms + "all of it") | Storm |
-| 2 | **Say it in your own words.** One line. | Storm, refined through the live matcher. This is the money question and the one that makes the result feel read rather than generated. |
+| 1 | What is heaviest right now? (seven storms + "all of it") | **Storm.** This alone resolves the routing key. |
+| 2 | **Say it in your own words.** One line. | The quote-back. Not classified, just kept. |
 | 3 | How long has it been like this? (weeks / months / a year / years) | The waiting cost |
-| 4 | When it hits, what do you do? (pray about it · read a verse · try not to think about it · tell someone · nothing) | Method |
-| 5 | Have you ever said God's Word out loud over this, by name? (never · once or twice · sometimes · most days) | Method. **The hinge question.** |
-| 6 | What does the first hour of your day sound like? (phone · news · silence · worship · the Word) | Method, input audit |
-| 7 | Whose voice do you hear about this most? (the diagnosis · the numbers · what someone said about you · your own · God's) | Agreement |
-| 8 | If this turned around, what changes first? (free text, one line) | Result copy, and the email sequence |
-| 9 | Where should we send it? | Capture |
+| 4 | When it hits, what do you do? (pray about it · read a verse · try not to think about it · tell someone · nothing) | Method, gap 1 |
+| 5 | Have you ever said God's Word out loud over this, by name? (never · once or twice · sometimes · most days) | Method. **The hinge question.** Gaps 1 and 5. |
+| 6 | What does the first hour of your day sound like? (phone · news · silence · worship · the Word) | Gap 4, input ledger |
+| 7 | Whose voice do you hear about this most? (the diagnosis · the numbers · what someone said about you · your own · God's) | Agreement, input ledger |
+| 8 | Do you know a verse that speaks to this exact thing? (no · one · a few · yes, several) | Gap 3 |
 
-Q2 and Q8 are free text on purpose. They are what the result quotes back, and quoting
-someone's own words is the cheapest personalization that exists.
+Then the email, framed as delivery rather than as a gate: *"Where should we send your
+plan?"* It lands after the work is done, when the answers are already invested.
 
-### 3c. The result page
+**Q2 is free text on purpose and is never parsed.** An earlier draft had it posting to the
+app's live matcher to refine the storm. That was the single most expensive line in the
+plan and it bought nothing: Q1 already resolves the storm, and what makes Q2 land is that
+the result quotes it back verbatim. Classification was over-engineering dressed as
+personalization. Cutting it is what takes this build from a quarter to an afternoon.
 
-Four beats, in this order. The order is not negotiable — beat 3 exists so beat 1 does not
+### 3c. The three gaps
+
+Tyler's format returns a score and the top three gaps. A score out of ten is wrong here
+(see §3e), but **the three gaps are exactly right, and they already exist**: they are the
+seven method problems from §1a. That inventory now does double duty as the research
+backbone and the result page's diagnosis.
+
+| Gap shown | Triggered by | §1a problem |
+|---|---|---|
+| **You have been praying about it, not to it.** | Q4 = pray about it / Q5 = never | 1 |
+| **You know the verse. It has never been in your mouth.** | Q5 = never or once or twice, and Q8 ≥ one | 2 |
+| **You do not know what God says about this exact thing.** | Q8 = no | 3 |
+| **Your first hour belongs to something else.** | Q6 = phone or news | 4 |
+| **You have never run it longer than a few days.** | Q5 = once or twice / sometimes, with Q3 ≥ a year | 5 |
+| **The loudest voice about this is not God's.** | Q7 ≠ God's | 7 (agreement) |
+
+Show the three highest-priority triggered gaps in the order above. Never show more than
+three: a list of six reads as a scolding, and the reader stops at the first one they
+recognise anyway.
+
+### 3d. The result page
+
+Five beats, in this order. The order is not negotiable — beat 4 exists so beat 1 does not
 become the whole message.
 
-1. **The storm, named.** *"You are standing in the storm of the mind."* Quote their Q2
-   line back verbatim underneath it.
+1. **The storm, named.** *"You are standing in the storm of the mind."* Quote their Q2 line
+   back verbatim underneath it.
 2. **The method gap.** *"And you have been praying about it. Not to it."* Plus the label:
    **You are an Asker.** With the reassurance immediately: most people are, because it is
    what they were taught.
-3. **The turn, to identity.** Jesus never prayed about a storm (Mark 4:39), then Mark
-   11:23-24, then their pain's identity line straight from the paywall: *"You have the
-   mind of Christ."* (1 Cor 2:16). Same sentence they will meet again at the paywall.
-4. **Their plan.** Seven mornings, one declaration, sixty seconds, out loud. Delivered as
-   the PDF, branched to their storm.
+3. **Your three gaps.** From §3c, as three cards. This is the part that reads like an
+   assessment rather than a quiz result.
+4. **The turn, to identity.** Jesus never prayed about a storm (Mark 4:39), then Mark
+   11:23-24, then their pain's identity line straight from the paywall: *"You have the mind
+   of Christ."* (1 Cor 2:16). The same sentence they will meet again at the paywall.
+5. **Their next step.** One declaration, on screen, right now, out loud. Then: the other six
+   are in your plan, and it is in your inbox.
 
-### 3d. The waiting cost, said honestly
+**Make them speak one before they leave the page.** The result page is the only moment we
+will ever have their full attention with nothing to install, and speaking once is the app's
+own activation event. A button that says **"Say it out loud"** and reveals the line, with a
+three-second beat before the CTA appears, converts an assessment into an experience. This
+is also beat 5 of the standard in §2: something doable in sixty seconds, done immediately
+rather than promised.
 
-Computed from Q3, and it is the line the whole type hangs on:
+### 3e. The waiting cost and the input ledger
+
+Two arithmetic lines, both computed, both honest. These are what make it feel measured.
+
+**The waiting cost**, from Q3:
 
 > You have been carrying this for about eighteen months. That is roughly 540 mornings your
 > mind started on something other than what God said about it.
 
-True, arithmetic, not a threat. It names a cost without predicting a catastrophe.
+**The input ledger**, from Q6 and Q7:
 
-### 3e. Two guardrails, and they are not optional
+> This week, the thing you are afraid of got about forty run-throughs. What God says about
+> it got none.
+
+True, arithmetic, and neither one predicts a catastrophe. **Prefer this to a score out of
+ten.** A number grading a person invites the reader to hear a verdict on their walk; a
+ledger counting inputs points at a habit, which is the thing we are actually selling a fix
+for. Same diagnostic force, none of the doctrinal cost.
+
+### 3f. Two guardrails, and they are not optional
 
 **Never score their faith, their righteousness, or their walk.** No "you scored 4/10 as a
 Christian." The audit scores **behaviour only** — what has been in their mouth. SpeakLife
@@ -345,9 +424,9 @@ thing:
 | **Existing email list** | Send once to everyone. Also the reactivation asset for lapsed trialists, and it re-segments a list we currently hold no pain data on. |
 | **Inside the app** | Offer on the post-cancel screen and to non-subscribers inactive 14 days. A free, personal diagnosis to someone who just said no is the cheapest goodwill in the product. |
 
-**Capture** through Klaviyo, email only, at Q9 — *after* the work is done, so the answers
-are already invested. Deliver the result on screen immediately and the PDF by email,
-because a result that depends on inbox delivery loses a third of them.
+**Capture** through Klaviyo, email only, after the eighth question — *after* the work is
+done, so the answers are already invested. Deliver the result on screen immediately and the
+PDF by email, because a result that depends on inbox delivery loses a third of them.
 
 **Follow-up sequence, five emails over seven days**, every one branched by the resolved
 storm:
@@ -383,23 +462,27 @@ RevenueCat identity fix, and historical cohorts stay orphaned
 
 ## 10. Build order
 
-1. Lock the audit: nine questions, the storm mapping onto `UserPain`, the three method
-   labels, and all seven result pages. Copy first.
-2. Build the audit front end. Q2 posts to the same matcher the `direct` arm uses, so the
-   classification is the app's, not a second one that drifts.
-3. Wire the deep link and UTMs, carrying the resolved pain, **before a single ad runs.**
-   This is the step that, skipped, silently turns the audit back into a PDF download.
-4. Design the shared PDF pages, then the three branched ones, then render all seven
-   variants.
-5. Klaviyo capture and the five-email sequence, branched by storm.
-6. Ship to the email list first. Cheapest read on whether the argument lands before any
-   money goes behind it.
-7. The 1-page printable and the carousel cutdown, from the same source.
+**This is a one-week build, and most of it is copy.** The earlier draft of this plan had a
+seven-step programme with a "if it cannot be built this quarter" fallback, which was the
+wrong posture: nothing here needs a backend. The audit is a static page with branching, the
+scoring is a lookup table, and the PDF is seven exports of one template. The only reason it
+was ever a quarter was the matcher call in Q2, and that is cut (§3b).
 
-**If the audit cannot be built this quarter**, ship the 10-page PDF unbranched, off a plain
-email capture, and treat it as a content asset rather than an acquisition channel. Say
-which one it is out loud, because the two get measured differently and the wrong yardstick
-will kill a magnet that was working.
+| Day | Work | Why it is this small |
+|---|---|---|
+| **1** | Lock all the copy: eight questions, the seven storms mapped to `UserPain`, the three method labels, six gap lines, seven result pages. | Copy is the whole product. A designer cannot rescue a weak beat 2. |
+| **2** | Build the audit as one static page. Eight screens, client-side branching, no backend. Storm comes from Q1, gaps from a lookup table, Q2 is stored and echoed, never parsed. | Nothing here needs a server. |
+| **2** | **Wire the deep link and UTMs carrying the resolved pain.** | Skipped, this silently degrades back into a PDF download and forfeits the entire reason the diagnostic beat the download (§2). Do it the same day the page exists, not after the ads are booked. |
+| **3** | Design one PDF template: seven shared pages plus the three branched ones. | Per §7 and the standard in §2, designed rather than typeset. This is the page that makes a free asset read as a paid one. |
+| **4** | Render seven variants by swapping the three branched pages. Pull the seven declarations per storm from `declarationsv10.json`. | Not seven documents. One document, one page swapped. |
+| **5** | Klaviyo capture, the five-email sequence branched by storm, delivery tested. | |
+| **6** | Ship to the email list. Nothing paid yet. | Cheapest read on whether the argument lands before money goes behind it, and it re-segments a list we hold no pain data on. |
+| **7** | Read it, fix the weakest beat, then open the ads. The 1-page printable and the carousel cutdown fall out of the same source. | |
+
+**The one thing to check before spending on ads**, ahead of any conversion number: do audit
+installs arrive at `paywall_impression` carrying a named `pain`? If they land on `none`,
+the handoff is broken and the audit is an expensive PDF. That is a day-7 check, not a
+month-2 one.
 
 ---
 
