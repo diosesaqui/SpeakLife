@@ -229,6 +229,25 @@ page's own button fires.
    claims is a host that behaves exactly like `speaklife.app.link` for the next
    release cycle.
 
+### The note on the invite sheet
+
+`StandInviteSheet` carries a line, above the share button, telling the SENDER to
+ask their recipient to update first. That is not belt-and-braces, it is the only
+warning anybody in the chain can receive: a recipient on an old build gets no
+error and has no code-entry screen, because both ship in the build they do not
+have.
+
+The text is Remote Config `standInviteRecipientNote`, and **setting it empty
+removes the row**. It is a migration notice, not a permanent part of the screen
+— once old builds have aged out it is clutter on the most important button in
+the feature. The same key is how you add a version number once you know which
+build actually shipped Stand.
+
+⚠️ A server-side version check cannot replace it. An old build never calls the
+server: tapping the link runs no stand code at all, and `joinStand` is only
+reachable from a screen that build does not have. The server is downstream of a
+client that never speaks.
+
 Until step 2 is done, leave `standTogetherEnabled` off. An invite sent before
 then is an invite that dies silently.
 

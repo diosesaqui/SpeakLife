@@ -162,6 +162,10 @@ struct StandInviteSheet: View {
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
 
+            if !recipientNote.isEmpty {
+                recipientNoteRow
+            }
+
             Button {
                 AnalyticsService.shared.track("stand_invite_shared", parameters: [
                     "room_id": roomId ?? "",
@@ -183,6 +187,49 @@ struct StandInviteSheet: View {
 
             codeRow
         }
+    }
+
+    /// Told to the SENDER, before they share, because nobody else can be told.
+    ///
+    /// A recipient who already has SpeakLife on a build older than the one that
+    /// ships Stand gets nothing when they tap the link: their app claims
+    /// `speaklife.app.link`, opens, finds no route for `/stand/…`, and stops.
+    /// It cannot show them an error, and it has no code-entry screen either,
+    /// because both ship in the build they do not have. See
+    /// docs/STAND_TOGETHER_HANDOFF.md, Step 2d.
+    ///
+    /// So the only person in the whole chain who can be warned is the one
+    /// standing here holding the share sheet.
+    ///
+    /// REMOTE, AND EMPTY TURNS IT OFF. This is a migration notice, not a
+    /// permanent part of the screen — once old builds have aged out it is
+    /// clutter on the most important button in the feature. Clearing
+    /// `standInviteRecipientNote` in Remote Config removes it without a build,
+    /// and the same key is how you add a version number once you know which
+    /// build actually shipped Stand.
+    private var recipientNote: String {
+        DefaultFeatureFlags.shared.string(
+            "standInviteRecipientNote",
+            default: "If they already have SpeakLife, ask them to update it first. An older version can't open the invite."
+        )
+    }
+
+    private var recipientNoteRow: some View {
+        HStack(alignment: .top, spacing: DS.Spacing.xs) {
+            Image(systemName: "arrow.down.circle")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(DS.Palette.gold.opacity(0.8))
+            Text(recipientNote)
+                .font(DS.Typography.caption)
+                .foregroundColor(DS.Palette.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(DS.Spacing.sm)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
+                .fill(Color.white.opacity(0.06))
+        )
     }
 
     private var codeRow: some View {
