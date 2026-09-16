@@ -157,13 +157,29 @@ provision paywall shipped subheaded *"your joy declarations"* over provision row
 and a provision closing line. Three sources of truth, one of them a run behind.
 `pain` now wins wherever it is known.
 
-**Solution rows (beat 3):** the same four capabilities every time — declarations,
-audio, the 30-day plan, Bible chat — each with a title and a detail line written
-against the named pain. Row one is bespoke per pain — for peace, *Speak peace,
-don't just read it* — and the other three are the same three capabilities aimed
-at that pain's domain ("over your mind", "over your home", "over the people you
-love"), which is what keeps fifteen sets of copy honest rather than fifteen sets
-of invented differences. The clean layout
+**Solution rows (beat 3): who you become.** Five rows whose *titles are the
+person* and whose *details are the mechanic*. Row one is bespoke per pain — for
+peace, *You win the battle in your mind*; for identity, *You live from who Jesus says you
+are* — and rows two through five run the same arc for everyone, aimed at that
+pain's domain: **You walk in authority before the day starts** (the sixty-second
+morning), **You stay unshakable all day** (audio), **You are training for
+reigning** (the 30-day plan, on Romans 5:17 — a plan is a training claim, so the
+row makes it out loud instead of counting days), **You know exactly what God
+says** (Bible chat).
+That shared arc is what keeps fifteen sets of copy honest rather than fifteen
+sets of invented differences.
+
+These rows were a feature list until September 2026 ("Ask the Bible anything",
+"Thirty days, not one good day"). Nobody subscribes to a capability; they
+subscribe to who they will be once they have it, and the app's whole claim is
+that speaking God's Word makes you somebody — unshakable, walking in authority,
+living from your identity in Jesus instead of from what is happening to you. The
+details still carry the concrete mechanic, which is not a compromise: an identity
+promise with no machinery under it is a slogan, and the storm arm already proved
+what this screen does when it sells a claim the user cannot see the mechanism of.
+The comparison grid's row labels moved the same way ("You speak it, not just read
+it" rather than "Spoken declarations") — a comparison table is the easiest place
+on a paywall to slip back into a spec sheet. The clean layout
 carries a titles-only three-row version — naming a problem and then showing nothing
 but a price is a worse screen than the one it replaced.
 

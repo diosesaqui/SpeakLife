@@ -16,9 +16,10 @@
 //    1. Name the problem      — the headline says the thing that is wrong
 //    2. Turn it               — why what they've been doing hasn't moved it,
 //                               and the mechanism that does (spoken, not read)
-//    3. Solve it, concretely  — four product mechanics described in terms of
-//                               what they do about THAT problem, not as a
-//                               generic feature list
+//    3. Name who they become  — five rows whose titles are the person this
+//                               makes them (unshakable, walking in authority,
+//                               living from their identity in Jesus), each with
+//                               the concrete mechanic underneath it
 //
 //  The storm positioning is not gone; it moved into beat 2, where it belongs —
 //  it is the mechanism, and a mechanism only sells once the problem is named.
@@ -201,21 +202,21 @@ enum UserPain: String, CaseIterable {
     /// where SpeakLife shows up.
     var solution: String {
         switch self {
-        case .peace:      return "Declare God's peace over your mind, then move through the day settled."
-        case .fear:       return "Declare God's protection over tomorrow, then walk into it uncovered by dread."
+        case .peace:      return "Declare God's peace over your mind, then walk through the day unshakable."
+        case .fear:       return "Declare God's protection over tomorrow, then walk into it unafraid."
         case .health:     return "Declare the healing the cross paid for, then treat your body like it's yours."
         case .abundance:  return "Declare God's supply over your finances, then decide like the provision is there."
         case .identity:   return "Declare what God already said you are, then carry yourself like it's true."
-        case .shame:      return "Declare what the cross already settled, then stop picking it back up."
+        case .shame:      return "Declare what the cross already settled, then walk clean and stay there."
         case .bondage:    return "Declare the freedom Jesus bought you, then walk away the next time."
         case .purpose:    return "Declare the steps God already ordered, then take the next one."
         case .joy:        return "Declare God's joy over your day, then go live it out loud."
         case .grief:      return "Declare God's comfort over your heart, then let Him carry what you can't."
-        case .loneliness: return "Declare God's nearness over your life, then stop facing it on your own."
-        case .marriage:   return "Declare God's peace over your home, then love it like peace lives there."
-        case .family:     return "Declare God's promises over the people you love, then pray instead of worrying."
+        case .loneliness: return "Declare God's nearness over your life, then live like He is in the room."
+        case .marriage:   return "Declare God's peace over your home, then lead it like peace lives there."
+        case .family:     return "Declare God's promises over the people you love, then stand instead of worrying."
         case .nearness:   return "Declare that God is near you, then go spend time with Him today."
-        case .more:       return "Declare God's Word with the authority Jesus used, then act on it."
+        case .more:       return "Declare God's Word with the authority Jesus used, then live from it."
         }
     }
 
@@ -281,51 +282,73 @@ enum UserPain: String, CaseIterable {
     /// to. Fifteen bespoke sentences here would be fifteen invented
     /// differences, which is the thing this file already decided not to do.
     var returningSolution: String {
-        "Unlock every declaration, all the guided audio, and the 30-day plan over \(domain)."
+        "Unlock all of it and become unshakable over \(domain)."
     }
 
-    /// The bespoke first row — the declarations themselves, which is the row
-    /// that has to prove the product understood the problem.
+    /// The bespoke first row — the new identity in Jesus, in this pain's own
+    /// domain. This is the row that has to prove the product understood both
+    /// the problem and who the person is on the other side of it.
     private var leadSolution: (icon: String, title: String, detail: String) {
         switch self {
-        case .peace:      return ("megaphone.fill", "Speak peace, don't just read it", "Declarations written for a racing mind, short enough to say out loud and mean.")
-        case .fear:       return ("megaphone.fill", "Speak to it before it grows", "Declarations on God's protection and His hold on tomorrow, for the moment the dread starts.")
-        case .health:     return ("megaphone.fill", "Speak what the cross paid for", "Healing declarations straight from Scripture, built to say over your body daily.")
-        case .abundance:  return ("megaphone.fill", "Speak God's supply over it", "Declarations on provision, favor, and open doors, built to say over the bills and the decisions.")
-        case .identity:   return ("megaphone.fill", "Say what God says about you", "Identity declarations spoken in first person, until they're what you believe.")
-        case .shame:      return ("megaphone.fill", "Speak what the cross already settled", "Declarations on grace and a clean record, written for the days it comes back.")
-        case .bondage:    return ("megaphone.fill", "Speak to it with authority", "Declarations that tell it where it stands instead of asking it to ease off.")
-        case .purpose:    return ("megaphone.fill", "Speak your calling into motion", "Declarations over your steps, your work, and the door God is opening.")
-        case .joy:        return ("megaphone.fill", "Speak joy over your day", "Declarations on God's joy and strength, made to say first thing in the morning.")
-        case .grief:      return ("megaphone.fill", "Speak comfort you didn't have to manufacture", "Declarations on God's nearness to the brokenhearted, for the hard mornings.")
-        case .loneliness: return ("megaphone.fill", "Speak the truth that you're not alone", "Declarations on God's presence and His people, for the quiet hours.")
-        case .marriage:   return ("megaphone.fill", "Speak peace over your home", "Declarations over your marriage and your household, not over your spouse's choices.")
-        case .family:     return ("megaphone.fill", "Stand for them out loud", "Declarations over your children and the people you're believing God for.")
-        case .nearness:   return ("megaphone.fill", "Speak His own words back to Him", "Declarations drawn straight from what God says about being near you.")
-        case .more:       return ("megaphone.fill", "Speak it, don't just read it", "The exact Word for your exact situation, written to say out loud.")
+        case .peace:      return ("megaphone.fill", "You win the battle in your mind", "Declarations written for a racing mind, short enough to say out loud and mean.")
+        case .fear:       return ("megaphone.fill", "You walk into tomorrow unafraid", "Declarations on God's protection and His hold on what is coming.")
+        case .health:     return ("megaphone.fill", "You live in the healing the cross paid for", "Healing declarations straight from Scripture, built to speak over your body daily.")
+        case .abundance:  return ("megaphone.fill", "You live like your Father owns it all", "Declarations on provision, favor, and open doors, for the bills and the decisions.")
+        case .identity:   return ("megaphone.fill", "You live from who Jesus says you are", "Identity declarations spoken in first person, until they are what you believe.")
+        case .shame:      return ("megaphone.fill", "You walk clean and stay there", "Declarations on grace and a settled record, written for the days it comes back.")
+        case .bondage:    return ("megaphone.fill", "You walk free and stay free", "Declarations that tell it where it stands instead of asking it to ease off.")
+        case .purpose:    return ("megaphone.fill", "You move like someone with orders", "Declarations over your steps, your work, and the door God is opening.")
+        case .joy:        return ("megaphone.fill", "You carry joy the day cannot set", "Declarations on God's joy and strength, made to speak first thing in the morning.")
+        case .grief:      return ("megaphone.fill", "You grieve held, never alone", "Declarations on God's nearness to the brokenhearted, for the hard mornings.")
+        case .loneliness: return ("megaphone.fill", "You live knowing He is right here", "Declarations on God's presence and His people, for the quiet hours.")
+        case .marriage:   return ("megaphone.fill", "You lead your home in peace", "Declarations over your marriage and your household, not over your spouse's choices.")
+        case .family:     return ("megaphone.fill", "You stand for them without flinching", "Declarations over your children and the people you are believing God for.")
+        case .nearness:   return ("megaphone.fill", "You live close to Him again", "Declarations drawn straight from what God says about being near you.")
+        case .more:       return ("megaphone.fill", "You live from your new identity in Jesus", "The exact Word for your exact situation, written to speak out loud.")
         }
     }
 
-    /// The mechanics. Row one is written for this pain; the rest are the same
-    /// capabilities every time, aimed at this pain's domain — which is what
-    /// keeps fifteen sets of copy honest instead of fifteen sets of invented
-    /// differences.
+    /// Who they become, with the mechanic that makes it real underneath.
     ///
-    /// Row two is the sixty-second morning promise, and it sits second on
+    /// **Titles say the person, details say the product.** These rows used to
+    /// be a feature list with the problem's name dropped in ("Ask the Bible
+    /// anything", "Thirty days, not one good day"). Nobody subscribes to a
+    /// capability; they subscribe to who they will be once they have it, and
+    /// the whole app is built on the claim that speaking God's Word makes you
+    /// somebody — unshakable, walking in authority, living from your identity
+    /// in Jesus rather than from what is currently happening to you.
+    ///
+    /// The detail lines still carry the concrete mechanic, and that is not a
+    /// compromise. An identity promise with nothing under it is a slogan, and
+    /// the storm arm already proved what happens when this screen sells a claim
+    /// the user cannot see the machinery of.
+    ///
+    /// Row one is written for this pain; rows two through five run the same arc
+    /// for everyone — walking in authority, staying unshakable through the day,
+    /// training for reigning rather than collecting good days, knowing what God
+    /// says — aimed at this pain's domain. That shared arc is what keeps fifteen
+    /// sets of copy honest instead of fifteen sets of invented differences.
+    ///
+    /// "Training for reigning" is Romans 5:17 said the way a person would say
+    /// it, and it is the one row that has to justify a thirty-day plan: a plan
+    /// is a training claim, so the row makes the training claim out loud rather
+    /// than counting days.
+    ///
+    /// Row two carries the sixty-second morning promise and sits second on
     /// purpose: it is the one row that answers "what does this actually cost me
     /// each day?", and the clean layout only renders the first three. Every
     /// user sees it, on every variant, whatever they came in for.
     var solutions: [(icon: String, title: String, detail: String)] {
         [
             leadSolution,
-            ("sunrise.fill", "Command your day in 60 seconds", "Take charge the moment you wake up: one minute of speaking over \(domain) sets the tone for everything after it."),
-            ("headphones", "His Word in your ears", "Guided declarations over \(domain) for the morning, the commute, and before bed."),
-            ("calendar", "Thirty days, not one good day", "A daily plan so you're speaking over \(domain) on the ordinary days too."),
-            ("bubble.left.and.bubble.right.fill", "Ask the Bible anything", "Every promise about \(domain), chapter and verse, in seconds.")
+            ("sunrise.fill", "You walk in authority before the day starts", "One minute out loud every morning, and you take charge of \(domain) before anything else does."),
+            ("headphones", "You stay unshakable all day", "Guided declarations over \(domain) for the morning, the commute, and before bed."),
+            ("calendar", "You are training for reigning", "Thirty days of speaking over \(domain), because reigning in life gets trained into you, not wished onto you."),
+            ("bubble.left.and.bubble.right.fill", "You know exactly what God says", "Every promise about \(domain), chapter and verse, in seconds.")
         ]
     }
 
-    var solutionHeader: String { "How SpeakLife works on this" }
+    var solutionHeader: String { "Who you become" }
 
     /// Rows for users we have no pain for at all (settings, feature gates, the
     /// quiz's `unsegmented` bucket).
@@ -572,10 +595,11 @@ struct HighConversionPaywallView: View {
         pain?.solutions ?? UserPain.generalSolutions
     }
 
-    /// Header over those rows. Answers "how does this fix MY thing?" — the
-    /// question a paywall has to close before price matters.
+    /// Header over those rows. It used to answer "how does this fix MY thing?"
+    /// and now answers "who does this make me?", which is the question the
+    /// price is actually being weighed against.
     private var solutionHeader: String {
-        pain?.solutionHeader ?? "How SpeakLife works"
+        pain?.solutionHeader ?? "Who you become"
     }
 
     /// Segment-tagged analytics property. Empty string when the user came through
@@ -631,7 +655,7 @@ struct HighConversionPaywallView: View {
     private var resolvedSubheadline: String {
         if isReturningUser {
             if let tracked = trackedCategoryPain { return tracked.returningSolution }
-            return "Every declaration, all the guided audio, and the 30-day plan, unlocked."
+            return "Unlock all of it and start living from who Jesus says you are."
         }
         if hasFreshPersonalDeclaration {
             // Falls through to the pain below when we have one. `burdenStyleLabel`
@@ -893,12 +917,12 @@ struct HighConversionPaywallView: View {
         }
     }
 
-    // MARK: - Solution (how SpeakLife fixes the named problem)
+    // MARK: - Solution (who the user becomes)
     // Beat 3. The headline named the problem and the subhead turned it; this is
-    // where the screen has to be concrete about the mechanics, or the turn
-    // reads as a slogan. Same four capabilities every time — declarations,
-    // audio, the daily plan, Bible chat — described in terms of what they do
-    // about THIS problem.
+    // where the screen says who they are on the other side of it. Each title is
+    // the person, each detail is the mechanic that gets them there — the same
+    // five capabilities every time (declarations, the morning minute, audio,
+    // the daily plan, Bible chat), never named as features.
     private var solutionSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text(solutionHeader)
@@ -914,9 +938,15 @@ struct HighConversionPaywallView: View {
     }
 
     // MARK: - Comparison Grid (SpeakLife vs. Other apps)
-    // Two-column feature grid that reframes the decision from "is this worth it?"
-    // to "why pay the same or more elsewhere for less?". Always shown on the
+    // Two-column grid that reframes the decision from "is this worth it?" to
+    // "why pay the same or more elsewhere for less?". Always shown on the
     // high-conversion paywall.
+    //
+    // The row labels are outcomes, not features: "You speak it, not just read
+    // it" rather than "Spoken declarations". A comparison table is the easiest
+    // place on a paywall to slip back into a spec sheet, and a spec sheet
+    // invites the reader to price-shop capabilities instead of weighing who
+    // they become.
     //
     // Deliberately generic ("Other apps") rather than naming competitors: the
     // paywall ships through App Review and can't be hot-fixed, so a named claim
@@ -926,11 +956,11 @@ struct HighConversionPaywallView: View {
     // a few competitors do offer journaling.
     private enum OthersMark { case no, some, yes }
     private static let comparisonRows: [(feature: String, others: OthersMark)] = [
-        ("Spoken declarations",  .no),
-        ("Guided audio",         .no),
-        ("AI Bible chat",        .yes),   // both have it — check on both columns
-        ("Faith journal",        .some),
-        ("Personalized to you",  .no)
+        ("You speak it, not just read it", .no),
+        ("His Word in your ears all day",  .no),
+        ("Chapter and verse in seconds",   .yes),   // both have it — check on both columns
+        ("A record of what God did",       .some),
+        ("Built for your exact fight",     .no)
     ]
     private static let comparisonColumnWidth: CGFloat = 92
 
