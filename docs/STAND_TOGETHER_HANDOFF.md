@@ -237,11 +237,14 @@ warning anybody in the chain can receive: a recipient on an old build gets no
 error and has no code-entry screen, because both ship in the build they do not
 have.
 
+It names **4.65**, the build Stand ships in. 4.59 through 4.64 all claim
+`speaklife.app.link` without being able to route `/stand/…`; 4.58 and earlier do
+not claim it and fall through to Safari correctly.
+
 The text is Remote Config `standInviteRecipientNote`, and **setting it empty
 removes the row**. It is a migration notice, not a permanent part of the screen
 — once old builds have aged out it is clutter on the most important button in
-the feature. The same key is how you add a version number once you know which
-build actually shipped Stand.
+the feature. The same key moves the version if the floor ever changes.
 
 ⚠️ A server-side version check cannot replace it. An old build never calls the
 server: tapping the link runs no stand code at all, and `joinStand` is only

@@ -201,16 +201,20 @@ struct StandInviteSheet: View {
     /// So the only person in the whole chain who can be warned is the one
     /// standing here holding the share sheet.
     ///
+    /// 4.65 is the floor because that is the build Stand ships in. Everything
+    /// from 4.59 to 4.64 claims `speaklife.app.link` without being able to
+    /// route `/stand/…`, which is the whole failure; 4.58 and earlier do not
+    /// claim it and so fall through to Safari and the App Store correctly.
+    ///
     /// REMOTE, AND EMPTY TURNS IT OFF. This is a migration notice, not a
     /// permanent part of the screen — once old builds have aged out it is
     /// clutter on the most important button in the feature. Clearing
     /// `standInviteRecipientNote` in Remote Config removes it without a build,
-    /// and the same key is how you add a version number once you know which
-    /// build actually shipped Stand.
+    /// and the same key is how the version gets bumped if the floor ever moves.
     private var recipientNote: String {
         DefaultFeatureFlags.shared.string(
             "standInviteRecipientNote",
-            default: "If they already have SpeakLife, ask them to update it first. An older version can't open the invite."
+            default: "If they already have SpeakLife, ask them to update to 4.65 or later. Older versions can't open the invite."
         )
     }
 
