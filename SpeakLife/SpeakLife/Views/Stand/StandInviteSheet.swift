@@ -65,8 +65,14 @@ struct StandInviteSheet: View {
 
     private var enforcement: Enforcement { source.enforcement }
 
+    /// Built by `StandLink`, not here.
+    ///
+    /// This string used to be a second, hardcoded copy of the invite URL, so
+    /// the host lived in two places and the one that actually gets SENT was
+    /// the copy — `StandLink.shareURL` was never called by anything.
     private var link: String {
-        "https://speaklife.app.link/stand/\(code ?? "")"
+        guard let code, let url = StandLink.shareURL(for: code) else { return "" }
+        return url.absoluteString
     }
 
     /// The message body. The link and the typed code both appear, because the

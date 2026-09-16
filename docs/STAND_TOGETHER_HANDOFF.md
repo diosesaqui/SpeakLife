@@ -167,6 +167,48 @@ it a callable cannot work at all.
 `joinStand` is the one to check hardest. Missing there, the entire receiving
 half of the feature is dead: every invite link opens and then fails.
 
+### Step 2d — Move the invite link off `speaklife.app.link` (REQUIRED before launch)
+
+**The default link domain is broken for 98% of your users, on purpose, because
+the alternative was a guess.**
+
+`applinks:speaklife.app.link` entered `associated-domains` on 2026-08-29, twelve
+minutes before the 4.59 version bump. Every build from 4.59 onward therefore
+tells iOS it owns every path on that host — including `/stand/<code>`, which no
+build before the Stand release can handle.
+
+That produces the worst failure shape available: iOS hands the universal link to
+the installed app, the app opens, `onOpenURL` finds no branch for it, and the
+invite evaporates. No error, no App Store prompt, nothing for the recipient to
+act on. The typed code is not a fallback either — `StandJoinView` ships in the
+same build as the link handling.
+
+Measured over 14 days, active users, simulator excluded:
+
+| Build | Users | What a stand link does |
+|---|---|---|
+| 4.57, 4.58 | 40 (2%) | Does not claim the domain → opens in Safari → Branch page → App Store. Correct. |
+| 4.59 – 4.64 | **2,026 (98%)** | Claims the domain, cannot route it → **app opens, nothing happens** |
+
+The fix is a host those builds do not claim. iOS then cannot match it to any
+installed app, so it opens in Safari and Branch's own page offers the App Store
+— which is exactly the behaviour the 2% already get.
+
+1. In the Branch dashboard, configure a **custom link domain** (for example
+   `go.speaklife.app`) and point DNS at Branch as its setup flow instructs.
+   Branch serves both the redirect page and the AASA for it.
+2. Set Remote Config **`standLinkDomain`** to that host. No build required —
+   `StandLink.shareHost` reads it, and `StandLink.code(from:)` has never matched
+   on the domain, so links already in the wild keep parsing.
+3. Optionally add `applinks:<that host>` to `SpeakLife.entitlements` in a later
+   build so new builds open it directly instead of bouncing through Safari.
+   **Do not add it to the build that ships Stand** — a host the shipping build
+   claims is a host that behaves exactly like `speaklife.app.link` for the next
+   release cycle.
+
+Until step 2 is done, leave `standTogetherEnabled` off. An invite sent before
+then is an invite that dies silently.
+
 ### Why the rules go first
 
 There is no hole today — nothing in the app calls `signInAnonymously`, so
