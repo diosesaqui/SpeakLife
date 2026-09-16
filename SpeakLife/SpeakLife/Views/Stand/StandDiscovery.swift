@@ -187,12 +187,23 @@ struct StandInviteRow: View {
     private var subtitle: String {
         guard let existingRoom, !companions.isEmpty else {
             // "They speak the same words" described a mechanic and promised
-            // nothing. Enforcing is this product's verb — the campaign is
-            // literally called Enforcing Healing — and naming the theme makes
-            // the line concrete instead of generic. Lowercased so it reads as a
-            // sentence rather than a title dropped into one.
-            let victory = enforcement.theme.enforcementTitle.lowercased()
-            return "They enforce \(victory) with you, all 7 days."
+            // nothing. Enforcing is this product's verb: the card directly
+            // above this row reads ENFORCING HEALING.
+            //
+            // ⚠️ DO NOT INTERPOLATE `enforcementTitle` HERE. It is a campaign
+            // NAME, not a bare noun, and a dozen of them are first-person
+            // possessive — "My Marriage", "My Children", "My Purpose", "My
+            // Home", "My Walk With God". Dropped into this frame they read
+            // "They enforce my marriage with you", which is nonsense, and
+            // `.lowercased()` additionally turns "God's Promise" into "god's
+            // promise". "the same victory" is grammatical for every theme, and
+            // `victory` is already this feature's own word: it is what the
+            // eyebrow says and what `enforcementTitle` falls back to.
+            //
+            // It also claims only what the code guarantees. Two members share
+            // the campaign and today's anchor; the six lines behind it are
+            // drawn per install, so "the same words" was over-claiming.
+            return "They enforce the same victory, all 7 days."
         }
         return existingRoom.presenceSummary(todayStamp: StandDayStamp.stamp())
     }
