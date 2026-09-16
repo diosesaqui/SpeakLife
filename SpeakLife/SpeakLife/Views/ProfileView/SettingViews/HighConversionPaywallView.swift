@@ -5,15 +5,22 @@
 //  Data-driven paywall - Remote Config flag: useHighConversionPaywall
 //  Fixes: 70% abandon rate, missing price anchor, weak social proof
 //
-//  Copy is PAIN-LED (supersedes the unconditional "speak to every storm"
-//  positioning, which in turn superseded the old personalized-headline stack;
-//  retired variants high_conversion_v1 / _succinct_v1 / _clean_v1 /
-//  _clean_dark_v1 / _storm_v1 / _storm_clean_v1 / _storm_clean_dark_v1).
+//  Copy is IDENTITY-LED (supersedes the pain-led version, which superseded the
+//  "speak to every storm" positioning and, before that, the old personalized-
+//  headline stack; retired variants high_conversion_v1 / _succinct_v1 /
+//  _clean_v1 / _clean_dark_v1 / _storm_* / _pain_*).
 //
-//  The screen now runs the same three beats in order, aimed at the problem the
-//  user actually named in onboarding (see `UserPain`):
+//  The screen sells who the user becomes, never what the app has. Nobody
+//  subscribes to a capability; they subscribe to who they will be once they
+//  have it, and this app's claim is that speaking God's Word puts a person in
+//  their right identity — unshakable, walking in authority, training for
+//  reigning, living from Jesus rather than from what is happening to them.
 //
-//    1. Name the problem      — the headline says the thing that is wrong
+//  Three beats, aimed at the problem the user named in onboarding (`UserPain`),
+//  which still resolves every personalized string even though beat 1 no longer
+//  says it out loud:
+//
+//    1. Name who they are     — the headline says who they are in Jesus
 //    2. Turn it               — why what they've been doing hasn't moved it,
 //                               and the mechanism that does (spoken, not read)
 //    3. Name who they become  — five rows whose titles are the person this
@@ -21,19 +28,25 @@
 //                               living from their identity in Jesus), each with
 //                               the concrete mechanic underneath it
 //
-//  The storm positioning is not gone; it moved into beat 2, where it belongs —
-//  it is the mechanism, and a mechanism only sells once the problem is named.
+//  The storm positioning is not gone; it is beat 2, where a mechanism belongs.
+//  The problem is not gone either; it is the subhead's first half and it is what
+//  `UserPain` still resolves the whole screen from.
 //
 //  Tracks paywallVariant on all events:
-//    - "high_conversion_pain_v1"            (classic dark layout)
-//    - "high_conversion_pain_clean_v1"      (light minimal layout via
+//    - "high_conversion_identity_v1"            (classic dark layout)
+//    - "high_conversion_identity_clean_v1"      (light minimal layout via
 //      Remote Config flag useCleanPaywallVariant: headline + illustration +
 //      two plan cards + Continue)
-//    - "high_conversion_pain_clean_dark_v1" (clean layout skinned with the
+//    - "high_conversion_identity_clean_dark_v1" (clean layout skinned with the
 //      classic dark gradient/colors, via useCleanPaywallDarkTheme on top of
 //      useCleanPaywallVariant)
-//  The "pain" segment marks this reposition's release point so the rollout
-//  reads as a clean before/after against the retired "storm" names.
+//  The "identity" segment marks this reposition's release point so the rollout
+//  reads as a clean before/after against the retired "pain" names.
+//
+//  If identity underperforms pain on shown→trial over a comparable window, the
+//  HEADLINE is the thing to revert (the retired lines are in
+//  docs/paywall-copy-research.md). The rows, the trial timeline and the pricing
+//  fix shipped in the same release but are independent of beat 1.
 //
 
 import SwiftUI
@@ -168,24 +181,44 @@ enum UserPain: String, CaseIterable {
 
     // MARK: Copy
 
-    /// Headline. Names the problem in the user's own terms, present tense.
+    /// Headline. Says who they are in Jesus, present tense, second person.
+    ///
+    /// **This used to name the problem** ("Your mind won't stop.", "The numbers
+    /// don't work right now."), and that version is what the 16.5%
+    /// onboarding paywall→purchase baseline was measured on. The reframe is
+    /// deliberate: a problem headline sells relief, and relief is a smaller
+    /// thing than what this app actually claims. Speaking God's Word does not
+    /// return you to neutral, it puts you in your right identity — unshakable,
+    /// walking in authority, reigning in life rather than surviving it — and a
+    /// screen that opens on what is wrong has already agreed to sell the
+    /// smaller thing.
+    ///
+    /// Every line is short, second person, and standing on a specific verse:
+    /// the mind of Christ (1 Cor 2:16), bold as a lion (Prov 28:1), healed
+    /// (Isa 53:5), heir (Rom 8:17), no condemnation (Rom 8:1), free (John
+    /// 8:36), the joy of the Lord as strength (Neh 8:10). Scripture is what
+    /// keeps an identity claim from being flattery.
+    ///
+    /// The problem is not gone, it moved into the subhead, which still names
+    /// the domain and still says what to do about it. Beat 1 asserts, beat 2
+    /// turns, beat 3 says who they become.
     var problem: String {
         switch self {
-        case .peace:      return "Your mind won't stop."
-        case .fear:       return "You keep waiting for bad news."
-        case .health:     return "Your body is still waiting on an answer."
-        case .abundance:  return "The numbers don't work right now."
-        case .identity:   return "You don't feel good enough."
-        case .shame:      return "You can't seem to put it down."
-        case .bondage:    return "You keep going back to it."
-        case .purpose:    return "You're off the track you were built for."
-        case .joy:        return "Everything feels flat."
-        case .grief:      return "You lost something you can't replace."
-        case .loneliness: return "You're carrying this on your own."
-        case .marriage:   return "Home doesn't feel like home right now."
-        case .family:     return "Someone you love is on your heart."
-        case .nearness:   return "God feels further away than He used to."
-        case .more:       return "You've prayed about it. It hasn't moved."
+        case .peace:      return "You have the mind of Christ."
+        case .fear:       return "You are as bold as a lion."
+        case .health:     return "You are healed and whole."
+        case .abundance:  return "You are an heir, not a beggar."
+        case .identity:   return "You are who God says you are."
+        case .shame:      return "There is no condemnation on you."
+        case .bondage:    return "Jesus already made you free."
+        case .purpose:    return "You are called, and already equipped."
+        case .joy:        return "The joy of the Lord is your strength."
+        case .grief:      return "You are held, and you are not alone."
+        case .loneliness: return "You are never alone again."
+        case .marriage:   return "You carry peace into your home."
+        case .family:     return "You are the one who stands for them."
+        case .nearness:   return "You are His, and He is near."
+        case .more:       return "You carry the authority Jesus gave you."
         }
     }
 
@@ -251,28 +284,33 @@ enum UserPain: String, CaseIterable {
     /// 135 of the 191 settings impressions in the last 30 days, which convert
     /// at a sixth of the onboarding rate.
     ///
-    /// Every line here is a statement about something the app watched the user
-    /// do, which is why it is only ever reachable through
-    /// `trackedCategoryPain` — the user really has come back to this category,
-    /// repeatedly, of their own accord. Resolved from a segment instead, these
+    /// The first sentence is a statement about something the app watched the
+    /// user do, which is why this is only ever reachable through
+    /// `trackedCategoryPain` — they really have come back to this category,
+    /// repeatedly, of their own accord. Resolved from a segment instead, it
     /// would be a claim we cannot support.
+    ///
+    /// The second sentence is the identity the first one earns. Recognition
+    /// first, then the assertion: told "it is already yours" cold, a returning
+    /// user hears marketing; told it right after the app has shown it was
+    /// paying attention, they hear it.
     var returningProblem: String {
         switch self {
-        case .peace:      return "You keep coming back for peace."
-        case .fear:       return "You keep coming back for courage."
-        case .health:     return "You keep coming back for healing."
-        case .abundance:  return "You keep coming back for provision."
-        case .identity:   return "You keep coming back to who God says you are."
-        case .shame:      return "You keep coming back for grace."
-        case .bondage:    return "You keep coming back for freedom."
-        case .purpose:    return "You keep coming back for direction."
-        case .joy:        return "You keep coming back for joy."
-        case .grief:      return "You keep coming back for comfort."
-        case .loneliness: return "You keep coming back for His presence."
-        case .marriage:   return "You keep coming back for your home."
-        case .family:     return "You keep coming back for the people you love."
-        case .nearness:   return "You keep coming back to be near Him."
-        case .more:       return "You keep coming back to the Word."
+        case .peace:      return "You came back for peace. It is already yours."
+        case .fear:       return "You came back for courage. It is already yours."
+        case .health:     return "You came back for healing. It is already yours."
+        case .abundance:  return "You came back for provision. It is already yours."
+        case .identity:   return "You came back for who you are. That is settled."
+        case .shame:      return "You came back for grace. It already covered you."
+        case .bondage:    return "You came back for freedom. Jesus already bought it."
+        case .purpose:    return "You came back for direction. Your steps are ordered."
+        case .joy:        return "You came back for joy. It is already yours."
+        case .grief:      return "You came back for comfort. He is already close."
+        case .loneliness: return "You came back for His presence. He never left."
+        case .marriage:   return "You came back for your home. Peace belongs there."
+        case .family:     return "You came back for them. God has not let go."
+        case .nearness:   return "You came back to be near Him. He is right here."
+        case .more:       return "You came back to the Word. It is working in you."
         }
     }
 
@@ -520,13 +558,20 @@ struct HighConversionPaywallView: View {
     }
 
     /// Variant string sent to Firebase Analytics on every paywall event. The
-    /// "pain" segment marks this reposition's release point so the rollout
-    /// reads as a before/after against the retired "storm" variant names.
+    /// "identity" segment marks this reposition's release point so the rollout
+    /// reads as a before/after against the retired "pain" variant names, the
+    /// same way "pain" read against "storm".
+    ///
+    /// Renamed because beat 1 changed sides. The pain names still resolve every
+    /// personalized string on the screen and `pain` is still on every event —
+    /// what stopped being true is that the *headline* names a problem, and a
+    /// variant called `pain` sitting above an identity headline would quietly
+    /// blend two different screens into one line on the chart.
     private var paywallVariant: String {
         if isCleanVariant {
-            return isCleanDarkTheme ? "high_conversion_pain_clean_dark_v1" : "high_conversion_pain_clean_v1"
+            return isCleanDarkTheme ? "high_conversion_identity_clean_dark_v1" : "high_conversion_identity_clean_v1"
         }
-        return "high_conversion_pain_v1"
+        return "high_conversion_identity_v1"
     }
 
     /// Clean minimal layout A/B (Remote Config: useCleanPaywallVariant). Swaps
@@ -632,9 +677,10 @@ struct HighConversionPaywallView: View {
     ///
     /// One exception keeps priority over the pain: a user who spoke their own
     /// declaration aloud seconds ago is the warmest moment in the funnel, and
-    /// naming a problem right after they took authority over it would step on
-    /// it. That branch keeps its continuity framing and lets the pain colour
-    /// the subhead instead.
+    /// the strongest identity line available is the one they just proved about
+    /// themselves. "You just spoke to your storm" is an identity headline —
+    /// it names the authority they exercised ten seconds ago — so it stays, and
+    /// the pain colours the subhead instead.
     private var resolvedHeadline: String {
         // Returning users first: the declaration branch below belongs to the
         // onboarding moment, and `personalDeclarationBelief` is in-memory only,
@@ -645,12 +691,12 @@ struct HighConversionPaywallView: View {
             // thing that is true of every free user without pretending to know
             // which problem sent them here — and it is the mechanism, which is
             // what this screen sells.
-            return "You've been reading it. Start speaking it."
+            return "You already have the Word. Start speaking it."
         }
         if hasFreshPersonalDeclaration { return "You just spoke to your storm." }
-        // Generic fallback is still pain-led — it just names the one problem
-        // every user on this screen shares rather than guessing at a specific.
-        return pain?.problem ?? "You've prayed about it. It hasn't moved."
+        // Generic fallback is the identity claim that is true of every believer
+        // on this screen, rather than a guess at which one they need.
+        return pain?.problem ?? "You carry the authority Jesus gave you."
     }
     private var resolvedSubheadline: String {
         if isReturningUser {
