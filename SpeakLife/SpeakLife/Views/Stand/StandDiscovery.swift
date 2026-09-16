@@ -186,7 +186,13 @@ struct StandInviteRow: View {
 
     private var subtitle: String {
         guard let existingRoom, !companions.isEmpty else {
-            return "They speak the same words, all 7 days."
+            // "They speak the same words" described a mechanic and promised
+            // nothing. Enforcing is this product's verb — the campaign is
+            // literally called Enforcing Healing — and naming the theme makes
+            // the line concrete instead of generic. Lowercased so it reads as a
+            // sentence rather than a title dropped into one.
+            let victory = enforcement.theme.enforcementTitle.lowercased()
+            return "They enforce \(victory) with you, all 7 days."
         }
         return existingRoom.presenceSummary(todayStamp: StandDayStamp.stamp())
     }
