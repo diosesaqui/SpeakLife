@@ -38,6 +38,9 @@ struct IdentityOnboardingView: View {
     @StateObject private var responses = SurveyResponses()
     @State private var currentStep: IdentityStep = .lie
     @State private var savedDeclaration: PersonalDeclaration? = nil
+    /// The step last logged to `onboarding_step_viewed`, so a repeat onAppear on
+    /// the same screen does not count it twice.
+    @State private var lastViewedStep: IdentityStep? = nil
 
     private var valueProgress: Double {
         guard let idx = currentStep.valueScreenIndex else { return 0 }
@@ -73,7 +76,25 @@ struct IdentityOnboardingView: View {
             }
         }
         .ignoresSafeArea()
-        .onAppear { AnalyticsService.shared.track("identity_onboarding_started") }
+        .onAppear {
+            AnalyticsService.shared.track("identity_onboarding_started")
+            logStepViewed()
+        }
+        // `advance()` assigns the step it actually lands on, having already
+        // jumped the skipped ones, so only displayed screens are logged.
+        .onChange(of: currentStep) { _, _ in logStepViewed() }
+    }
+
+    private func logStepViewed() {
+        guard !appState.debugReplayOnboarding, lastViewedStep != currentStep else { return }
+        lastViewedStep = currentStep
+        OnboardingFunnel.stepViewed(
+            variant: subscriptionStore.onboardingVariantName,
+            stepName: currentStep.funnelStepName,
+            stepIndex: currentStep.rawValue,  // == `step` on identity_step_completed
+            stage: currentStep.funnelStage,
+            flowSchema: IdentityStep.flowSchema
+        )
     }
 
     @ViewBuilder
@@ -133,7 +154,7 @@ struct IdentityOnboardingView: View {
     private func advance() {
         Juice.play(.tapLight)
         // flow_schema 2 = testimonial wall inserted before paywall (absent/1 = original layout); bump when step raw values are renumbered again.
-        AnalyticsService.shared.track("identity_step_completed", parameters: ["step": currentStep.rawValue, "flow_schema": 2])
+        AnalyticsService.shared.track("identity_step_completed", parameters: ["step": currentStep.rawValue, "flow_schema": IdentityStep.flowSchema])
 
         switch currentStep {
         case .notificationTime:
@@ -248,6 +269,50 @@ enum IdentityStep: Int, CaseIterable {
     }
 
     static let totalValueScreens = 5
+
+    /// Stamped on every event that reports a step, so the per-arm
+    /// `identity_step_completed` and the unified `onboarding_step_viewed` can
+    /// never disagree about which layout they were counting. 2 = testimonial
+    /// wall inserted before the paywall. Bump when raw values are renumbered.
+    static let flowSchema = 2
+}
+
+// MARK: - Unified funnel mapping
+
+/// This arm's screens in the cross-arm `onboarding_step_viewed` funnel. The
+/// shared screens use the names every other arm uses for them.
+extension IdentityStep: OnboardingFunnelStep {
+    var funnelStepName: String {
+        switch self {
+        case .lie:                 return "lie"
+        case .verdict:             return "verdict"
+        case .named:               return "named"
+        case .mechanism:           return "mechanism"
+        case .identityPicker:      return "identity_picker"
+        case .firstDeclaration:    return "first_declaration"
+        case .personalDeclaration: return "personal_declaration"
+        case .rating:              return "rating"
+        case .testimonials:        return "testimonials"
+        case .paywall:             return "paywall"
+        case .notificationTime:    return "notification_time"
+        }
+    }
+
+    var funnelStage: OnboardingStage {
+        switch self {
+        case .lie, .verdict, .named, .mechanism:
+            return .hook
+        // The picker is this arm's only question.
+        case .identityPicker:
+            return .personalize
+        case .firstDeclaration, .personalDeclaration, .rating, .testimonials:
+            return .value
+        case .paywall:
+            return .paywall
+        case .notificationTime:
+            return .setup
+        }
+    }
 }
 
 // MARK: - Identity truth mapping

@@ -98,6 +98,9 @@ struct DirectOnboardingView: View {
     // question) and `notificationTime` (the terminal screen) are ever set.
     @StateObject private var responses = SurveyResponses()
     @State private var currentStep: DirectStep = .declaration
+    /// The step last logged to `onboarding_step_viewed`, so a repeat onAppear on
+    /// the same screen does not count it twice.
+    @State private var lastViewedStep: DirectStep? = nil
 
     /// The declaration the user got back after describing their situation, or
     /// nil if they skipped or the match failed. Kept so completion (and
@@ -180,7 +183,24 @@ struct DirectOnboardingView: View {
             AnalyticsService.shared.track("direct_onboarding_started", parameters: [
                 "flow_schema": DirectStep.flowSchema
             ])
+            logStepViewed()
         }
+        // `advance()` assigns the step it actually lands on, having already
+        // jumped the recovery screens a landed declaration makes unnecessary,
+        // so only displayed screens are logged.
+        .onChange(of: currentStep) { _, _ in logStepViewed() }
+    }
+
+    private func logStepViewed() {
+        guard !appState.debugReplayOnboarding, lastViewedStep != currentStep else { return }
+        lastViewedStep = currentStep
+        OnboardingFunnel.stepViewed(
+            variant: subscriptionStore.onboardingVariantName,
+            stepName: currentStep.funnelStepName,
+            stepIndex: currentStep.rawValue,  // == `step` on direct_step_completed
+            stage: currentStep.funnelStage,
+            flowSchema: DirectStep.flowSchema
+        )
     }
 
     @ViewBuilder
@@ -645,6 +665,35 @@ enum DirectStep: Int, CaseIterable {
         case .paywall:          return "paywall"
         case .connectStyle:     return "connect_style"
         case .notificationTime: return "notification_time"
+        }
+    }
+}
+
+// MARK: - Unified funnel mapping
+
+/// This arm's screens in the cross-arm `onboarding_step_viewed` funnel.
+extension DirectStep: OnboardingFunnelStep {
+    /// The same name `direct_step_completed` already carries, so the two join on
+    /// it. Note `personal_declaration` here is frame one, the free-text ask; the
+    /// step of that name in the other arms is never displayed.
+    var funnelStepName: String { name }
+
+    var funnelStage: OnboardingStage {
+        switch self {
+        // Frame one IS the personalization, so this arm has no hook stage.
+        // The mechanism and "long enough" screens are personalize, not value:
+        // they sit between the asks, and a value stage ahead of the questions
+        // that follow it would break the stage funnel's order.
+        case .declaration, .painFallback, .declarationRetry,
+             .mechanism, .carriedDuration, .longEnough, .victoryOutcome, .dailyMinutes:
+            return .personalize
+        case .planBuilding, .planReveal, .pledge, .testimonials:
+            return .value
+        case .paywall:
+            return .paywall
+        // Connect style moved behind the paywall as setup, not persuasion.
+        case .connectStyle, .notificationTime:
+            return .setup
         }
     }
 }

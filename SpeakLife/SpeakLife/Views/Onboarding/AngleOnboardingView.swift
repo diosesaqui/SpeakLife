@@ -47,6 +47,9 @@ struct AngleOnboardingView: View {
     @State private var stepIndex: Int = 0
     @State private var selectedChoiceID: String? = nil
     @State private var savedDeclaration: PersonalDeclaration? = nil
+    /// The index last logged to `onboarding_step_viewed`, so a repeat onAppear
+    /// on the same screen does not count it twice.
+    @State private var lastViewedStepIndex: Int? = nil
 
     // Quiz v2 flag, frozen at the flow's first appearance (mirroring
     // lockOnboardingVariant's intent) so a realtime Remote Config activation
@@ -100,7 +103,24 @@ struct AngleOnboardingView: View {
         .onAppear {
             if quizV2Snapshot == nil { quizV2Snapshot = subscriptionStore.useQuizV2 }
             AnalyticsService.shared.track("\(angle.flow)_onboarding_started")
+            logStepViewed()
         }
+        // `advance()` writes the index of the step it actually lands on, having
+        // already jumped the skipped ones, so observing the index logs exactly
+        // the screens that were displayed.
+        .onChange(of: stepIndex) { _, _ in logStepViewed() }
+    }
+
+    private func logStepViewed() {
+        guard !appState.debugReplayOnboarding, lastViewedStepIndex != stepIndex else { return }
+        lastViewedStepIndex = stepIndex
+        OnboardingFunnel.stepViewed(
+            variant: subscriptionStore.onboardingVariantName,
+            stepName: currentStep.funnelStepName,
+            stepIndex: stepIndex,
+            stage: currentStep.funnelStage,
+            flowSchema: angle.flowSchema
+        )
     }
 
     @ViewBuilder

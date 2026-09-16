@@ -18,6 +18,7 @@ struct Event {
     static let favoriteTapped = "favorite_tapped"
     static let speechTapped = "speech_tapped"
     static let onboardingFinished = "onboarding_finished"  // Fixed: was onBoardingFinished
+    static let onboardingStepViewed = "onboarding_step_viewed"  // cross-arm step funnel; see OnboardingFunnel
     static let shareTapped = "share_tapped"
     static let remindersTapped = "reminders_tapped"
     static let powerDeclarationsTapped = "power_declarations_tapped"
@@ -168,5 +169,105 @@ extension Event {
             params.merge(metadata) { _, new in new }
         }
         AnalyticsService.shared.track(bibleVerseHighlighted, parameters: params)
+    }
+}
+
+// MARK: - Unified onboarding step funnel
+//
+// Lives here rather than in its own file because the app target's sources are
+// listed in project.pbxproj by hand (no synchronized folder), and a new file
+// that is not added there compiles in nobody's build but the author's.
+
+/// The stage a screen occupies in ANY onboarding arm, so arms with different
+/// screens can be read as the same onboarding with different content.
+///
+/// Every arm used to report progress only through its own
+/// `<flow>_step_completed` with an integer `step`, and step 7 of `product` has
+/// nothing to do with step 7 of `closer`. The integers could never be pooled,
+/// so there was no way to ask "which arm loses people before they personalize"
+/// without a per-arm decoder. The stage is that decoder, carried on the event.
+///
+/// Stages are contiguous within an arm by construction: once an arm has entered
+/// a stage it never shows a screen from an earlier one. That is what keeps a
+/// stage funnel ordered, and why an interstitial sitting INSIDE the question
+/// block (the quiz insight, the quiz arm's mirror, warfare's burden payoff,
+/// direct's mechanism) is `personalize` rather than `value`: calling it value
+/// would put value ahead of the questions that follow it. `OnboardingAngleTests`
+/// holds every driver to this.
+///
+/// - `hook`: before the user tells us anything that shapes their plan. Includes
+///   rhetorical agreement questions (closer's yes/no ladder), whose answers
+///   neither branch the flow nor seed anything.
+/// - `personalize`: from the first answer that segments or seeds (a picker, the
+///   quiz arm's segment question, direct's free-text declaration) through the
+///   last question.
+/// - `value`: after the questions, before the ask. First declaration, rating,
+///   plan loader, plan reveal, pledge, testimonials.
+/// - `paywall`: the onboarding paywall.
+/// - `setup`: everything after the paywall.
+enum OnboardingStage: String, CaseIterable {
+    case hook
+    case personalize
+    case value
+    case paywall
+    case setup
+
+    /// Sort key for `stage_index`, so a PostHog breakdown by stage orders by
+    /// funnel position instead of alphabetically.
+    var index: Int {
+        switch self {
+        case .hook:        return 0
+        case .personalize: return 1
+        case .value:       return 2
+        case .paywall:     return 3
+        case .setup:       return 4
+        }
+    }
+}
+
+/// A driver's step type, mapped into the unified funnel. Conformances sit next
+/// to each step enum as exhaustive switches, so a new step does not compile
+/// until someone decides which stage it belongs to.
+protocol OnboardingFunnelStep {
+    /// Stable snake_case screen name. A screen shared between arms carries the
+    /// same name in every arm (`paywall`, `notification_time`, `testimonials`,
+    /// `plan_reveal`, the extended-quiz questions), so it can be compared across
+    /// arms by name as well as by stage.
+    var funnelStepName: String { get }
+    var funnelStage: OnboardingStage { get }
+}
+
+enum OnboardingFunnel {
+    /// Fire once each time a step becomes the VISIBLE step. Steps a driver jumps
+    /// over (the retired personal declaration ask, a remote-disabled rating or
+    /// pledge, quiz v1's belief question) are never displayed and must never be
+    /// logged, or the funnel shows people "reaching" screens nobody saw.
+    ///
+    /// Callers suppress this during a debug replay, the way HomeView suppresses
+    /// `onboarding_started` / `onboarding_finished`: a tester walking an arm is
+    /// not a real user moving through it.
+    ///
+    /// - Parameters:
+    ///   - variant: `subscriptionStore.onboardingVariantName`, the value
+    ///     `onboarding_started` carries. Not the per-arm `flow` slug.
+    ///   - stepIndex: the integer the driver reports as `step` on its per-arm
+    ///     event, so the two join.
+    ///   - flowSchema: the driver's `flow_schema`, or nil for a driver without one.
+    static func stepViewed(
+        variant: String,
+        stepName: String,
+        stepIndex: Int,
+        stage: OnboardingStage,
+        flowSchema: Int?
+    ) {
+        var parameters: [String: Any] = [
+            "variant": variant,
+            "step_name": stepName,
+            "step_index": stepIndex,
+            "stage": stage.rawValue,
+            "stage_index": stage.index
+        ]
+        if let flowSchema { parameters["flow_schema"] = flowSchema }
+        AnalyticsService.shared.track(Event.onboardingStepViewed, parameters: parameters)
     }
 }
