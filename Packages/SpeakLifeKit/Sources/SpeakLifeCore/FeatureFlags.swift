@@ -22,6 +22,16 @@ import Foundation
 /// tests, all interchangeable.
 public protocol FeatureFlagProviding {
     func bool(_ key: String, default defaultValue: Bool) -> Bool
+    /// Remotely-set text. Added for the stand invite domain, which has to be
+    /// changeable without a build: the link host is the one part of this
+    /// feature that older, already-shipped builds can silently swallow.
+    func string(_ key: String, default defaultValue: String) -> String
+}
+
+public extension FeatureFlagProviding {
+    /// Defaulted so existing conformers — including test doubles — compile
+    /// unchanged and simply report "no remote value".
+    func string(_ key: String, default defaultValue: String) -> String { defaultValue }
 }
 
 /// In-memory implementation, used by tests and as the pre-startup default.
@@ -32,13 +42,19 @@ public protocol FeatureFlagProviding {
 /// return.
 public struct StaticFeatureFlags: FeatureFlagProviding {
     private let values: [String: Bool]
+    private let strings: [String: String]
 
-    public init(_ values: [String: Bool] = [:]) {
+    public init(_ values: [String: Bool] = [:], strings: [String: String] = [:]) {
         self.values = values
+        self.strings = strings
     }
 
     public func bool(_ key: String, default defaultValue: Bool) -> Bool {
         values[key] ?? defaultValue
+    }
+
+    public func string(_ key: String, default defaultValue: String) -> String {
+        strings[key] ?? defaultValue
     }
 }
 
@@ -62,5 +78,9 @@ public final class DefaultFeatureFlags: FeatureFlagProviding {
 
     public func bool(_ key: String, default defaultValue: Bool) -> Bool {
         provider.bool(key, default: defaultValue)
+    }
+
+    public func string(_ key: String, default defaultValue: String) -> String {
+        provider.string(key, default: defaultValue)
     }
 }

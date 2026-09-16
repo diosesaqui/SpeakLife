@@ -482,6 +482,15 @@ struct RemoteConfigFlags: FeatureFlagProviding {
     func bool(_ key: String, default defaultValue: Bool) -> Bool {
         DebugOverrides.bool(key) ?? RemoteConfig.remoteConfig()[key].boolValue
     }
+
+    /// An unset Remote Config string reads as "", which is not a value — it is
+    /// the absence of one. Falling through to the caller's default there keeps
+    /// the same semantics `bool` has.
+    func string(_ key: String, default defaultValue: String) -> String {
+        if let override = DebugOverrides.string(key), !override.isEmpty { return override }
+        let remote = RemoteConfig.remoteConfig()[key].stringValue
+        return remote.isEmpty ? defaultValue : remote
+    }
 }
 
 extension AppDelegate {
