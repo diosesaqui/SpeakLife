@@ -40,7 +40,32 @@ add it to individual call sites.
 
 ---
 
-## 1. Onboarding Funnel (quiz flow)
+## Weekly Growth Scorecard (start here)
+
+PostHog dashboard **SpeakLife — Weekly Growth Scorecard**
+(https://us.posthog.com/project/455580/dashboard/2102993) is the weekly review,
+top to bottom: onboarding (all arms, one funnel) → activation → retention →
+trial → paid → renewal → LTV. Insight short_ids are listed in
+`.claude/skills/check-funnels/SKILL.md`.
+
+- **Retention runs on `app_day_started`** (once per calendar day). The PostHog
+  starter insights were built on `$pageview`, which this app never sends, and read
+  empty until 2026-09-16.
+- **Activation** is `Application Installed` → `user_activated` within 7 days.
+- **LTV / MRR / churn** tiles are HogQL over RevenueCat `rc_*` events (USD
+  `revenue`; refunds are negative revenue on `rc_cancellation_event`). A "Became
+  paid subscriber (RC)" action unions `rc_trial_converted_event` and
+  `rc_initial_purchase_event`.
+- **CAC is not in PostHog**: no ad-spend source is connected, so payback has to be
+  computed against Meta Ads Manager until one is.
+
+---
+
+## 1. Onboarding Funnel (quiz flow) — legacy, quiz arm only
+
+> Only the `quiz` arm fires these events. The saved insight is renamed
+> "[Legacy — quiz arm only]". For every arm use the unified step funnel in section 3.
+
 
 The live Treatment cohort (`useQuizOnboarding = true`) rendered by
 `QuizOnboardingView`. Steps are ordered events; PostHog shows drop-off between
@@ -69,6 +94,12 @@ Other quiz events available for deeper analysis (not core funnel steps):
 ---
 
 ## 2. Activation → Trial Funnel
+
+> **Superseded 2026-09-16.** The saved insight (`Q9Sw8t24`, now "Onboarding → Paid
+> Funnel (all arms)") starts at `onboarding_started` instead of
+> `onboarding_completed`, so every arm enters it: `onboarding_started` →
+> `paywall_impression` → `trial_started` → `rc_trial_converted_event`, 30-day
+> window, broken down by `variant`. The table below is the original definition.
 
 From finishing onboarding through to a paid conversion.
 
