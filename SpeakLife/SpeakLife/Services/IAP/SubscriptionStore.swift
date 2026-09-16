@@ -270,6 +270,19 @@ final class SubscriptionStore: ObservableObject {
     // the rating step, advancing straight to the screen after it.
     @Published var onboardingRatingEnabled = true
 
+    // MARK: - Onboarding Email Capture Flag
+    // Kill switch for the pre-paywall email ask in every onboarding flow.
+    // Defaults true (registered in AppDelegate's Remote Config defaults); set
+    // `emailCaptureEnabled` to false in Remote Config and each flow skips the
+    // email step, advancing straight to the paywall.
+    //
+    // It gets its own switch for the same reason `closerPledgeEnabled` does:
+    // the ask sits one screen before a hard paywall, so it is the element most
+    // able to go NEGATIVE. Every address is worth something and a lost trial
+    // start is worth more, so if the arm's conversion drops when this is on,
+    // it comes off without waiting for a release.
+    @Published var emailCaptureEnabled = true
+
     // MARK: - Closer Arm Pledge Flag
     // Isolates the one element of the `closer` arm that could plausibly go
     // NEGATIVE. The "I'm In" pledge lands between the plan reveal and the
@@ -532,6 +545,7 @@ final class SubscriptionStore: ObservableObject {
         guardEnabled = flagValue("guardEnabled")
         onboardingRatingEnabled = flagValue("onboardingRatingEnabled")
         closerPledgeEnabled = flagValue("closerPledgeEnabled")
+        emailCaptureEnabled = flagValue("emailCaptureEnabled")
 
         evaluateForcedUpdate()
 

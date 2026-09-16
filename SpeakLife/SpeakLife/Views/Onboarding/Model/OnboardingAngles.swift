@@ -39,7 +39,7 @@ enum OnboardingAngles {
     static let grief = OnboardingAngle(
         id: "grief",
         flow: "grief",
-        flowSchema: 1,
+        flowSchema: 2,
         opensWithStormScreen: true,
         scenes: [
             AngleScene(
@@ -105,7 +105,7 @@ enum OnboardingAngles {
     static let mortality = OnboardingAngle(
         id: "mortality",
         flow: "mortality",
-        flowSchema: 1,
+        flowSchema: 2,
         opensWithStormScreen: true,
         scenes: [
             AngleScene(
@@ -173,7 +173,7 @@ enum OnboardingAngles {
     static let prodigal = OnboardingAngle(
         id: "prodigal",
         flow: "prodigal",
-        flowSchema: 1,
+        flowSchema: 2,
         opensWithStormScreen: true,
         scenes: [
             AngleScene(
@@ -239,7 +239,7 @@ enum OnboardingAngles {
     static let purity = OnboardingAngle(
         id: "purity",
         flow: "purity",
-        flowSchema: 1,
+        flowSchema: 2,
         opensWithStormScreen: true,
         scenes: [
             AngleScene(
@@ -326,7 +326,7 @@ enum OnboardingAngles {
     static let depression = OnboardingAngle(
         id: "depression",
         flow: "depression",
-        flowSchema: 1,
+        flowSchema: 2,
         opensWithStormScreen: true,
         scenes: [
             AngleScene(
@@ -419,7 +419,7 @@ enum OnboardingAngles {
     static let fear = OnboardingAngle(
         id: "fear",
         flow: "fear",
-        flowSchema: 1,
+        flowSchema: 2,
         opensWithStormScreen: true,
         scenes: [
             AngleScene(
@@ -500,7 +500,7 @@ enum OnboardingAngles {
     static let parenting = OnboardingAngle(
         id: "parenting",
         flow: "parenting",
-        flowSchema: 1,
+        flowSchema: 2,
         opensWithStormScreen: true,
         scenes: [
             AngleScene(
@@ -582,7 +582,7 @@ enum OnboardingAngles {
     static let addiction = OnboardingAngle(
         id: "addiction",
         flow: "addiction",
-        flowSchema: 1,
+        flowSchema: 2,
         opensWithStormScreen: true,
         scenes: [
             AngleScene(
@@ -657,7 +657,7 @@ enum OnboardingAngles {
     static let marriage = OnboardingAngle(
         id: "marriage",
         flow: "marriage",
-        flowSchema: 1,
+        flowSchema: 2,
         opensWithStormScreen: true,
         scenes: [
             AngleScene(
@@ -741,7 +741,7 @@ enum OnboardingAngles {
     static let hardtimes = OnboardingAngle(
         id: "hardtimes",
         flow: "hardtimes",
-        flowSchema: 1,
+        flowSchema: 2,
         opensWithStormScreen: true,
         scenes: [
             AngleScene(
@@ -823,7 +823,7 @@ enum OnboardingAngles {
         flow: "promises",
         // 3 = storm opener prepended as step 0 (2 = testimonial wall inserted
         // before paywall, 1 = original promises arc). Bump when the step order changes.
-        flowSchema: 3,
+        flowSchema: 4,
         opensWithStormScreen: true,
         scenes: [
             AngleScene(
@@ -929,7 +929,7 @@ enum OnboardingAngles {
         flow: "warfare",
         // 4 = testimonial wall inserted before paywall (3 = victory-vision inserted
         // after the picker, 2 = pre-victory-vision, 1 = pre-renumbering).
-        flowSchema: 4,
+        flowSchema: 5,
         iconStyle: .ember,
         scenes: [
             AngleScene(
@@ -1076,7 +1076,7 @@ enum OnboardingAngles {
         flow: "outcomes",
         // 4 = storm opener prepended as step 0 (3 = testimonial wall inserted before
         // paywall, 2 = matched-to-warfare layout, 1 = original short outcomes flow).
-        flowSchema: 4,
+        flowSchema: 5,
         opensWithStormScreen: true,
         scenes: [
             // The outcome visions deliver the dream; this cold open gives the flow
@@ -1180,7 +1180,7 @@ enum OnboardingAngles {
     static let healing = OnboardingAngle(
         id: "healing",
         flow: "healing",
-        flowSchema: 1,
+        flowSchema: 2,
         opensWithStormScreen: true,
         scenes: [
             AngleScene(
@@ -1276,7 +1276,7 @@ enum OnboardingAngles {
     static let provision = OnboardingAngle(
         id: "provision",
         flow: "provision",
-        flowSchema: 1,
+        flowSchema: 2,
         opensWithStormScreen: true,
         scenes: [
             AngleScene(
@@ -1373,7 +1373,7 @@ enum OnboardingAngles {
     static let anxiety = OnboardingAngle(
         id: "anxiety",
         flow: "anxiety",
-        flowSchema: 1,
+        flowSchema: 2,
         opensWithStormScreen: true,
         scenes: [
             AngleScene(
@@ -1469,7 +1469,7 @@ enum OnboardingAngles {
     static let renewal = OnboardingAngle(
         id: "renewal",
         flow: "renewal",
-        flowSchema: 1,
+        flowSchema: 2,
         opensWithStormScreen: true,
         scenes: [
             AngleScene(
@@ -1590,7 +1590,7 @@ enum OnboardingAngles {
     static let command = OnboardingAngle(
         id: "command",
         flow: "command",
-        flowSchema: 1,
+        flowSchema: 2,
         opensWithStormScreen: false,
         showsExperienceScreen: false,
         scenes: [

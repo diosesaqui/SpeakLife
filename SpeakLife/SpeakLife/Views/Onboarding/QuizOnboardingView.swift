@@ -407,6 +407,7 @@ struct QuizOnboardingView: View {
         case personalDeclaration
         case commitmentHold
         case testimonials      // App Store review wall — social proof right before the ask
+        case email             // pre-paywall email ask, so the address is captured from the majority who decline the trial. Remote-gated by `emailCaptureEnabled`
         case paywall
         case notificationTime  // post-paywall: pick a window, then iOS permission prompt
     }
@@ -489,6 +490,14 @@ struct QuizOnboardingView: View {
                 case .testimonials:
                     TestimonialWallView(size: size, flow: "quiz") {
                         advanceFromTestimonials()
+                    }
+                case .email:
+                    EmailCaptureScreen(
+                        size: size,
+                        flow: "quiz",
+                        burden: selectedBurden?.rawValue
+                    ) {
+                        advanceFromEmail()
                     }
                 case .paywall:
                     HighConversionPaywallView(callback: {
@@ -761,6 +770,13 @@ struct QuizOnboardingView: View {
     }
 
     private func advanceFromTestimonials() {
+        Juice.play(.tapLight)
+        // The email ask sits between the wall and the paywall, unless it is
+        // remote-disabled or we already hold an address.
+        transition(to: subscriptionStore.shouldSkipEmailCapture ? .paywall : .email)
+    }
+
+    private func advanceFromEmail() {
         Juice.play(.tapLight)
         transition(to: .paywall)
     }

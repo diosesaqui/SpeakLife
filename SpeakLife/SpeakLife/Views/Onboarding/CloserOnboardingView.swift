@@ -235,6 +235,12 @@ struct CloserOnboardingView: View {
             CloserPledgeScreen(size: size, burden: responses.heaviestBurden ?? .peace) { advance() }
         case .testimonials:
             TestimonialWallView(size: size, flow: "closer") { advance() }
+        case .email:
+            EmailCaptureScreen(
+                size: size,
+                flow: "closer",
+                burden: responses.heaviestBurden?.rawValue
+            ) { advance() }
         case .paywall:
             HighConversionPaywallView(callback: { advance() }, source: "onboarding", isHardPaywall: true)
         case .notificationTime:
@@ -246,10 +252,12 @@ struct CloserOnboardingView: View {
 
     private func advance() {
         Juice.play(.tapLight)
-        // flow_schema 2 = storm opener prepended as step 0 (1 = original closer arc, nearness → pledge → paywall). Bump when step raw values are renumbered.
+        // flow_schema 3 = email ask inserted between the review wall and the paywall
+        // (2 = storm opener prepended as step 0, 1 = original closer arc,
+        // nearness → pledge → paywall). Bump when step raw values are renumbered.
         AnalyticsService.shared.track("closer_step_completed", parameters: [
             "step": currentStep.rawValue,
-            "flow_schema": 2,
+            "flow_schema": 3,
             "pledge_enabled": pledgeEnabled as NSNumber
         ])
 
@@ -262,6 +270,14 @@ struct CloserOnboardingView: View {
         switch currentStep {
         case .notificationTime:
             applyResponsesAndComplete()
+        // Out-of-band hop: .email's raw value is 25 (appended to protect the
+        // funnel's numbering) but it RUNS here, between the review wall and the
+        // paywall. Skipped when the ask is remote-disabled or the address is
+        // already held, in which case the wall goes straight to the paywall.
+        case .testimonials where !subscriptionStore.shouldSkipEmailCapture:
+            withAnimation(.easeInOut(duration: 0.35)) { currentStep = .email }
+        case .email:
+            withAnimation(.easeInOut(duration: 0.35)) { currentStep = .paywall }
         default:
             var nextRaw = currentStep.rawValue + 1
             // FIRST, before the belief and rating gates below.
@@ -414,6 +430,13 @@ enum CloserStep: Int, CaseIterable {
     case testimonials        = 22  // App Store review wall — social proof right before the ask
     case paywall             = 23
     case notificationTime    = 24  // terminal — completes onboarding
+    // Appended, not inserted, although it RUNS between .testimonials and
+    // .paywall. These raw values are the `step` dimension on the onboarding
+    // funnel; giving email a value of 23 would renumber the paywall and
+    // notification steps and make every build before this one incomparable.
+    // The order is expressed in `advance()` instead, which routes
+    // .testimonials → .email → .paywall. Remote-gated by `emailCaptureEnabled`.
+    case email               = 25
 
     func valueScreenIndex(quizV2: Bool) -> Int? {
         var screens: [CloserStep] = [

@@ -15,6 +15,11 @@
 //     enums' raw values, transcribed. If a change here is deliberate, bump the
 //     angle's `flowSchema` and update these numbers together.
 //
+//  The numbers below are one higher from the paywall on than the hand-written
+//  enums', because `.email` was inserted between the review wall and the
+//  paywall and every arm's `flowSchema` was bumped with it. Everything before
+//  the review wall is untouched, which is why only the tail indices moved.
+//
 
 import XCTest
 @testable import SpeakLife
@@ -60,7 +65,7 @@ final class OnboardingAngleTests: XCTestCase {
     /// Raw values from `PromisesStep`, before the port.
     func testPromisesStepIndicesAreUnchanged() {
         let steps = OnboardingAngles.promises.steps
-        XCTAssertEqual(steps.count, 23)
+        XCTAssertEqual(steps.count, 24)
         XCTAssertEqual(steps[0], .storm)
         XCTAssertEqual(steps[5], .scene(4))       // everyArea
         XCTAssertEqual(steps[6], .experience)
@@ -69,8 +74,9 @@ final class OnboardingAngleTests: XCTestCase {
         XCTAssertEqual(steps[13], .belief)
         XCTAssertEqual(steps[14], .dailyMinutes)
         XCTAssertEqual(steps[17], .rating)
-        XCTAssertEqual(steps[21], .paywall)
-        XCTAssertEqual(steps[22], .notificationTime)
+        XCTAssertEqual(steps[21], .email)
+        XCTAssertEqual(steps[22], .paywall)
+        XCTAssertEqual(steps[23], .notificationTime)
     }
 
     /// Raw values from `WarfareStep`, before the port. Warfare is the one PORTED
@@ -79,7 +85,7 @@ final class OnboardingAngleTests: XCTestCase {
     /// lower than the other ported arms from the picker on.
     func testWarfareStepIndicesAreUnchanged() {
         let steps = OnboardingAngles.warfare.steps
-        XCTAssertEqual(steps.count, 22)
+        XCTAssertEqual(steps.count, 23)
         XCTAssertEqual(steps[0], .scene(0))       // thief
         XCTAssertEqual(steps[3], .scene(3))       // activation
         XCTAssertEqual(steps[4], .experience)
@@ -89,19 +95,21 @@ final class OnboardingAngleTests: XCTestCase {
         XCTAssertEqual(steps[12], .belief)
         XCTAssertEqual(steps[13], .dailyMinutes)
         XCTAssertEqual(steps[16], .rating)
-        XCTAssertEqual(steps[20], .paywall)
-        XCTAssertEqual(steps[21], .notificationTime)
+        XCTAssertEqual(steps[20], .email)
+        XCTAssertEqual(steps[21], .paywall)
+        XCTAssertEqual(steps[22], .notificationTime)
     }
 
     /// Raw values from `OutcomesStep`, before the port.
     func testOutcomesStepIndicesAreUnchanged() {
         let steps = OnboardingAngles.outcomes.steps
-        XCTAssertEqual(steps.count, 23)
+        XCTAssertEqual(steps.count, 24)
         XCTAssertEqual(steps[0], .storm)
         XCTAssertEqual(steps[1], .scene(0))       // stakes
         XCTAssertEqual(steps[6], .experience)
         XCTAssertEqual(steps[7], .picker)
-        XCTAssertEqual(steps[22], .notificationTime)
+        XCTAssertEqual(steps[21], .email)
+        XCTAssertEqual(steps[23], .notificationTime)
     }
 
     /// The command arm is the lean one: no storm opener, no product recap, three
@@ -113,7 +121,7 @@ final class OnboardingAngleTests: XCTestCase {
     /// bump the schema with it.
     func testCommandStepIndices() {
         let steps = OnboardingAngles.command.steps
-        XCTAssertEqual(steps.count, 14)
+        XCTAssertEqual(steps.count, 15)
         XCTAssertEqual(steps[0], .scene(0))       // Jesus' morning, screen one
         XCTAssertEqual(steps[2], .scene(2))       // sixty seconds
         XCTAssertEqual(steps[3], .picker)
@@ -122,8 +130,9 @@ final class OnboardingAngleTests: XCTestCase {
         XCTAssertEqual(steps[6], .dailyMinutes)
         XCTAssertEqual(steps[7], .firstDeclaration)
         XCTAssertEqual(steps[9], .rating)
-        XCTAssertEqual(steps[12], .paywall)
-        XCTAssertEqual(steps[13], .notificationTime)
+        XCTAssertEqual(steps[12], .email)
+        XCTAssertEqual(steps[13], .paywall)
+        XCTAssertEqual(steps[14], .notificationTime)
         // The trimmed screens are gone, not reordered.
         for dropped in [AngleStep.storm, .experience, .battleDuration, .alreadyTried,
                         .insight, .hitsHardest, .belief, .planBuilding] {
@@ -187,6 +196,30 @@ final class OnboardingAngleTests: XCTestCase {
             let screens = angle.valueScreens(quizV2: true)
             XCTAssertEqual(screens.last, .dailyMinutes, "\(id): the bar should run to the last quiz question")
             XCTAssertFalse(screens.contains(.paywall), "\(id): the paywall is not a value screen")
+            XCTAssertFalse(screens.contains(.email), "\(id): the email ask is not a value screen")
+        }
+    }
+
+    /// The email ask is worth the most from the users who DON'T subscribe, which
+    /// is only true while it runs before the paywall. Slip it after and it
+    /// collects addresses from the people we can already reach — the one
+    /// arrangement that makes the whole step pointless — so its position is
+    /// asserted for every arm rather than trusted to the builder.
+    func testEmailAskSitsImmediatelyBeforeThePaywall() {
+        for (id, angle) in OnboardingAngles.all {
+            let steps = angle.steps
+            guard let emailIndex = steps.firstIndex(of: .email) else {
+                return XCTFail("\(id): no email step")
+            }
+            guard let paywallIndex = steps.firstIndex(of: .paywall) else {
+                return XCTFail("\(id): no paywall step")
+            }
+            XCTAssertEqual(emailIndex + 1, paywallIndex,
+                           "\(id): the email ask must be the screen right before the paywall")
+            XCTAssertEqual(steps[emailIndex - 1], .testimonials,
+                           "\(id): the review wall should lead into the email ask")
+            XCTAssertEqual(steps.filter { $0 == .email }.count, 1,
+                           "\(id): asking twice would be asked twice in the live flow too")
         }
     }
 

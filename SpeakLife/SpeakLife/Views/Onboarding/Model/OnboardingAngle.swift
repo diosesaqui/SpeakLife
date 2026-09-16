@@ -43,6 +43,11 @@ struct OnboardingAngle {
     /// Bumped whenever the step ORDER changes, so `<flow>_step_completed`'s
     /// integer `step` can still be interpreted. Ported arms keep the value they
     /// were already emitting.
+    ///
+    /// Last bump (+1 on every arm): `.email` inserted between `.testimonials`
+    /// and `.paywall`, which shifts the index of the paywall and notification
+    /// steps in every angle. Events either side of it are not comparable by raw
+    /// `step`, which is exactly what this field exists to signal.
     let flowSchema: Int
     /// Icon treatment for the narrative screens. Warfare runs ember; the rest gold.
     let iconStyle: AngleIconStyle
@@ -144,6 +149,7 @@ enum AngleStep: Hashable {
     case planBuilding
     case planReveal
     case testimonials
+    case email
     case paywall
     case notificationTime
 }
@@ -166,7 +172,14 @@ extension OnboardingAngle {
         // `AngleOnboardingView.advance` skips over it instead.
         steps.append(contentsOf: [AngleStep.firstDeclaration, .personalDeclaration, .rating])
         if showsPlanBuilding { steps.append(.planBuilding) }
-        steps.append(contentsOf: [AngleStep.planReveal, .testimonials, .paywall, .notificationTime])
+        // `.email` sits between the review wall and the paywall: the last
+        // screen before the ask, so the address is captured from everyone who
+        // reaches the decision — including the majority who decline it and
+        // would otherwise be unreachable forever. Remote-gated
+        // (`emailCaptureEnabled`) and skipped once an address is already held;
+        // like `.rating`, it stays in this list either way so the step indices
+        // never shift under a flag. `AngleOnboardingView.advance` jumps it.
+        steps.append(contentsOf: [AngleStep.planReveal, .testimonials, .email, .paywall, .notificationTime])
         return steps
     }
 

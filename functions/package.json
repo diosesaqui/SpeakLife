@@ -5,7 +5,8 @@
     "deploy": "firebase deploy --only functions",
     "test:rules": "cd .. && firebase emulators:exec --only firestore --project speaklife-rules-test \"node functions/test/rules.test.js\"",
     "test:functions": "cd .. && firebase emulators:exec --only firestore --project speaklife-fn-test \"node functions/test/standTogether.test.js\"",
-    "test": "npm run test:rules && npm run test:functions"
+    "test:email": "node --test test/emailCapture.test.js",
+    "test": "npm run test:rules && npm run test:functions && npm run test:email"
   },
   "engines": {
     "node": "22"

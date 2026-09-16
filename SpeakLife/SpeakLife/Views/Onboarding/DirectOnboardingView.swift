@@ -319,6 +319,16 @@ struct DirectOnboardingView: View {
             ) { advance() }
         case .testimonials:
             TestimonialWallView(size: size, flow: "direct") { advance() }
+        case .email:
+            // This arm classifies the pain from what the user wrote, at a finer
+            // granularity than the seven burdens, so send that rather than the
+            // rounded-off burden. Falls back to the burden for users who never
+            // got a declaration.
+            EmailCaptureScreen(
+                size: size,
+                flow: "direct",
+                burden: pain?.rawValue ?? responses.heaviestBurden?.rawValue
+            ) { advance() }
         case .paywall:
             HighConversionPaywallView(callback: { advance() }, source: "onboarding", isHardPaywall: true)
         case .connectStyle:
@@ -398,6 +408,19 @@ struct DirectOnboardingView: View {
         switch currentStep {
         case .notificationTime:
             applyResponsesAndComplete()
+        // Out-of-band hop: .email's raw value is 15 (appended to protect the
+        // funnel's numbering) but it RUNS here, between the review wall and the
+        // paywall. Skipped when the ask is remote-disabled or the address is
+        // already held, in which case the wall goes straight to the paywall.
+        //
+        // Note this sits AFTER the `onboarding_completed` fire above, which is
+        // keyed to leaving the review wall. That event marks the last
+        // pre-paywall milestone and must keep firing at the same point in the
+        // arc, whether or not the email ask runs.
+        case .testimonials where !subscriptionStore.shouldSkipEmailCapture:
+            withAnimation(.easeInOut(duration: 0.35)) { currentStep = .email }
+        case .email:
+            withAnimation(.easeInOut(duration: 0.35)) { currentStep = .paywall }
         default:
             var nextRaw = currentStep.rawValue + 1
             // The picker and the retry are both recovery, not part of the flow.
@@ -578,6 +601,13 @@ enum DirectStep: Int, CaseIterable {
     case paywall          = 12
     case connectStyle     = 13 // setup, not persuasion — orders their daily rows from tomorrow
     case notificationTime = 14 // terminal — completes onboarding
+    // Appended, not inserted, although it RUNS between .testimonials and
+    // .paywall. These raw values are the `step` dimension on the onboarding
+    // funnel; giving email a value of 12 would renumber the paywall and
+    // everything after it. The order is expressed in `advance()` instead,
+    // which routes .testimonials → .email → .paywall. Remote-gated by
+    // `emailCaptureEnabled`.
+    case email            = 15
 
     /// Position in the question phase, for the progress bar.
     ///
@@ -623,7 +653,12 @@ enum DirectStep: Int, CaseIterable {
     /// that answers it, a pledge before the ask, auto-advance on every one-tap
     /// question, and a progress bar over the whole one-tap half. Every step
     /// after the mechanism is renumbered again.
-    static let flowSchema = 7
+    /// 7 → 8: the email ask was added between the review wall and the paywall.
+    /// The raw values are untouched (`.email` is appended at 15 and reached by
+    /// an explicit hop in `advance()`), but a screen now stands between the
+    /// wall and the ask, so the paywall's drop-off is not comparable to
+    /// schema-7's.
+    static let flowSchema = 8
 
     /// Stable analytics name. Funnels and breakdowns are built on this, not on
     /// the raw Int — a `step_name` of "mechanism" is readable in PostHog where
@@ -645,6 +680,7 @@ enum DirectStep: Int, CaseIterable {
         case .paywall:          return "paywall"
         case .connectStyle:     return "connect_style"
         case .notificationTime: return "notification_time"
+        case .email:            return "email_capture"
         }
     }
 }

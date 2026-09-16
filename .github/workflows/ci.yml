@@ -225,3 +225,31 @@ jobs:
           path: TestResults.xcresult
           retention-days: 14
           if-no-files-found: ignore
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Cloud Functions logic that needs neither Xcode nor the Firestore emulator.
+  #
+  # Runs on Linux in seconds, alongside the macOS jobs rather than behind them.
+  # The emulator-backed suites (test:rules, test:functions) are deliberately not
+  # here: they need a Firebase project and a JVM, which is a slower and more
+  # fragile setup than this job is meant to be.
+  # ───────────────────────────────────────────────────────────────────────────
+  functions-tests:
+    name: Cloud Functions unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Install dependencies
+        working-directory: functions
+        run: npm ci
+
+      - name: Email capture tests
+        working-directory: functions
+        run: npm run test:email
