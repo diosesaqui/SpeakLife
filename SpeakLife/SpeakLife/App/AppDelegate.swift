@@ -750,24 +750,102 @@ enum BranchAttribution {
             SubscriptionStore.handleIncomingURL(url, source: "ad")
         }
 
-        // Branch's own attribution keys beat anything parsed off the URL: they
-        // name the network that actually served the click, which a link's
-        // utm_source only claims. Left here so the channel arrives the moment
-        // the SDK is added, rather than needing a second pass.
-        let network = (params["~advertising_partner_name"] as? String)
-            ?? (params["~channel"] as? String)
-        let channel = AcquisitionChannel.from(sourceString: network)
-
+        // Only a real link click is an attribution. See `attribution(from:)`.
+        guard let attribution = attribution(from: params) else { return }
         AcquisitionAttribution.shared.record(
-            channel: channel == .unknown ? .ownedDeeplink : channel,
-            source: network ?? "branch",
-            campaign: params["~campaign"] as? String,
-            adGroup: params["~ad_set_name"] as? String,
-            creative: params["~creative_name"] as? String,
-            keyword: params["~keyword"] as? String
+            channel: attribution.channel,
+            source: attribution.source,
+            campaign: attribution.campaign,
+            adGroup: attribution.adGroup,
+            creative: attribution.creative,
+            keyword: attribution.keyword
         )
     }
     #endif
+
+    // MARK: - Attribution decision
+    //
+    // Pure and outside the SDK guard, so it is unit-testable without Branch.
+
+    struct Attribution: Equatable {
+        let channel: AcquisitionChannel
+        let source: String
+        let campaign: String?
+        let adGroup: String?
+        let creative: String?
+        let keyword: String?
+    }
+
+    /// What a Branch session says about acquisition, or nil when it says nothing.
+    ///
+    /// `initSession` calls back on EVERY launch, not just link opens. A session
+    /// with no matched click still returns params (`+clicked_branch_link:
+    /// false`, `+is_first_session`, `+non_branch_link`), and this used to record
+    /// all of them as `owned_deeplink / branch`. That outranks `organic` (60 vs
+    /// 10), so it overwrote the organic decision for nearly every install: 360
+    /// of 382 onboarding starters over 14 days read `owned_deeplink` with no
+    /// campaign. No click, no attribution: AcquisitionAttribution's own organic
+    /// finalizer owns that answer.
+    static func attribution(from params: [String: Any]) -> Attribution? {
+        guard clickedBranchLink(params) else { return nil }
+
+        func string(_ key: String) -> String? {
+            guard let value = params[key] as? String else { return nil }
+            let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+            return trimmed.isEmpty ? nil : trimmed
+        }
+
+        // Branch's own attribution keys beat anything parsed off the URL: they
+        // name the network that actually served the click, which a link's
+        // utm_source only claims. Most specific first — the ad partner, then
+        // the link's channel, then its feature ("paid advertising", "invite").
+        let candidates = [
+            string("~advertising_partner_name"),
+            string("~channel"),
+            string("~feature")
+        ].compactMap { $0 }
+
+        var channel = candidates
+            .lazy
+            .map { AcquisitionChannel.from(sourceString: $0) }
+            .first { $0 != .unknown } ?? .unknown
+
+        // A stand invite is a person inviting a person, whatever the link's
+        // channel field was left as.
+        if channel == .unknown, string("stand") != nil
+            || string("~referring_link").flatMap({ URL(string: $0) }).flatMap(StandLink.code(from:)) != nil {
+            channel = .referral
+        }
+
+        // A real click with no network named is still an owned link.
+        if channel == .unknown { channel = .ownedDeeplink }
+
+        return Attribution(
+            channel: channel,
+            // Raw network text survives here even when the channel is coarse.
+            source: candidates.first ?? "branch",
+            campaign: string("~campaign"),
+            adGroup: string("~ad_set_name"),
+            creative: string("~creative_name"),
+            keyword: string("~keyword")
+        )
+    }
+
+    /// `+clicked_branch_link` arrives as a Bool from the SDK, but as an
+    /// NSNumber or a string when it has crossed a JSON or Objective-C boundary.
+    /// Anything unreadable counts as no click.
+    static func clickedBranchLink(_ params: [String: Any]) -> Bool {
+        switch params["+clicked_branch_link"] {
+        case let flag as Bool:
+            return flag
+        case let number as NSNumber:
+            return number.boolValue
+        case let text as String:
+            return ["true", "1", "yes"].contains(text.trimmingCharacters(in: .whitespaces).lowercased())
+        default:
+            return false
+        }
+    }
 }
 
 // MARK: - AppsFlyer (MMP)
