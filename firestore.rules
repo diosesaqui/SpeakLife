@@ -15,8 +15,8 @@ rules_version = '2';
 //   - standNudges/{uid}                         (server-only)
 //   - accountMerges/{ticket}                    (server-only)
 //
-// ...and onboarding email collection:
-//   - emailSubscribers/{sha256(email)}          (server-only)
+// Email collection lives in a DIFFERENT database (`speaklife`, collection
+// `email_list`) and is governed by firestore.speaklife.rules, not this file.
 //
 // See docs/STAND_TOGETHER_SPEC.md and docs/EMAIL_COLLECTION.md.
 //
@@ -398,23 +398,5 @@ service cloud.firestore {
     match /standInvites/{code}    { allow read, write: if false; }
     match /standNudges/{uid}      { allow read, write: if false; }
     match /accountMerges/{ticket} { allow read, write: if false; }
-
-    // ─── Email subscribers ─────────────────────────────────────────────
-    //
-    // Closed to clients entirely, in BOTH directions, and neither half is
-    // optional.
-    //
-    // Read: this collection is the marketing list. One readable document is
-    // every address the app has ever collected, harvestable by anyone who can
-    // run the SDK against the project.
-    //
-    // Write: the app never writes here. It posts to the `collectEmail`
-    // function, which validates the address and holds the Klaviyo key. A
-    // client-writable path would let anyone stuff the list with addresses they
-    // do not own — which is how a sending domain gets burned.
-    //
-    // The Admin SDK bypasses these rules, so the function is unaffected.
-
-    match /emailSubscribers/{docId} { allow read, write: if false; }
   }
 }

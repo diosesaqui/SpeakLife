@@ -67,18 +67,34 @@ test('normalizeEmail collapses case and whitespace so one person is one doc', ()
   assert.strictEqual(H.normalizeEmail('  Me@Example.COM '), 'me@example.com');
 });
 
-test('docIdFor is stable, hex, and derived from the normalized address', () => {
-  const id = H.docIdFor('me@example.com');
-  assert.match(id, /^[0-9a-f]{64}$/);
-  assert.strictEqual(id, H.docIdFor('me@example.com'));
-  assert.notStrictEqual(id, H.docIdFor('other@example.com'));
+test('docIdFor reproduces the legacy sanitizing exactly', () => {
+  // This is the contract with every record written before 2026-06-12. The old
+  // Swift replaced dots FIRST and then '@', so 'me@example.com' becomes
+  // 'me_at_example_com' and not 'me_at_example.com'. Break this and a
+  // returning subscriber writes a second document instead of updating theirs.
+  assert.strictEqual(H.docIdFor('me@example.com'), 'me_at_example_com');
+  assert.strictEqual(H.docIdFor('first.last@sub.domain.co.uk'),
+                     'first_last_at_sub_domain_co_uk');
+  assert.strictEqual(H.docIdFor('someone+speaklife@gmail.com'),
+                     'someone+speaklife_at_gmail_com');
 });
 
-test('docIdFor survives local parts that would break Firestore .doc()', () => {
-  // A slash or a bare dot segment in a document id throws synchronously. The
-  // hash is what makes that impossible, so this is the case that matters.
-  for (const weird of ['a/b@example.com', '.@example.com', '..@example.com']) {
-    assert.match(H.docIdFor(H.normalizeEmail(weird)), /^[0-9a-f]{64}$/);
+test('docIdFor prefers the Firebase UID, matching the legacy scheme', () => {
+  // Legacy: `let documentId = userId ?? sanitizedEmail`. The UID is what ties
+  // an email update to the same user record.
+  assert.strictEqual(H.docIdFor('me@example.com', 'abc123uid'), 'abc123uid');
+  assert.strictEqual(H.docIdFor('me@example.com', null), 'me_at_example_com');
+  assert.strictEqual(H.docIdFor('me@example.com', undefined), 'me_at_example_com');
+});
+
+test('docIdFor neutralizes ids Firestore would reject', () => {
+  // A '/' makes .doc() throw and a bare dot segment is reserved. Both are
+  // legal in an email local part, and the legacy Swift would have crashed the
+  // write on them.
+  assert.strictEqual(H.docIdFor('a/b@example.com').includes('/'), false);
+  for (const id of [H.docIdFor('.@example.com'), H.docIdFor('..@example.com')]) {
+    assert.notStrictEqual(id, '.');
+    assert.notStrictEqual(id, '..');
   }
 });
 
@@ -110,7 +126,7 @@ async function captureKlaviyoCall(response, args = {}) {
       apiKey: 'pk_test',
       listId: 'WaeTSA',
       email: 'me@example.com',
-      properties: { speaklife_source: 'onboarding' },
+      properties: { source: 'onboarding' },
       ...args,
     });
     return { result, calls };
@@ -164,11 +180,11 @@ test('subscribeToKlaviyo opts in as a current signup, not a backdated import', a
 
 test('subscribeToKlaviyo stamps the properties it was given', async () => {
   const { calls } = await captureKlaviyoCall(accepted, {
-    properties: { speaklife_source: 'onboarding', speaklife_burden: 'peace' },
+    properties: { source: 'onboarding', speaklife_burden: 'peace' },
   });
   const body = JSON.parse(calls[0].init.body);
   assert.deepStrictEqual(body.data.attributes.profiles.data[0].attributes.properties, {
-    speaklife_source: 'onboarding',
+    source: 'onboarding',
     speaklife_burden: 'peace',
   });
 });
@@ -177,10 +193,24 @@ test('subscribeToKlaviyo omits null properties rather than clearing good ones', 
   // An object of nulls would overwrite the variant and burden recorded on an
   // earlier submission with nothing.
   const { calls } = await captureKlaviyoCall(accepted, {
-    properties: { speaklife_source: 'onboarding', speaklife_burden: null },
+    properties: { source: 'onboarding', speaklife_burden: null },
   });
   const attrs = JSON.parse(calls[0].init.body).data.attributes.profiles.data[0].attributes;
-  assert.deepStrictEqual(attrs.properties, { speaklife_source: 'onboarding' });
+  assert.deepStrictEqual(attrs.properties, { source: 'onboarding' });
+});
+
+test('subscribeToKlaviyo carries first_name when it has one', async () => {
+  const { calls } = await captureKlaviyoCall(accepted, { firstName: 'Riccardo' });
+  const attrs = JSON.parse(calls[0].init.body).data.attributes.profiles.data[0].attributes;
+  assert.strictEqual(attrs.first_name, 'Riccardo');
+});
+
+test('subscribeToKlaviyo omits first_name rather than blanking it', async () => {
+  // Sending an empty first_name would wipe the name on a profile that already
+  // had one from an earlier capture.
+  const { calls } = await captureKlaviyoCall(accepted, { firstName: null });
+  const attrs = JSON.parse(calls[0].init.body).data.attributes.profiles.data[0].attributes;
+  assert.strictEqual('first_name' in attrs, false);
 });
 
 test('subscribeToKlaviyo sends no properties key when it has none', async () => {

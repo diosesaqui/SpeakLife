@@ -21,6 +21,7 @@
 //
 
 import Foundation
+import FirebaseAuth
 
 final class EmailCaptureService {
     static let shared = EmailCaptureService()
@@ -41,10 +42,20 @@ final class EmailCaptureService {
         /// Set once the address has actually reached the server. Gates the
         /// onboarding screen so a returning user is never asked twice.
         static let captured = "emailCaptureCompleted"
-        /// The address itself, for the profile row and for prefilling.
-        static let address = "emailCaptureAddress"
+        /// The address itself, for the Profile row and for prefilling.
+        ///
+        /// Deliberately the LEGACY key. `AppState.email` was `@AppStorage("email")`
+        /// before the subsystem was removed, and installs that gave an address
+        /// back then still have it sitting in UserDefaults under this name.
+        /// Reusing it means those users see their address in the Profile row and
+        /// are never asked for it again, instead of being treated as brand new.
+        static let address = "email"
         /// A submission that has not reached the server yet, retried on launch.
         static let pending = "emailCapturePendingPayload"
+        /// Legacy: set when the post-purchase ask has been shown once, so it
+        /// never reappears. Same key the removed EmailCaptureView used, so
+        /// anyone who already dismissed it is not asked again.
+        static let shownAfterPurchase = "hasShownEmailCapture"
     }
 
     private let defaults: UserDefaults
@@ -55,12 +66,31 @@ final class EmailCaptureService {
         self.session = session
     }
 
-    /// True once an address has been accepted by the server. The onboarding
-    /// step reads this and skips itself.
-    var hasCapturedEmail: Bool { defaults.bool(forKey: Keys.captured) }
+    /// True once we hold an address for this install. The onboarding step reads
+    /// this and skips itself.
+    ///
+    /// The second clause is what carries legacy users across: someone who gave
+    /// their address through the old capture sheet has `email` in UserDefaults
+    /// but none of this service's own flags, and asking them again for
+    /// something they already gave is the rudest thing this feature could do.
+    var hasCapturedEmail: Bool {
+        defaults.bool(forKey: Keys.captured) || !capturedEmail.isEmpty
+    }
 
-    /// The captured address, if there is one.
-    var capturedEmail: String? { defaults.string(forKey: Keys.address) }
+    /// The captured address, or "" when there is none.
+    var capturedEmail: String {
+        (defaults.string(forKey: Keys.address) ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// Whether the post-purchase ask has already had its one chance.
+    var hasShownPostPurchaseAsk: Bool { defaults.bool(forKey: Keys.shownAfterPurchase) }
+
+    /// Spend the post-purchase ask, whether or not the user actually submitted.
+    /// Mirrors the old view's `onDisappear`: one ask per install, ever.
+    func markPostPurchaseAskShown() {
+        defaults.set(true, forKey: Keys.shownAfterPurchase)
+    }
 
     // MARK: - Validation
 
@@ -84,7 +114,13 @@ final class EmailCaptureService {
     ///   - source: where in the app the ask happened, e.g. "onboarding".
     ///   - variant: the onboarding arm, so list segmentation matches the funnel.
     ///   - burden: the area they picked, for segmented sends.
-    func submit(email: String, source: String, variant: String?, burden: String?) {
+    func submit(
+        email: String,
+        source: String,
+        variant: String? = nil,
+        burden: String? = nil,
+        firstName: String? = nil
+    ) {
         let normalized = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard Self.isValidEmail(normalized) else { return }
 
@@ -95,14 +131,41 @@ final class EmailCaptureService {
 
         var payload: [String: String] = ["email": normalized, "source": source]
         payload["appUserId"] = RevenueCatManager.shared.appUserID
+        // The Firebase UID is the legacy document id: `userId ?? sanitizedEmail`.
+        // Usually nil during onboarding, because nothing has created an account
+        // yet — which is exactly why the server keeps the sanitized-email
+        // fallback rather than requiring one.
+        if let uid = Auth.auth().currentUser?.uid, !uid.isEmpty {
+            payload["userId"] = uid
+        }
+        payload["appVersion"] =
+            Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"
         if let variant { payload["variant"] = variant }
         if let burden { payload["burden"] = burden }
+        if let firstName, !firstName.isEmpty { payload["firstName"] = firstName }
 
         queue(payload)
 
         Task.detached(priority: .utility) { [weak self] in
             await self?.flushPending()
         }
+    }
+
+    /// Re-send the address we already hold, tagged `post_purchase`.
+    ///
+    /// This is what the removed `EmailConfirmationView` was for: someone who
+    /// gave their address earlier subscribes, and the profile should say so, so
+    /// buyer and non-buyer flows can be segmented apart in Klaviyo.
+    ///
+    /// It does that without a screen. The old build put a whole confirmation
+    /// sheet in front of a user who had already typed their address, purely to
+    /// change a string on the server. Asking someone to re-confirm something
+    /// they never changed is friction spent on our bookkeeping, seconds after
+    /// they paid — the worst possible moment to take up their attention.
+    func retagAsPostPurchase() {
+        let stored = capturedEmail
+        guard !stored.isEmpty else { return }
+        submit(email: stored, source: "post_purchase")
     }
 
     /// Retry anything a previous run could not deliver. Called on launch.

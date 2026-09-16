@@ -1,13 +1,15 @@
 /**
- * emailCapture — onboarding email collection.
+ * emailCapture — email collection for the app.
  *
- * The app posts an address from the pre-paywall onboarding screen; this module
- * is the only thing that ever touches it. Two jobs, in this order:
+ * This replaces `EmailMarketingService.swift`, which shipped from 2026-03-16
+ * until commit c605131f removed the whole subsystem on 2026-06-19. The app
+ * posts an address here from onboarding, the Profile row, or after a purchase;
+ * this module is the only thing that ever touches it. Two jobs, in order:
  *
- *   1. Write it to Firestore (`emailSubscribers/{sha256(email)}`). This is the
- *      source of truth and it is what makes the address OURS — it survives a
- *      Klaviyo outage, a rotated key, and a decision to move off Klaviyo
- *      entirely.
+ *   1. Write it to Firestore (`email_list` in the `speaklife` database, the
+ *      same collection the old service wrote). This is the source of truth and
+ *      it is what makes the address OURS — it survives a Klaviyo outage, a
+ *      rotated key, and a decision to move off Klaviyo entirely.
  *   2. Subscribe it to the Klaviyo list, so it is usable for campaigns without
  *      anyone exporting anything by hand.
  *
@@ -17,13 +19,20 @@
  * is already past the screen. So the client gets a 200 as soon as the write
  * lands, and the doc carries `klaviyoStatus` for the retry sweep to find.
  *
+ * TWO THINGS THE OLD SERVICE GOT WRONG, both fixed here:
+ *
+ *   - It read the Klaviyo PRIVATE key from `EmailConfig.plist`, bundled in the
+ *     app. That key was committed to git and extractable from every shipped
+ *     binary, and a Klaviyo private key is full account access. It now lives in
+ *     this function's secrets, which is the entire reason this is server-side.
+ *   - It never recorded consent (see `subscribeToKlaviyo`).
+ *
  * Setup:
  *   firebase functions:secrets:set KLAVIYO_API_KEY     # private key, pk_...
- *   firebase functions:secrets:set KLAVIYO_LIST_ID     # e.g. WaeTSA ("Email List")
+ *   firebase functions:secrets:set KLAVIYO_LIST_ID     # WaeTSA ("Email List")
  *
- * The private key is a secret and stays server-side. It is never shipped in the
- * app binary, which is the whole reason this function exists instead of the
- * client calling Klaviyo directly.
+ * Use a NEWLY ROTATED key. The one the app shipped with must be considered
+ * compromised.
  */
 
 const { onRequest } = require('firebase-functions/v2/https');
@@ -31,15 +40,27 @@ const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { defineSecret } = require('firebase-functions/params');
 const { logger } = require('firebase-functions');
 const admin = require('firebase-admin');
+const { getFirestore } = require('firebase-admin/firestore');
 const crypto = require('crypto');
 
 if (admin.apps.length === 0) admin.initializeApp();
-const db = admin.firestore();
+
+// The NAMED database, not the default one, and not a detail to "clean up".
+// Every address collected between 2026-03-16 and 2026-06-12 lives in
+// `email_list` here, written by the EmailMarketingService that shipped until
+// commit c605131f removed it. Pointing this function anywhere else would fork
+// the list in two: the same person re-subscribing would land in a different
+// database from their own existing record.
+//
+// Nothing else in the app reads or writes this database — every other
+// Firestore call site uses the default one.
+const DATABASE_ID = 'speaklife';
+const db = getFirestore(DATABASE_ID);
 
 const KLAVIYO_API_KEY = defineSecret('KLAVIYO_API_KEY');
 const KLAVIYO_LIST_ID = defineSecret('KLAVIYO_LIST_ID');
 
-const COLLECTION = 'emailSubscribers';
+const COLLECTION = 'email_list';
 
 // Pinned deliberately. Klaviyo versions its API by date and an unpinned client
 // gets moved onto breaking changes without a deploy on our side.
@@ -81,13 +102,35 @@ function normalizeEmail(value) {
 }
 
 /**
- * Doc id is the hash, not the address. Firestore ids show up in logs, console
- * URLs and error traces; a hash keeps the address itself in the document body
- * where the security rules actually cover it. It also sidesteps `/` and `..`,
- * which are legal in an email local part and would make `.doc()` throw.
+ * The document id for an address, matching the legacy scheme EXACTLY.
+ *
+ * `EmailMarketingService.saveToFirebase` used the Firebase UID when there was
+ * one and a sanitized address otherwise:
+ *
+ *     let documentId = userId ?? email
+ *         .replacingOccurrences(of: ".", with: "_")
+ *         .replacingOccurrences(of: "@", with: "_at_")
+ *
+ * Dots first, then `@` — the order matters, and so does reproducing it here.
+ * Get it wrong and a returning subscriber writes a SECOND document instead of
+ * updating their own, which is how a list quietly doubles and every count
+ * drawn from it becomes wrong.
+ *
+ * A hash would be the better design in isolation (it keeps the address out of
+ * logs and console URLs, and sidesteps `/` and `..`), but it would orphan every
+ * record already written. Compatibility wins; the sanitizing below covers the
+ * ids `.doc()` would actually reject.
  */
-function docIdFor(normalizedEmail) {
-  return crypto.createHash('sha256').update(normalizedEmail).digest('hex');
+function docIdFor(normalizedEmail, userId) {
+  if (userId) return userId;
+  const sanitized = normalizedEmail
+    .replace(/\./g, '_')
+    .replace(/@/g, '_at_')
+    // Not in the legacy scheme, because a Swift String could hold these where
+    // a Firestore id cannot. `/` makes .doc() throw and a bare dot segment is
+    // reserved, so they are neutralized rather than left to crash the write.
+    .replace(/\//g, '_');
+  return sanitized === '.' || sanitized === '..' ? `_${sanitized}_` : sanitized;
 }
 
 /** Trimmed, capped, and empty-to-null so blank strings never reach Klaviyo. */
@@ -107,14 +150,25 @@ function cleanField(value) {
  * Returns { ok: true } or { ok: false, error, status }. Never throws: the
  * caller's contract with the client is that Klaviyo cannot fail the request.
  */
-async function subscribeToKlaviyo({ apiKey, listId, email, properties }) {
+async function subscribeToKlaviyo({ apiKey, listId, email, firstName, properties }) {
   const profile = {
     type: 'profile',
     attributes: {
       email,
+      // The half the old EmailMarketingService never wrote.
+      //
+      // It created the profile with POST /api/profiles/ and then added it to
+      // the list through a relationship, which records MEMBERSHIP but leaves
+      // consent untouched. Every profile collected that way still reads
+      // `consent: NEVER_SUBSCRIBED` with a null consent_timestamp and no
+      // method, so there is no record of anyone having agreed to anything.
+      //
+      // The bulk subscribe job is the only endpoint that creates-or-updates
+      // the profile AND writes consent in one call, which is why this uses it.
       subscriptions: { email: { marketing: { consent: 'SUBSCRIBED' } } },
     },
   };
+  if (firstName) profile.attributes.first_name = firstName;
   // Only stamp properties we actually have — an object of nulls overwrites
   // good values from an earlier submission with nothing.
   const stamped = Object.fromEntries(
@@ -205,33 +259,46 @@ exports.collectEmail = onRequest(
     }
 
     const email = normalizeEmail(rawEmail);
-    const docId = docIdFor(email);
 
+    const userId = cleanField(body.userId);
     const appUserId = cleanField(body.appUserId);
     const source = cleanField(body.source) || 'onboarding';
     const variant = cleanField(body.variant);
     const burden = cleanField(body.burden);
+    const firstName = cleanField(body.firstName);
+    const appVersion = cleanField(body.appVersion) || 'unknown';
 
+    const docId = docIdFor(email, userId);
     const ref = db.collection(COLLECTION).doc(docId);
 
     // ─── 1. Firestore: the address is ours the moment this returns ───────
     try {
       const existing = await ref.get();
       const payload = {
+        // Legacy field names, kept verbatim. `timestamp`, `platform`,
+        // `app_version`, `user_id` and `first_name` are what the records
+        // written before June already carry, and what any export or Klaviyo
+        // import built against this collection expects. Renaming them to
+        // something tidier would split the schema across one collection.
         email,
-        appUserId,
         source,
+        platform: 'iOS',
+        app_version: appVersion,
+        // New fields, additive only.
+        appUserId,
         variant,
         burden,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         klaviyoStatus: 'pending',
         retryCount: 0,
       };
-      // Stamped on the first write only. A returning user re-submitting the
-      // same address must not look like a brand new subscriber, so this is
-      // conditional rather than part of the merge.
+      if (userId) payload.user_id = userId;
+      if (firstName) payload.first_name = firstName;
+      // `timestamp` is the legacy creation stamp and is written once, on the
+      // first write. A returning user re-submitting must not look like a brand
+      // new subscriber, so this is conditional rather than part of the merge.
       if (!existing.exists) {
-        payload.createdAt = admin.firestore.FieldValue.serverTimestamp();
+        payload.timestamp = admin.firestore.FieldValue.serverTimestamp();
       }
       await ref.set(payload, { merge: true });
     } catch (err) {
@@ -256,8 +323,15 @@ exports.collectEmail = onRequest(
       apiKey,
       listId,
       email,
+      firstName,
       properties: {
-        speaklife_source: source,
+        // `source`, `platform` and `app_version` are the property names the
+        // existing Klaviyo profiles already carry, so segments built on them
+        // keep working. The speaklife_* pair is new.
+        source,
+        platform: 'iOS',
+        app_version: appVersion,
+        firebase_uid: userId,
         speaklife_onboarding_variant: variant,
         speaklife_burden: burden,
       },
@@ -301,6 +375,12 @@ exports.retryKlaviyoSync = onSchedule(
       return;
     }
 
+    // `klaviyoStatus` is a field this function introduced, so records written
+    // by the old service — every address collected before 2026-06-12 — simply
+    // do not match and are never touched. That is deliberate: those profiles
+    // are already in Klaviyo, and re-subscribing thousands of them would
+    // rewrite consent timestamps to today and fire the welcome flow at people
+    // who joined months ago.
     const snap = await db
       .collection(COLLECTION)
       .where('klaviyoStatus', '==', 'pending')
@@ -324,8 +404,12 @@ exports.retryKlaviyoSync = onSchedule(
         apiKey,
         listId,
         email: data.email,
+        firstName: data.first_name,
         properties: {
-          speaklife_source: data.source,
+          source: data.source,
+          platform: 'iOS',
+          app_version: data.app_version,
+          firebase_uid: data.user_id,
           speaklife_onboarding_variant: data.variant,
           speaklife_burden: data.burden,
         },

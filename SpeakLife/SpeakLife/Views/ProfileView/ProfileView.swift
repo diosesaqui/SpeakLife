@@ -56,6 +56,7 @@ struct ProfileView: View {
     @State private var showShareSheet = false
     @State private var showSpiritualGrowth = false
     @State private var showSupportIDCopied = false
+    @State private var showEmailCaptureSheet = false
     @State private var showFCMTokenCopied = false
     @State private var showHowToUse = false
     @State private var showCommunity = false
@@ -147,6 +148,7 @@ struct ProfileView: View {
                     
                     Section(header: Text("SUPPORT").font(.caption)) {
     
+                        emailRow
                         shareRow
                         reviewRow
                         feedbackRow
@@ -752,6 +754,41 @@ struct ProfileView: View {
     }
 
     @ViewBuilder
+    /// Restored from the removed subsystem (c605131f), label and all.
+    ///
+    /// This is the only surface where someone can give an address AFTER
+    /// onboarding, or change one that has gone stale. The onboarding step is
+    /// skippable by design, so without this row every skip is permanent.
+    @ViewBuilder
+    private var emailRow: some View {
+        Button(action: { showEmailCaptureSheet = true }) {
+            HStack {
+                Image(systemName: appState.email.isEmpty ? "envelope.fill" : "envelope.badge.fill")
+                    .foregroundColor(.primary)
+                    .frame(width: 24)
+                Text(appState.email.isEmpty ? "Join Weekly Emails" : "Update Email")
+                    .foregroundColor(.primary)
+                Spacer()
+                if !appState.email.isEmpty {
+                    Text(appState.email)
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
+                Image(systemName: "chevron.right")
+                    .foregroundColor(.secondary)
+                    .font(.footnote)
+            }
+            .padding(.vertical, 4)
+        }
+        .sheet(isPresented: $showEmailCaptureSheet) {
+            EmailCaptureSheet(source: "settings")
+                .environmentObject(appState)
+                .environmentObject(subscriptionStore)
+        }
+    }
+
     private var supportIDRow: some View {
         Button(action: {
             let userID = Purchases.shared.appUserID

@@ -191,6 +191,7 @@
 		45C15A942F3704EB006171F5 /* SpiritualWarfareContentScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C15A932F3704EB006171F5 /* SpiritualWarfareContentScreens.swift */; };
 		45C15A962F37064A006171F5 /* OptimizedSubscriptionViewV2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C15A952F37064A006171F5 /* OptimizedSubscriptionViewV2.swift */; };
 		45C15A982F370869006171F5 /* StreamlinedSpiritualWarfareFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C15A972F370869006171F5 /* StreamlinedSpiritualWarfareFlow.swift */; };
+		EMA11000000000000000007 /* EmailCaptureSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = EMA11000000000000000006 /* EmailCaptureSheet.swift */; };
 		EMA11000000000000000002 /* EmailCaptureScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = EMA11000000000000000001 /* EmailCaptureScreen.swift */; };
 		EMA11000000000000000004 /* EmailCaptureService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EMA11000000000000000003 /* EmailCaptureService.swift */; };
 		45C15AB42F400001006171F5 /* TestimonialWallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C15AB32F400001006171F5 /* TestimonialWallView.swift */; };
@@ -606,6 +607,7 @@
 		45C15A932F3704EB006171F5 /* SpiritualWarfareContentScreens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpiritualWarfareContentScreens.swift; sourceTree = "<group>"; };
 		45C15A952F37064A006171F5 /* OptimizedSubscriptionViewV2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OptimizedSubscriptionViewV2.swift; sourceTree = "<group>"; };
 		45C15A972F370869006171F5 /* StreamlinedSpiritualWarfareFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreamlinedSpiritualWarfareFlow.swift; sourceTree = "<group>"; };
+		EMA11000000000000000006 /* EmailCaptureSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailCaptureSheet.swift; sourceTree = "<group>"; };
 		EMA11000000000000000001 /* EmailCaptureScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailCaptureScreen.swift; sourceTree = "<group>"; };
 		EMA11000000000000000003 /* EmailCaptureService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailCaptureService.swift; sourceTree = "<group>"; };
 		45C15AB32F400001006171F5 /* TestimonialWallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestimonialWallView.swift; sourceTree = "<group>"; };
@@ -1611,6 +1613,7 @@
 		7AA870A328DACCB700134ADB /* ProfileView */ = {
 			isa = PBXGroup;
 			children = (
+				EMA11000000000000000006 /* EmailCaptureSheet.swift */,
 				4525D9A42F54F7DA00571394 /* CancelInterventionView.swift */,
 				7AF18C9D2A0DB056005A6E31 /* Tracker */,
 				7AA870B528DACCB700134ADB /* ProfileBarButton.swift */,
@@ -2216,6 +2219,7 @@
 				45C15A8E2F35751A006171F5 /* TestimonialsOnboardingView.swift in Sources */,
 				45C15AB42F400001006171F5 /* TestimonialWallView.swift in Sources */,
 				EMA11000000000000000002 /* EmailCaptureScreen.swift in Sources */,
+				EMA11000000000000000007 /* EmailCaptureSheet.swift in Sources */,
 				EMA11000000000000000004 /* EmailCaptureService.swift in Sources */,
 				7AA870CF28DACCB700134ADB /* MailView.swift in Sources */,
 				45F3E75B2EAAAD41002B1F4E /* CreateYourOwnTutorial.swift in Sources */,
