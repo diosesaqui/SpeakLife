@@ -186,7 +186,27 @@ struct StandInviteRow: View {
 
     private var subtitle: String {
         guard let existingRoom, !companions.isEmpty else {
-            return "They speak the same words, all 7 days."
+            // "They speak the same words" described a mechanic and promised
+            // nothing. Enforcing is this product's verb: the card directly
+            // above this row reads ENFORCING HEALING.
+            //
+            // ⚠️ DO NOT INTERPOLATE `enforcementTitle` HERE. It is a campaign
+            // NAME, not a bare noun, and a dozen of them are first-person
+            // possessive — "My Marriage", "My Children", "My Purpose", "My
+            // Home", "My Walk With God". Dropped into this frame they read
+            // "They enforce my marriage with you", which is nonsense, and
+            // `.lowercased()` additionally turns "God's Promise" into "god's
+            // promise". "the same victory" is grammatical for every theme, and
+            // `victory` is already this feature's own word: it is what the
+            // eyebrow says and what `enforcementTitle` falls back to, and it is
+            // the one word that holds whatever the person walked in with.
+            // Someone enforcing peace over anxiety and someone enforcing their
+            // marriage are both enforcing a victory.
+            //
+            // It also claims only what the code guarantees. Two members share
+            // the campaign and today's anchor; the six lines behind it are
+            // drawn per install, so "the same words" was over-claiming.
+            return "They enforce victory with you, all 7 days."
         }
         return existingRoom.presenceSummary(todayStamp: StandDayStamp.stamp())
     }
