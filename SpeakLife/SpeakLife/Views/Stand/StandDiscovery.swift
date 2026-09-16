@@ -54,7 +54,21 @@ enum StandDiscovery {
     static func shouldPrompt(forDay day: Int) -> Bool {
         guard FeatureFlag.standTogetherEnabled, hasPromptBudget else { return false }
         guard !StandService.shared.rooms.contains(where: { $0.status == .active }) else { return false }
+        // The one-time welcome offer fires on the same burst completion this
+        // prompt does, and it yields to nothing: it is once-ever, it is
+        // revenue, and a sheet it collides with is simply gone. This one can
+        // wait — `EnforcementCard` re-asks on the next campaign day, and the
+        // persistent row on the card is there the whole time either way.
+        guard !WelcomeOfferPresenter.shared.isPendingOrShowing,
+              !PersonalDeclarationPrompt.shared.isPendingOrShowing else { return false }
         return UserDefaults.standard.integer(forKey: lastPromptedDayKey) != day
+    }
+
+    /// Nobody has ever been asked. The day-1 ask can be suppressed by a
+    /// post-Burst prompt, so `EnforcementCard` retries on days 2 and 3 — but
+    /// only for somebody who was never asked, not as three asks for everyone.
+    static var hasNeverPrompted: Bool {
+        UserDefaults.standard.integer(forKey: lastPromptedDayKey) == 0
     }
 
     static func markPrompted(day: Int) {

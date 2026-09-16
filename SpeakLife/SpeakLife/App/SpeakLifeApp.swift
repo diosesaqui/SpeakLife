@@ -152,6 +152,25 @@ struct SpeakLifeApp: App {
                     // stand push points at. Both were previously set by code that
                     // nothing read.
                     .standPresentation(appState: appState)
+                    // The two post-Burst covers: the one-time welcome offer and
+                    // the personal-declaration ask that used to live in
+                    // onboarding.
+                    //
+                    // HERE, ONCE, not on the views that present the Burst.
+                    // Attaching them to ModernDailyChecklistView and
+                    // DeclarationView put two covers on one singleton — those
+                    // views are live siblings in HomeView's TabView, and the
+                    // checklist is also presented from the feed's sheet. SwiftUI
+                    // honours one and silently drops the other, and both
+                    // presenters write their once-ever flag BEFORE setting
+                    // isPresented, so the dropped one burned the ask for life.
+                    //
+                    // A root cover is safe because neither fires until 0.6s
+                    // after the Burst's own cover has been dismissed, so there
+                    // is no descendant cover left to be dropped behind.
+                    .welcomeOffer(subscriptionStore: subscriptionStore,
+                                  declarationStore: declarationStore)
+                    .personalDeclarationPrompt(appState: appState)
                     .onOpenURL { url in
                         // Ad-matched onboarding: owned channels (email, push, IG bio,
                         // QR, landing page) carrying `ob=<variant>` route here when the

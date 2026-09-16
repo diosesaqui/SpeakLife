@@ -158,6 +158,12 @@ extension OnboardingAngle {
         steps.append(.picker)
         if burdenScene != nil { steps.append(.burdenScene) }
         steps.append(contentsOf: quizSteps)
+        // `.personalDeclaration` stays in this list even though it is never
+        // shown any more. `step` in this arm's analytics is the INDEX into this
+        // array, so removing it silently renumbers every later step — the exact
+        // renumbering the raw-value arms go out of their way to avoid, and it
+        // would make this build's funnel incomparable to every build before it.
+        // `AngleOnboardingView.advance` skips over it instead.
         steps.append(contentsOf: [AngleStep.firstDeclaration, .personalDeclaration, .rating])
         if showsPlanBuilding { steps.append(.planBuilding) }
         steps.append(contentsOf: [AngleStep.planReveal, .testimonials, .paywall, .notificationTime])

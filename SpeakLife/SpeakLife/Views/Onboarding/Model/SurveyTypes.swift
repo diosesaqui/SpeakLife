@@ -223,15 +223,18 @@ enum HeaviestBurden: String, CaseIterable, Identifiable {
     /// The place the plan is spoken over, named plainly. Used by the plan
     /// reveal's Day 7 line so the promise lands on a domain the user recognizes
     /// ("your mind", "your body") rather than an abstraction.
+    /// FIRST PERSON, because its only readers are the plan reveal's day arc,
+    /// which the user reads in their own voice. "spoken over your mind" inside
+    /// a line that ends "I hear the difference" is two people talking.
     var planDomain: String {
         switch self {
-        case .peace:     return "your mind"
-        case .health:    return "your body"
-        case .joy:       return "your heart"
-        case .identity:  return "who you are"
-        case .purpose:   return "your future"
-        case .abundance: return "your finances"
-        case .allOfIt:   return "your life"
+        case .peace:     return "my mind"
+        case .health:    return "my body"
+        case .joy:       return "my heart"
+        case .identity:  return "who I am"
+        case .purpose:   return "my future"
+        case .abundance: return "my finances"
+        case .allOfIt:   return "my life"
         }
     }
 
