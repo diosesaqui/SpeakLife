@@ -125,6 +125,31 @@ enum UserPain: String, CaseIterable {
         }
     }
 
+    /// From the category the user actually keeps opening inside the app.
+    ///
+    /// This is the returning user's equivalent of an onboarding segment, and
+    /// it is better evidence than one: a segment is what somebody said once at
+    /// the end of a flow, this is what they have done repeatedly since. The
+    /// caller gates it on a real repeat count — see
+    /// `HighConversionPaywallView.trackedCategoryPain` — so a single tap on
+    /// one category never renames someone's problem.
+    ///
+    /// `general` returns nil: it is the tracker's "no signal" value, not a
+    /// fifteenth kind of pain.
+    static func from(category: UserPreferencesTracker.CategoryType) -> UserPain? {
+        switch category {
+        case .anxiety, .rest: return .peace
+        case .fear:           return .fear
+        case .health:         return .health
+        case .confidence:     return .identity
+        case .joy:            return .joy
+        case .marriage:       return .marriage
+        case .love, .faith:   return .nearness
+        case .hope:           return .purpose
+        case .general:        return nil
+        }
+    }
+
     /// The coarse burden this pain belongs to, for the shared onboarding
     /// screens (notification copy, goal word, feed seeding) that only speak the
     /// seven-value vocabulary.
@@ -216,6 +241,49 @@ enum UserPain: String, CaseIterable {
         }
     }
 
+    /// Headline for a paywall opened from inside the app instead of at the end
+    /// of onboarding.
+    ///
+    /// A cold-open pain headline is the wrong screen for a returning user.
+    /// "You've prayed about it. It hasn't moved." is a stranger's guess aimed
+    /// at somebody whose behaviour we can actually see, and it was going to
+    /// 135 of the 191 settings impressions in the last 30 days, which convert
+    /// at a sixth of the onboarding rate.
+    ///
+    /// Every line here is a statement about something the app watched the user
+    /// do, which is why it is only ever reachable through
+    /// `trackedCategoryPain` — the user really has come back to this category,
+    /// repeatedly, of their own accord. Resolved from a segment instead, these
+    /// would be a claim we cannot support.
+    var returningProblem: String {
+        switch self {
+        case .peace:      return "You keep coming back for peace."
+        case .fear:       return "You keep coming back for courage."
+        case .health:     return "You keep coming back for healing."
+        case .abundance:  return "You keep coming back for provision."
+        case .identity:   return "You keep coming back to who God says you are."
+        case .shame:      return "You keep coming back for grace."
+        case .bondage:    return "You keep coming back for freedom."
+        case .purpose:    return "You keep coming back for direction."
+        case .joy:        return "You keep coming back for joy."
+        case .grief:      return "You keep coming back for comfort."
+        case .loneliness: return "You keep coming back for His presence."
+        case .marriage:   return "You keep coming back for your home."
+        case .family:     return "You keep coming back for the people you love."
+        case .nearness:   return "You keep coming back to be near Him."
+        case .more:       return "You keep coming back to the Word."
+        }
+    }
+
+    /// Returning-user subhead. One shape for all fifteen on purpose: this user
+    /// already knows what SpeakLife is, so the line's only job is to name what
+    /// is still behind the wall and aim it at the domain they keep returning
+    /// to. Fifteen bespoke sentences here would be fifteen invented
+    /// differences, which is the thing this file already decided not to do.
+    var returningSolution: String {
+        "Unlock every declaration, all the guided audio, and the 30-day plan over \(domain)."
+    }
+
     /// The bespoke first row — the declarations themselves, which is the row
     /// that has to prove the product understood the problem.
     private var leadSolution: (icon: String, title: String, detail: String) {
@@ -269,6 +337,99 @@ enum UserPain: String, CaseIterable {
     static let closingAssurance = "Speak Life to activate God's promises."
 }
 
+// MARK: - Paywall Testimonials
+//  Real App Store reviews, tagged by the `UserPain` each one actually speaks
+//  to, so the paywall's proof is aimed at the same problem its headline named.
+//
+//  Why this exists: the paywall personalizes the headline, the subhead and
+//  five solution rows off `UserPain`, and then used to hand every one of those
+//  users the same fixed anxiety review. A user who came in on provision or on
+//  a marriage read fifteen lines written for them followed by somebody else's
+//  problem, at the exact moment the screen needs them to believe it works for
+//  theirs.
+//
+//  **Every quote here is a real review. Nothing in this file may be written.**
+//  If a pain has no real review, it falls back to the broadest true one rather
+//  than getting an invented match — see `fallback` below. A fabricated
+//  testimonial is not a copy decision, it is a false statement about a real
+//  person shipped next to a price.
+//
+//  Buckets with NO real review yet (currently fall back):
+//      health · abundance · shame · purpose · grief · loneliness ·
+//      marriage · family
+//  These are worth sourcing deliberately — a real provision or healing review
+//  would immediately serve the three highest-volume unmatched segments.
+
+enum PaywallTestimonial {
+
+    struct Quote: Identifiable {
+        let id = UUID()
+        let text: String
+        let author: String
+        /// The pains this review genuinely speaks to. Tag only what the review
+        /// actually says — a stretch here is the same failure as writing one.
+        let domains: [UserPain]
+    }
+
+    /// The corpus. Order is the display order of the supporting wall.
+    static let all: [Quote] = [
+        Quote(
+            text: "My anxiety attacks stopped after 2 weeks. I speak these declarations every morning and it changed everything.",
+            author: "Marcus T., App Store review",
+            // Deliberately narrow. This review names a specific outcome on a
+            // specific timeline, which is powerful for the reader who came in
+            // on a racing mind and an overclaim for everyone else.
+            domains: [.peace, .fear]
+        ),
+        Quote(
+            text: "I've tried journaling, therapy, everything. Nothing rewired my thinking like speaking God's Word daily. This app is different.",
+            author: "DeShawn R., App Store review",
+            // Behaviour-change proof, which outperforms outcome proof in this
+            // category: he is not claiming a circumstance moved, he is saying
+            // the practice took where other practices did not.
+            domains: [.peace, .identity, .bondage]
+        ),
+        Quote(
+            text: "I was skeptical but this is the real deal. My mind literally works differently now. Worth every penny.",
+            author: "Priya K., App Store review",
+            domains: [.identity, .more]
+        ),
+        Quote(
+            text: "I love this app. To feed on the promises of God regularly throughout the day is so uplifting and encouraging. It feeds my soul.",
+            author: "Tina, App Store review",
+            // The fallback. It claims no outcome and no timeline, so it is true
+            // for every pain on the screen — which is exactly what a fallback
+            // has to be.
+            domains: [.joy, .nearness, .more]
+        ),
+        Quote(
+            text: "This app was created under the manifestation and direction of the Holy Spirit, bringing life through scripture and meditation to God's people.",
+            author: "Crash L., App Store review",
+            domains: [.nearness]
+        )
+    ]
+
+    /// Shown when the named pain has no real review. The broadest true quote in
+    /// the corpus, never the most impressive one.
+    static let fallback: Quote = all[3]
+
+    /// The review that speaks to this user's problem, or the fallback.
+    ///
+    /// `nil` pain (settings with no tracked category, the quiz's unsegmented
+    /// bucket) gets the fallback too: with no problem named, there is no match
+    /// to make, and the quote that claims least is the honest one.
+    static func featured(for pain: UserPain?) -> Quote {
+        guard let pain else { return fallback }
+        return all.first { $0.domains.contains(pain) } ?? fallback
+    }
+
+    /// The rest of the wall, in corpus order, with the featured one removed so
+    /// the same review never appears twice on one screen.
+    static func supporting(excluding featured: Quote) -> [Quote] {
+        all.filter { $0.id != featured.id }
+    }
+}
+
 struct HighConversionPaywallView: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var appState: AppState
@@ -289,15 +450,20 @@ struct HighConversionPaywallView: View {
     /// global bit checked only against the annual product mislabels the others.
     @State private var trialEligibility: [String: Bool] = [:]
 
-    // MARK: - Welcome Offer State (decline path)
-    // One recovery screen shown when an onboarding user dismisses this paywall
-    // without buying. Exactly one step deep (Apple 5.6): once it resolves we
-    // run the original callback/dismiss path and never show another offer.
-    @State private var showWelcomeOffer = false
-    @State private var welcomeOfferResolved = false
-    /// Once-ever persistence: flips true the moment the offer is presented and
-    /// never resets, so the user sees the welcome offer at most once for life.
-    @AppStorage("welcomeOfferShown") private var welcomeOfferShown = false
+    // MARK: - Welcome Offer
+    //
+    // MOVED OUT OF THIS SCREEN. The welcome offer used to appear here, as a
+    // state swap when an onboarding user tapped the X without buying. It now
+    // fires after the user's first Daily Burst — see WelcomeOfferPresenter.
+    //
+    // The reason is what the user has at each moment. On the decline path they
+    // had opened the app minutes ago and just said no to paying; a cheaper
+    // price is the one thing a person who has felt nothing yet has no way to
+    // judge. After a burst they have spoken seven declarations out loud and
+    // felt it, and the offer is an answer to something they now want.
+    //
+    // WelcomeOfferView itself is unchanged and still lives in this file. Only
+    // where it is presented from moved.
 
     // MARK: - Post-Purchase Mission State
     // Brief mission/thank-you state shown after a successful purchase from the
@@ -305,7 +471,7 @@ struct HighConversionPaywallView: View {
     // success path runs. Reframes the subscription as mission (the Bible Chat
     // pattern). Settings / feature-gate purchases keep the immediate dismiss —
     // those users are mid-task.
-    private enum MissionResolution { case mainPurchase, welcomeOfferPurchase }
+    private enum MissionResolution { case mainPurchase }
     @State private var showMissionScreen = false
     /// Exactly-once guard: the CTA tap and the 6-second auto-advance can race.
     @State private var missionContinued = false
@@ -365,10 +531,45 @@ struct HighConversionPaywallView: View {
         isCleanVariant && (lockedCleanDarkTheme ?? subscriptionStore.useCleanPaywallDarkTheme)
     }
 
-    /// The problem this user named in onboarding, or nil when we don't know
-    /// (settings, feature gates, the quiz's `unsegmented` bucket). Everything
-    /// personalized on this screen hangs off this one value.
-    private var pain: UserPain? { UserPain.from(segment: segmentParam) }
+    /// True when this paywall was opened from inside the app (settings, a
+    /// feature gate, the upgrade screen) rather than at the end of onboarding.
+    /// These users have used SpeakLife; the screen should not talk to them as
+    /// if it has never met them.
+    private var isReturningUser: Bool { source != "onboarding" }
+
+    /// The pain the user's own in-app behaviour points at: the category they
+    /// keep opening, not the one they named once.
+    ///
+    /// Gated on a real repeat count. One tap on `health` is a look; three is a
+    /// pattern, and only a pattern earns a headline that says "you keep coming
+    /// back". Below the threshold this returns nil and the screen falls back to
+    /// the onboarding segment, then to generic copy — in that order, never
+    /// upward into a claim the data does not support.
+    private var trackedCategoryPain: UserPain? {
+        guard let top = preferencesTracker.topCategories.first,
+              top.count >= Self.returningCategoryThreshold,
+              let type = UserPreferencesTracker.CategoryType(rawValue: top.category)
+        else { return nil }
+        return UserPain.from(category: type)
+    }
+
+    /// Category selections needed before behaviour counts as a pattern.
+    private static let returningCategoryThreshold = 3
+
+    /// The problem this user is carrying, or nil when we don't know.
+    /// Everything personalized on this screen hangs off this one value — see
+    /// the consistency rule in `docs/paywall-copy-research.md`; it is the
+    /// single source of truth for the headline, the subhead, the rows, the
+    /// testimonial and the `pain` analytics property, deliberately.
+    ///
+    /// Behaviour beats the segment for a returning user, and only for them.
+    /// Someone who onboarded on `peace` six weeks ago and has opened `health`
+    /// every morning since is carrying a health problem now; at the end of
+    /// onboarding there is no behaviour yet and the segment is all there is.
+    private var pain: UserPain? {
+        if isReturningUser, let tracked = trackedCategoryPain { return tracked }
+        return UserPain.from(segment: segmentParam)
+    }
 
     /// The four mechanics, described against the user's actual problem when we
     /// know it and generically when we don't.
@@ -416,12 +617,27 @@ struct HighConversionPaywallView: View {
     /// it. That branch keeps its continuity framing and lets the pain colour
     /// the subhead instead.
     private var resolvedHeadline: String {
+        // Returning users first: the declaration branch below belongs to the
+        // onboarding moment, and `personalDeclarationBelief` is in-memory only,
+        // so it can still be set when the same session later opens settings.
+        if isReturningUser {
+            if let tracked = trackedCategoryPain { return tracked.returningProblem }
+            // Used the app, but no category pattern to point at. Says the one
+            // thing that is true of every free user without pretending to know
+            // which problem sent them here — and it is the mechanism, which is
+            // what this screen sells.
+            return "You've been reading it. Start speaking it."
+        }
         if hasFreshPersonalDeclaration { return "You just spoke to your storm." }
         // Generic fallback is still pain-led — it just names the one problem
         // every user on this screen shares rather than guessing at a specific.
         return pain?.problem ?? "You've prayed about it. It hasn't moved."
     }
     private var resolvedSubheadline: String {
+        if isReturningUser {
+            if let tracked = trackedCategoryPain { return tracked.returningSolution }
+            return "Every declaration, all the guided audio, and the 30-day plan, unlocked."
+        }
         if hasFreshPersonalDeclaration {
             // Falls through to the pain below when we have one. `burdenStyleLabel`
             // reads `surveyGoalWord`, which is written at the END of onboarding
@@ -504,10 +720,15 @@ struct HighConversionPaywallView: View {
     /// path can end up on a plan that has no card on screen.
     private var onlyShowYearly: Bool { subscriptionStore.onlyShowYearly }
     private var nonAnnualTitle: String { showWeeklyPlan ? "Weekly" : "Monthly" }
-    private var nonAnnualSub: String { showWeeklyPlan ? "per week" : "per month" }
     /// Plan identity of the non-annual card, so analytics report "weekly" (not
     /// "monthly") when the useWeeklyPlan flag is on.
     private var nonAnnualPlan: PlanType { showWeeklyPlan ? .weekly : .monthly }
+    /// The cadence both plan cards quote in, so the two hero numbers are
+    /// actually comparable. Follows the non-annual plan, since that is the one
+    /// whose price is fixed to a cadence.
+    private var cadenceUnit: String { showWeeklyPlan ? "/wk" : "/mo" }
+    /// The annual plan expressed in that same cadence.
+    private var annualComparablePrice: String { showWeeklyPlan ? annualPerWeek : annualPerMonth }
     private var nonAnnualPrice: String {
         showWeeklyPlan
             ? (subscriptionStore.currentOfferedWeekly?.displayPrice ?? pricePlaceholder)
@@ -550,7 +771,7 @@ struct HighConversionPaywallView: View {
             // The clean variant is light unless its dark theme is on; the
             // mission and welcome screens keep the dark gradient regardless.
             Group {
-                if isCleanVariant && !isCleanDarkTheme && !showMissionScreen && !showWelcomeOffer {
+                if isCleanVariant && !isCleanDarkTheme && !showMissionScreen {
                     cleanBackground
                 } else {
                     backgroundGradient
@@ -564,18 +785,6 @@ struct HighConversionPaywallView: View {
                 // only ever appears after a successful purchase.
                 PostPurchaseMissionView(onContinue: continueMission)
                     .transition(.opacity)
-            } else if showWelcomeOffer {
-                // Decline-path recovery screen. State-swap (not a modal): this
-                // paywall is embedded as a step inside the onboarding flows,
-                // so swapping content in place is safer than layering a
-                // fullScreenCover on a non-presented view.
-                WelcomeOfferView(
-                    variant: paywallVariant,
-                    segment: segmentParam,
-                    onResolve: resolveWelcomeOffer,
-                    onPurchaseSuccess: { presentMissionScreen(.welcomeOfferPurchase) }
-                )
-                .transition(.opacity)
             } else {
                 if isCleanVariant {
                     cleanVariantLayout
@@ -587,8 +796,14 @@ struct HighConversionPaywallView: View {
                                 starsOnlyBanner.padding(.top, 20)
                                 solutionSection.padding(.top, 24)
                                 comparisonSection.padding(.top, 28)
-                                featuredTestimonial.padding(.top, DS.Spacing.lg)
                                 remainingTestimonialsSection.padding(.top, DS.Spacing.lg)
+                                // The matched review closes the proof, and the
+                                // trial timeline sits last because the question
+                                // it answers — "what happens to my card, and
+                                // when" — is the one being asked at the price,
+                                // not four screens earlier.
+                                featuredTestimonial.padding(.top, DS.Spacing.lg)
+                                trialTimelineSection.padding(.top, DS.Spacing.lg)
                                 Spacer(minLength: 20)
                             }
                         }
@@ -801,17 +1016,29 @@ struct HighConversionPaywallView: View {
         }
     }
 
-    // MARK: - Featured Testimonial (above the fold, anxiety-first)
+    // MARK: - Featured Testimonial (pain-matched, last proof before the price)
+    // Matched to the problem the headline named, and moved to the bottom of the
+    // scroll so it is the last thing read before the plan cards.
+    //
+    // It used to be a fixed anxiety review shown to everyone. That put fifteen
+    // lines of copy written for this user's exact problem directly above
+    // somebody else's problem, at the moment the screen most needs them to
+    // believe it works for theirs. `PaywallTestimonial` does the matching
+    // against real reviews only, and falls back to the quote that claims least
+    // rather than inventing a match — see that file for which pains still have
+    // no real review behind them.
+    private var featured: PaywallTestimonial.Quote { PaywallTestimonial.featured(for: pain) }
+
     private var featuredTestimonial: some View {
         VStack(alignment: .leading, spacing: DS.Spacing.xs) {
             HStack(spacing: 2) {
                 ForEach(0..<5) { _ in Image(systemName: "star.fill").font(.system(size: 12)).foregroundColor(.yellow) }
             }
-            Text("\"My anxiety attacks stopped after 2 weeks. I speak these declarations every morning and it changed everything.\"")
+            Text("\"\(featured.text)\"")
                 .font(.system(size: 15, weight: .medium))
                 .foregroundColor(.white)
                 .fixedSize(horizontal: false, vertical: true)
-            Text("— Marcus T., App Store review")
+            Text("— \(featured.author)")
                 .font(.system(size: 12, weight: .medium))
                 .foregroundColor(.white.opacity(0.5))
         }
@@ -826,24 +1053,13 @@ struct HighConversionPaywallView: View {
     }
 
     // MARK: - Remaining Testimonials
+    // The wall, minus whichever review was promoted to the featured slot — the
+    // same quote appearing twice on one screen reads as a shortage of them.
     private var remainingTestimonialsSection: some View {
         VStack(spacing: DS.Spacing.sm) {
-            testimonialCard(
-                quote: "I've tried journaling, therapy, everything. Nothing rewired my thinking like speaking God's Word daily. This app is different.",
-                author: "DeShawn R.", stars: 5
-            )
-            testimonialCard(
-                quote: "I was skeptical but this is the real deal. My mind literally works differently now. Worth every penny.",
-                author: "Priya K.", stars: 5
-            )
-            testimonialCard(
-                quote: "I love this app. To feed on the promises of God regularly throughout the day is so uplifting and encouraging. It feeds my soul.",
-                author: "Tina", stars: 5
-            )
-            testimonialCard(
-                quote: "This app was created under the manifestation and direction of the Holy Spirit, bringing life through scripture and meditation to God's people.",
-                author: "Crash L.", stars: 5
-            )
+            ForEach(PaywallTestimonial.supporting(excluding: featured)) { quote in
+                testimonialCard(quote: quote.text, author: quote.author, stars: 5)
+            }
         }
         .padding(.horizontal, DS.Spacing.lg)
     }
@@ -864,6 +1080,132 @@ struct HighConversionPaywallView: View {
         .padding(DS.Spacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.06)))
+    }
+
+    // MARK: - Trial Timeline ("How your free trial works")
+    // The single strongest documented paywall pattern in the category
+    // (Blinkist: +23% trial starts, 55% fewer billing complaints) and the one
+    // this screen was missing. The reason people refuse a free trial is not
+    // price, it is the fear of forgetting to cancel — so the answer is not a
+    // better argument, it is a calendar.
+    //
+    // **Every line of it is true for us.** Day 1 is real access, not a teaser.
+    // The reminder is `TrialExperienceService`'s `trial_d2` push, scheduled at
+    // 9am on day n-1 the moment the trial starts (and scheduled even while
+    // notification permission is still undetermined, which matters because the
+    // onboarding permission ask comes AFTER this screen — a pending request
+    // added pre-authorization delivers normally once permission is granted).
+    // The last row is the StoreKit contract itself.
+    //
+    // Nothing here is shown to a user who is not actually trial-eligible: the
+    // whole block hangs off `selectedPlanTrialDays`, the same real per-product
+    // eligibility check the CTA and the callout use.
+    private var trialTimelineSteps: [(icon: String, day: String, text: String)]? {
+        guard let days = selectedPlanTrialDays, days >= 1 else { return nil }
+        var steps: [(icon: String, day: String, text: String)] = [
+            ("lock.open.fill", "TODAY", "Everything unlocks. You are not charged a thing.")
+        ]
+        // The reminder row needs a day that is neither today nor the last day,
+        // or it is describing a push that lands on a row already on screen.
+        // `scheduleDay2Push` fires at day n-1, so that holds from n = 3 up.
+        if days >= 3 {
+            steps.append(("bell.fill", "DAY \(days - 1)", "We remind you the trial is ending, before it ends."))
+        }
+        steps.append(("star.fill", "DAY \(days)", "Your trial ends. Cancel any time before this and pay nothing."))
+        return steps
+    }
+
+    /// True when the block is being drawn on the clean layout's light page.
+    /// The timeline and the proof block below are the only two pieces shared
+    /// verbatim between the dark and clean layouts, so they read their four
+    /// colors from here instead of hardcoding white.
+    private var onLightSurface: Bool { isCleanVariant && !isCleanDarkTheme }
+    private var surfaceInk: Color { onLightSurface ? cleanInk : .white }
+    private var surfaceSubInk: Color { onLightSurface ? cleanSubInk : .white.opacity(0.9) }
+    private var surfaceMutedInk: Color { onLightSurface ? cleanSubInk.opacity(0.85) : .white.opacity(0.55) }
+    private var surfaceCardFill: Color { onLightSurface ? .white : .white.opacity(0.06) }
+    private var surfaceCardStroke: Color { onLightSurface ? cleanStroke : Constants.DAMidBlue.opacity(0.35) }
+
+    @ViewBuilder
+    private var trialTimelineSection: some View {
+        if let steps = trialTimelineSteps {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("How your free trial works")
+                    .font(.system(size: 17, weight: .bold))
+                    .foregroundColor(surfaceInk)
+
+                ForEach(Array(steps.enumerated()), id: \.offset) { _, step in
+                    HStack(alignment: .top, spacing: 12) {
+                        ZStack {
+                            Circle()
+                                .fill(Constants.DAMidBlue.opacity(0.22))
+                                .frame(width: 30, height: 30)
+                            Image(systemName: step.icon)
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(Constants.DAMidBlue)
+                        }
+                        .frame(width: 30, height: 30)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(step.day)
+                                .font(.system(size: 11, weight: .bold))
+                                .kerning(0.8)
+                                .foregroundColor(surfaceMutedInk)
+                            Text(step.text)
+                                .font(.system(size: 13.5))
+                                .foregroundColor(surfaceSubInk)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        Spacer(minLength: 0)
+                    }
+                }
+            }
+            .padding(18)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(surfaceCardFill)
+                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(surfaceCardStroke, lineWidth: 1))
+            )
+            .padding(.horizontal, DS.Spacing.lg)
+        }
+    }
+
+    // MARK: - Compact Proof (clean layout)
+    // The clean layout shipped with no social proof at all — no rating, no
+    // review, nothing. That is not minimalism, it is a missing element: the
+    // rating is the one claim on this screen a user can go and verify, and a
+    // matched review is the answer to "does it work for MY thing", which is
+    // the last question before a price. One small card carries both without
+    // spending the layout's whole point.
+    private var compactProofBlock: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 5) {
+                HStack(spacing: 2) {
+                    ForEach(0..<5) { _ in
+                        Image(systemName: "star.fill").font(.system(size: 11)).foregroundColor(.yellow)
+                    }
+                }
+                Text("4.9 rating · App Store")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(surfaceMutedInk)
+            }
+            Text("\"\(featured.text)\"")
+                .font(.system(size: 13.5, weight: .medium))
+                .foregroundColor(surfaceInk)
+                .fixedSize(horizontal: false, vertical: true)
+            Text("— \(featured.author)")
+                .font(.system(size: 11.5, weight: .medium))
+                .foregroundColor(surfaceMutedInk)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(surfaceCardFill)
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(cleanStroke, lineWidth: 1))
+        )
+        .padding(.horizontal, DS.Spacing.lg)
     }
 
     // MARK: - Sticky Bottom
@@ -902,13 +1244,33 @@ struct HighConversionPaywallView: View {
             GeometryReader { geo in
                 let cardWidth = (geo.size.width - 10) / 2
                 HStack(spacing: 10) {
-                    planCard(plan: nonAnnualPlan, topLabel: nil, title: nonAnnualTitle, price: nonAnnualPrice, sub: nonAnnualSub)
-                        .frame(width: cardWidth)
-                    planCard(plan: .annual, topLabel: annualSavingsPercent.map { "SAVE \($0)%" } ?? "BEST VALUE", title: "Annual", price: annualPrice, sub: "per month \(annualPerMonth)")
-                        .frame(width: cardWidth)
+                    planCard(
+                        plan: nonAnnualPlan,
+                        topLabel: nil,
+                        title: nonAnnualTitle,
+                        price: nonAnnualPrice,
+                        unit: cadenceUnit,
+                        struck: nil,
+                        sub: "Billed \(showWeeklyPlan ? "weekly" : "monthly")."
+                    )
+                    .frame(width: cardWidth)
+                    planCard(
+                        plan: .annual,
+                        topLabel: annualSavingsPercent.map { "SAVE \($0)%" } ?? "BEST VALUE",
+                        title: "Annual",
+                        price: annualComparablePrice,
+                        unit: cadenceUnit,
+                        // Same guard as the SAVE badge: the anchor only appears
+                        // when annual is genuinely cheaper than a year of the
+                        // other plan, and it is that real derived figure, never
+                        // an invented "was" price.
+                        struck: annualSavingsPercent != nil ? nonAnnualYearlyEquivalent : nil,
+                        sub: "\(annualPrice) per year"
+                    )
+                    .frame(width: cardWidth)
                 }
             }
-            .frame(height: 90)
+            .frame(height: 104)
         }
     }
 
@@ -943,18 +1305,45 @@ struct HighConversionPaywallView: View {
         )
     }
 
-    private func planCard(plan: PlanType, topLabel: String?, title: String, price: String, sub: String) -> some View {
+    /// Both cards quote the SAME cadence, which is the whole point of the
+    /// rewrite.
+    ///
+    /// This selector used to put the annual card's **yearly total** beside the
+    /// monthly card's **monthly** price, so the eye compared $9.99 to $59.99
+    /// and the cheaper plan read as six times the price. The two numbers were
+    /// never comparable; only one of them was a monthly cost. The clean layout
+    /// had already solved this (per-week on both, with a real anchor) and is
+    /// the layout that converts nearly twice as well — so it is not a
+    /// coincidence worth leaving in place on the layout taking all the traffic.
+    ///
+    /// The billed amount does not disappear: it is the `sub` line on the annual
+    /// card ("$59.99 per year"), directly under the per-month figure, which is
+    /// also what keeps the price disclosure honest.
+    private func planCard(plan: PlanType, topLabel: String?, title: String, price: String, unit: String, struck: String?, sub: String) -> some View {
         let isSelected = selectedPlan == plan
         return Button(action: {
             withAnimation(.easeInOut(duration: 0.15)) { selectedPlan = plan }
             AnalyticsService.shared.track("paywall_plan_switched", parameters: ["plan": plan.rawValue, "variant": paywallVariant, "segment": segmentParam])
         }) {
             ZStack(alignment: .top) {
-                VStack(spacing: 4) {
+                VStack(spacing: 3) {
                     if topLabel != nil { Spacer().frame(height: DS.Spacing.sm) }
                     Text(title).font(.system(size: 13, weight: .semibold)).foregroundColor(isSelected ? .white : .white.opacity(0.55))
-                    Text(price).font(.system(size: 22, weight: .bold)).foregroundColor(isSelected ? .white : .white.opacity(0.45))
-                    Text(sub).font(.system(size: 10)).foregroundColor(isSelected ? .white.opacity(0.7) : .white.opacity(0.3)).multilineTextAlignment(.center)
+                    (Text(price).font(.system(size: 22, weight: .bold))
+                        + Text(unit).font(.system(size: 12, weight: .semibold)))
+                        .foregroundColor(isSelected ? .white : .white.opacity(0.45))
+                    HStack(spacing: 4) {
+                        if let struck {
+                            Text(struck)
+                                .strikethrough(true, color: isSelected ? .white.opacity(0.55) : .white.opacity(0.25))
+                                .foregroundColor(isSelected ? .white.opacity(0.55) : .white.opacity(0.25))
+                        }
+                        Text(sub).foregroundColor(isSelected ? .white.opacity(0.7) : .white.opacity(0.3))
+                    }
+                    .font(.system(size: 11))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+                    .multilineTextAlignment(.center)
                 }
                 .padding(.vertical, 14).padding(.horizontal, DS.Spacing.xs)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -978,11 +1367,19 @@ struct HighConversionPaywallView: View {
     // MARK: - Trial Callout (clarity-first: addresses the autocharge fear).
     // Day count is read from the selected plan's real StoreKit intro offer —
     // never hardcoded — and only shown when this user is actually eligible.
+    // Only when there is no timeline to carry it. With the timeline on screen
+    // this line said the same sentence as its last row, 40pt below it — and a
+    // promise repeated verbatim reads as a script, not as reassurance. The
+    // non-trial fallback ("Start today. Cancel anytime in Settings.") has no
+    // timeline to defer to, so it still shows.
+    @ViewBuilder
     private var trialCallout: some View {
-        HStack(spacing: 6) {
-            Image(systemName: "checkmark.circle.fill").foregroundColor(.green).font(.system(size: 14))
-            Text(trialCalloutText)
-                .font(.system(size: 13, weight: .semibold)).foregroundColor(.white.opacity(0.92))
+        if trialTimelineSteps == nil {
+            HStack(spacing: 6) {
+                Image(systemName: "checkmark.circle.fill").foregroundColor(.green).font(.system(size: 14))
+                Text(trialCalloutText)
+                    .font(.system(size: 13, weight: .semibold)).foregroundColor(.white.opacity(0.92))
+            }
         }
     }
 
@@ -1143,12 +1540,11 @@ struct HighConversionPaywallView: View {
                         "seconds_on_paywall": Int(Date().timeIntervalSince(timeOnPaywall)),
                         "segment": segmentParam
                     ])
-                    if canShowWelcomeOffer {
-                        welcomeOfferShown = true
-                        withAnimation(.easeInOut(duration: 0.3)) { showWelcomeOffer = true }
-                    } else {
-                        callback?(); dismiss()
-                    }
+                    // Always the plain dismissal path now. The welcome offer
+                    // that used to intercept this tap moved to the first Daily
+                    // Burst (WelcomeOfferPresenter).
+                    callback?()
+                    dismiss()
                 }) {
                     Image(systemName: "xmark.circle.fill").font(.system(size: 28))
                         .foregroundColor(isCleanVariant && !isCleanDarkTheme ? Color.gray.opacity(0.45) : .white.opacity(0.6))
@@ -1211,6 +1607,8 @@ struct HighConversionPaywallView: View {
                         .padding(.horizontal, 32).padding(.top, 6)
                     cleanIllustrationCard.padding(.top, 18)
                     cleanSolutionList.padding(.top, 20)
+                    compactProofBlock.padding(.top, 22)
+                    trialTimelineSection.padding(.top, 14)
                     Spacer(minLength: 16)
                 }
             }
@@ -1293,8 +1691,8 @@ struct HighConversionPaywallView: View {
                     badge: nil
                 )
             }
-            cleanTrialLine
             cleanContinueButton
+            cleanTrialLine
             // Same Remote Config-gated link as the dark layout, so enabling
             // showPayWhatYouCanCTA reaches both A/B arms.
             payWhatYouCanCTA
@@ -1367,15 +1765,20 @@ struct HighConversionPaywallView: View {
         .buttonStyle(PlainButtonStyle())
     }
 
-    // Same autocharge-fear reassurance as the dark layout's trial callout —
-    // real per-plan eligibility, real StoreKit day count, never hardcoded.
+    // Same autocharge-fear reassurance as the dark layout — real per-plan
+    // eligibility, real StoreKit day count, never hardcoded.
+    //
+    // With the timeline above the plan cards carrying the calendar, this line
+    // stops repeating the day count and carries the promise instead, which is
+    // what belongs at the button. It also moved below the CTA to match: the
+    // documented pattern is reassurance *under* the tap, not above it.
     @ViewBuilder
     private var cleanTrialLine: some View {
         if selectedPlanTrialDays != nil {
             HStack(spacing: 6) {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundColor(Constants.DAMidBlue).font(.system(size: 13))
-                Text(trialCalloutText)
+                Text(trialTimelineSteps == nil ? trialCalloutText : "No payment due now · Cancel anytime in Settings")
                     .font(.system(size: 12.5, weight: .medium))
                     .foregroundColor(cleanSubInk)
             }
@@ -1413,40 +1816,6 @@ struct HighConversionPaywallView: View {
         .font(.system(size: 12)).foregroundColor(cleanSubInk)
     }
 
-    // MARK: - Welcome Offer Gate
-    /// True when dismissing this paywall should show the one-time welcome
-    /// offer instead of immediately advancing onboarding. All must hold:
-    /// onboarding source, never shown before (persisted once-ever flag), soft
-    /// paywall (hard mode has no close button, but gate it anyway), AND the
-    /// Remote Config `discountID` product actually loaded from StoreKit as an
-    /// annual SKU priced below the regular annual. The product checks are the
-    /// same anti-phantom-price stance as the plan cards: if the discount
-    /// product is unset, unloaded, not annual, or not actually cheaper, the
-    /// offer never shows at all.
-    private var canShowWelcomeOffer: Bool {
-        guard source == "onboarding",
-              !welcomeOfferShown,
-              !effectiveIsHardPaywall,
-              let discount = subscriptionStore.currentOfferedDiscount,
-              let regular = subscriptionStore.currentOfferedPremium,
-              discount.subscription?.subscriptionPeriod.unit == .year,
-              let discountValue = Double(discount.price.description),
-              let regularValue = Double(regular.price.description),
-              discountValue < regularValue else { return false }
-        return true
-    }
-
-    /// Runs the original dismissal path (advance onboarding + dismiss) exactly
-    /// once after the welcome offer resolves, whether by purchase success or
-    /// "No thanks, continue". Guarded so a purchase completion racing a
-    /// decline tap can't fire the onboarding callback twice.
-    private func resolveWelcomeOffer() {
-        guard !welcomeOfferResolved else { return }
-        welcomeOfferResolved = true
-        callback?()
-        dismiss()
-    }
-
     // MARK: - Post-Purchase Mission Screen Routing
     /// Swaps in the mission screen after a successful purchase, remembering
     /// which success path to run when it continues. Callers clear the purchase
@@ -1466,8 +1835,6 @@ struct HighConversionPaywallView: View {
 
     /// Runs the original purchase success path exactly once, whether triggered
     /// by the mission CTA tap or the 6-second auto-advance (both can fire).
-    /// The welcome-offer path goes through resolveWelcomeOffer, preserving its
-    /// own exactly-once guard.
     private func continueMission() {
         guard !missionContinued else { return }
         missionContinued = true
@@ -1478,8 +1845,6 @@ struct HighConversionPaywallView: View {
         case .mainPurchase:
             callback?()
             dismiss()
-        case .welcomeOfferPurchase:
-            resolveWelcomeOffer()
         }
     }
 
@@ -1555,6 +1920,12 @@ struct HighConversionPaywallView: View {
         AnalyticsService.shared.track("paywall_cta_tapped", parameters: [
             "variant": paywallVariant,
             "plan": selectedPlan.rawValue,
+            // Carried here as well as on the impression: without it, "does a
+            // named pain convert better than none" needs a person-level join
+            // against paywall_shown, which is exactly the cut this screen's
+            // personalization has to justify itself on.
+            "pain": pain?.rawValue ?? "none",
+            "source": source,
             "user_category": preferencesTracker.primaryCategory.rawValue,
             "product_id": product.id,
             "segment": segmentParam
@@ -1691,16 +2062,22 @@ fileprivate func perMonthString(yearlyProduct: Product) -> String? {
     localizedPrice(yearlyProduct.price / 12, in: yearlyProduct)
 }
 
-// MARK: - Welcome Offer (decline-path recovery screen)
-/// Shown at most once ever (UserDefaults `welcomeOfferShown`) when an
-/// onboarding user dismisses the soft paywall without buying, and only when
-/// the Remote Config discount annual product actually loaded from StoreKit at
-/// a price below the regular annual (gate: HighConversionPaywallView
-/// .canShowWelcomeOffer — the anti-phantom-price guard). Exactly one step
-/// deep per Apple Guideline 5.6: purchase and "No thanks" both resolve to the
-/// original callback/dismiss path and no further offers follow. No countdown
-/// timer or fake urgency — the framing line states plainly that it's a
-/// one-time offer. All prices come straight from StoreKit.
+// MARK: - Welcome Offer
+/// Shown at most once ever (UserDefaults `welcomeOfferShown`), after the
+/// user's first Daily Burst, to somebody who does not already have full
+/// access. Presented by `WelcomeOfferPresenter`, which owns the trigger and
+/// carries the anti-phantom-price guard this screen depends on: the Remote
+/// Config discount annual must have actually loaded from StoreKit at a price
+/// below the regular annual, or the offer never appears at all.
+///
+/// It used to fire on the onboarding paywall's decline path instead. Nothing
+/// in this view changed when it moved — it takes its callbacks from whoever
+/// presents it, which is the whole reason the move was cheap.
+///
+/// Exactly one step deep per Apple Guideline 5.6: purchase and "No thanks"
+/// both resolve and no further offers follow. No countdown timer or fake
+/// urgency; the framing line states plainly that it is a one-time offer. All
+/// prices come straight from StoreKit.
 struct WelcomeOfferView: View {
     @EnvironmentObject var declarationStore: DeclarationViewModel
     @EnvironmentObject var subscriptionStore: SubscriptionStore

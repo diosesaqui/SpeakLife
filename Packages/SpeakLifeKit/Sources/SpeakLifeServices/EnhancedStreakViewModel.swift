@@ -634,10 +634,18 @@ public final class EnhancedStreakViewModel: ObservableObject {
                     "enforcement_id": enforcementId ?? "unknown",
                     "day": day - 1
                 ])
+                // Mirror the banked day into any stand this user is in.
+                // Fire-and-forget by contract: the room is a mirror of the
+                // progress just written above, never the source of it, so a
+                // failed write costs a dot on someone's week strip and can
+                // never cost a campaign day. `currentDay` has already moved on
+                // to the next day, so the day just banked is `day - 1`.
+                StandMirror.recordDay(day - 1)
             case .completed(let id, let elapsedDays):
                 CoreAnalytics.track("enforcement_day_completed", parameters: [
                     "enforcement_id": id, "day": Enforcement.length
                 ])
+                StandMirror.recordDay(Enforcement.length)
                 // elapsed_days > 7 means they dropped off and came back, which is
                 // the behavior worth measuring — not just clean 7-day runs.
                 CoreAnalytics.track("enforcement_completed", parameters: [

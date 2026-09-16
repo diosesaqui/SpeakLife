@@ -46,6 +46,7 @@
 		452D17DB2D703E9E000AB1D1 /* FirebaseRemoteConfig in Frameworks */ = {isa = PBXBuildFile; productRef = 452D17DA2D703E9E000AB1D1 /* FirebaseRemoteConfig */; };
 		452D17DD2D703E9E000AB1D1 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 452D17DC2D703E9E000AB1D1 /* FirebaseStorage */; };
 		452D17DF2D703F3A000AB1D1 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 452D17DE2D703F3A000AB1D1 /* FirebaseFirestore */; };
+		STANDFN00000000000000002 /* FirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = STANDFN00000000000000001 /* FirebaseFunctions */; };
 		452D17E22D725F87000AB1D1 /* RatingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 452D17E12D725F84000AB1D1 /* RatingView.swift */; };
 		452F6ACA2E87BA8300A27856 /* AnalyticsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 452F6AC92E87BA8200A27856 /* AnalyticsService.swift */; };
 		45C0A1112F2A0B0100A27856 /* AnalyticsContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C0A1102F2A0B0100A27856 /* AnalyticsContext.swift */; };
@@ -376,6 +377,20 @@
 		MD00DECL0000000002BUILDFL /* DeletePersonalDeclarationUseCase.swift in Sources */ = {isa = PBXBuildFile; fileRef = MD00DECL0000000002FILEREF /* DeletePersonalDeclarationUseCase.swift */; };
 		RC00000001294E382700CD2103 /* RevenueCatManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = RC00000002294E382700CD2103 /* RevenueCatManager.swift */; };
 		QT00000001294E382700CD2103 /* QualifiedTrialTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = QT00000002294E382700CD2103 /* QualifiedTrialTracker.swift */; };
+		STANDB000000000000000001 /* StandCompletionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = STAND0000000000000000001 /* StandCompletionView.swift */; };
+		STANDB000000000000000002 /* StandConflictSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = STAND0000000000000000002 /* StandConflictSheet.swift */; };
+		STANDB000000000000000003 /* StandDiscovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = STAND0000000000000000003 /* StandDiscovery.swift */; };
+		OFFERB000000000000000001 /* WelcomeOfferPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = OFFER0000000000000000001 /* WelcomeOfferPresenter.swift */; };
+		OFFERB000000000000000002 /* PersonalDeclarationPrompt.swift in Sources */ = {isa = PBXBuildFile; fileRef = OFFER0000000000000000002 /* PersonalDeclarationPrompt.swift */; };
+		STANDB000000000000000004 /* StandInviteCardRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = STAND0000000000000000004 /* StandInviteCardRenderer.swift */; };
+		STANDB000000000000000005 /* StandInviteSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = STAND0000000000000000005 /* StandInviteSheet.swift */; };
+		STANDB000000000000000006 /* StandJoinView.swift in Sources */ = {isa = PBXBuildFile; fileRef = STAND0000000000000000006 /* StandJoinView.swift */; };
+		STANDB000000000000000007 /* StandListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = STAND0000000000000000007 /* StandListView.swift */; };
+		STANDB000000000000000008 /* StandRoomView.swift in Sources */ = {isa = PBXBuildFile; fileRef = STAND0000000000000000008 /* StandRoomView.swift */; };
+		STANDB000000000000000009 /* StandAuthCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = STAND0000000000000000009 /* StandAuthCoordinator.swift */; };
+		STANDB000000000000000010 /* StandLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = STAND0000000000000000010 /* StandLink.swift */; };
+		STANDB000000000000000011 /* StandPassStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = STAND0000000000000000011 /* StandPassStore.swift */; };
+		STANDB000000000000000012 /* StandService.swift in Sources */ = {isa = PBXBuildFile; fileRef = STAND0000000000000000012 /* StandService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -766,6 +781,20 @@
 		MD00DECL0000000002FILEREF /* DeletePersonalDeclarationUseCase.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeletePersonalDeclarationUseCase.swift; sourceTree = "<group>"; };
 		RC00000002294E382700CD2103 /* RevenueCatManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevenueCatManager.swift; sourceTree = "<group>"; };
 		QT00000002294E382700CD2103 /* QualifiedTrialTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QualifiedTrialTracker.swift; sourceTree = "<group>"; };
+		STAND0000000000000000001 /* StandCompletionView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StandCompletionView.swift; sourceTree = "<group>"; };
+		STAND0000000000000000002 /* StandConflictSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StandConflictSheet.swift; sourceTree = "<group>"; };
+		STAND0000000000000000003 /* StandDiscovery.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StandDiscovery.swift; sourceTree = "<group>"; };
+		OFFER0000000000000000001 /* WelcomeOfferPresenter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WelcomeOfferPresenter.swift; sourceTree = "<group>"; };
+		OFFER0000000000000000002 /* PersonalDeclarationPrompt.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PersonalDeclarationPrompt.swift; sourceTree = "<group>"; };
+		STAND0000000000000000004 /* StandInviteCardRenderer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StandInviteCardRenderer.swift; sourceTree = "<group>"; };
+		STAND0000000000000000005 /* StandInviteSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StandInviteSheet.swift; sourceTree = "<group>"; };
+		STAND0000000000000000006 /* StandJoinView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StandJoinView.swift; sourceTree = "<group>"; };
+		STAND0000000000000000007 /* StandListView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StandListView.swift; sourceTree = "<group>"; };
+		STAND0000000000000000008 /* StandRoomView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StandRoomView.swift; sourceTree = "<group>"; };
+		STAND0000000000000000009 /* StandAuthCoordinator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StandAuthCoordinator.swift; sourceTree = "<group>"; };
+		STAND0000000000000000010 /* StandLink.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StandLink.swift; sourceTree = "<group>"; };
+		STAND0000000000000000011 /* StandPassStore.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StandPassStore.swift; sourceTree = "<group>"; };
+		STAND0000000000000000012 /* StandService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StandService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -800,6 +829,7 @@
 				452D17DB2D703E9E000AB1D1 /* FirebaseRemoteConfig in Frameworks */,
 				7AF18CA22A0DB126005A6E31 /* SwiftUICharts in Frameworks */,
 				452D17DF2D703F3A000AB1D1 /* FirebaseFirestore in Frameworks */,
+				STANDFN00000000000000002 /* FirebaseFunctions in Frameworks */,
 				452D17DD2D703E9E000AB1D1 /* FirebaseStorage in Frameworks */,
 				45F6D87E2F2AD75200C0B98D /* FirebaseAuth in Frameworks */,
 				4553AE002FD2DDA70000D657 /* PostHog in Frameworks */,
@@ -1315,6 +1345,8 @@
 		7AA8706528DACB3500134ADB /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				STANDG000000000000000001 /* Stand */,
+				OFFERG000000000000000001 /* Offer */,
 				TIC00GRP000000000000002A /* Guard */,
 				458510D82B159B0D00230EE5 /* LandingView.swift */,
 				7A601440294E574500CD2103 /* HomeView.swift */,
@@ -1364,6 +1396,7 @@
 		7AA8706728DACB5100134ADB /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				STANDG000000000000000002 /* Stand */,
 				TIC00GRP000000000000001A /* Guard */,
 				45567D712F29F6FA00382072 /* Auth */,
 				45BC74622EDA4CB5003AC964 /* PaywallTriggerManager.swift */,
@@ -1793,6 +1826,44 @@
 			path = Enforcement;
 			sourceTree = "<group>";
 		};
+		OFFERG000000000000000001 /* Offer */ = {
+			isa = PBXGroup;
+			children = (
+				OFFER0000000000000000001 /* WelcomeOfferPresenter.swift */,
+				OFFER0000000000000000002 /* PersonalDeclarationPrompt.swift */,
+			);
+			name = Offer;
+			path = Offer;
+			sourceTree = "<group>";
+		};
+		STANDG000000000000000001 /* Stand */ = {
+			isa = PBXGroup;
+			children = (
+				STAND0000000000000000001 /* StandCompletionView.swift */,
+				STAND0000000000000000002 /* StandConflictSheet.swift */,
+				STAND0000000000000000003 /* StandDiscovery.swift */,
+				STAND0000000000000000004 /* StandInviteCardRenderer.swift */,
+				STAND0000000000000000005 /* StandInviteSheet.swift */,
+				STAND0000000000000000006 /* StandJoinView.swift */,
+				STAND0000000000000000007 /* StandListView.swift */,
+				STAND0000000000000000008 /* StandRoomView.swift */,
+			);
+			name = Stand;
+			path = Stand;
+			sourceTree = "<group>";
+		};
+		STANDG000000000000000002 /* Stand */ = {
+			isa = PBXGroup;
+			children = (
+				STAND0000000000000000009 /* StandAuthCoordinator.swift */,
+				STAND0000000000000000010 /* StandLink.swift */,
+				STAND0000000000000000011 /* StandPassStore.swift */,
+				STAND0000000000000000012 /* StandService.swift */,
+			);
+			name = Stand;
+			path = Stand;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -1839,6 +1910,7 @@
 				452D17DA2D703E9E000AB1D1 /* FirebaseRemoteConfig */,
 				452D17DC2D703E9E000AB1D1 /* FirebaseStorage */,
 				452D17DE2D703F3A000AB1D1 /* FirebaseFirestore */,
+				STANDFN00000000000000001 /* FirebaseFunctions */,
 				45AE76702D7960BD0037EE12 /* FirebaseMessaging */,
 				45A4A3D72D8918BB00DFCEB7 /* FirebaseFirestoreCombine-Community */,
 				457CD38D2E84A11000F435EC /* TikTokBusinessSDK */,
@@ -1993,6 +2065,20 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				STANDB000000000000000001 /* StandCompletionView.swift in Sources */,
+				STANDB000000000000000002 /* StandConflictSheet.swift in Sources */,
+				STANDB000000000000000003 /* StandDiscovery.swift in Sources */,
+				OFFERB000000000000000001 /* WelcomeOfferPresenter.swift in Sources */,
+				OFFERB000000000000000002 /* PersonalDeclarationPrompt.swift in Sources */,
+				STANDB000000000000000004 /* StandInviteCardRenderer.swift in Sources */,
+				STANDB000000000000000005 /* StandInviteSheet.swift in Sources */,
+				STANDB000000000000000006 /* StandJoinView.swift in Sources */,
+				STANDB000000000000000007 /* StandListView.swift in Sources */,
+				STANDB000000000000000008 /* StandRoomView.swift in Sources */,
+				STANDB000000000000000009 /* StandAuthCoordinator.swift in Sources */,
+				STANDB000000000000000010 /* StandLink.swift in Sources */,
+				STANDB000000000000000011 /* StandPassStore.swift in Sources */,
+				STANDB000000000000000012 /* StandService.swift in Sources */,
 				TIC00SVC000000000000004B /* TakeThoughtCaptiveIntent.swift in Sources */,
 				TIC00VW0000000000000001B /* TakeItCaptiveFlowView.swift in Sources */,
 				TIC00VW0000000000000003B /* ReplaceDeclarationView.swift in Sources */,
@@ -2735,7 +2821,7 @@
 			repositoryURL = "https://github.com/RevenueCat/purchases-ios-spm";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 5.61.0;
+				minimumVersion = 5.78.0;
 			};
 		};
 		7AF18CA02A0DB126005A6E31 /* XCRemoteSwiftPackageReference "ChartView" */ = {
@@ -2775,6 +2861,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 452D17D72D703E9E000AB1D1 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseFirestore;
+		};
+		STANDFN00000000000000001 /* FirebaseFunctions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 452D17D72D703E9E000AB1D1 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFunctions;
 		};
 		4553ADFF2FD2DDA70000D657 /* PostHog */ = {
 			isa = XCSwiftPackageProductDependency;

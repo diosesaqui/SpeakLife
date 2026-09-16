@@ -142,10 +142,48 @@ struct SpeakLifeApp: App {
                     // onboarding cover cannot sit on top of the gate. Inert
                     // unless `forceUpdateEnabled` is on with a published floor.
                     .forceUpdateGate(subscriptionStore: subscriptionStore)
+                    // Turns a pending Stand invite code into the join screen.
+                    // Applied here, above HomeView, so it survives every route
+                    // through the app; it self-gates on `isOnboarded` so a
+                    // deferred link resolved during didFinishLaunching cannot
+                    // land on top of onboarding.
+                    .standRedemption(appState: appState)
+                    // Presents the shared day-7 celebration and opens the room a
+                    // stand push points at. Both were previously set by code that
+                    // nothing read.
+                    .standPresentation(appState: appState)
+                    // The two post-Burst covers: the one-time welcome offer and
+                    // the personal-declaration ask that used to live in
+                    // onboarding.
+                    //
+                    // HERE, ONCE, not on the views that present the Burst.
+                    // Attaching them to ModernDailyChecklistView and
+                    // DeclarationView put two covers on one singleton — those
+                    // views are live siblings in HomeView's TabView, and the
+                    // checklist is also presented from the feed's sheet. SwiftUI
+                    // honours one and silently drops the other, and both
+                    // presenters write their once-ever flag BEFORE setting
+                    // isPresented, so the dropped one burned the ask for life.
+                    //
+                    // A root cover is safe because neither fires until 0.6s
+                    // after the Burst's own cover has been dismissed, so there
+                    // is no descendant cover left to be dropped behind.
+                    .welcomeOffer(subscriptionStore: subscriptionStore,
+                                  declarationStore: declarationStore)
+                    .personalDeclarationPrompt(appState: appState)
                     .onOpenURL { url in
                         // Ad-matched onboarding: owned channels (email, push, IG bio,
                         // QR, landing page) carrying `ob=<variant>` route here when the
                         // app opens directly (vs. a deferred install link).
+                        // Stand invite, checked first: the code is the only
+                        // thing on this link that expires, and attribution
+                        // parsing below must not be able to swallow it.
+                        if let code = StandLink.code(from: url) {
+                            appState.pendingStandCode = code
+                            AnalyticsService.shared.track("stand_invite_opened", parameters: [
+                                "source": "universal_link"
+                            ])
+                        }
                         SubscriptionStore.handleIncomingURL(url, source: "deeplink")
                         // Same link, read for channel rather than for the arm:
                         // utm_source/campaign/term land on the person so paid
@@ -411,6 +449,21 @@ struct SpeakLifeApp: App {
         // Prayer wall, streak-at-risk, and streak-complete notifications surface as banners only —
         // never navigate away from whatever tab the user is on.
         let notifType = content.userInfo["notificationType"] as? String
+
+        // A stand push is the one social notification that DOES navigate. It
+        // was sent because somebody the user invited just spoke, so the whole
+        // point is arriving in the room — unlike the prayer wall, which is a
+        // broadcast and stays a banner.
+        if notifType == "stand" {
+            if let roomId = content.userInfo["roomId"] as? String, !roomId.isEmpty {
+                appState.pendingStandRoomId = StandRoomRoute(value: roomId)
+                AnalyticsService.shared.track("stand_nudge_opened", parameters: [
+                    "room_id": roomId
+                ])
+            }
+            return
+        }
+
         if notifType == "prayerWall" ||
            notifType == "streakAtRisk" ||
            notifType == "streakComplete" {

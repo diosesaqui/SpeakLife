@@ -61,10 +61,30 @@ struct ModernDailyChecklistView: View {
     }
     /// The link under the task: a way into the full list when they carry more
     /// than one. The count itself now lives on the checklist row's subtitle.
-    private var seeAllDeclarationsLabel: String {
-        activeDeclarations.count > 1
-            ? "See all \(activeDeclarations.count)"
-            : "Believing for something else too?"
+    /// Whether they can carry another declaration right now.
+    private var canAddDeclaration: Bool {
+        activeDeclarations.count
+            < PersonalDeclarationLimits.maxDeclarations(isPremium: subscriptionStore.isPremium)
+    }
+
+    /// The tile under the checklist, which is now a WRITE affordance rather
+    /// than a second route into the list.
+    ///
+    /// Seeing the list was already reachable: tapping the row itself opens the
+    /// card with one declaration and the full list with several. So the tile
+    /// was the only always-visible slot in Today with no job of its own, and
+    /// "Believing for something else too?" asked a question instead of naming
+    /// an action. Creating a declaration is now one tap from Today at every
+    /// point in the product: no declaration yet and the checklist row itself is
+    /// the invitation; one or more and this is.
+    ///
+    /// At the limit it falls back to the list, which is where the count and the
+    /// upgrade path live.
+    private var declarationTileLabel: String {
+        if activeDeclarations.isEmpty { return "Name what you're believing for" }
+        return canAddDeclaration
+            ? "Write a new declaration"
+            : "See all \(activeDeclarations.count)"
     }
     // Modal presentations surfaced directly on the Today tab (instead of routing
     // the user over to the Speak feed and presenting there).
@@ -158,12 +178,15 @@ struct ModernDailyChecklistView: View {
         } else if personalDeclaration != nil {
             showPersonalDeclarationCard = true
         } else {
-            // The row can briefly outlive the list: the async load hasn't
-            // returned yet, or the last one was just closed out or deleted. The
-            // card sheet renders nothing without a declaration, so a tap would
-            // present an empty sheet. The list handles empty properly and offers
-            // a way to start a new one.
-            showMyDeclarations = true
+            // Nothing to speak yet, so this is the invitation row: send them
+            // straight to writing one rather than to a list whose only content
+            // is a button that does the same thing.
+            //
+            // This also covers the case the comment here used to describe — the
+            // row briefly outliving the list while the async load returns, or
+            // the last declaration just being closed out. Opening the writing
+            // flow is the right answer to both.
+            showNewDeclarationSheet = true
         }
     }
 
@@ -194,19 +217,40 @@ struct ModernDailyChecklistView: View {
     /// and the audio pointer were removed for. This is a doorway, not a copy.
     ///
     /// Shown whenever they carry at least one, not only when they carry several.
-    /// Gating on `count > 1` made `seeAllDeclarationsLabel`'s other branch
-    /// unreachable and left single-declaration users with no route from Today
-    /// into the list at all — which is also where they'd go to add a second.
+    /// Gating on `count > 1` left single-declaration users with no route from
+    /// Today to a second one at all.
     ///
-    /// nil when they carry none, so the slot collapses instead of leaving a gap.
+    /// It now WRITES rather than routing to the list a second time — see
+    /// `declarationTileLabel`.
+    ///
+    /// ALWAYS SHOWN, including when they carry none. That empty case is the
+    /// whole point: the create path used to live two taps inside My
+    /// Declarations, reachable only from a tile that itself only appeared once
+    /// you already had a declaration. Somebody with none had no route to one
+    /// from Today at all.
+    ///
+    /// This was briefly a checklist TASK instead. It cannot be: the row would
+    /// never be completable (there is nothing to speak yet) and
+    /// `DailyChecklist.isCompleted` is `allSatisfy`, so every user without a
+    /// declaration could never complete a day — killing the completion
+    /// celebration for exactly the people this was meant to help.
     private var personalDeclarationTile: AnyView? {
-        guard appState.hasPersonalDeclaration, !activeDeclarations.isEmpty else { return nil }
-        return AnyView(
+        AnyView(
             Button {
                 Juice.play(.tapLight)
-                showMyDeclarations = true
+                guard canAddDeclaration else {
+                    showMyDeclarations = true
+                    return
+                }
+                // `createYourOwnTapped` has been declared in Events.swift and
+                // never fired by anything. This is the event it was written for.
+                AnalyticsService.shared.track(Event.createYourOwnTapped, parameters: [
+                    "source": "today_checklist",
+                    "existing_count": activeDeclarations.count
+                ])
+                showNewDeclarationSheet = true
             } label: {
-                Text(seeAllDeclarationsLabel)
+                Text(declarationTileLabel)
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
                     .foregroundColor(.white.opacity(0.5))
                     .frame(maxWidth: .infinity)
@@ -512,10 +556,20 @@ struct ModernDailyChecklistView: View {
                         if subscriptionStore.enforcementEnabled {
                             EnforcementCard(
                                 service: enforcementService,
-                                isPremium: subscriptionStore.isPremium,
+                                // hasFullAccess, not isPremium: an invitee
+                                // holding a Stand Pass must see the campaign
+                                // they were invited into, not `lockedCard`.
+                                // This is the ONE gate the pass exists for —
+                                // the burst itself is already free, and
+                                // startShared is deliberately ungated.
+                                isPremium: subscriptionStore.hasFullAccess,
                                 totalDaysCompleted: viewModel.totalDaysCompleted,
                                 burstCompletedToday: isBurstCompletedToday,
                                 onStart: { enforcement in
+                                    // Still isPremium, deliberately. A pass
+                                    // lets an invitee run the campaign they
+                                    // were invited into; starting a brand new
+                                    // one of your own is what premium buys.
                                     guard enforcementService.startEnforcement(id: enforcement.id,
                                                                   isPremium: subscriptionStore.isPremium) else { return }
                                     AnalyticsService.shared.track("enforcement_started",
@@ -934,7 +988,13 @@ struct ModernDailyChecklistView: View {
                 PersonalDeclarationOnboardingView(
                     viewModel: DIContainer.shared.makePersonalDeclarationViewModel(),
                     size: geo.size,
-                    flow: "app"
+                    flow: "app",
+                    // Was omitted, so it defaulted to PersonalDeclarationLimits
+                    // .premium — the premium allowance, for everybody, on the
+                    // one create route that does not go through My
+                    // Declarations. That view has always passed it.
+                    limit: PersonalDeclarationLimits.maxDeclarations(
+                        isPremium: subscriptionStore.isPremium)
                 ) { newDeclaration in
                     if newDeclaration != nil {
                         appState.hasPersonalDeclaration = true

@@ -80,6 +80,8 @@ struct EnforcementCard: View {
     @State private var redirect: SituationScreen.Redirect?
     /// Someone said they want to end their life. Not a campaign state.
     @State private var showReachOut = false
+    /// Stand With Me's day-1 ask (spec §9.5, surface 1).
+    @State private var showStandPrompt = false
 
     var body: some View {
         if service.isEligible(totalDaysCompleted: totalDaysCompleted) {
@@ -99,6 +101,32 @@ struct EnforcementCard: View {
             }
             .padding(DS.Spacing.md)
             .dsGlass(cornerRadius: DS.Radius.lg, strokeOpacity: 0.16, elevation: DS.Elevation.medium)
+            // Asked once, after the first day is actually banked — they have
+            // just spoken it out loud and felt it, which is the whole reason
+            // the ask lands here rather than at campaign start.
+            .sheet(isPresented: $showStandPrompt) {
+                if let active = service.activeEnforcement {
+                    StandInvitePromptSheet(enforcement: active)
+                }
+            }
+            // Days 1 to 3 rather than day 1 only.
+            //
+            // The one-time welcome offer now fires on the same first burst and
+            // takes precedence (StandDiscovery.shouldPrompt yields to it), so a
+            // day-1-only trigger meant anyone who got the offer never saw this
+            // ask at all. `shouldPrompt` already dedupes per day and caps at
+            // three prompts for life, so widening the window costs nothing and
+            // simply lets a suppressed day-1 land on day 2.
+            .onChange(of: service.progress.completedDayNumbers.count) { _, count in
+                guard (1...3).contains(count), let _ = service.activeEnforcement,
+                      // Never asked before. Without this, widening the window
+                      // asks EVERYBODY on days 1, 2 and 3 and spends the whole
+                      // lifetime budget of three prompts in three days.
+                      StandDiscovery.hasNeverPrompted,
+                      StandDiscovery.shouldPrompt(forDay: count) else { return }
+                StandDiscovery.markPrompted(day: count)
+                showStandPrompt = true
+            }
         }
     }
 
@@ -126,6 +154,12 @@ struct EnforcementCard: View {
 
             todayCTA
                 .padding(.top, 2)
+
+            // Stand With Me's durable home (spec §9.5, surface 2). Always
+            // present, never a prompt, and the only path by which someone
+            // already mid-campaign when the feature shipped discovers it.
+            // Renders nothing while the flag is off.
+            StandInviteRow(enforcement: enforcement)
 
             HStack(spacing: DS.Spacing.xs) {
                 // Nothing sits here on purpose.

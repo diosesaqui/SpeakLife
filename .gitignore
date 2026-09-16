@@ -3,6 +3,8 @@ SpeakLife/Secrets.xcconfig
 # Firebase CLI diagnostic output
 firebase-debug.log
 firebase-debug.*.log
+firestore-debug.log
+ui-debug.log
 .firebase/
 
 # Xcode per-user state
