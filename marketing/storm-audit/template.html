@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Storm Audit | SpeakLife</title>
+<meta name="description" content="Eight questions. Find out which storm you are standing in, why it has not moved, and the one thing to do tomorrow morning.">
+<meta property="og:title" content="The Storm Audit">
+<meta property="og:description" content="Eight questions. Sixty seconds. Find out why it has not moved.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0B0C10">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;900&family=Lora:ital@1&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0B0C10; --ink-2:#14161C; --ink-3:#1B1E26;
+  --gold:#FFD700; --gold-dim:#C9A227;
+  --text:#FFFFFF; --body:#C7C9CF; --muted:#8B8F99;
+  --line:rgba(255,255,255,.12); --card:rgba(255,255,255,.055);
+  --ok:#5CD68C; --warn:#D96A6A;
+  --gutter:20px; --maxw:620px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--ink);color:var(--text)}
+body{
+  font-family:Nunito,-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  font-size:17px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  min-height:100svh;
+  padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 var(--gutter)}
+.eyebrow{
+  font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--gold);margin:0 0 14px
+}
+h1,h2,h3{margin:0;font-weight:900;letter-spacing:-.01em;line-height:1.14}
+h1{font-size:clamp(28px,7.2vw,40px)}
+h2{font-size:clamp(24px,6vw,32px)}
+h3{font-size:19px;font-weight:700;line-height:1.3}
+p{margin:0 0 16px;color:var(--body)}
+.lede{color:#E6E7EA;font-size:clamp(17px,4.4vw,20px);font-weight:600}
+.scripture{font-family:Lora,Georgia,serif;font-style:italic;color:#E9EAEE;line-height:1.55}
+.ref{font-weight:700;color:var(--gold);font-size:14px;letter-spacing:.02em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px}
+.rule{height:4px;width:64px;background:var(--gold);border-radius:2px;margin:0 0 22px}
+
+/* progress */
+#bar{position:sticky;top:0;z-index:20;background:var(--ink);padding-top:10px}
+#bar .track{height:3px;background:rgba(255,255,255,.10);border-radius:2px;overflow:hidden}
+#bar .fill{height:100%;width:0;background:var(--gold);transition:width .35s cubic-bezier(.4,0,.2,1)}
+#bar .meta{display:flex;justify-content:space-between;align-items:center;padding:10px 0 4px;
+  font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+#back{background:none;border:0;color:var(--muted);font:inherit;font-size:12px;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;padding:6px 0;cursor:pointer}
+#back[hidden]{display:none}
+
+/* screens */
+.screen{display:none;padding:26px 0 40px}
+.screen.on{display:block;animation:rise .38s cubic-bezier(.2,.7,.3,1) both}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){
+  .screen.on{animation:none}
+  *{transition:none!important}
+}
+
+/* options */
+.opts{display:flex;flex-direction:column;gap:10px;margin-top:22px}
+.opt{
+  display:block;width:100%;text-align:left;font:inherit;font-weight:600;color:var(--text);
+  background:var(--ink-2);border:1px solid var(--line);border-radius:14px;
+  padding:17px 18px;cursor:pointer;transition:background .15s,border-color .15s,transform .08s;
+  min-height:56px;
+}
+.opt:hover{background:var(--ink-3);border-color:rgba(255,255,255,.22)}
+.opt:active{transform:scale(.99)}
+.opt:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.opt.sel{border-color:var(--gold);background:rgba(255,215,0,.08)}
+
+/* inputs */
+input[type=text],input[type=email]{
+  width:100%;font:inherit;font-weight:600;color:var(--text);background:var(--ink-2);
+  border:1px solid var(--line);border-radius:14px;padding:17px 18px;margin-top:20px
+}
+input::placeholder{color:#6A6E78;font-weight:400}
+input:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:transparent}
+.btn{
+  display:block;width:100%;font:inherit;font-weight:800;font-size:17px;
+  background:#fff;color:#0B0C10;border:0;border-radius:999px;padding:18px;margin-top:16px;
+  cursor:pointer;transition:transform .08s,opacity .15s;text-align:center;text-decoration:none
+}
+.btn:active{transform:scale(.99)}
+.btn:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.btn.ghost{background:transparent;color:var(--body);border:1px solid var(--line);font-weight:700}
+.btn[disabled]{opacity:.5;cursor:default}
+.fine{font-size:13px;color:var(--muted);margin-top:14px;text-align:center}
+.hint{color:var(--muted);font-size:15px;margin:8px 0 0}
+.err{color:var(--warn);font-size:14px;font-weight:700;margin-top:10px;min-height:20px}
+
+/* result */
+.beat{padding:34px 0;border-top:1px solid var(--line)}
+.beat:first-of-type{border-top:0;padding-top:20px}
+.quoted{
+  font-family:Lora,Georgia,serif;font-style:italic;color:#E9EAEE;font-size:19px;
+  border-left:3px solid var(--gold);padding:4px 0 4px 16px;margin:18px 0 0
+}
+.label{
+  display:inline-block;font-weight:900;font-size:15px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--gold);border:1px solid var(--gold-dim);border-radius:999px;padding:8px 16px;margin:18px 0 14px
+}
+.gap{margin-top:12px}
+.gap h3{color:var(--text);margin-bottom:6px}
+.gap p{margin:0;font-size:16px}
+.ledger{font-weight:700;color:#E6E7EA}
+.ledger b{color:var(--gold);font-weight:900}
+.identity{
+  font-size:clamp(26px,6.6vw,36px);font-weight:900;line-height:1.2;color:var(--text);
+  margin:22px 0 0
+}
+#reveal{display:none;margin-top:20px}
+#reveal.on{display:block;animation:rise .5s cubic-bezier(.2,.7,.3,1) both}
+#decl{font-size:clamp(21px,5.4vw,26px);font-weight:700;line-height:1.36;color:#fff}
+#cta{display:none;margin-top:28px}
+#cta.on{display:block;animation:rise .5s cubic-bezier(.2,.7,.3,1) both}
+.rows{margin:22px 0 0;padding:0;list-style:none}
+.rows li{position:relative;padding:0 0 18px 26px}
+.rows li::before{content:"";position:absolute;left:0;top:9px;width:9px;height:9px;border-radius:50%;background:var(--gold)}
+.rows b{display:block;color:#fff;font-weight:800;margin-bottom:2px}
+.rows span{color:var(--body);font-size:15.5px}
+footer{padding:34px 0 46px;color:var(--muted);font-size:12px;letter-spacing:.12em;
+  text-transform:uppercase;font-weight:700;text-align:center;border-top:1px solid var(--line);margin-top:20px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+</head>
+<body>
+
+<div id="bar" class="wrap" hidden>
+  <div class="track"><div class="fill" id="fill"></div></div>
+  <div class="meta">
+    <button id="back" type="button" hidden>&larr; Back</button>
+    <span id="step"></span>
+  </div>
+</div>
+
+<main class="wrap" id="app">
+  <!-- Intro -->
+  <section class="screen on" id="s-intro" aria-labelledby="intro-h">
+    <p class="eyebrow">The Storm Audit</p>
+    <div class="rule"></div>
+    <h1 id="intro-h">Eight questions.<br>Sixty seconds.</h1>
+    <p class="lede" style="margin-top:18px">Find out which storm you are standing in, why it has
+      not moved, and the one thing to do tomorrow morning.</p>
+    <button class="btn" id="start">Start</button>
+    <p class="fine">Free. No card, no account.</p>
+  </section>
+
+  <!-- Questions render here -->
+  <section class="screen" id="s-q" aria-live="polite"></section>
+
+  <!-- Email -->
+  <section class="screen" id="s-email" aria-labelledby="email-h">
+    <p class="eyebrow">Last step</p>
+    <h2 id="email-h">Where should we send your plan?</h2>
+    <p style="margin-top:14px">Seven declarations for your storm, one for each morning. Yours to
+      keep.</p>
+    <form id="email-form" novalidate>
+      <label class="sr" for="email">Email address</label>
+      <input type="email" id="email" name="email" inputmode="email" autocomplete="email"
+             placeholder="you@email.com" required>
+      <p class="err" id="email-err" role="alert"></p>
+      <button class="btn" type="submit" id="email-go">Show me my result</button>
+    </form>
+    <p class="fine">We send the plan and a short note each morning for a week. Leave whenever you
+      want.</p>
+  </section>
+
+  <!-- Result -->
+  <section class="screen" id="s-result" aria-labelledby="r-h"></section>
+</main>
+
+<footer class="wrap">SpeakLife</footer>
+
+<script>
+/* ============================================================================
+   CONFIG. Three values must be filled in before this goes live. Marketing owns
+   the first two. Do not guess them.
+   ========================================================================== */
+const CONFIG = {
+  KLAVIYO_COMPANY_ID: "",        // TODO public API key / company id
+  KLAVIYO_LIST_ID:    "",        // TODO the audit list, from marketing
+  POSTHOG_KEY:        "",        // TODO project 455580 web key
+  POSTHOG_HOST:       "https://us.i.posthog.com",
+  APP_LINK:           "https://speaklife.app/onboard",
+  PDF_BASE:           "/plans",  // where unshakable-<route>.pdf is served
+  UTM: { utm_source:"audit", utm_medium:"owned", utm_campaign:"storm_audit" }
+};
+
+const AUDIT = /*__AUDIT_DATA__*/;
+
+/* ---------------------------------------------------------------- state --- */
+const KEY = "speaklife.storm-audit.v1";
+let A = {};                       // answers
+try { A = JSON.parse(sessionStorage.getItem(KEY) || "{}"); } catch (e) { A = {}; }
+
+function save() {
+  try { sessionStorage.setItem(KEY, JSON.stringify(A)); } catch (e) {}
+}
+
+/* The question order is flat except Q1b, which only exists for two Q1 answers. */
+function flow() {
+  const steps = ["q1"];
+  if (A.storm && AUDIT.substorms[A.storm]) steps.push("q1b");
+  return steps.concat(["q2","q3","q4","q5","q6","q7","q8"]);
+}
+
+let at = 0;                       // index into flow()
+
+/* ------------------------------------------------------------ resolution --- */
+function route() {
+  if (!A.storm) return null;
+  if (AUDIT.substorms[A.storm]) return A.substorm || null;
+  return A.storm;
+}
+
+function method() {
+  if (A.spoken === "most_days" || A.spoken === "sometimes") return "Speaker";
+  if (A.response === "pray_about") return "Asker";
+  if (A.spoken === "never" || A.spoken === "once_twice") return "Asker";
+  return "Reader";
+}
+
+/* Evaluate all six in priority order, keep the first three. Never more. */
+function gaps() {
+  const hit = [];
+  const t = {
+    praying_about: A.response === "pray_about" || A.spoken === "never",
+    never_spoken:  (A.spoken === "never" || A.spoken === "once_twice") && A.knows_verse !== "no",
+    dont_know:     A.knows_verse === "no",
+    first_hour:    A.first_hour === "phone" || A.first_hour === "news",
+    never_ran_it:  (A.spoken === "once_twice" || A.spoken === "sometimes")
+                     && (A.duration === "year" || A.duration === "years"),
+    other_voice:   A.loudest && A.loudest !== "gods"
+  };
+  for (const g of AUDIT.gaps) if (t[g.id] && hit.length < 3) hit.push(g);
+  return hit;
+}
+
+function waitingCost() {
+  const d = AUDIT.durations[A.duration];
+  if (!d || !d.months) return null;
+  const mornings = (d.months * 30).toLocaleString("en-US");
+  return "You have been carrying this for " + d.phrase + ". That is roughly <b>" + mornings +
+         "</b> mornings your mind started on something other than what God said about it.";
+}
+
+function ledger() {
+  if (A.loudest && A.loudest !== "gods") return AUDIT.ledger.voice;
+  if (A.first_hour === "phone" || A.first_hour === "news") return AUDIT.ledger.hour;
+  return null;
+}
+
+/* -------------------------------------------------------------- tracking --- */
+let ph = null;
+function track(event, props) {
+  const body = Object.assign({}, props || {});
+  if (!CONFIG.POSTHOG_KEY) { console.debug("[track]", event, body); return; }
+  try {
+    if (!ph) ph = window.posthog || null;
+    if (ph && ph.capture) ph.capture(event, body);
+  } catch (e) {}
+}
+
+function utmParams() {
+  const q = new URLSearchParams(location.search);
+  const out = {};
+  ["utm_source","utm_medium","utm_campaign","utm_content"].forEach(function (k) {
+    if (q.get(k)) out[k] = q.get(k);
+  });
+  return out;
+}
+
+/* ------------------------------------------------------------------ view --- */
+const app  = document.getElementById("app");
+const bar  = document.getElementById("bar");
+const fill = document.getElementById("fill");
+const stepEl = document.getElementById("step");
+const backEl = document.getElementById("back");
+const qEl  = document.getElementById("s-q");
+
+function show(id) {
+  document.querySelectorAll(".screen").forEach(function (s) { s.classList.remove("on"); });
+  document.getElementById(id).classList.add("on");
+  window.scrollTo(0, 0);
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, function (c) {
+    return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c];
+  });
+}
+
+function progress() {
+  const steps = flow();
+  const total = steps.length + 1;              // + the email step
+  bar.hidden = false;
+  fill.style.width = Math.round((at / total) * 100) + "%";
+  stepEl.textContent = at === 0
+    ? "Question 1"
+    : "Question " + Math.min(at + 1, steps.length) + " of " + steps.length;
+  backEl.hidden = at === 0;
+}
+
+function renderQuestion() {
+  const steps = flow();
+  if (at >= steps.length) { renderEmail(); return; }
+  const q = AUDIT.questions[steps[at]];
+  progress();
+
+  /* Q1b ships both branches and renders whichever Q1 selected. */
+  const prompt = q.branches ? q.branches[A.storm].prompt : q.prompt;
+  const options = q.branches ? q.branches[A.storm].options : q.options;
+
+  let html = '<p class="eyebrow">' + esc(q.eyebrow) + "</p>" +
+             '<h2 id="q-h">' + esc(prompt) + "</h2>";
+  if (q.hint) html += '<p class="hint">' + esc(q.hint) + "</p>";
+
+  if (q.type === "text") {
+    html += '<label class="sr" for="free">' + esc(q.prompt) + "</label>" +
+            '<input type="text" id="free" maxlength="140" placeholder="' + esc(q.placeholder) +
+            '" value="' + esc(A[q.key] || "") + '">' +
+            '<button class="btn" id="next">Continue</button>' +
+            '<button class="btn ghost" id="skip">Skip this one</button>';
+  } else {
+    html += '<div class="opts" role="group" aria-labelledby="q-h">';
+    options.forEach(function (o) {
+      const sel = A[q.key] === o.value ? " sel" : "";
+      html += '<button class="opt' + sel + '" type="button" data-v="' + esc(o.value) + '">' +
+              esc(o.label) + "</button>";
+    });
+    html += "</div>";
+  }
+
+  qEl.innerHTML = html;
+  show("s-q");
+
+  if (q.type === "text") {
+    const input = document.getElementById("free");
+    const go = function (skip) {
+      A[q.key] = skip ? "" : input.value.trim();
+      save();
+      track("audit_question_answered", { question: steps[at], value: A[q.key] ? "provided" : "skipped" });
+      at++; renderQuestion();
+    };
+    document.getElementById("next").onclick = function () { go(false); };
+    document.getElementById("skip").onclick = function () { go(true); };
+    input.addEventListener("keydown", function (e) { if (e.key === "Enter") go(false); });
+    input.focus({ preventScroll: true });
+  } else {
+    qEl.querySelectorAll(".opt").forEach(function (btn) {
+      btn.onclick = function () {
+        A[q.key] = btn.dataset.v;
+        if (q.key === "storm") delete A.substorm;     // changing Q1 invalidates Q1b
+        save();
+        track("audit_question_answered", { question: steps[at], value: btn.dataset.v });
+        at++; renderQuestion();
+      };
+    });
+  }
+}
+
+function renderEmail() {
+  at = flow().length;
+  progress();
+  stepEl.textContent = "Last step";
+  show("s-email");
+  document.getElementById("email").focus({ preventScroll: true });
+}
+
+/* ----------------------------------------------------------- the result --- */
+function renderResult() {
+  const r = route();
+  const R = AUDIT.routes[r];
+  const M = AUDIT.methods[method()];
+  const G = gaps();
+  const wc = waitingCost();
+  const lg = ledger();
+
+  let h = "";
+
+  /* beat 1 */
+  h += '<div class="beat"><p class="eyebrow">Your result</p>' +
+       '<h1 id="r-h">' + esc(R.headline) + "</h1>";
+  if (A.own_words) h += '<p class="quoted">&ldquo;' + esc(A.own_words) + "&rdquo;</p>";
+  h += "</div>";
+
+  /* beat 2 */
+  h += '<div class="beat"><p class="lede">' + esc(M.line) + "</p>" +
+       '<span class="label">' + esc(M.label) + "</span>" +
+       "<p>" + esc(M.reassurance) + "</p></div>";
+
+  /* beat 3 */
+  if (G.length) {
+    h += '<div class="beat"><p class="eyebrow">Your top ' +
+         (G.length === 1 ? "gap" : G.length === 2 ? "two gaps" : "three gaps") + "</p>";
+    G.forEach(function (g) {
+      h += '<div class="card gap"><h3>' + esc(g.headline) + "</h3><p>" + esc(g.body) + "</p></div>";
+    });
+    if (wc) h += '<p class="ledger" style="margin-top:22px">' + wc + "</p>";
+    if (lg) h += '<p class="ledger">' + esc(lg) + "</p>";
+    h += "</div>";
+  }
+
+  /* beat 4 */
+  h += '<div class="beat"><p class="eyebrow">The turn</p>' +
+       "<h2>" + esc(AUDIT.turn.headline) + "</h2>" +
+       "<p style=\"margin-top:16px\">" + esc(AUDIT.turn.body) + "</p>" +
+       '<div class="card"><p class="scripture" style="margin:0 0 10px">&ldquo;' +
+       esc(AUDIT.turn.quote) + "&rdquo;</p><p class=\"ref\" style=\"margin:0\">" +
+       esc(AUDIT.turn.ref) + "</p></div>" +
+       '<p style="margin-top:16px">' + esc(AUDIT.turn.kicker) + "</p>" +
+       '<p class="identity">' + esc(R.identity) + "</p></div>";
+
+  /* beat 5 */
+  h += '<div class="beat"><p class="eyebrow">Your next step</p>' +
+       "<h2>" + esc(AUDIT.say.headline) + "</h2>" +
+       '<button class="btn" id="say">' + esc(AUDIT.say.button) + "</button>" +
+       '<div id="reveal"><div class="card"><p id="decl">' + esc(R.declaration) +
+       '</p><p class="ref" style="margin:12px 0 0">' + esc(R.declaration_ref) + "</p></div>" +
+       '<p class="fine" style="text-align:left;margin-top:14px">' + esc(AUDIT.say.after) + "</p>" +
+       '<p class="lede" style="margin-top:18px">' + esc(AUDIT.say.note) + "</p></div>" +
+       '<div id="cta">' +
+       "<p class=\"lede\">" + esc(AUDIT.cta.headline) + "</p>" +
+       "<p>" + esc(AUDIT.cta.body) + "</p><ul class=\"rows\">";
+  AUDIT.cta.rows.forEach(function (row) {
+    h += "<li><b>" + esc(row[0]) + "</b><span>" + esc(row[1]) + "</span></li>";
+  });
+  h += '</ul><a class="btn" id="get" href="#" rel="noopener">Get SpeakLife free</a>' +
+       '<a class="btn ghost" id="dl" href="#" download>Download my 7-day plan</a>' +
+       '<p class="fine">' + esc(AUDIT.cta.fine) + "</p></div></div>";
+
+  document.getElementById("s-result").innerHTML = h;
+  bar.hidden = true;
+  show("s-result");
+
+  const link = CONFIG.APP_LINK + "?ob=" + encodeURIComponent(R.ob) + "&" +
+    new URLSearchParams(Object.assign({}, CONFIG.UTM, { utm_content: r }, utmParams())).toString();
+  const get = document.getElementById("get");
+  get.href = link;
+  get.onclick = function () { track("audit_cta_tapped", { route: r, ob: R.ob }); };
+
+  const dl = document.getElementById("dl");
+  dl.href = CONFIG.PDF_BASE + "/unshakable-" + r + ".pdf";
+  dl.onclick = function () { track("audit_pdf_downloaded", { route: r }); };
+
+  /* The three second hold before the CTA is deliberate. The page asks them to
+     speak, then waits, rather than selling over the top of the moment. */
+  document.getElementById("say").onclick = function (e) {
+    e.target.setAttribute("disabled", "");
+    document.getElementById("reveal").classList.add("on");
+    track("audit_declaration_revealed", { route: r });
+    setTimeout(function () { document.getElementById("cta").classList.add("on"); }, 3000);
+  };
+
+  track("audit_completed", {
+    storm: A.storm, substorm: A.substorm || null, route: r, pain: R.pain,
+    method: method(), gaps: G.map(function (g) { return g.id; }).join(","),
+    duration: A.duration,
+    has_own_words: !!A.own_words          // never the text itself, see the spec
+  });
+}
+
+/* ------------------------------------------------------------- klaviyo --- */
+/* Fire and forget. The result must never wait on this, and must render if it
+   fails. A dropped subscribe costs an email; a blocked result costs the user. */
+function subscribe(email) {
+  if (!CONFIG.KLAVIYO_COMPANY_ID || !CONFIG.KLAVIYO_LIST_ID) {
+    console.warn("Klaviyo not configured; skipping subscribe.");
+    return Promise.resolve();
+  }
+  const r = route();
+  const props = {
+    audit_storm: A.storm,
+    audit_substorm: A.substorm || null,
+    audit_route: r,
+    audit_pain: AUDIT.routes[r].pain,
+    audit_method: method(),
+    audit_gaps: gaps().map(function (g) { return g.id; }).join(","),
+    audit_duration: A.duration,
+    audit_own_words: A.own_words || "",
+    audit_completed_at: new Date().toISOString()
+  };
+  return fetch("https://a.klaviyo.com/client/subscriptions/?company_id=" +
+               encodeURIComponent(CONFIG.KLAVIYO_COMPANY_ID), {
+    method: "POST",
+    headers: { "Content-Type": "application/json", revision: "2024-10-15" },
+    body: JSON.stringify({
+      data: {
+        type: "subscription",
+        attributes: {
+          profile: { data: { type: "profile",
+            attributes: { email: email, properties: props } } }
+        },
+        relationships: { list: { data: { type: "list", id: CONFIG.KLAVIYO_LIST_ID } } }
+      }
+    })
+  }).catch(function (e) { console.warn("subscribe failed", e); });
+}
+
+/* ---------------------------------------------------------------- wiring --- */
+document.getElementById("start").onclick = function () {
+  track("audit_started", utmParams());
+  at = 0; renderQuestion();
+};
+
+backEl.onclick = function () {
+  if (at > 0) { at--; renderQuestion(); }
+};
+
+document.getElementById("email-form").onsubmit = function (e) {
+  e.preventDefault();
+  const input = document.getElementById("email");
+  const err = document.getElementById("email-err");
+  const v = input.value.trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)) {
+    err.textContent = "That does not look like an email address.";
+    input.focus();
+    return;
+  }
+  err.textContent = "";
+  document.getElementById("email-go").setAttribute("disabled", "");
+  A.email = v; save();
+  track("audit_email_submitted", { route: route(), pain: AUDIT.routes[route()].pain });
+  subscribe(v);
+  renderResult();
+};
+
+/* Deep linked back into a half-finished run: pick up where they stopped. */
+(function resume() {
+  if (!A.storm) return;
+  const steps = flow();
+  let i = 0;
+  while (i < steps.length && A[AUDIT.questions[steps[i]].key] !== undefined) i++;
+  if (i === 0) return;
+  at = i;
+  if (at >= steps.length) renderEmail(); else renderQuestion();
+})();
+
+/* PostHog, only when a key is configured. */
+(function posthog() {
+  if (!CONFIG.POSTHOG_KEY) return;
+  !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys getNextSurveyStep onSessionId".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+  posthog.init(CONFIG.POSTHOG_KEY, { api_host: CONFIG.POSTHOG_HOST, capture_pageview: true });
+})();
+</script>
+</body>
+</html>

@@ -231,6 +231,8 @@ pattern.
 
 ### Beat 5 wrapper (all routes)
 
+> **Say it once before you go.**
+>
 > `[ Say it out loud ]`
 >
 > *(on tap, reveal the declaration large, hold 3s, then the CTA)*
