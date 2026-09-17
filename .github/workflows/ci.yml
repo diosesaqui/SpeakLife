@@ -252,4 +252,4 @@ jobs:
 
       - name: Email capture tests
         working-directory: functions
-        run: npm run test:email
+        run: npm run test:email:coverage

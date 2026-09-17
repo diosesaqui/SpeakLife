@@ -753,7 +753,6 @@ struct ProfileView: View {
         }
     }
 
-    @ViewBuilder
     /// Restored from the removed subsystem (c605131f), label and all.
     ///
     /// This is the only surface where someone can give an address AFTER
@@ -789,6 +788,7 @@ struct ProfileView: View {
         }
     }
 
+    @ViewBuilder
     private var supportIDRow: some View {
         Button(action: {
             let userID = Purchases.shared.appUserID

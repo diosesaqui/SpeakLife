@@ -16,12 +16,17 @@ Email collection is not new. It shipped on **2026-03-16**, ran until
 This document describes the restored system. Two things about the old one are
 load-bearing context:
 
-**1. The Klaviyo private key was in the app.** `EmailConfig.plist` carried
-`pk_3d962d390e864808f15988adaa1ca212e8`, committed to git and extractable from
-every shipped binary. A Klaviyo *private* key is full account access. **That key
-must be treated as compromised and rotated**, independently of anything here.
-It is the reason the Klaviyo call moved server-side rather than being restored
-as it was.
+**1. The Klaviyo private key was in the app.** `EmailConfig.plist` carried a
+live Klaviyo private key (`pk_3d96…`, readable in full at `c605131f^`),
+committed to git and extractable from every shipped binary. A Klaviyo *private*
+key is full account access — read and export every profile, delete lists.
+**That key must be treated as compromised and rotated**, independently of
+anything here. It is the reason the Klaviyo call moved server-side rather than
+being restored as it was.
+
+(The value is deliberately truncated here. It is already in this repo's history
+and cannot be removed from it, but there is no reason to reproduce it at HEAD
+where it is greppable in a file people read.)
 
 **2. Consent was never recorded.** The old service created a profile with
 `POST /api/profiles/` and then added it to the list via a relationship. That
@@ -187,6 +192,34 @@ land. Nothing is lost by deploying the app before configuring Klaviyo.
 `false` and every flow skips the step, going straight to the review wall. This
 is also the A/B switch — see "It might still cost trial starts" above; prefer
 running it as an experiment over shipping it to everyone.
+
+---
+
+## Abuse surface (read before widening anything)
+
+`collectEmail` is unauthenticated and CORS-open, and it has to be: the
+onboarding ask runs before any account exists, so there is no identity to
+require. Two abuses follow, and the second is the dangerous one:
+
+- **List poisoning** — stuffing the list with addresses nobody owns.
+- **Email bombing** — every accepted address is subscribed *with consent*, so
+  it triggers the welcome flow. A script pointed at this URL sends our mail to
+  strangers, and the spam complaints land on our sending domain.
+
+Mitigated today by a per-IP window: 10 submissions per hour, counted in
+`emailCaptureRateLimits/{sha256(ip)}` (server-only, same as the list). Real
+traffic is roughly a dozen submissions a day across all users, so the limit is
+far above anything legitimate. It **fails open** — if the counter read throws,
+the submission proceeds, because a Firestore hiccup must not start rejecting
+real addresses at the one moment we get to ask for them.
+
+**The proper fix is Firebase App Check**, which would let the function require a
+genuine app attestation instead of inferring intent from an IP. `x-forwarded-for`
+is spoofable, so the current limit is a speed bump, not a security control. App
+Check needs an app-side provider and a rollout, so it is deliberately a
+follow-up rather than something half-done here. Do not widen this endpoint's
+limits, or add another unauthenticated write path, without doing App Check
+first.
 
 ---
 

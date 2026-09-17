@@ -7,6 +7,7 @@ rules_version = '2';
 // firestore.rules governs. It holds exactly one thing:
 //
 //   - email_list/{uid or sanitized email}       (server-only)
+//   - emailCaptureRateLimits/{sha256(ip)}       (server-only)
 //
 // Every address the app has ever collected lives here, written today by the
 // `collectEmail` Cloud Function and, before 2026-06-19, by the
@@ -46,6 +47,11 @@ service cloud.firestore {
     // The Admin SDK bypasses these rules, so the Cloud Function is unaffected.
 
     match /email_list/{docId} { allow read, write: if false; }
+
+    // Per-IP counters for the collectEmail rate limit. Server-only for the
+    // same reason as the list itself: a client that could write here could
+    // reset its own counter, which is the whole point of the limit.
+    match /emailCaptureRateLimits/{ipHash} { allow read, write: if false; }
 
     // Anything else in this database is denied by default; there is no
     // catch-all allow above, and nothing else is expected to live here.

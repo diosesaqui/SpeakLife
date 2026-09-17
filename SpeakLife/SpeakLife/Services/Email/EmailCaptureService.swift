@@ -170,7 +170,7 @@ final class EmailCaptureService {
 
     /// Retry anything a previous run could not deliver. Called on launch.
     func retryPendingIfNeeded() {
-        guard defaults.dictionary(forKey: Keys.pending) != nil else { return }
+        guard !pendingQueue.isEmpty else { return }
         Task.detached(priority: .background) { [weak self] in
             await self?.flushPending()
         }
@@ -178,8 +178,39 @@ final class EmailCaptureService {
 
     // MARK: - Delivery
 
+    /// Append to the pending queue.
+    ///
+    /// A LIST, not a single slot. The slot version silently dropped an
+    /// undelivered address whenever a second submit landed on top of it — an
+    /// onboarding address still waiting on a bad connection, discarded by the
+    /// post-purchase re-tag or by the user editing their address in Profile.
+    /// That is exactly the loss the queue exists to prevent.
+    ///
+    /// Same-address submissions collapse: a re-tag carries no new address, only
+    /// a newer `source`, so keeping both would just send the same record twice.
     private func queue(_ payload: [String: String]) {
-        defaults.set(payload, forKey: Keys.pending)
+        var pending = pendingQueue
+        if let email = payload["email"] {
+            pending.removeAll { $0["email"] == email }
+        }
+        pending.append(payload)
+        // Bounded: an install that somehow never delivers must not grow an
+        // unbounded array in UserDefaults.
+        if pending.count > 10 { pending.removeFirst(pending.count - 10) }
+        defaults.set(pending, forKey: Keys.pending)
+    }
+
+    private var pendingQueue: [[String: String]] {
+        if let queued = defaults.array(forKey: Keys.pending) as? [[String: String]] {
+            return queued
+        }
+        // Tolerate the single-dictionary shape an earlier build of this branch
+        // wrote, so a TestFlight install mid-upgrade does not silently drop the
+        // address it was still holding.
+        if let single = defaults.dictionary(forKey: Keys.pending) as? [String: String] {
+            return [single]
+        }
+        return []
     }
 
     /// Sends the queued payload, clearing it only on a definitive outcome.
@@ -192,8 +223,17 @@ final class EmailCaptureService {
     /// launch. Clearing on those would throw the address away for a reason that
     /// has nothing to do with the address.
     private func flushPending() async {
-        guard let payload = defaults.dictionary(forKey: Keys.pending) as? [String: String],
-              let email = payload["email"], !email.isEmpty else { return }
+        for payload in pendingQueue {
+            await send(payload)
+        }
+    }
+
+    /// Sends one queued payload and resolves its place in the queue.
+    private func send(_ payload: [String: String]) async {
+        guard let email = payload["email"], !email.isEmpty else {
+            drop(payload)
+            return
+        }
 
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
@@ -207,7 +247,7 @@ final class EmailCaptureService {
 
             switch http.statusCode {
             case 200...299:
-                defaults.removeObject(forKey: Keys.pending)
+                drop(payload)
                 defaults.set(true, forKey: Keys.captured)
                 AnalyticsService.shared.track("email_capture_delivered", parameters: [
                     "source": payload["source"] ?? "unknown"
@@ -215,7 +255,15 @@ final class EmailCaptureService {
             case 400...499:
                 // Unfixable by retrying. Drop it rather than carry a poison
                 // payload on every launch for the life of the install.
-                defaults.removeObject(forKey: Keys.pending)
+                drop(payload)
+                // Forget the address too. It was stored optimistically at
+                // submit time, and leaving it behind would keep
+                // `hasCapturedEmail` true — so every surface would go on
+                // believing we hold an address the server has permanently
+                // refused, and the user would never be asked again.
+                if defaults.string(forKey: Keys.address) == email {
+                    defaults.removeObject(forKey: Keys.address)
+                }
                 AnalyticsService.shared.track("email_capture_rejected", parameters: [
                     "status": http.statusCode
                 ])
@@ -227,6 +275,17 @@ final class EmailCaptureService {
         } catch {
             // Offline or timed out. Stays queued; next launch tries again.
             AnalyticsService.shared.track("email_capture_deferred", parameters: ["status": 0])
+        }
+    }
+
+    /// Remove one payload from the queue, matched on its address.
+    private func drop(_ payload: [String: String]) {
+        let email = payload["email"]
+        let remaining = pendingQueue.filter { $0["email"] != email }
+        if remaining.isEmpty {
+            defaults.removeObject(forKey: Keys.pending)
+        } else {
+            defaults.set(remaining, forKey: Keys.pending)
         }
     }
 }

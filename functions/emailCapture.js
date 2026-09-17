@@ -79,6 +79,30 @@ const MAX_FIELD_LENGTH = 120;
 const MAX_RETRIES = 10;
 const RETRY_BATCH_SIZE = 100;
 
+// ─── Abuse limits ──────────────────────────────────────────────────────────
+//
+// This endpoint is unauthenticated and CORS-open, because it has to be: the
+// onboarding ask runs before any account exists, so there is no identity to
+// require. That leaves it open to two abuses, and the second is the dangerous
+// one:
+//
+//   - List poisoning: stuffing the list with addresses nobody owns.
+//   - Email bombing: every accepted address is subscribed WITH CONSENT, so it
+//     triggers the welcome flow. A script pointed at this URL sends our mail to
+//     strangers, and the complaints land on our sending domain.
+//
+// A per-IP window is the cheap mitigation that needs no client change. Real
+// traffic is roughly a dozen submissions a day across all users, so 10 per IP
+// per hour is far above anything legitimate and still caps a script hard.
+//
+// The PROPER fix is Firebase App Check, which would let the function require a
+// genuine app attestation rather than guessing from an address. That needs an
+// app-side provider configured and a rollout, so it is deliberately left as a
+// follow-up rather than half-done here. See docs/EMAIL_COLLECTION.md.
+const RATE_LIMIT_COLLECTION = 'emailCaptureRateLimits';
+const RATE_LIMIT_MAX = 10;
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
+
 // ═══════════════════════════════════════════════════════════════════════════
 // Helpers
 // ═══════════════════════════════════════════════════════════════════════════
@@ -213,6 +237,57 @@ async function subscribeToKlaviyo({ apiKey, listId, email, firstName, properties
   }
 }
 
+/**
+ * The caller's IP, as far as it can be trusted.
+ *
+ * Behind Google's front end `x-forwarded-for` is a list whose FIRST entry is
+ * the client. It is spoofable, which is why this is a speed bump rather than a
+ * security control — but a spoofing script is a different, larger effort than
+ * curling a URL in a loop, and that is the bar being raised.
+ */
+function callerIp(req) {
+  const forwarded = req.headers && req.headers['x-forwarded-for'];
+  if (typeof forwarded === 'string' && forwarded.length > 0) {
+    return forwarded.split(',')[0].trim();
+  }
+  return (req.ip || 'unknown').toString();
+}
+
+/**
+ * Count this caller against the window. Returns true when they are over it.
+ *
+ * Fails OPEN: if the rate-limit read or write throws, the submission proceeds.
+ * A Firestore hiccup must not start rejecting real addresses at the one moment
+ * we get to ask for them — the downside of a missed limit is some junk in a
+ * list we control, and the downside of a false rejection is a subscriber gone
+ * for good.
+ */
+async function isRateLimited(ip) {
+  const ref = db.collection(RATE_LIMIT_COLLECTION)
+    .doc(crypto.createHash('sha256').update(ip).digest('hex'));
+  try {
+    const snap = await ref.get();
+    const now = Date.now();
+    const data = snap.exists ? snap.data() : null;
+    const windowStart = data && typeof data.windowStart === 'number' ? data.windowStart : 0;
+    const within = now - windowStart < RATE_LIMIT_WINDOW_MS;
+    const count = within && typeof data.count === 'number' ? data.count : 0;
+
+    if (within && count >= RATE_LIMIT_MAX) return true;
+
+    await ref.set(
+      within
+        ? { count: count + 1, windowStart }
+        : { count: 1, windowStart: now },
+      { merge: true }
+    );
+    return false;
+  } catch (err) {
+    logger.error('collectEmail: rate limit check failed, allowing', err);
+    return false;
+  }
+}
+
 /** Shared by the live path and the retry sweep so they can never drift. */
 function klaviyoResultFields(result) {
   if (result.ok) {
@@ -258,6 +333,15 @@ exports.collectEmail = onRequest(
       return;
     }
 
+    // After validation so a malformed request is rejected without spending a
+    // Firestore round trip, and before the write so a script cannot fill the
+    // list while being told no.
+    if (await isRateLimited(callerIp(req))) {
+      logger.warn('collectEmail: rate limited');
+      res.status(429).json({ error: 'rate_limited' });
+      return;
+    }
+
     const email = normalizeEmail(rawEmail);
 
     const userId = cleanField(body.userId);
@@ -284,16 +368,23 @@ exports.collectEmail = onRequest(
         source,
         platform: 'iOS',
         app_version: appVersion,
-        // New fields, additive only.
-        appUserId,
-        variant,
-        burden,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         klaviyoStatus: 'pending',
         retryCount: 0,
       };
+      // Every optional field is written only when we actually have it.
+      //
+      // This is a merge, so writing `null` does not mean "no value" — it
+      // OVERWRITES. The onboarding submit is the only one carrying `variant`
+      // and `burden`; the Profile sheet and the post-purchase re-tag send
+      // neither, so an unguarded null here would erase the onboarding arm off
+      // the record the moment the user updates their address, and the sweep
+      // would then re-send a profile with those properties blanked.
       if (userId) payload.user_id = userId;
       if (firstName) payload.first_name = firstName;
+      if (appUserId) payload.appUserId = appUserId;
+      if (variant) payload.variant = variant;
+      if (burden) payload.burden = burden;
       // `timestamp` is the legacy creation stamp and is written once, on the
       // first write. A returning user re-submitting must not look like a brand
       // new subscriber, so this is conditional rather than part of the merge.
@@ -398,7 +489,16 @@ exports.retryKlaviyoSync = onSchedule(
     // starts rate-limiting us again.
     for (const doc of snap.docs) {
       const data = doc.data();
-      if (!data.email) continue;
+      if (!data.email) {
+        // A doc with no address can never be subscribed, and leaving it
+        // `pending` would let it occupy a slot in every future 100-doc batch
+        // forever, crowding out addresses that could actually be sent.
+        await doc.ref.update({
+          klaviyoStatus: 'unsendable',
+          klaviyoError: 'no email on record',
+        }).catch(() => {});
+        continue;
+      }
 
       const result = await subscribeToKlaviyo({
         apiKey,
