@@ -199,7 +199,7 @@ struct ProductOnboardingView: View {
 
     private func advance() {
         Juice.play(.tapLight)
-        // flow_schema 4 = email ask inserted between the review wall and the paywall
+        // flow_schema 4 = email ask inserted immediately before the review wall
         // (3 = testimonial wall inserted before paywall, 2 = pre-testimonials,
         // 1 = pre-renumbering); bump when step raw values are renumbered again.
         AnalyticsService.shared.track("product_step_completed", parameters: ["step": currentStep.rawValue, "flow_schema": 4])
@@ -214,13 +214,9 @@ struct ProductOnboardingView: View {
         case .notificationTime:
             applyResponsesAndComplete()
         // Out-of-band hop: .email's raw value is 20 (appended to protect the
-        // funnel's numbering) but it RUNS here, between the review wall and the
-        // paywall. Skipped when the ask is remote-disabled or the address is
-        // already held, in which case the wall goes straight to the paywall.
-        case .testimonials where !subscriptionStore.shouldSkipEmailCapture:
-            withAnimation(.easeInOut(duration: 0.35)) { currentStep = .email }
+        // funnel's numbering) but it RUNS just before the review wall.
         case .email:
-            withAnimation(.easeInOut(duration: 0.35)) { currentStep = .paywall }
+            withAnimation(.easeInOut(duration: 0.35)) { currentStep = .testimonials }
         default:
             var nextRaw = currentStep.rawValue + 1
             // FIRST, before the belief and rating gates below.
@@ -255,7 +251,15 @@ struct ProductOnboardingView: View {
                 onComplete()
                 return
             }
-            withAnimation(.easeInOut(duration: 0.35)) { currentStep = next }
+        // The email ask sits immediately BEFORE the review wall, so the wall
+        // keeps its adjacency to the paywall. This intercepts ARRIVAL at the
+        // wall rather than hooking whatever precedes it, because the
+        // predecessor is not fixed — the remote-gated rating step changes which
+        // screen leads here. Skipped when the ask is off or an address is
+        // already held, in which case the wall is reached directly.
+            let nextStep: ProductStep =
+                (next == .testimonials && !subscriptionStore.shouldSkipEmailCapture) ? .email : next
+            withAnimation(.easeInOut(duration: 0.35)) { currentStep = nextStep }
         }
     }
 

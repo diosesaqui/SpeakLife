@@ -15,10 +15,10 @@
 //     enums' raw values, transcribed. If a change here is deliberate, bump the
 //     angle's `flowSchema` and update these numbers together.
 //
-//  The numbers below are one higher from the paywall on than the hand-written
-//  enums', because `.email` was inserted between the review wall and the
-//  paywall and every arm's `flowSchema` was bumped with it. Everything before
-//  the review wall is untouched, which is why only the tail indices moved.
+//  The numbers below are one higher from the review wall on than the
+//  hand-written enums', because `.email` was inserted immediately before the
+//  wall and every arm's `flowSchema` was bumped with it. Everything earlier is
+//  untouched, which is why only the tail indices moved.
 //
 
 import XCTest
@@ -74,7 +74,8 @@ final class OnboardingAngleTests: XCTestCase {
         XCTAssertEqual(steps[13], .belief)
         XCTAssertEqual(steps[14], .dailyMinutes)
         XCTAssertEqual(steps[17], .rating)
-        XCTAssertEqual(steps[21], .email)
+        XCTAssertEqual(steps[20], .email)
+        XCTAssertEqual(steps[21], .testimonials)
         XCTAssertEqual(steps[22], .paywall)
         XCTAssertEqual(steps[23], .notificationTime)
     }
@@ -95,7 +96,8 @@ final class OnboardingAngleTests: XCTestCase {
         XCTAssertEqual(steps[12], .belief)
         XCTAssertEqual(steps[13], .dailyMinutes)
         XCTAssertEqual(steps[16], .rating)
-        XCTAssertEqual(steps[20], .email)
+        XCTAssertEqual(steps[19], .email)
+        XCTAssertEqual(steps[20], .testimonials)
         XCTAssertEqual(steps[21], .paywall)
         XCTAssertEqual(steps[22], .notificationTime)
     }
@@ -108,7 +110,8 @@ final class OnboardingAngleTests: XCTestCase {
         XCTAssertEqual(steps[1], .scene(0))       // stakes
         XCTAssertEqual(steps[6], .experience)
         XCTAssertEqual(steps[7], .picker)
-        XCTAssertEqual(steps[21], .email)
+        XCTAssertEqual(steps[20], .email)
+        XCTAssertEqual(steps[21], .testimonials)
         XCTAssertEqual(steps[23], .notificationTime)
     }
 
@@ -130,7 +133,9 @@ final class OnboardingAngleTests: XCTestCase {
         XCTAssertEqual(steps[6], .dailyMinutes)
         XCTAssertEqual(steps[7], .firstDeclaration)
         XCTAssertEqual(steps[9], .rating)
-        XCTAssertEqual(steps[12], .email)
+        XCTAssertEqual(steps[10], .planReveal)
+        XCTAssertEqual(steps[11], .email)
+        XCTAssertEqual(steps[12], .testimonials)
         XCTAssertEqual(steps[13], .paywall)
         XCTAssertEqual(steps[14], .notificationTime)
         // The trimmed screens are gone, not reordered.
@@ -200,24 +205,35 @@ final class OnboardingAngleTests: XCTestCase {
         }
     }
 
-    /// The email ask is worth the most from the users who DON'T subscribe, which
-    /// is only true while it runs before the paywall. Slip it after and it
-    /// collects addresses from the people we can already reach — the one
-    /// arrangement that makes the whole step pointless — so its position is
-    /// asserted for every arm rather than trusted to the builder.
-    func testEmailAskSitsImmediatelyBeforeThePaywall() {
+    /// Two separate things are pinned here, and both are load-bearing.
+    ///
+    /// The ask must stay BEFORE the paywall: only about 11% of the people who
+    /// see the paywall ever reach a screen past it, so an ask that slipped
+    /// after it would address a ninth of the audience — the ninth we can
+    /// already reach, which is the one arrangement that makes the whole step
+    /// pointless.
+    ///
+    /// And the review wall must stay welded to the paywall. The wall is social
+    /// proof positioned deliberately against the ask; a screen between them
+    /// spends that adjacency at the tightest point in the funnel.
+    func testEmailAskSitsImmediatelyBeforeTheReviewWall() {
         for (id, angle) in OnboardingAngles.all {
             let steps = angle.steps
             guard let emailIndex = steps.firstIndex(of: .email) else {
                 return XCTFail("\(id): no email step")
             }
+            guard let wallIndex = steps.firstIndex(of: .testimonials) else {
+                return XCTFail("\(id): no review wall step")
+            }
             guard let paywallIndex = steps.firstIndex(of: .paywall) else {
                 return XCTFail("\(id): no paywall step")
             }
-            XCTAssertEqual(emailIndex + 1, paywallIndex,
-                           "\(id): the email ask must be the screen right before the paywall")
-            XCTAssertEqual(steps[emailIndex - 1], .testimonials,
-                           "\(id): the review wall should lead into the email ask")
+            XCTAssertEqual(emailIndex + 1, wallIndex,
+                           "\(id): the email ask must be the screen right before the review wall")
+            XCTAssertEqual(wallIndex + 1, paywallIndex,
+                           "\(id): nothing may come between the review wall and the paywall")
+            XCTAssertLessThan(emailIndex, paywallIndex,
+                              "\(id): the ask is worthless after the paywall")
             XCTAssertEqual(steps.filter { $0 == .email }.count, 1,
                            "\(id): asking twice would be asked twice in the live flow too")
         }

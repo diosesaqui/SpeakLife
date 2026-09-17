@@ -406,8 +406,8 @@ struct QuizOnboardingView: View {
         case rating            // App Store review prompt — slotted before paywall so every funnel-progress user sees it (ASO velocity); placed AFTER matched declaration so the user has had at least one personalized payoff and BEFORE personalDeclaration/paywall so it doesn't compete with the trial decision
         case personalDeclaration
         case commitmentHold
-        case testimonials      // App Store review wall — social proof right before the ask
         case email             // pre-paywall email ask, so the address is captured from the majority who decline the trial. Remote-gated by `emailCaptureEnabled`
+        case testimonials      // App Store review wall — social proof right before the ask
         case paywall
         case notificationTime  // post-paywall: pick a window, then iOS permission prompt
     }
@@ -766,17 +766,18 @@ struct QuizOnboardingView: View {
             "segment": segment.rawValue,
             "total_duration_seconds": totalDuration
         ])
+        // The email ask sits immediately BEFORE the review wall, so the wall
+        // keeps its adjacency to the paywall. Skipped when the ask is
+        // remote-disabled or an address is already held.
+        transition(to: subscriptionStore.shouldSkipEmailCapture ? .testimonials : .email)
+    }
+
+    private func advanceFromEmail() {
+        Juice.play(.tapLight)
         transition(to: .testimonials)
     }
 
     private func advanceFromTestimonials() {
-        Juice.play(.tapLight)
-        // The email ask sits between the wall and the paywall, unless it is
-        // remote-disabled or we already hold an address.
-        transition(to: subscriptionStore.shouldSkipEmailCapture ? .paywall : .email)
-    }
-
-    private func advanceFromEmail() {
         Juice.play(.tapLight)
         transition(to: .paywall)
     }

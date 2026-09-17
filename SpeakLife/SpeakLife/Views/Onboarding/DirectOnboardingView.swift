@@ -409,18 +409,14 @@ struct DirectOnboardingView: View {
         case .notificationTime:
             applyResponsesAndComplete()
         // Out-of-band hop: .email's raw value is 15 (appended to protect the
-        // funnel's numbering) but it RUNS here, between the review wall and the
-        // paywall. Skipped when the ask is remote-disabled or the address is
-        // already held, in which case the wall goes straight to the paywall.
+        // funnel's numbering) but it RUNS just before the review wall.
         //
-        // Note this sits AFTER the `onboarding_completed` fire above, which is
-        // keyed to leaving the review wall. That event marks the last
-        // pre-paywall milestone and must keep firing at the same point in the
-        // arc, whether or not the email ask runs.
-        case .testimonials where !subscriptionStore.shouldSkipEmailCapture:
-            withAnimation(.easeInOut(duration: 0.35)) { currentStep = .email }
+        // Running the ask BEFORE the wall also leaves `onboarding_completed`
+        // alone: it is keyed to leaving the wall, and the wall now leads
+        // straight into the paywall again, so that milestone fires exactly
+        // where it always did.
         case .email:
-            withAnimation(.easeInOut(duration: 0.35)) { currentStep = .paywall }
+            withAnimation(.easeInOut(duration: 0.35)) { currentStep = .testimonials }
         default:
             var nextRaw = currentStep.rawValue + 1
             // The picker and the retry are both recovery, not part of the flow.
@@ -437,7 +433,15 @@ struct DirectOnboardingView: View {
                 onComplete()
                 return
             }
-            withAnimation(.easeInOut(duration: 0.35)) { currentStep = next }
+            // The email ask sits immediately BEFORE the review wall, so the
+            // wall keeps its adjacency to the paywall. This intercepts ARRIVAL
+            // at the wall rather than hooking whatever precedes it, because the
+            // predecessor is not fixed — this arm skips the picker and the
+            // retry for users whose declaration landed. Skipped when the ask is
+            // off or an address is already held.
+            let nextStep: DirectStep =
+                (next == .testimonials && !subscriptionStore.shouldSkipEmailCapture) ? .email : next
+            withAnimation(.easeInOut(duration: 0.35)) { currentStep = nextStep }
         }
     }
 
@@ -653,11 +657,10 @@ enum DirectStep: Int, CaseIterable {
     /// that answers it, a pledge before the ask, auto-advance on every one-tap
     /// question, and a progress bar over the whole one-tap half. Every step
     /// after the mechanism is renumbered again.
-    /// 7 → 8: the email ask was added between the review wall and the paywall.
-    /// The raw values are untouched (`.email` is appended at 15 and reached by
-    /// an explicit hop in `advance()`), but a screen now stands between the
-    /// wall and the ask, so the paywall's drop-off is not comparable to
-    /// schema-7's.
+    /// 7 → 8: the email ask was added immediately before the review wall. The
+    /// raw values are untouched (`.email` is appended at 15 and reached by an
+    /// explicit hop in `advance()`), but a screen now stands between the pledge
+    /// and the wall, so step-to-step drop-off is not comparable to schema-7's.
     static let flowSchema = 8
 
     /// Stable analytics name. Funnels and breakdowns are built on this, not on

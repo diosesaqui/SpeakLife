@@ -4,25 +4,37 @@
 //
 //  The one place the app asks for an email address.
 //
-//  It sits pre-paywall, immediately after the review wall, in every onboarding
-//  arm. Pre-paywall because the address is worth the most from the people who
-//  DON'T subscribe: a user who declines the trial and leaves is unreachable
-//  forever otherwise, and they are the majority. Asking after the paywall would
-//  collect emails only from the users we can already reach.
+//  It sits immediately BEFORE the review wall, in every onboarding arm, which
+//  puts it pre-paywall with one screen of separation. Both halves of that are
+//  measured, not assumed (90 days, test accounts filtered):
+//
+//  - Pre-paywall, because the address is worth the most from the people who
+//    DON'T subscribe. 1,062 people reach this point and 1,050 see the paywall,
+//    but only 116 ever reach a screen after it. An ask placed past the paywall
+//    would address a ninth of the audience, and specifically the ninth we can
+//    already reach.
+//  - Before the wall rather than after it, because the wall is social proof
+//    positioned deliberately against the paywall and 98.9% of the people who
+//    see it go on to see the paywall. A keyboard in that gap spends the
+//    adjacency the wall exists for. Earlier also reaches MORE people: roughly
+//    30% of those who see the plan reveal never arrive at the wall.
 //
 //  Two deliberate choices, both of which protect the conversion rate this
 //  screen sits in front of:
 //
-//  1. **Skippable, and the skip is visible.** A hard gate one screen before a
-//     hard paywall stacks two walls in a row. The skip costs some addresses and
+//  1. **Skippable, and the skip is visible.** A hard gate two screens before a
+//     hard paywall stacks walls in a row. The skip costs some addresses and
 //     keeps the trial starts, which is the right way round.
 //  2. **It never blocks on the network.** Tapping continue advances instantly;
 //     EmailCaptureService sends behind the flow and retries on a later launch
 //     if the send fails. No spinner, no error alert, no way for a bad
 //     connection to cost a subscription.
 //
-//  Remote-gated by `emailCaptureEnabled`, the same way the rating ask is: if
-//  the ask measurably hurts trial starts, it goes dark without a release.
+//  Remote-gated by `emailCaptureEnabled`, the same way the rating ask is. That
+//  switch is also how this should be ROLLED OUT, not just killed: the honest
+//  risk is that the screen costs trial starts, and the break-even is around a
+//  5% drop. Run it as an A/B and read `trial_started` across the arms rather
+//  than shipping it to everyone and hoping.
 //
 
 import SwiftUI

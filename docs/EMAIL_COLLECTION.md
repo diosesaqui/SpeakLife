@@ -52,12 +52,12 @@ paywall, and the address is stored in **our** database first and Klaviyo second.
 
 | Surface | View | `source` | When |
 |---|---|---|---|
-| Onboarding, pre-paywall | `EmailCaptureScreen` | `onboarding` | every install, skippable |
+| Onboarding, before the review wall | `EmailCaptureScreen` | `onboarding` | every install, skippable |
 | Profile → Support | `EmailCaptureSheet` | `settings` | any time, also edits a stale address |
 | After a purchase | `EmailCaptureSheet` | `post_purchase` | once per install, only if no address held |
 
 ```
-  review wall  →  EMAIL ASK  →  paywall  →  notification time
+  plan reveal  →  EMAIL ASK  →  review wall  →  paywall  →  notification time
 ```
 
 The onboarding step is one screen inserted in all six drivers (`quiz`,
@@ -95,9 +95,31 @@ in the account are segmented by those exact strings.
 
 ## Design decisions worth keeping
 
-**Pre-paywall, not post.** Asking after the paywall would collect addresses only
-from people who subscribed — who we can already reach. The value is in the
-people who say no.
+**Pre-paywall, not post.** Measured over 90 days: 1,062 people reach the screen
+where the ask sits, 1,050 see the paywall, and only 116 ever reach a screen
+*after* it. The paywall is a real wall — about 89% of the people who see it
+never get past it — so an ask placed after would address roughly a ninth of the
+audience, and specifically the ninth we can already reach.
+
+(A comment in `DirectOnboardingView` claims post-paywall screens are seen by
+"everyone, because the paywall is hard and the flow continues through it either
+way." The data disagrees; that comment predates the current
+`showPayWhatYouCanLink` setting.)
+
+**Before the review wall, not after it.** The wall is social proof placed
+deliberately against the paywall, and 98.9% of the people who see it go on to
+see the paywall — the tightest, cleanest stretch of the funnel. Putting a
+keyboard in that gap spends the adjacency the wall exists for. Moving one screen
+earlier also *increases* reach: about 30% of the people who see the plan reveal
+never arrive at the wall.
+
+**It might still cost trial starts, so measure it.** Roughly, the pre-paywall
+slot reaches ~950 more people per 90 days than a post-paywall one; at a ~40%
+submit rate that is ~380 addresses, against ~7.6 trials lost if the screen costs
+5% of trial starts. That trade — about 50 addresses per trial — only pays off if
+the list converts back at ~2% or better. **Do not ship this at 100%.** Run
+`emailCaptureEnabled` as a Remote Config A/B and read `trial_started` across the
+arms.
 
 **Skippable.** A hard gate one screen before a hard paywall stacks two walls in
 a row. The skip costs some addresses and protects the trial starts, which is the
@@ -156,8 +178,9 @@ Firestore and marked `pending`, and the sweep subscribes them once the secrets
 land. Nothing is lost by deploying the app before configuring Klaviyo.
 
 **Remote Config kill switch:** `emailCaptureEnabled` (default `true`). Set it to
-`false` and every flow skips the step, advancing straight to the paywall. This
-is the switch to reach for if trial starts dip after the ask ships.
+`false` and every flow skips the step, going straight to the review wall. This
+is also the A/B switch — see "It might still cost trial starts" above; prefer
+running it as an experiment over shipping it to everyone.
 
 ---
 
@@ -296,5 +319,5 @@ looks fine, and has no consent behind it; a doc-id regression silently doubles
 the list.
 
 `SpeakLife/SpeakLifeTests/OnboardingAngleTests.swift` asserts the step indices
-for every angle arm, and that the email ask sits immediately before the paywall
-in all of them.
+for every angle arm, that the email ask sits immediately before the review wall,
+and that nothing comes between the wall and the paywall.

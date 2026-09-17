@@ -44,10 +44,11 @@ struct OnboardingAngle {
     /// integer `step` can still be interpreted. Ported arms keep the value they
     /// were already emitting.
     ///
-    /// Last bump (+1 on every arm): `.email` inserted between `.testimonials`
-    /// and `.paywall`, which shifts the index of the paywall and notification
-    /// steps in every angle. Events either side of it are not comparable by raw
-    /// `step`, which is exactly what this field exists to signal.
+    /// Last bump (+1 on every arm): `.email` inserted before `.testimonials`,
+    /// which shifts the index of the review wall, the paywall and the
+    /// notification step in every angle. Events either side of it are not
+    /// comparable by raw `step`, which is exactly what this field exists to
+    /// signal.
     let flowSchema: Int
     /// Icon treatment for the narrative screens. Warfare runs ember; the rest gold.
     let iconStyle: AngleIconStyle
@@ -148,8 +149,8 @@ enum AngleStep: Hashable {
     case rating
     case planBuilding
     case planReveal
-    case testimonials
     case email
+    case testimonials
     case paywall
     case notificationTime
 }
@@ -172,14 +173,26 @@ extension OnboardingAngle {
         // `AngleOnboardingView.advance` skips over it instead.
         steps.append(contentsOf: [AngleStep.firstDeclaration, .personalDeclaration, .rating])
         if showsPlanBuilding { steps.append(.planBuilding) }
-        // `.email` sits between the review wall and the paywall: the last
-        // screen before the ask, so the address is captured from everyone who
-        // reaches the decision — including the majority who decline it and
-        // would otherwise be unreachable forever. Remote-gated
-        // (`emailCaptureEnabled`) and skipped once an address is already held;
-        // like `.rating`, it stays in this list either way so the step indices
-        // never shift under a flag. `AngleOnboardingView.advance` jumps it.
-        steps.append(contentsOf: [AngleStep.planReveal, .testimonials, .email, .paywall, .notificationTime])
+        // `.email` sits BEFORE the review wall, not after it. Two reasons, and
+        // the second is the one that decided it:
+        //
+        //   1. The wall is social proof placed deliberately against the paywall.
+        //      Putting a keyboard between them spends that adjacency to save a
+        //      screen's travel, at the single tightest point in the funnel —
+        //      98.9% of people who see the wall go on to see the paywall.
+        //   2. Earlier reaches MORE people, not fewer. About 30% of the users
+        //      who see the plan reveal never reach the wall, so a slot ahead of
+        //      it is in front of a strictly larger audience.
+        //
+        // Still pre-paywall, which is the part that matters: only ~11% of people
+        // who see the paywall ever reach a screen after it, so an ask placed
+        // past it would address a ninth of the audience.
+        //
+        // Remote-gated (`emailCaptureEnabled`) and skipped once an address is
+        // already held; like `.rating`, it stays in this list either way so the
+        // step indices never shift under a flag. `AngleOnboardingView.advance`
+        // jumps it.
+        steps.append(contentsOf: [AngleStep.planReveal, .email, .testimonials, .paywall, .notificationTime])
         return steps
     }
 
