@@ -92,16 +92,25 @@ enum StandLink {
     /// days). The typed code is no fallback either, because `StandJoinView`
     /// ships in the same build.
     ///
-    /// A host those builds do NOT claim fails correctly instead: iOS cannot
-    /// match it, so it opens in Safari, and Branch's own page offers the App
-    /// Store. Configure a custom link domain in Branch, point DNS at it, and
-    /// set this key — see docs/STAND_TOGETHER_HANDOFF.md, "Step 2d".
+    /// ⚠️ DEFERRED, NOT PENDING. MVP ships on the default and does NOT set this
+    /// key. The mitigation is the note on `StandInviteSheet` telling the sender
+    /// to have their recipient update first, and the failure is recoverable
+    /// anyway: codes live 14 days and `joinStand` treats `alreadyMember` as
+    /// success, so updating and re-tapping the same link joins fine.
     ///
-    /// Remote Config rather than a constant because the domain has to be
-    /// changeable without a build, and because the default below is
-    /// deliberately the BROKEN one: shipping a guess at a domain nobody owns
-    /// would break the link for everybody instead of just for old builds.
-    /// Setting the key is a required launch step, not a tuning knob.
+    /// The fix, when it is worth doing, is a host those builds do NOT claim:
+    /// iOS cannot match it, so it opens in Safari and Branch's own page offers
+    /// the App Store.
+    ///
+    /// SETTING THIS KEY CARELESSLY IS WORSE THAN LEAVING IT. A host that is not
+    /// fully verified in Branch and DNS breaks the link for 100% of recipients,
+    /// including the no-app case that works today and is the feature's actual
+    /// growth path. Read docs/STAND_TOGETHER_HANDOFF.md, "Step 2d", which
+    /// carries the verification order and the Branch setting that has to go
+    /// with it — the domain move alone is not sufficient.
+    ///
+    /// Remote Config rather than a constant so the host can move without a
+    /// build when that day comes.
     static var shareHost: String {
         DefaultFeatureFlags.shared.string(domainKey, default: "speaklife.app.link")
     }
