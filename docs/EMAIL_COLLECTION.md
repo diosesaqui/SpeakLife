@@ -109,9 +109,15 @@ way." The data disagrees; that comment predates the current
 **Before the review wall, not after it.** The wall is social proof placed
 deliberately against the paywall, and 98.9% of the people who see it go on to
 see the paywall — the tightest, cleanest stretch of the funnel. Putting a
-keyboard in that gap spends the adjacency the wall exists for. Moving one screen
-earlier also *increases* reach: about 30% of the people who see the plan reveal
-never arrive at the wall.
+keyboard in that gap spends the adjacency the wall exists for.
+
+Reach is *not* a reason, despite an earlier version of this doc saying so. That
+claim ("about 30% of the people who see the plan reveal never arrive at the
+wall") came from a funnel spanning builds older than 4.42, which shipped no
+review wall at all — their "drop-off" was a missing screen, not a leaving user.
+Scoped to builds that have the wall, 894 people tap through the plan reveal and
+890 reach the wall. The earlier slot gains four users. See
+`docs/ANALYTICS_DATA_QUALITY.md` Rule 1.
 
 **It might still cost trial starts, so measure it.** Roughly, the pre-paywall
 slot reaches ~950 more people per 90 days than a post-paywall one; at a ~40%

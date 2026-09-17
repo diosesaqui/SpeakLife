@@ -173,16 +173,19 @@ extension OnboardingAngle {
         // `AngleOnboardingView.advance` skips over it instead.
         steps.append(contentsOf: [AngleStep.firstDeclaration, .personalDeclaration, .rating])
         if showsPlanBuilding { steps.append(.planBuilding) }
-        // `.email` sits BEFORE the review wall, not after it. Two reasons, and
-        // the second is the one that decided it:
+        // `.email` sits BEFORE the review wall, not after it, for exactly one
+        // reason: the wall is social proof placed deliberately against the
+        // paywall. Putting a keyboard between them spends that adjacency to
+        // save a screen's travel, at the single tightest stretch of the funnel
+        // — 98.9% of the people who see the wall go on to see the paywall.
         //
-        //   1. The wall is social proof placed deliberately against the paywall.
-        //      Putting a keyboard between them spends that adjacency to save a
-        //      screen's travel, at the single tightest point in the funnel —
-        //      98.9% of people who see the wall go on to see the paywall.
-        //   2. Earlier reaches MORE people, not fewer. About 30% of the users
-        //      who see the plan reveal never reach the wall, so a slot ahead of
-        //      it is in front of a strictly larger audience.
+        // It is NOT here to reach more people. An earlier draft of this comment
+        // claimed a slot ahead of the wall was in front of ~30% more users;
+        // that number came from a funnel spanning builds older than 4.42, which
+        // had no review wall at all, so their "drop" was a missing screen
+        // rather than a leaving user. On builds that actually have the wall,
+        // 894 people tap through the plan reveal and 890 reach the wall. The
+        // gain is four people. The adjacency argument is the whole case.
         //
         // Still pre-paywall, which is the part that matters: only ~11% of people
         // who see the paywall ever reach a screen after it, so an ask placed

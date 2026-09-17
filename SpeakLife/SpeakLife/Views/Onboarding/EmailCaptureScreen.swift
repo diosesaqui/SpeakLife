@@ -16,8 +16,10 @@
 //  - Before the wall rather than after it, because the wall is social proof
 //    positioned deliberately against the paywall and 98.9% of the people who
 //    see it go on to see the paywall. A keyboard in that gap spends the
-//    adjacency the wall exists for. Earlier also reaches MORE people: roughly
-//    30% of those who see the plan reveal never arrive at the wall.
+//    adjacency the wall exists for. Reach is NOT the reason: on builds that
+//    have the wall, 894 people tap through the plan reveal and 890 reach the
+//    wall, so the earlier slot gains four users, not the ~30% an earlier
+//    version of this comment claimed from a version-confounded funnel.
 //
 //  Two deliberate choices, both of which protect the conversion rate this
 //  screen sits in front of:
