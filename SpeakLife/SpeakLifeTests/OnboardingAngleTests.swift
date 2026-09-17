@@ -348,4 +348,87 @@ final class OnboardingAngleTests: XCTestCase {
             }
         }
     }
+
+    // MARK: - Unified step funnel (onboarding_step_viewed)
+
+    /// The cross-arm funnel is `onboarding_started → stage=personalize →
+    /// stage=paywall → onboarding_finished`. The compiler already forces every
+    /// step to HAVE a stage (the mappings are exhaustive switches); what it
+    /// cannot see is an arm whose step list, as assembled from data, never
+    /// reaches one of the stages the funnel is built on — which would drop the
+    /// whole arm out of the comparison without anything failing.
+    func testEveryAngleSatisfiesTheFunnelContract() {
+        XCTAssertFalse(OnboardingAngles.all.isEmpty)
+        for (id, angle) in OnboardingAngles.all {
+            assertFunnelContract(angle.steps, arm: id)
+        }
+    }
+
+    /// The bespoke drivers hold to the same contract. Their step enums are
+    /// `CaseIterable` in flow order, so `allCases` is the step list.
+    func testBespokeDriversSatisfyTheFunnelContract() {
+        assertFunnelContract(QuizOnboardingView.Step.allCases, arm: "quiz")
+        assertFunnelContract(ProductStep.allCases, arm: "product")
+        assertFunnelContract(IdentityStep.allCases, arm: "identity")
+        assertFunnelContract(CloserStep.allCases, arm: "closer")
+        assertFunnelContract(DirectStep.allCases, arm: "direct")
+    }
+
+    /// `stage_index` is the sort key a breakdown uses; it has to match the order
+    /// the stages are declared in, which is the order a user meets them.
+    func testStageIndicesFollowFunnelOrder() {
+        XCTAssertEqual(OnboardingStage.allCases.map(\.index), [0, 1, 2, 3, 4])
+        XCTAssertEqual(OnboardingStage.allCases.map(\.rawValue),
+                       ["hook", "personalize", "value", "paywall", "setup"])
+    }
+
+    /// `direct_step_completed` already carries `step_name`; the unified event
+    /// must use the same string or the two stop joining.
+    func testDirectFunnelNamesMatchItsPerArmEvent() {
+        for step in DirectStep.allCases {
+            XCTAssertEqual(step.funnelStepName, step.name)
+        }
+    }
+
+    private func assertFunnelContract<Step: OnboardingFunnelStep>(
+        _ steps: [Step],
+        arm: String,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        let stages = steps.map(\.funnelStage)
+        let names = steps.map(\.funnelStepName)
+
+        XCTAssertTrue(stages.contains(.personalize),
+                      "\(arm): no personalize step, so it drops out of the cross-arm funnel", file: file, line: line)
+        XCTAssertTrue(stages.contains(.paywall),
+                      "\(arm): no paywall step, so it drops out of the cross-arm funnel", file: file, line: line)
+
+        // A stage funnel is only ordered if no arm goes back to an earlier stage.
+        for (a, b) in zip(stages, stages.dropFirst()) where b.index < a.index {
+            XCTFail("\(arm): stage goes backwards (\(a.rawValue) → \(b.rawValue)) in \(names)", file: file, line: line)
+        }
+
+        // Per-arm drop-off is read as unique users per step_name within one
+        // variant; two screens sharing a name would be counted as one.
+        XCTAssertEqual(Set(names).count, names.count,
+                       "\(arm): duplicate step names in \(names)", file: file, line: line)
+
+        for name in names {
+            XCTAssertFalse(name.isEmpty, "\(arm): empty step name", file: file, line: line)
+            XCTAssertEqual(name, name.lowercased(), "\(arm): '\(name)' is not snake_case", file: file, line: line)
+            XCTAssertFalse(name.contains(" ") || name.contains("-"), "\(arm): '\(name)' is not snake_case", file: file, line: line)
+        }
+
+        // The shared screens carry one name in every arm.
+        for (stage, name) in zip(stages, names) where stage == .paywall {
+            XCTAssertEqual(name, "paywall", "\(arm): the paywall must be named 'paywall'", file: file, line: line)
+        }
+        XCTAssertEqual(stages.filter { $0 == .paywall }.count, 1,
+                       "\(arm): expected exactly one paywall step", file: file, line: line)
+        XCTAssertTrue(names.contains("notification_time"),
+                      "\(arm): the notification time screen must be named 'notification_time'", file: file, line: line)
+        XCTAssertTrue(names.contains("testimonials"),
+                      "\(arm): the testimonial wall must be named 'testimonials'", file: file, line: line)
+    }
 }

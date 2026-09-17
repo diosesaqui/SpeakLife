@@ -40,7 +40,32 @@ add it to individual call sites.
 
 ---
 
-## 1. Onboarding Funnel (quiz flow)
+## Weekly Growth Scorecard (start here)
+
+PostHog dashboard **SpeakLife — Weekly Growth Scorecard**
+(https://us.posthog.com/project/455580/dashboard/2102993) is the weekly review,
+top to bottom: onboarding (all arms, one funnel) → activation → retention →
+trial → paid → renewal → LTV. Insight short_ids are listed in
+`.claude/skills/check-funnels/SKILL.md`.
+
+- **Retention runs on `app_day_started`** (once per calendar day). The PostHog
+  starter insights were built on `$pageview`, which this app never sends, and read
+  empty until 2026-09-16.
+- **Activation** is `Application Installed` → `user_activated` within 7 days.
+- **LTV / MRR / churn** tiles are HogQL over RevenueCat `rc_*` events (USD
+  `revenue`; refunds are negative revenue on `rc_cancellation_event`). A "Became
+  paid subscriber (RC)" action unions `rc_trial_converted_event` and
+  `rc_initial_purchase_event`.
+- **CAC is not in PostHog**: no ad-spend source is connected, so payback has to be
+  computed against Meta Ads Manager until one is.
+
+---
+
+## 1. Onboarding Funnel (quiz flow) — legacy, quiz arm only
+
+> Only the `quiz` arm fires these events. The saved insight is renamed
+> "[Legacy — quiz arm only]". For every arm use the unified step funnel in section 3.
+
 
 The live Treatment cohort (`useQuizOnboarding = true`) rendered by
 `QuizOnboardingView`. Steps are ordered events; PostHog shows drop-off between
@@ -69,6 +94,12 @@ Other quiz events available for deeper analysis (not core funnel steps):
 ---
 
 ## 2. Activation → Trial Funnel
+
+> **Superseded 2026-09-16.** The saved insight (`Q9Sw8t24`, now "Onboarding → Paid
+> Funnel (all arms)") starts at `onboarding_started` instead of
+> `onboarding_completed`, so every arm enters it: `onboarding_started` →
+> `paywall_impression` → `trial_started` → `rc_trial_converted_event`, 30-day
+> window, broken down by `variant`. The table below is the original definition.
 
 From finishing onboarding through to a paid conversion.
 
@@ -123,6 +154,113 @@ straight off step 2. `trial_started` and `subscription_started` carry `variant`
 too, for revenue attribution per arm.
 
 > Ships in app **v4.27+**. Until that build is live, this funnel reads zero.
+
+### Unified step funnel (all arms)
+
+`onboarding_started` → `onboarding_finished` says which arm wins, not **where**
+an arm loses people. Each driver's own step event (`<flow>_step_completed` with
+an integer `step`) cannot answer that across arms: step 7 of `product` and step 7
+of `closer` are different screens. `onboarding_step_viewed` is one event, fired
+by every live driver (`QuizOnboardingView`, `ProductOnboardingView`,
+`IdentityOnboardingView`, `AngleOnboardingView` for all its arms,
+`CloserOnboardingView`, `DirectOnboardingView`), that places each screen on a
+**stage** shared by all arms. Read every arm as the same onboarding with
+different content.
+
+It fires once each time a step becomes the visible step: the first screen on
+appear, then every step change. Steps a driver jumps over are **never** logged:
+the retired `personal_declaration` ask in every arm except `direct`, the rating
+ask when `onboardingRatingEnabled` is off, `belief` under quiz v1, closer's
+`pledge` when `closerPledgeEnabled` is off, and direct's `pain_fallback` /
+`personal_declaration_retry` when the first declaration landed. A debug replay
+from the flag panel emits nothing, the same as `onboarding_started`.
+
+Defined in `Core/Analytics/Events.swift` (`OnboardingStage`,
+`OnboardingFunnelStep`, `OnboardingFunnel.stepViewed`). Each driver's mapping is
+an exhaustive switch next to its step enum, so a new step does not compile
+without a stage, and `OnboardingAngleTests` fails any arm that loses its
+`personalize` or `paywall` step, repeats a step name, or moves backwards a stage.
+
+| Property | Example | Meaning |
+|----------|---------|---------|
+| `variant` | `warfare` | `subscriptionStore.onboardingVariantName`, the exact value `onboarding_started` carries. Not the per-arm `flow` slug |
+| `step_name` | `plan_reveal` | Stable snake_case screen name. A screen shared between arms has one name everywhere: `paywall`, `notification_time`, `testimonials`, `plan_reveal`, `plan_building`, `first_declaration`, `rating`, and the quiz questions (`battle_duration`, `already_tried`, `insight`, `hits_hardest`, `connect_style`, `belief`, `daily_minutes`) |
+| `step_index` | `20` | 0-based position in that driver's step list. The same integer as `step` on `<flow>_step_completed`, so the two join. Meaningful **within one variant and flow_schema only** |
+| `stage` | `personalize` | One of `hook` / `personalize` / `value` / `paywall` / `setup` |
+| `stage_index` | `1` | 0 hook, 1 personalize, 2 value, 3 paywall, 4 setup. Sort on this |
+| `flow_schema` | `4` | The driver's existing `flow_schema`. **Absent on `quiz`**, which versions itself by `quiz_version` |
+
+**Stages.** Contiguous within every arm: once an arm enters a stage it never
+shows a screen from an earlier one, which is what keeps a stage funnel ordered.
+
+| Stage | Covers |
+|-------|--------|
+| `hook` | Everything before the user tells us something that shapes their plan: openers, story scenes, pitch and mechanism screens, the product recap. Includes closer's yes/no agreement ladder (`longing_q`, `drift_q`), whose answers neither branch the flow nor seed anything |
+| `personalize` | From the first answer that segments or seeds (a picker, the quiz arm's segment question, direct's free-text declaration) through the last question. Interstitials **inside** the question block count here, not as value: `insight`, quiz's `mirror`, the angle `burden_scene`, direct's `mechanism` and `long_enough`. Calling them value would put value ahead of the questions that follow them |
+| `value` | After the questions, before the ask: first declaration, rating, plan loader, plan reveal, commitment hold, pledge, testimonials |
+| `paywall` | The onboarding paywall (`step_name` is always `paywall`) |
+| `setup` | Post-paywall: `notification_time`, and direct's `connect_style` |
+
+**Per-arm mapping.** Screens in brackets only show under a flag or branch (see
+above); `personal_declaration` outside `direct` is in the step list, so it holds
+an index, but is never shown.
+
+| Arm(s) | `hook` | `personalize` | `value` | `paywall` | `setup` |
+|--------|--------|---------------|---------|-----------|---------|
+| `quiz` | *(none: screen one is a question)* | `segment_quiz`, `mirror`, `belief_sequence` (all six belief questions are one step), `burden_selection` | `first_declaration`, [`rating`], `personal_declaration`, `commitment_hold`, `testimonials` | `paywall` | `notification_time` |
+| `product` | `hook`, `speed`, `mechanism`, `experience` | `category_picker`, `battle_duration`, `already_tried`, `insight`, `hits_hardest`, `connect_style`, [`belief`], `daily_minutes` | `first_declaration`, `personal_declaration`, [`rating`], `plan_building`, `plan_reveal`, `testimonials` | `paywall` | `notification_time` |
+| `identity` | `lie`, `verdict`, `named`, `mechanism` | `identity_picker` | `first_declaration`, `personal_declaration`, [`rating`], `testimonials` | `paywall` | `notification_time` |
+| `closer` | `storm`, `nearness`, `longing_q`, `growth`, `drift_q`, `spoken`, `rhythm`, `experience` | `closeness_picker`, `battle_duration`, `already_tried`, `insight`, `hits_hardest`, `connect_style`, [`belief`], `daily_minutes` | `first_declaration`, `personal_declaration`, [`rating`], `plan_building`, `plan_reveal`, [`pledge`], `testimonials` | `paywall` | `notification_time` |
+| `direct` | *(none: frame one is the declaration)* | `personal_declaration`, [`pain_fallback`], [`personal_declaration_retry`], `mechanism`, `carried_duration`, `long_enough`, `victory_outcome`, `daily_minutes` | `plan_building`, `plan_reveal`, `pledge`, `testimonials` | `paywall` | `connect_style`, `notification_time` |
+| `promises`, `outcomes`, `healing`, `provision`, `anxiety`, `renewal` | `storm`, `scene_1` … `scene_5`, `experience` | `picker`, `battle_duration`, `already_tried`, `insight`, `hits_hardest`, `connect_style`, [`belief`], `daily_minutes` | `first_declaration`, `personal_declaration`, [`rating`], `plan_building`, `plan_reveal`, `testimonials` | `paywall` | `notification_time` |
+| `grief`, `mortality`, `prodigal`, `purity`, `depression`, `fear`, `parenting`, `addiction`, `marriage`, `hardtimes` | `storm`, `scene_1` … `scene_3`, `experience` | same as the row above | same as the row above | `paywall` | `notification_time` |
+| `warfare` | `scene_1` … `scene_4`, `experience` | `picker`, `burden_scene`, then the same seven quiz steps | same as the `promises` row | `paywall` | `notification_time` |
+| `command` | `scene_1` … `scene_3` | `picker`, `burden_scene`, `connect_style`, `daily_minutes` | `first_declaration`, `personal_declaration`, [`rating`], `plan_reveal`, `testimonials` | `paywall` | `notification_time` |
+
+Angle arms derive all of this from `AngleStep`, so a new angle is mapped the
+moment its constant exists. `scene_N` is 1-based; `step_index` carries the true
+position. `connect_style` keeps the slot's name under quiz v2, where it asks the
+victory question instead, the same way `<flow>_step_completed` counts it. Every
+arm has a `personalize` and a `paywall` step; `quiz` and `direct` are the two
+with no `hook`.
+
+**How to read it.**
+
+- **Cross-arm funnel.** Ordered funnel, conversion window `1 day`:
+  `onboarding_started` → `onboarding_step_viewed` where `stage = personalize` →
+  `onboarding_step_viewed` where `stage = value` → `onboarding_step_viewed`
+  where `stage = paywall` → `onboarding_finished`. **Break down by `variant`.**
+  Step 2 is hook survival, step 4 is paywall reach, and the gap between them is
+  what an arm's personalization and proof cost it. Remember `quiz` and `direct`
+  enter step 2 on screen one, so their hook survival reads 100% by construction.
+- **Per-arm drop-off.** Filter to one `variant` (and one `flow_schema`), count
+  unique users per `step_name`, ordered by `step_index`:
+
+  ```sql
+  SELECT properties.step_index AS step_index,
+         properties.step_name  AS step_name,
+         properties.stage      AS stage,
+         count(DISTINCT person_id) AS users
+  FROM events
+  WHERE event = 'onboarding_step_viewed'
+    AND properties.variant = 'warfare'
+    AND properties.flow_schema = 4
+    AND timestamp > now() - INTERVAL 14 DAY
+  GROUP BY step_index, step_name, stage
+  ORDER BY toInt(step_index)
+  ```
+
+  Gaps in `step_index` are the skipped steps above, not lost data.
+- **Stage time, stage mix.** Break the event down by `stage` / `stage_index`
+  within a variant to see where the arm's screens and users sit.
+
+Apply `ANALYTICS_DATA_QUALITY.md` Rule 1 (filter to current builds) as usual.
+
+> Populates **only from the build that ships it** (the first release after app
+> **v4.65**). Every earlier install has no `onboarding_step_viewed` at all, so
+> scope any read to that build and later rather than treating older traffic as
+> drop-off. The per-arm `<flow>_step_completed` events are unchanged and still
+> carry history.
 
 ### 3a. Warfare vs Product (head-to-head)
 
@@ -332,6 +470,7 @@ These route through `AnalyticsService` and reach every provider:
 |-------|---------------|--------------------|
 | `onboarding_started` | `AnalyticsService.track` (HomeView) | `variant` |
 | `onboarding_finished` | `AnalyticsService.track` (HomeView) | `variant`, `converted`, `conversion_type` |
+| `onboarding_step_viewed` | `OnboardingFunnel.stepViewed` (every onboarding driver) | `variant`, `step_name`, `step_index`, `stage`, `stage_index`, `flow_schema` |
 | `subscription_started` | `track` (SubscriptionStore.purchase) | `product_id`, `value`, `is_trial`, `variant` |
 | `screen_viewed` | `trackScreenView` | `screen_name`, `previous_screen` |
 | `paywall_impression` | `trackPaywallImpression` | `paywall_id`, `variant`, `segment`, `pain` |
