@@ -121,6 +121,16 @@ final class RevenueCatManager {
         return entitlement.periodType == .trial
     }
 
+    /// Store product id behind the active premium entitlement, or nil when
+    /// premium is not active. Reflects renewals, restores, offer codes and
+    /// App Store-side plan changes, none of which pass through `purchase`.
+    func activePremiumProductID(_ info: CustomerInfo) -> String? {
+        guard let entitlement = info.entitlements[Self.premiumEntitlement],
+              entitlement.isActive,
+              !entitlement.productIdentifier.isEmpty else { return nil }
+        return entitlement.productIdentifier
+    }
+
     /// First time the user ever purchased premium, surviving cancel/resubscribe.
     /// Used to compute subscription anniversaries.
     func premiumOriginalPurchaseDate(_ info: CustomerInfo) -> Date? {

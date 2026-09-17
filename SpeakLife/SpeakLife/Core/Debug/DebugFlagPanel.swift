@@ -190,6 +190,8 @@ struct DebugFlagPanelView: View {
     /// Draft for the forced-update floor. See `commitMinimumVersion`.
     @State private var minimumVersionDraft =
         DebugOverrides.string(MinimumVersionPolicy.minimumVersionKey) ?? ""
+    @State private var standLinkDomainDraft =
+        DebugOverrides.string(StandLink.domainKey) ?? ""
 
     private let remoteConfig = RemoteConfig.remoteConfig()
 
@@ -199,6 +201,7 @@ struct DebugFlagPanelView: View {
                 overridesSection
                 onboardingSection
                 flagsSection
+                standLinkSection
                 updateGateSection
                 buildSection
             }
@@ -336,6 +339,42 @@ struct DebugFlagPanelView: View {
         } footer: {
             Text("Set a minimum above this build and turn \"Forced update gate\" on to see the screen. The gate window sits at the same level as this panel — shake twice to bring the panel back over it, then clear the override.")
         }
+    }
+
+    /// The host stand invites are minted on.
+    ///
+    /// On the panel because getting this wrong is invisible from inside the
+    /// app: the default, `speaklife.app.link`, is claimed by every build from
+    /// 4.59 on, so a link sent to one of those opens the app and does nothing
+    /// at all. Typing a host here lets you send yourself a real invite and
+    /// watch it land in Safari instead. See docs/STAND_TOGETHER_HANDOFF.md,
+    /// "Step 2d".
+    @ViewBuilder
+    private var standLinkSection: some View {
+        Section {
+            TextField("Link host (e.g. go.speaklife.app)", text: $standLinkDomainDraft)
+                .keyboardType(.URL)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .onSubmit { commitStandLinkDomain() }
+
+            Button("Apply link host") { commitStandLinkDomain() }
+
+            LabeledContent("Sending on", value: StandLink.shareHost)
+        } header: {
+            Text("Stand invite link")
+        } footer: {
+            Text("Empty clears the override and falls back to Remote Config `standLinkDomain`, then to speaklife.app.link — which older builds silently swallow. Parsing never looks at the host, so changing this cannot break invites already sent.")
+        }
+    }
+
+    private func commitStandLinkDomain() {
+        let trimmed = standLinkDomainDraft
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "https://", with: "")
+            .replacingOccurrences(of: "http://", with: "")
+        DebugOverrides.setString(StandLink.domainKey, trimmed.isEmpty ? nil : trimmed)
+        revision += 1
     }
 
     @ViewBuilder

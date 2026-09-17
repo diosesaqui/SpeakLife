@@ -167,6 +167,93 @@ it a callable cannot work at all.
 `joinStand` is the one to check hardest. Missing there, the entire receiving
 half of the feature is dead: every invite link opens and then fails.
 
+### Step 2d — Move the invite link off `speaklife.app.link` (REQUIRED before launch)
+
+**The default link domain is broken for 98% of your users, on purpose, because
+the alternative was a guess.**
+
+`applinks:speaklife.app.link` entered `associated-domains` on 2026-08-29, twelve
+minutes before the 4.59 version bump. Every build from 4.59 onward therefore
+tells iOS it owns every path on that host — including `/stand/<code>`, which no
+build before the Stand release can handle.
+
+That produces the worst failure shape available: iOS hands the universal link to
+the installed app, the app opens, `onOpenURL` finds no branch for it, and the
+invite evaporates. No error, no App Store prompt, nothing for the recipient to
+act on. The typed code is not a fallback either — `StandJoinView` ships in the
+same build as the link handling.
+
+**Who this actually affects.** Not everyone. An invite sent to somebody WITHOUT
+SpeakLife already works and always did: no app claims the domain, so iOS opens
+Safari, Branch's page sends them to the App Store, and they install the current
+build. That is the growth path and it is fine.
+
+The broken population is narrower and less obvious: **recipients who already
+have SpeakLife, on a build between 4.59 and the Stand release.** Over 14 days
+that is 2,026 of 2,067 active users — so while it is a minority of INVITES, it
+is nearly everyone who already has the app, which is exactly who a user is most
+likely to invite first.
+
+| Recipient | What a stand link does |
+|---|---|
+| No app | Safari → Branch → App Store → installs current build. **Works.** |
+| App, 4.57–4.58 (40 users) | Does not claim the domain → same as above. **Works.** |
+| App, 4.59–4.64 (2,026 users) | Claims it, cannot route it → **app opens, nothing happens** |
+
+The fix is a host those builds do not claim. iOS cannot match it to any
+installed app, so it opens in Safari instead of dead-ending inside one.
+
+**⚠️ THE DOMAIN MOVE ALONE IS NOT ENOUGH.** By default a Branch link tries to
+open an installed app before falling back to the web, which for a 4.59–4.64
+recipient means bouncing them straight back into the same silent no-op — now
+with an extra redirect. Configure the stand link so it does **not** auto-open an
+installed app: either web-only, or a deepview page whose copy says to update,
+with the App Store link on it. That page is the only thing in the whole chain
+that can actually tell an old build's owner what to do, because their app cannot
+say anything and they have no code-entry screen to type into.
+
+This is also why step 3 below says not to claim the new host in the build that
+ships Stand. While nobody claims it, the page runs for everybody, and the new
+build still gets in through `speaklife://stand/<code>` — the custom scheme the
+page's own button fires.
+
+1. In the Branch dashboard, configure a **custom link domain** (for example
+   `go.speaklife.app`) and point DNS at Branch as its setup flow instructs.
+   Branch serves both the redirect page and the AASA for it.
+2. Set Remote Config **`standLinkDomain`** to that host. No build required —
+   `StandLink.shareHost` reads it, and `StandLink.code(from:)` has never matched
+   on the domain, so links already in the wild keep parsing.
+3. Optionally add `applinks:<that host>` to `SpeakLife.entitlements` in a later
+   build so new builds open it directly instead of bouncing through Safari.
+   **Do not add it to the build that ships Stand** — a host the shipping build
+   claims is a host that behaves exactly like `speaklife.app.link` for the next
+   release cycle.
+
+### The note on the invite sheet
+
+`StandInviteSheet` carries a line, above the share button, telling the SENDER to
+ask their recipient to update first. That is not belt-and-braces, it is the only
+warning anybody in the chain can receive: a recipient on an old build gets no
+error and has no code-entry screen, because both ship in the build they do not
+have.
+
+It names **4.65**, the build Stand ships in. 4.59 through 4.64 all claim
+`speaklife.app.link` without being able to route `/stand/…`; 4.58 and earlier do
+not claim it and fall through to Safari correctly.
+
+The text is Remote Config `standInviteRecipientNote`, and **setting it empty
+removes the row**. It is a migration notice, not a permanent part of the screen
+— once old builds have aged out it is clutter on the most important button in
+the feature. The same key moves the version if the floor ever changes.
+
+⚠️ A server-side version check cannot replace it. An old build never calls the
+server: tapping the link runs no stand code at all, and `joinStand` is only
+reachable from a screen that build does not have. The server is downstream of a
+client that never speaks.
+
+Until step 2 is done, leave `standTogetherEnabled` off. An invite sent before
+then is an invite that dies silently.
+
 ### Why the rules go first
 
 There is no hole today — nothing in the app calls `signInAnonymously`, so

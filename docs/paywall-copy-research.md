@@ -92,7 +92,53 @@ The problem comes from `PaywallPain`, resolved from `AppState.onboardingSegment`
 `surveyGoalWord`: that is written after the paywall in every arm except quiz, so
 it is empty exactly when this screen needs it.
 
-**Headline (pain known):** the problem, named in the user's terms —
+**Headline (pain known): who they are in Jesus.** Reframed September 2026 from
+the problem-naming version below it; variants renamed `pain` → `identity` so the
+rollout reads as a before/after the same way `pain` read against `storm`.
+
+| Pain | Headline | Standing on |
+|------|----------|-------------|
+| peace | You have the mind of Christ. | 1 Cor 2:16 |
+| fear | You are as bold as a lion. | Prov 28:1 |
+| health | You are healed and whole. | Isa 53:5 |
+| abundance | You are an heir, not a beggar. | Rom 8:17 |
+| identity | You are who God says you are. | |
+| shame | There is no condemnation on you. | Rom 8:1 |
+| bondage | Jesus already made you free. | John 8:36 |
+| purpose | You are called, and already equipped. | |
+| joy | The joy of the Lord is your strength. | Neh 8:10 |
+| grief | You are held, and you are not alone. | Ps 34:18 |
+| loneliness | You are never alone again. | Heb 13:5 |
+| marriage | You carry peace into your home. | |
+| family | You are the one who stands for them. | |
+| nearness | You are His, and He is near. | Jas 4:8 |
+| more | You carry the authority Jesus gave you. | Luke 10:19 |
+
+**Why the problem headline went.** A problem headline sells relief, and relief is
+a smaller thing than the app's actual claim. Speaking God's Word is not supposed
+to return someone to neutral, it is supposed to put them in their right identity
+— unshakable, walking in authority, reigning in life rather than surviving it —
+and a screen that opens on what is wrong has already agreed to sell the smaller
+thing. Every line stands on a specific verse, which is what keeps an identity
+claim from being flattery.
+
+**This is the riskiest change on the screen and should be watched as one.** The
+problem-led version is what the 16.5% onboarding paywall→purchase baseline was
+measured on, and the storm arm's documented failure was opening on the answer
+before the screen had named anything. Two things are different here: the storm
+arm led with a *mechanism* ("speak to every storm") where this leads with the
+reader's own standing, and the problem did not disappear — it moved into the
+subhead, which still names the domain and still says what to do. Beat 1 asserts,
+beat 2 turns, beat 3 says who they become. If `identity` underperforms `pain` on
+shown→trial over a comparable window, the headline is the thing to revert; the
+rows, the timeline and the pricing changes are independent of it.
+
+**Returning users** get recognition first, then the identity it earns: *"You came
+back for healing. It is already yours."* Told "it is already yours" cold, a
+returning user hears marketing; told right after the app has shown it was paying
+attention, they hear it.
+
+**The retired problem headlines**, for the revert:
 
 | Pain | Headline |
 |------|----------|
@@ -157,13 +203,29 @@ provision paywall shipped subheaded *"your joy declarations"* over provision row
 and a provision closing line. Three sources of truth, one of them a run behind.
 `pain` now wins wherever it is known.
 
-**Solution rows (beat 3):** the same four capabilities every time — declarations,
-audio, the 30-day plan, Bible chat — each with a title and a detail line written
-against the named pain. Row one is bespoke per pain — for peace, *Speak peace,
-don't just read it* — and the other three are the same three capabilities aimed
-at that pain's domain ("over your mind", "over your home", "over the people you
-love"), which is what keeps fifteen sets of copy honest rather than fifteen sets
-of invented differences. The clean layout
+**Solution rows (beat 3): who you become.** Five rows whose *titles are the
+person* and whose *details are the mechanic*. Row one is bespoke per pain — for
+peace, *You win the battle in your mind*; for identity, *You live from who Jesus says you
+are* — and rows two through five run the same arc for everyone, aimed at that
+pain's domain: **You walk in authority before the day starts** (the sixty-second
+morning), **You stay unshakable all day** (audio), **You are training for
+reigning** (the 30-day plan, on Romans 5:17 — a plan is a training claim, so the
+row makes it out loud instead of counting days), **You know exactly what God
+says** (Bible chat).
+That shared arc is what keeps fifteen sets of copy honest rather than fifteen
+sets of invented differences.
+
+These rows were a feature list until September 2026 ("Ask the Bible anything",
+"Thirty days, not one good day"). Nobody subscribes to a capability; they
+subscribe to who they will be once they have it, and the app's whole claim is
+that speaking God's Word makes you somebody — unshakable, walking in authority,
+living from your identity in Jesus instead of from what is happening to you. The
+details still carry the concrete mechanic, which is not a compromise: an identity
+promise with no machinery under it is a slogan, and the storm arm already proved
+what this screen does when it sells a claim the user cannot see the mechanism of.
+The comparison grid's row labels moved the same way ("You speak it, not just read
+it" rather than "Spoken declarations") — a comparison table is the easiest place
+on a paywall to slip back into a spec sheet. The clean layout
 carries a titles-only three-row version — naming a problem and then showing nothing
 but a price is a worse screen than the one it replaced.
 

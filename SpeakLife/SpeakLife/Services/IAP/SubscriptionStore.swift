@@ -792,6 +792,18 @@ final class SubscriptionStore: ObservableObject {
         // Sync subscriptionGroupStatus
         subscriptionGroupStatus = premiumActive ? .subscribed : nil
 
+        // Person `plan` / `billing_term` for every subscriber, not only the ones
+        // who bought through `purchase` on a build that recorded it. Left
+        // untouched when premium is inactive: the last plan stays next to
+        // `churned_at`, which is what a churn cohort wants to break down by.
+        if let productId = RevenueCatManager.shared.activePremiumProductID(info) {
+            let storeProduct = (subscriptions + nonConsumables).first { $0.id == productId }
+            GrowthMetrics.shared.recordActivePlan(
+                productId: productId,
+                plan: storeProduct.map { planLabel(for: $0) }
+            )
+        }
+
         // Track cancellations
         if wasSubscribed && !premiumActive {
             AnalyticsService.shared.trackSubscriptionCancelled(

@@ -181,6 +181,60 @@ extension OnboardingAngle {
     }
 }
 
+// MARK: - Unified funnel mapping
+
+/// Every angle arm's screens in the cross-arm `onboarding_step_viewed` funnel.
+/// Keyed off the step, not the angle, so a new angle is mapped the moment it
+/// exists, and a new `AngleStep` case does not compile until it has a stage.
+extension AngleStep: OnboardingFunnelStep {
+    var funnelStepName: String {
+        switch self {
+        case .storm:               return "storm"
+        // 1-based so the name reads like the screen count ("scene_1" is the
+        // first scene); `step_index` carries the position in the flow.
+        case .scene(let i):        return "scene_\(i + 1)"
+        case .experience:          return "experience"
+        case .picker:              return "picker"
+        case .burdenScene:         return "burden_scene"
+        case .battleDuration:      return "battle_duration"
+        case .alreadyTried:        return "already_tried"
+        case .insight:             return "insight"
+        case .hitsHardest:         return "hits_hardest"
+        // The slot's name, in both quiz versions: v2 asks the victory question
+        // here instead, exactly as `<flow>_step_completed` counts it.
+        case .connectStyle:        return "connect_style"
+        case .belief:              return "belief"
+        case .dailyMinutes:        return "daily_minutes"
+        case .firstDeclaration:    return "first_declaration"
+        case .personalDeclaration: return "personal_declaration"
+        case .rating:              return "rating"
+        case .planBuilding:        return "plan_building"
+        case .planReveal:          return "plan_reveal"
+        case .testimonials:        return "testimonials"
+        case .paywall:             return "paywall"
+        case .notificationTime:    return "notification_time"
+        }
+    }
+
+    var funnelStage: OnboardingStage {
+        switch self {
+        case .storm, .scene, .experience:
+            return .hook
+        // The burden payoff sits between the picker and the quiz, so it is part
+        // of the personalize block; see `OnboardingStage` for why.
+        case .picker, .burdenScene,
+             .battleDuration, .alreadyTried, .insight, .hitsHardest, .connectStyle, .belief, .dailyMinutes:
+            return .personalize
+        case .firstDeclaration, .personalDeclaration, .rating, .planBuilding, .planReveal, .testimonials:
+            return .value
+        case .paywall:
+            return .paywall
+        case .notificationTime:
+            return .setup
+        }
+    }
+}
+
 // MARK: - Icon treatment
 
 enum AngleIconStyle {
