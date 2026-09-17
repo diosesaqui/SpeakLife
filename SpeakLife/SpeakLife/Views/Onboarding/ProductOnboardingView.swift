@@ -218,7 +218,7 @@ struct ProductOnboardingView: View {
         // Leaving the category picker: stamp the segment so downstream paywall
         // events carry a meaningful segment for this arm (quiz sets its own).
         if currentStep == .categoryPicker, let burden = responses.heaviestBurden {
-            appState.onboardingSegment = "product_\(burden.shortLabel)"
+            appState.setOnboardingSegment("product_\(burden.shortLabel)")
         }
 
         switch currentStep {

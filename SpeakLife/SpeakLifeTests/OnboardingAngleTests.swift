@@ -243,6 +243,10 @@ final class OnboardingAngleTests: XCTestCase {
             "addiction": .identity,
             "marriage": .peace,
             "hardtimes": .peace,
+            // Fourth wave: these seed straight off the burden, no row override.
+            "purpose": .purpose,
+            "joy": .joy,
+            "more": .allOfIt,
         ]
         for (id, burden) in expected {
             guard let angle = OnboardingAngles.angle(id: id) else {

@@ -161,6 +161,10 @@ final class SubscriptionStore: ObservableObject {
         // `parenting` carry the same limit `prodigal` does: no promise about
         // what another free person will do.
         case parenting, addiction, marriage, hardtimes
+        // Fourth wave. These three seed straight off `HeaviestBurden`, so they
+        // carry no per-row override: purpose maps to destiny, joy to joy, and
+        // more to faith, which is the growth track for someone not in crisis.
+        case purpose, joy, more
         init?(code: String) { self.init(rawValue: code.lowercased()) }
 
         /// The angle this arm renders, or nil for a bespoke flow with its own view.
@@ -815,6 +819,23 @@ final class SubscriptionStore: ObservableObject {
         // Meta's qualified-trial event: fires once a trial has survived 24h
         // with auto-renew on. No-ops for everyone else.
         Task { await QualifiedTrialTracker.shared.evaluate(info) }
+
+        // Track trial → paid. Deliberately NOT a comparison against the
+        // captured `wasSubscribed` state above: the charge lands on day 3 with
+        // the app shut, so the previous in-memory value is whatever this launch
+        // initialised, not what the person was before the conversion.
+        // GrowthMetrics persists the pending trial and dedupes, so this is safe
+        // to call on every entitlement update.
+        let activeProductId = purchasedSubscriptions.first?.id ?? lastKnownProductId
+        let activePrice = subscriptions
+            .first { $0.id == activeProductId }
+            .map { NSDecimalNumber(decimal: $0.price).doubleValue }
+        GrowthMetrics.shared.reconcileTrialState(
+            isPremium: premiumActive,
+            isInTrial: isInTrial,
+            productId: activeProductId,
+            price: activePrice
+        )
     }
 
     @MainActor

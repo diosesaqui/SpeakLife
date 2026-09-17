@@ -81,6 +81,9 @@ the granularity to optimise creative against.
 | Drink, pills, the scroll, food, the bet, the relapse shame | `addiction` | `addiction` / `grace` | "What keeps pulling you back?" |
 | A marriage gone quiet or loud, broken trust, standing alone | `marriage` | `marriage` | "Where is your marriage right now?" |
 | Everything at once, running on empty, a season that will not break | `hardtimes` | `hardtimes` / `rest` | "What is hitting hardest right now?" |
+| Calling, direction, stuck years, what am I here for | `purpose` | `destiny` | "What are you believing God for?" |
+| Heaviness, going through the motions, joy gone | `joy` | `joy` | "What do you want back?" |
+| Not in crisis, wants more of God, a growth track | `more` | `faith` | "What are you hungry for?" |
 
 **The second wave seeds from the ROW, not the burden.** `HeaviestBurden` has seven
 cases and maps to seven categories, which covered every arm while they were all
