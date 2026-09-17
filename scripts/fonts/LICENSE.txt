@@ -1,0 +1,5 @@
+Nunito and Lora are licensed under the SIL Open Font License 1.1.
+Nunito: Copyright the Nunito Project Authors (https://github.com/googlefonts/nunito)
+Lora: Copyright the Lora Project Authors (https://github.com/cyrealtype/Lora-Cyrillic)
+Full license: https://openfontlicense.org
+Vendored here so the lead-magnet render is reproducible without network access.
