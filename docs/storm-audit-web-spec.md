@@ -18,8 +18,8 @@ has to clear), `ad-creative-brief.md` (the visual system), `AD_ONBOARDING_ROUTIN
 
 | Owner | Work |
 |---|---|
-| **Web (you)** | The audit page, all branching, the result page, Klaviyo capture, outbound links, analytics events. |
-| **Design** | Eight PDF variants and the page's visual treatment. You consume the PDFs as static files. |
+| **Web (you)** | The audit page, all branching, the result page, Klaviyo capture, outbound links, analytics events. All strings come from `storm-audit-copy.md`. |
+| **Design** | Eleven PDF variants and the page's visual treatment. You consume the PDFs as static files. |
 | **iOS** | Nothing required for v1. There is one optional follow-up in §12. |
 
 **No backend, no database, no server-side rendering.** Every answer lives in client state.
@@ -60,35 +60,36 @@ separate things: which PDF they get, which identity line the result page shows, 
 
 **Q1: "What is heaviest right now?"**
 
-| `storm` value | Label shown | PDF variant | `ob=` | `pain` (result copy key) |
+| `storm` value | Label shown | `route` (PDF variant) | `ob=` | `pain` (result copy key) |
 |---|---|---|---|---|
 | `mind` | My mind will not stop. | `mind` | `anxiety` | `peace` |
 | `body` | My body. | `body` | `healing` | `health` |
 | `money` | Money, work, the bills. | `money` | `provision` | `abundance` |
 | `self` | How I see myself. | `self` | `renewal` | `identity` |
 | `calling` | What I am supposed to be doing with my life. | `calling` | `outcomes` | `purpose` |
-| `heart` | My joy, or something I lost. | `heart` | *see Q1b* | *see Q1b* |
-| `people` | Someone I love. | `people` | *see Q1b* | *see Q1b* |
+| `heart` | My joy, or something I lost. | *see Q1b* | *see Q1b* | *see Q1b* |
+| `people` | Someone I love. | *see Q1b* | *see Q1b* | *see Q1b* |
 | `all` | Everything at once. | `all` | `hardtimes` | `more` |
 
 **Q1b, shown only when `storm` = `heart`:** *"Which is closer?"*
 
-| `substorm` | Label | `ob=` | `pain` |
-|---|---|---|---|
-| `loss` | I lost someone. | `grief` | `grief` |
-| `flat` | Everything feels flat. The joy is gone. | `depression` | `joy` |
+| `substorm` | Label | `route` | `ob=` | `pain` |
+|---|---|---|---|---|
+| `loss` | I lost someone. | `loss` | `grief` | `grief` |
+| `flat` | Everything feels flat. The joy is gone. | `flat` | `depression` | `joy` |
 
 **Q1b, shown only when `storm` = `people`:** *"Who is on your heart?"*
 
-| `substorm` | Label | `ob=` | `pain` |
-|---|---|---|---|
-| `spouse` | My marriage. | `marriage` | `marriage` |
-| `child` | My kids. | `parenting` | `family` |
-| `prodigal` | Someone who has walked away from God. | `prodigal` | `family` |
+| `substorm` | Label | `route` | `ob=` | `pain` |
+|---|---|---|---|---|
+| `spouse` | My marriage. | `spouse` | `marriage` | `marriage` |
+| `child` | My kids. | `child` | `parenting` | `family` |
+| `prodigal` | Someone who has walked away from God. | `prodigal` | `prodigal` | `family` |
 
-So: **8 PDF variants, 11 routing outcomes.** `heart` and `people` share one PDF each but
-route to different onboarding arms, because the arm is what stops a grief ad seeding a
-money feed.
+So: **11 routing outcomes, 11 PDF variants, one per route.** An earlier draft had `heart`
+and `people` sharing a PDF, which was a false economy: only three of the ten PDF pages are
+branched, so the extra variants cost a page swap each, and someone grieving should not open
+a plan whose declarations are about getting their joy back. One route, one plan.
 
 **The `ob=` values are a closed set defined in the iOS app.** A value not in this table is
 silently ignored by the app and the user falls back to a random onboarding experiment. Do
@@ -257,6 +258,7 @@ One field. Email only. No name, no phone.
 | Property | Value |
 |---|---|
 | `audit_storm` | `storm` |
+| `audit_route` | resolved `route` (one of eleven) |
 | `audit_substorm` | `substorm` or null |
 | `audit_pain` | resolved `pain` |
 | `audit_method` | `Reader` / `Asker` / `Speaker` |
@@ -265,31 +267,27 @@ One field. Email only. No name, no phone.
 | `audit_own_words` | `own_words` (may be empty) |
 | `audit_completed_at` | ISO 8601 |
 
-The email sequence branches on `audit_storm`, so that property must always be set.
+The email sequence branches on `audit_route`, so that property must always be set.
 
-PDF delivery: email the variant matching `audit_storm` (eight files, §8). Also expose a
+PDF delivery: email the variant matching `audit_route` (eleven files, §8). Also expose a
 direct download link on the result page, because inbox delivery loses roughly a third.
 
 ---
 
-## 8. PDF variants and first declarations
+## 8. PDF variants
 
-Eight static files. Design supplies them; you map and serve them.
+Eleven static files, one per `route`. Design supplies them; you map and serve them.
 
-| `storm` | File | Verse on the page | First declaration (beat 5) |
-|---|---|---|---|
-| `mind` | `unshakable-mind.pdf` | Isaiah 26:3 | You gave me Your own peace, and I carry it into every room. *(John 14:27)* |
-| `body` | `unshakable-body.pdf` | Isaiah 53:5 | Thank You Jesus, by Your wounds I am healed and whole. *(Isaiah 53:5)* |
-| `money` | `unshakable-money.pdf` | Philippians 4:19 | You meet every need of mine from the riches of Your glory. *(Philippians 4:19)* |
-| `self` | `unshakable-self.pdf` | 2 Corinthians 5:17 | I am a new creation in You, and the old is gone for good. *(2 Corinthians 5:17)* |
-| `calling` | `unshakable-calling.pdf` | Jeremiah 29:11 | Your plans for me are hope and a future, and I walk in them today. *(Jeremiah 29:11)* |
-| `heart` | `unshakable-heart.pdf` | Psalm 34:18 | You hold me close and steady my spirit with Your own strength today. *(Psalm 34:18)* |
-| `people` | `unshakable-people.pdf` | Psalm 127:1 | You build my house Yourself, and what You raise stands firm. *(Psalm 127:1)* |
-| `all` | `unshakable-all.pdf` | Psalm 46:1 | You are my refuge and my strength, and You are here the second I call. *(Psalm 46:1)* |
+`unshakable-{route}.pdf`, where route is one of:
+`mind` · `body` · `money` · `self` · `calling` · `loss` · `flat` · `spouse` · `child` ·
+`prodigal` · `all`
 
-Every declaration above is verbatim from the app's live declaration set. **Do not edit,
-reword, or re-punctuate them**, including the absence of em dashes, which is a brand rule.
-If a line looks like it has a typo, it does not. Ask.
+**All copy, including the first declaration for beat 5 and the seven declarations in each
+PDF, is in `storm-audit-copy.md`.** Take the strings from there, not from this spec.
+
+Every declaration in that file is verbatim from the app's live declaration set. **Do not
+edit, reword, or re-punctuate them**, including the absence of em dashes, which is a brand
+rule. If a line looks like it has a typo, it does not. Ask.
 
 ---
 
@@ -332,10 +330,10 @@ Fire to PostHog (project 455580, existing web key). Event names are lowercase sn
 | `audit_started` | Q1 renders | `utm_source`, `utm_campaign` |
 | `audit_question_answered` | each answer | `question` (`q1`…`q8`), `value` |
 | `audit_email_submitted` | submit succeeds | `storm`, `pain` |
-| `audit_completed` | result renders | `storm`, `substorm`, `pain`, `method`, `gaps`, `duration`, `has_own_words` (bool) |
+| `audit_completed` | result renders | `storm`, `substorm`, `route`, `pain`, `method`, `gaps`, `duration`, `has_own_words` (bool) |
 | `audit_declaration_revealed` | "Say it out loud" tapped | `storm` |
 | `audit_cta_tapped` | App Store link tapped | `storm`, `ob` |
-| `audit_pdf_downloaded` | direct download tapped | `storm` |
+| `audit_pdf_downloaded` | direct download tapped | `route` |
 
 Send `has_own_words` as a boolean. **Do not send `own_words` itself to PostHog** — it is
 free text about someone's marriage, health or child, and it belongs in Klaviyo for the
@@ -378,15 +376,17 @@ the segment stamp. Worth doing only if the audit proves out.
 
 1. Eight questions, nine screens for most users and ten for the `heart` and `people`
    branches. Back preserves answers. Refresh preserves answers.
-2. Every one of the 11 routing outcomes in §3 produces the correct PDF, identity line and
-   `ob=` code. **Test all eleven**, not a happy path.
+2. Every one of the 11 routes in §3 produces the correct PDF, identity line and `ob=` code.
+   **Test all eleven**, not a happy path. An unrecognised `ob=` fails silently by design, so
+   a typo will not surface as an error.
 3. `gaps[]` never exceeds three and follows the §5b priority order exactly.
 4. The result page renders fully with Q2 left blank, and with the Klaviyo call failing.
 5. No score out of ten appears anywhere.
-6. The App Store link carries exactly one `ob` parameter, lowercase, from the closed set.
-7. `own_words` reaches Klaviyo and does not reach PostHog.
-8. Works in the Instagram and TikTok in-app browsers on iOS and Android.
-9. No em dashes or en dashes in any rendered copy.
+6. All rendered strings match `storm-audit-copy.md` exactly, declarations included.
+7. The App Store link carries exactly one `ob` parameter, lowercase, from the closed set.
+8. `own_words` reaches Klaviyo and does not reach PostHog.
+9. Works in the Instagram and TikTok in-app browsers on iOS and Android.
+10. No em dashes or en dashes in any rendered copy.
 
 ---
 

@@ -294,9 +294,15 @@ screen after beat 1 rather than five emails later. Diagnosis, then identity, fas
 ## 4. The delivery: the personalized 7-day plan
 
 The PDF work is not wasted, it is re-aimed. Instead of one 18-page guide covering seven
-storms, build **one 10-page plan, branched seven ways.** Most pages are shared; only the
-storm pages differ. Same total design effort, and every reader gets an asset addressed to
-them rather than a table of contents with their problem somewhere in it.
+storms, build **one 10-page plan, branched eleven ways** (the routes in
+`storm-audit-web-spec.md` §3). Seven pages are shared; only three differ. Same total design
+effort, and every reader gets an asset addressed to them rather than a table of contents
+with their problem somewhere in it.
+
+Eleven rather than seven because the branch is cheap and the alternative is careless:
+someone who just lost a person should not open a plan whose declarations are about getting
+their joy back, and a marriage, a struggling child and a prodigal are three different sets
+of promises. Final copy for all eleven is in `storm-audit-copy.md`.
 
 **Format: 1080×1350 per page, PDF. Not a 16:9 deck.**
 
