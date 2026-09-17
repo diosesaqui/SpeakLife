@@ -131,6 +131,34 @@ final class OnboardingAngleTests: XCTestCase {
         }
     }
 
+    /// The spirit arm is the mechanism arm, and it is deliberately UNTRIMMED:
+    /// storm opener, three scenes, product recap, picker, the seed payoff, the
+    /// full seven-question quiz and the whole back half. 22 screens, which is
+    /// warfare's count exactly, so the default arm is a clean head-to-head and a
+    /// difference between them is the angle rather than the funnel length. It
+    /// reaches that count differently than warfare does (warfare runs four scenes
+    /// and no storm opener; this runs three and opens on the storm), so the
+    /// indices are its own contract from here on: change the order, bump the
+    /// schema with it.
+    func testSpiritStepIndices() {
+        let steps = OnboardingAngles.spirit.steps
+        XCTAssertEqual(steps.count, 22)
+        XCTAssertEqual(steps[0], .storm)
+        XCTAssertEqual(steps[1], .scene(0))       // you are a spirit
+        XCTAssertEqual(steps[3], .scene(2))       // the mouth is the door
+        XCTAssertEqual(steps[4], .experience)
+        XCTAssertEqual(steps[5], .picker)
+        XCTAssertEqual(steps[6], .burdenScene)    // the seed / the fig tree
+        XCTAssertEqual(steps[7], .battleDuration)
+        XCTAssertEqual(steps[12], .belief)
+        XCTAssertEqual(steps[13], .dailyMinutes)
+        XCTAssertEqual(steps[16], .rating)
+        XCTAssertEqual(steps[20], .paywall)
+        XCTAssertEqual(steps[21], .notificationTime)
+        // The whole point of the depth parity: same count, same denominator.
+        XCTAssertEqual(steps.count, OnboardingAngles.warfare.steps.count)
+    }
+
     /// Trimming depth is data (`quizSteps`), so the compiler cannot stop an arm
     /// from dropping a question whose answer something downstream still reads.
     /// `ConnectStyle` (v1) and `DailyTimeBudget` both outlive onboarding and are
@@ -156,7 +184,7 @@ final class OnboardingAngleTests: XCTestCase {
     /// The default has to stay the full block, or trimming one arm silently
     /// shortens every arm that never asked to be trimmed.
     func testOnlyTheCommandArmRunsShort() {
-        for id in ["promises", "warfare", "outcomes", "healing", "provision", "anxiety", "renewal"] {
+        for id in ["promises", "warfare", "outcomes", "spirit", "healing", "provision", "anxiety", "renewal"] {
             guard let angle = OnboardingAngles.angle(id: id) else {
                 return XCTFail("missing angle '\(id)'")
             }
@@ -180,6 +208,10 @@ final class OnboardingAngleTests: XCTestCase {
         // same on both quizzes: 3 scenes + picker + payoff + 2 questions.
         XCTAssertEqual(OnboardingAngles.command.valueScreens(quizV2: true).count, 7)
         XCTAssertEqual(OnboardingAngles.command.valueScreens(quizV2: false).count, 7)
+        // Spirit is built to read against warfare, so its bar has to fill at the
+        // same rate: storm + 3 scenes + experience + picker + payoff + the quiz.
+        XCTAssertEqual(OnboardingAngles.spirit.valueScreens(quizV2: true).count, 14)
+        XCTAssertEqual(OnboardingAngles.spirit.valueScreens(quizV2: false).count, 13)
     }
 
     func testValueScreensStopBeforeTheBackHalf() {
@@ -257,7 +289,7 @@ final class OnboardingAngleTests: XCTestCase {
 
     /// The broad arms let the user name their own area, so every burden needs a row.
     func testBroadAnglesCoverEveryBurden() {
-        for id in ["promises", "warfare", "outcomes", "command"] {
+        for id in ["promises", "warfare", "outcomes", "command", "spirit"] {
             guard let angle = OnboardingAngles.angle(id: id) else {
                 return XCTFail("missing angle '\(id)'")
             }

@@ -125,8 +125,8 @@ final class SubscriptionStore: ObservableObject {
 
     // MARK: - Onboarding A/B variant (single switch for which flow shows)
     // Remote Config key `onboardingVariant`: "quiz" | "product" | "identity" | "outcomes"
-    // | "warfare" | "promises" | "command" | "closer" | "direct" | "healing" | "provision"
-    // | "anxiety" | "renewal" | "grief" | "mortality" | "prodigal" | "purity"
+    // | "warfare" | "promises" | "command" | "spirit" | "closer" | "direct" | "healing"
+    // | "provision" | "anxiety" | "renewal" | "grief" | "mortality" | "prodigal" | "purity"
     // | "depression" | "fear" | "parenting" | "addiction" | "marriage"
     // | "hardtimes".
     // Empty/unset falls back to the legacy useQuizOnboarding boolean so live
@@ -151,6 +151,10 @@ final class SubscriptionStore: ObservableObject {
         // area); the last four are single-issue arms meant to be deep linked
         // from angle-matched creative, so the whole arc matches the ad.
         case outcomes, warfare, promises, command
+        // The mechanism arm: spirit, soul and body, the two realms, and why the
+        // physical one reports late. Broad, full depth, and the only arm that
+        // explains WHY speaking works rather than asserting that it does.
+        case spirit
         case healing, provision, anxiety, renewal
         // Second wave of single-issue arms. These six name subjects
         // `HeaviestBurden` cannot, so their picker rows carry their own

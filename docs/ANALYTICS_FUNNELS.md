@@ -117,7 +117,7 @@ From finishing onboarding through to a paid conversion.
 > the **`quiz`** arm (at the commitment hold) and the **`direct`** arm (leaving
 > the review wall) — both at the last pre-paywall milestone. The other arms
 > (`product` / `identity` / `outcomes` / `warfare` / `promises` / `command` /
-> `closer`) do
+> `spirit` / `closer`) do
 > not fire it, so they are invisible here; read those in funnel 3 instead.
 > Both arms that do fire it stamp `variant`, and every event carries the
 > `onboarding_variant` person property, so **break this funnel down by variant**
@@ -133,8 +133,8 @@ From finishing onboarding through to a paid conversion.
 The cross-variant experiment funnel. Every onboarding flow now fires a unified
 `onboarding_started` → `onboarding_finished` pair from `HomeView`, tagged with
 the chosen arm, so the variants (`product` / `identity` / `quiz` / `outcomes` /
-`warfare` / `promises` / `command` / `closer` / `direct`, selected by Remote Config
-`onboardingVariant`) compare head-to-head. `warfare` is the default arm from app **v4.28+**.
+`warfare` / `promises` / `command` / `spirit` / `closer` / `direct`, selected by Remote
+Config `onboardingVariant`) compare head-to-head. `warfare` is the default arm from app **v4.28+**.
 These route through `AnalyticsService`, so PostHog and Firebase both receive them.
 
 **PostHog insight:** [Onboarding A/B — Winner by Variant](https://us.posthog.com/project/455580/insights/QfVRKZ3H)
@@ -145,7 +145,7 @@ These route through `AnalyticsService`, so PostHog and Firebase both receive the
 | 2 | `onboarding_finished` | Completed onboarding |
 | 3 | `subscription_started` | Started a trial or paid sub |
 
-**Breakdown:** event property `variant` (`product` / `identity` / `quiz` / `outcomes` / `warfare` / `promises` / `command` / `closer` / `direct`). Dynamic, so new arms appear automatically.
+**Breakdown:** event property `variant` (`product` / `identity` / `quiz` / `outcomes` / `warfare` / `promises` / `command` / `spirit` / `closer` / `direct`). Dynamic, so new arms appear automatically.
 **Funnel settings:** conversion window `14 days`, order `ordered`.
 
 `onboarding_finished` also carries `converted` (bool) and `conversion_type`
@@ -215,6 +215,7 @@ an index, but is never shown.
 | `promises`, `outcomes`, `healing`, `provision`, `anxiety`, `renewal` | `storm`, `scene_1` … `scene_5`, `experience` | `picker`, `battle_duration`, `already_tried`, `insight`, `hits_hardest`, `connect_style`, [`belief`], `daily_minutes` | `first_declaration`, `personal_declaration`, [`rating`], `plan_building`, `plan_reveal`, `testimonials` | `paywall` | `notification_time` |
 | `grief`, `mortality`, `prodigal`, `purity`, `depression`, `fear`, `parenting`, `addiction`, `marriage`, `hardtimes` | `storm`, `scene_1` … `scene_3`, `experience` | same as the row above | same as the row above | `paywall` | `notification_time` |
 | `warfare` | `scene_1` … `scene_4`, `experience` | `picker`, `burden_scene`, then the same seven quiz steps | same as the `promises` row | `paywall` | `notification_time` |
+| `spirit` | `storm`, `scene_1` … `scene_3`, `experience` | `picker`, `burden_scene`, then the same seven quiz steps | same as the `promises` row | `paywall` | `notification_time` |
 | `command` | `scene_1` … `scene_3` | `picker`, `burden_scene`, `connect_style`, `daily_minutes` | `first_declaration`, `personal_declaration`, [`rating`], `plan_reveal`, `testimonials` | `paywall` | `notification_time` |
 
 Angle arms derive all of this from `AngleStep`, so a new angle is mapped the
@@ -332,7 +333,7 @@ it, plus `closer`; the `flow` property says which arm the impression came from.
 
 | Event | Properties | Why it matters |
 |-------|-----------|----------------|
-| `storm_opener_shown` | `flow` (`outcomes` / `promises` / `closer` / `healing` / `provision` / `anxiety` / `renewal` / `grief` / `mortality` / `prodigal` / `purity` / `depression` / `fear` / `parenting` / `addiction` / `marriage` / `hardtimes`) | Screen-one reach; the denominator for everything after it |
+| `storm_opener_shown` | `flow` (`outcomes` / `promises` / `spirit` / `closer` / `healing` / `provision` / `anxiety` / `renewal` / `grief` / `mortality` / `prodigal` / `purity` / `depression` / `fear` / `parenting` / `addiction` / `marriage` / `hardtimes`) | Screen-one reach; the denominator for everything after it |
 
 Because the opener is prepended as step 0, every step raw value in those three
 arms shifted by one. **`flow_schema` was bumped on all three** — `outcomes` 3→4,
@@ -459,6 +460,45 @@ funnel — `command` moves angle and depth together, so it is not a pure angle
 result. Then read D1/D7 retention and streak length by `onboarding_variant`,
 because a morning-ritual pitch that converts no better but retains better is still
 the winning arm.
+
+---
+
+### 3f. The `spirit` arm (mechanism test)
+
+`spirit` is the mechanism arm, and the only one that explains WHY any of this
+works. Every other arm asserts that speaking moves things; this one teaches the
+machinery first: you are a spirit who lives in a body, the unseen realm is
+upstream of the seen one (Hebrews 11:3), and the mouth is the door between them
+(Mark 11:23). The product promise then stops being a claim the user has to take
+on trust.
+
+| Event | Properties | Why it matters |
+|-------|-----------|----------------|
+| `spirit_onboarding_started` | | Arm entry |
+| `storm_opener_shown` | `flow` = `spirit` | Screen-one reach, shared with the other openers |
+| `spirit_scene_shown` | `scene` (`three_parts` / `unseen_first` / `mouth_is_the_door`) | **The arm's whole risk lives in this cut.** It is a teaching arc, so watch scene-to-scene drop against warfare's: if the field falls out here, the mechanism is too expensive to explain before the picker |
+| `spirit_picker_shown` | | Reach of the area choice |
+| `spirit_seed_shown` | `burden` | The delay teaching, matched to the burden just chosen. Cut against `spirit_picker_shown` |
+| `spirit_step_completed` | `step`, `flow_schema` | Per-screen drop-off. 22 steps, `flow_schema` starts at **1** |
+| `spirit_onboarding_completed` | `burden`, `picker_choice`, … | Same shape and same seven quiz properties as every other full-depth angle arm |
+
+**The delay is the point of the arm, and it is a retention bet before it is a
+conversion bet.** The habit this app sells has one real enemy: day five with
+nothing visible to show for it. This arm pre-loads the answer before the user
+ever pays — the spirit receives when it is spoken, the physical realm reports
+later, and Jesus' fig tree was dead at the root the moment He said it while every
+leaf was still on the branch (Mark 11:20, then "believe that you HAVE received
+it, and it WILL be yours" in 11:24). So **do not rank this arm on trial starts
+alone.** Read D7 and D30 retention, streak length and trial-to-paid by
+`onboarding_variant`; an arm that converts level with warfare and holds users
+three weeks longer is the winning arm.
+
+**It is full depth on purpose.** 22 screens and a 14/13 progress denominator,
+which is `warfare`'s exactly, so `warfare` (the default) is a clean head-to-head
+and any difference between them is the ANGLE rather than the funnel length. That
+is the opposite trade from `command` and `direct`, both of which move angle and
+depth together. `promises` is the second control: nearest neighbour in posture
+(both argue a settled fact rather than a fight), one screen longer.
 
 ---
 

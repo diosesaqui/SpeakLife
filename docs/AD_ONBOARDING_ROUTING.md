@@ -38,6 +38,7 @@ the user names their own area on a seven-row picker (one row per `HeaviestBurden
 | "God's promises have never failed" / trust and activate | `promises` |
 | "Feel closer to God" / drifted away, come back near | `closer` |
 | "Command your day in 60 seconds" / the morning routine | `command` |
+| "Why your prayers feel unanswered" / spirit, soul and body / the two realms / seedtime and harvest | `spirit` |
 | Straight-to-the-offer, no narrative | `direct` |
 
 `command` is the ritual arm: its hook is WHEN rather than WHAT. The day is decided
@@ -58,6 +59,18 @@ angle AND depth at once, so it is not a pure angle result: `warfare` is still th
 arm to control it against, but `direct` (the depth arm) is the one that says how
 much of any win is just the shorter funnel. Pair it with morning-routine, "first
 thing when you wake up" and 60-second creative.
+
+`spirit` is the mechanism arm: the only one that explains WHY speaking works
+instead of asserting that it does. You are a spirit who lives in a body, the
+unseen realm is upstream of the seen one, and the mouth is the door between them.
+Its payoff screen is the part creative should lean on: you receive the moment you
+speak, and the physical realm reports later, the way Jesus' fig tree was dead at
+the root the second He said it while every leaf was still on the branch. Pair it
+with "why your prayers feel unanswered", spirit/soul/body teaching, two-realms and
+seedtime-and-harvest creative, and with anything aimed at a believer who has been
+speaking for a while and seen nothing yet — that objection is what this arm
+answers. Unlike `command` it runs **full depth** (22 screens, warfare's exact
+count), so a head-to-head against `warfare` is a clean angle read.
 
 **Single-issue arms.** Built to be deep linked from angle-matched creative: every
 screen, the picker included, stays on the one subject the ad promised, so a healing

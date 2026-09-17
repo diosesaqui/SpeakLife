@@ -5,13 +5,14 @@
 //  Every onboarding angle's copy, in one place. See `OnboardingAngle` for the
 //  model and `AngleOnboardingView` for the driver that renders it.
 //
-//  BROAD ARMS (promises / warfare / outcomes / command) argue the mechanism from
-//  a different emotional entry point and then let the user name their own area:
-//  promises leads with a settled fact, warfare with the fight for what is
-//  already yours, outcomes with the won life, command with the first sixty
-//  seconds of the morning. Their picker lists one row per HeaviestBurden. The
-//  first three are ports of the hand-written views that preceded this file, copy
-//  and step order preserved exactly so the live A/B funnels still join.
+//  BROAD ARMS (promises / warfare / outcomes / command / spirit) argue the
+//  mechanism from a different emotional entry point and then let the user name
+//  their own area: promises leads with a settled fact, warfare with the fight
+//  for what is already yours, outcomes with the won life, command with the first
+//  sixty seconds of the morning, spirit with how the unseen realm becomes the
+//  seen one. Their picker lists one row per HeaviestBurden. The first three are
+//  ports of the hand-written views that preceded this file, copy and step order
+//  preserved exactly so the live A/B funnels still join.
 //
 //  SINGLE-ISSUE ARMS (healing / provision / anxiety / renewal, then the second
 //  wave: grief / mortality / prodigal / purity / depression) exist to be deep
@@ -804,7 +805,8 @@ enum OnboardingAngles {
     )
 
     static let all: [String: OnboardingAngle] = Dictionary(
-        uniqueKeysWithValues: [promises, warfare, outcomes, command, healing, provision, anxiety, renewal,
+        uniqueKeysWithValues: [promises, warfare, outcomes, command, spirit,
+                               healing, provision, anxiety, renewal,
                                grief, mortality, prodigal, purity, depression, fear,
                                parenting, addiction, marriage, hardtimes]
             .map { ($0.id, $0) }
@@ -1737,5 +1739,195 @@ enum OnboardingAngles {
         quizSteps: OnboardingAngle.leanQuiz,
         // The loader is theatre, and this arm's claim is speed.
         showsPlanBuilding: false
+    )
+
+    // MARK: - Spirit, soul and body (the mechanism arm, deep link ?ob=spirit)
+
+    // The only arm that explains WHY any of this works. Promises argues a settled
+    // fact, warfare argues a fight, outcomes argues the won life, command argues
+    // the hour. All four ASSERT that speaking works. This one teaches the
+    // machinery: you are a spirit, the unseen realm is upstream of the seen one,
+    // and the mouth is the door between them. The product promise then stops
+    // being a claim the user has to take on trust and becomes the obvious
+    // consequence of something they now believe about how reality is built.
+    //
+    // THE DELAY IS THE POINT OF THE ARM. Every flow in this app sells a daily
+    // spoken habit, and the habit's real enemy is day five with nothing visible
+    // to show for it. This arm pre-loads the answer before the user ever pays:
+    // the spirit receives the moment it is spoken, and the physical realm reports
+    // it later. Jesus spoke to the fig tree and walked away from a tree with
+    // every leaf still on it. It was dead from the roots by morning. It died when
+    // He said it; the leaves were the last to find out. That is not a hedge
+    // bolted on to excuse a slow week, it is Mark 11:20 and Mark 11:24 in the
+    // order Jesus said them ("believe that you HAVE received it, and it WILL be
+    // yours"), and it is the difference between a user who quits on day five and
+    // one who reads day five as confirmation.
+    //
+    // Placement follows from that: the delay teaching is the burden-matched
+    // payoff, not a scene. The user names their body, their money or their mind
+    // FIRST, and the seed screen then tells them what just happened in the realm
+    // they cannot see and why the mirror is behind. Same slot warfare fills with
+    // its victory vision and command with tomorrow's first words.
+    //
+    // Depth is deliberately UNTRIMMED: storm opener, three scenes, product recap,
+    // picker, payoff, the full seven-question quiz, the whole back half. 22
+    // screens, exactly `warfare`'s count and its 14/13 progress denominator, so
+    // warfare (the default arm) is a clean head-to-head and any difference is the
+    // ANGLE, not the funnel length. `promises` is the second control: nearest
+    // neighbour in posture, one screen longer.
+    //
+    // The risk worth stating: this is a TEACHING arm, and it asks the user to
+    // learn something before it asks them what hurts. Screen one therefore leads
+    // with the frustration (years of praying about a body while the realm that
+    // decides it never heard your voice), not with a doctrine of man. Watch
+    // `spirit_scene_shown` scene-to-scene drop against warfare's: if the field
+    // falls out during the teaching, the mechanism is too expensive to explain
+    // before the picker and belongs after it instead.
+    //
+    // Broad arm, so one picker row per HeaviestBurden, framed as the place the
+    // unseen has not shown up in the seen yet. No `seedCategory` overrides: every
+    // row follows its burden, the way every broad arm does.
+    static let spirit = OnboardingAngle(
+        id: "spirit",
+        flow: "spirit",
+        flowSchema: 1,
+        opensWithStormScreen: true,
+        scenes: [
+            AngleScene(
+                symbol: "person.fill",
+                // The hook carries the conflict, not the curriculum: the reason
+                // prayer has felt like shouting at a wall. Naming the low thing
+                // is allowed in onboarding copy (warfare names the thief); the
+                // declarations themselves still never do.
+                eyebrow: "YOU ARE NOT A BODY THAT HAS A SPIRIT",
+                title: "You are a spirit.\nYou live in a body.",
+                body: "Spirit, soul, body. That is the order you were made in, and it is the order everything moves in. Which is why you can ask God about that body for years and watch nothing change. The part of you that touches it has never once opened its mouth.",
+                verse: "May your whole spirit, soul and body be kept blameless at the coming of our Lord Jesus Christ.",
+                reference: "1 Thessalonians 5:23",
+                analyticsEvent: "spirit_scene_shown",
+                analyticsParameters: ["scene": "three_parts"]
+            ),
+            AngleScene(
+                symbol: "sparkles",
+                // The realms, in one image. Hebrews 11:3 is the whole thesis:
+                // the seen is downstream, so the seen is not where you work.
+                eyebrow: "THE VISIBLE CAME OUT OF THE INVISIBLE",
+                title: "Everything you see\ncame from what you can't.",
+                body: "God did not build the world with His hands. He said light, and light showed up. The unseen realm is where a thing is decided and the physical one is only where it finally shows. Whatever you are staring at today started somewhere you cannot see.",
+                verse: "What is seen was not made out of what was visible.",
+                reference: "Hebrews 11:3",
+                analyticsEvent: "spirit_scene_shown",
+                analyticsParameters: ["scene": "unseen_first"]
+            ),
+            AngleScene(
+                symbol: "waveform",
+                // The handoff. God moved it with words, Jesus moved it with
+                // words, and the same authority was put in the user's mouth.
+                eyebrow: "HE PUT THE DOOR IN YOUR MOUTH",
+                title: "Speaking is how the\nunseen crosses over.",
+                body: "Jesus never begged the storm, the fever or the funeral. He spoke, and the other realm moved into this one. Then He handed you the same door and said whoever says to this mountain, and does not doubt, will have whatever they say.",
+                verse: "Truly I tell you, if anyone says to this mountain, Go, throw yourself into the sea, and does not doubt in their heart but believes that what they say will happen, it will be done for them.",
+                reference: "Mark 11:23",
+                buttonLabel: "Show Me How to Speak →",
+                analyticsEvent: "spirit_scene_shown",
+                analyticsParameters: ["scene": "mouth_is_the_door"]
+            ),
+        ],
+        picker: AnglePicker(
+            headline: "Where do you need the unseen\nto show up in the seen?",
+            subtitle: "We will build your sixty seconds around it\nand have it ready every morning when you wake up.",
+            analyticsEvent: "spirit_picker_shown",
+            choices: [
+                AnglePickerChoice(id: "health", burden: .health,
+                                  statement: "My body",
+                                  subtitle: "The report says one thing. Heaven says another.",
+                                  symbol: "heart.fill"),
+                AnglePickerChoice(id: "abundance", burden: .abundance,
+                                  statement: "My finances",
+                                  subtitle: "The balance has not caught up to the promise",
+                                  symbol: "key.fill"),
+                AnglePickerChoice(id: "peace", burden: .peace,
+                                  statement: "My mind",
+                                  subtitle: "Where the noise never fully turns off",
+                                  symbol: "moon.stars.fill"),
+                AnglePickerChoice(id: "identity", burden: .identity,
+                                  statement: "Who I am",
+                                  subtitle: "What I say about me and what God says are not the same",
+                                  symbol: "crown.fill"),
+                AnglePickerChoice(id: "purpose", burden: .purpose,
+                                  statement: "My steps",
+                                  subtitle: "Called to something I am not yet walking in",
+                                  symbol: "flag.fill"),
+                AnglePickerChoice(id: "joy", burden: .joy,
+                                  statement: "My joy",
+                                  subtitle: "Going through the motions with nothing behind them",
+                                  symbol: "sun.max.fill"),
+                AnglePickerChoice(id: "more", burden: .allOfIt,
+                                  statement: "Honestly, all of it",
+                                  subtitle: "My home, my people, every part of it",
+                                  symbol: "shield.lefthalf.filled"),
+            ]
+        ),
+        // The seed screen. This is the arm's centre of gravity: the user has just
+        // named the thing they are desperate about, so this is the moment the
+        // delay lands hardest and the moment it is cheapest to accept. Each
+        // burden gets the image its domain actually takes (a root that died, a
+        // harvest that is not due, a seed splitting open in the dark) and a verse
+        // that carries the delay itself, not just the promise.
+        //
+        // Nothing here promises an outcome scripture does not state, and the
+        // `allOfIt` row deliberately stands on Isaiah 55:11 (the word works)
+        // rather than on anything about what another free person will do.
+        burdenScene: AngleBurdenScene(
+            eyebrow: "IT IS ALREADY DONE. HERE IS WHY YOU CANNOT SEE IT YET.",
+            buttonLabel: "Then I'll Keep Speaking →",
+            analyticsEvent: "spirit_seed_shown",
+            // `.peace` lives here rather than in the dictionary: it is what an
+            // unlisted burden falls back to, and two copies would drift apart.
+            defaultContent: .init(
+                symbol: "moon.stars.fill",
+                title: "It is settled already.\nYour mind is catching up.",
+                body: "A farmer plants and goes to bed. The seed splits open in the dark where nobody is watching, and he never digs it up on Thursday to see whether it took. Speak over your mind every morning and let it grow the way seeds grow.",
+                verse: "Night and day, whether he sleeps or gets up, the seed sprouts and grows, though he does not know how.",
+                reference: "Mark 4:27"),
+            content: [
+                .health: .init(
+                    symbol: "heart.fill",
+                    title: "It died at the root\nthe second He said it.",
+                    body: "Jesus spoke to that fig tree and walked away from a tree with every leaf still on it. By morning it was dead from the roots up. It died when He said it. The leaves were only the last to find out, and your body is the leaves.",
+                    verse: "In the morning, as they went along, they saw the fig tree withered from the roots.",
+                    reference: "Mark 11:20"),
+                .abundance: .init(
+                    symbol: "key.fill",
+                    title: "The harvest is coming.\nIt is just not Tuesday.",
+                    body: "Nobody plants on Monday and drives out to harvest on Tuesday. The ground is already working on it underneath. Speak over your finances every morning and stop pulling up what you planted to check on it.",
+                    verse: "Let us not become weary in doing good, for at the proper time we will reap a harvest if we do not give up.",
+                    reference: "Galatians 6:9"),
+                .identity: .init(
+                    symbol: "crown.fill",
+                    title: "You were made new\nin a single second.",
+                    body: "The new creation was not a process. It happened the moment you believed, and your feelings have been running behind it ever since. Say what God says about you every morning until the mirror agrees with the record.",
+                    verse: "Be transformed by the renewing of your mind.",
+                    reference: "Romans 12:2"),
+                .purpose: .init(
+                    symbol: "flag.fill",
+                    title: "The calling is set.\nSo is the timing.",
+                    body: "God wrote an appointed time over your life before you had any say in it. Slow is not cancelled and quiet is not no. Speak over your steps every morning and keep walking toward something that is already on the calendar.",
+                    verse: "Though it linger, wait for it; it will certainly come and will not delay.",
+                    reference: "Habakkuk 2:3"),
+                .joy: .init(
+                    symbol: "sun.max.fill",
+                    title: "Joy goes in as seed.\nIt comes up singing.",
+                    body: "Nothing you say over your joy hits the ground and dies. It goes into the same soil the tears went into, and that ground has a promise on it. Keep sowing on the mornings you feel none of it, because those are the mornings the crop actually goes in.",
+                    verse: "Those who sow with tears will reap with songs of joy.",
+                    reference: "Psalm 126:5"),
+                .allOfIt: .init(
+                    symbol: "shield.lefthalf.filled",
+                    title: "Your words are out\nand they do not quit.",
+                    body: "God put a guarantee on His word in your mouth. It does not wander off, it does not expire, and it never comes back empty handed. Every morning you speak it over your life, something is being accomplished in a realm you are not able to watch.",
+                    verse: "So is my word that goes out from my mouth: It will not return to me empty, but will accomplish what I desire.",
+                    reference: "Isaiah 55:11"),
+            ]
+        )
     )
 }

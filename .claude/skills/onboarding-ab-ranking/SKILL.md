@@ -1,6 +1,6 @@
 ---
 name: onboarding-ab-ranking
-description: Query PostHog for the onboarding A/B funnel and rank the variants (product / identity / quiz / outcomes / warfare / promises / command / closer / direct, plus the deep-linked healing / provision / anxiety / renewal / grief / mortality / prodigal / purity / depression / fear / parenting / addiction / marriage / hardtimes arms) to pick a winner. Use when asked which onboarding is winning, onboarding A/B results, onboarding funnel rankings, or "which onboarding should we ship".
+description: Query PostHog for the onboarding A/B funnel and rank the variants (product / identity / quiz / outcomes / warfare / promises / command / spirit / closer / direct, plus the deep-linked healing / provision / anxiety / renewal / grief / mortality / prodigal / purity / depression / fear / parenting / addiction / marriage / hardtimes arms) to pick a winner. Use when asked which onboarding is winning, onboarding A/B results, onboarding funnel rankings, or "which onboarding should we ship".
 ---
 
 # Onboarding A/B Ranking
@@ -12,8 +12,8 @@ variant is winning, with the numbers behind it.
 
 - The app shows one of several onboarding flows, chosen by Remote Config
   `onboardingVariant`: `product`, `identity`, `quiz`, `outcomes`, `warfare`,
-  `promises`, `command`, `closer`, `direct`. `warfare` is the default arm from app
-  **v4.28+**.
+  `promises`, `command`, `spirit`, `closer`, `direct`. `warfare` is the default arm
+  from app **v4.28+**.
 - `healing`, `provision`, `anxiety`, `renewal`, `grief`, `mortality`, `prodigal`,
   `purity`, `depression`, `fear`, `parenting`, `addiction`, `marriage` and
   `hardtimes` are **single-issue arms**, added
@@ -44,6 +44,20 @@ variant is winning, with the numbers behind it.
   (those screens were cut), so break it down on `burden` / `picker_choice`
   instead; and cut `command_first_words_shown` against `command_picker_shown` to
   see whether the payoff screen holds.
+- `spirit` is the **mechanism** arm: spirit/soul/body, the unseen realm upstream of
+  the seen one, the mouth as the door between them, and a burden-matched payoff
+  that teaches the DELAY (received in the spirit now, reported by the physical
+  later). It runs at **full depth** — 22 screens, `warfare`'s exact count and
+  progress denominator — so unlike `command` and `direct` it is a clean
+  angle-vs-angle read against `warfare`, with `promises` as the second control.
+  Two things to do when ranking it. First, its risk sits in the teaching arc, so
+  cut `spirit_scene_shown` by `scene` (`three_parts` → `unseen_first` →
+  `mouth_is_the_door`) against warfare's scene drop before reading anything else;
+  a teaching arm that loses the field before the picker is answered there, not at
+  the paywall. Second, the delay teaching is a **retention** bet — it pre-answers
+  day five with nothing visible — so never rank this arm on trial starts alone:
+  read D7/D30 retention, streaks and trial-to-paid by `onboarding_variant`
+  alongside Conversion %.
 - `direct` is the **funnel-depth** arm: pain question on frame one, four screens
   to the paywall instead of sixteen (no extended quiz, no plan reveal, no
   pledge, no rating ask). Read it against `warfare` (the default) for
