@@ -229,7 +229,7 @@ struct ProductOnboardingView: View {
         switch currentStep {
         case .notificationTime:
             applyResponsesAndComplete()
-        // Out-of-band hop: .email's raw value is 20 (appended to protect the
+        // Out-of-band hop: .email's raw value is 20 (out of sequence to protect the
         // funnel's numbering) but it RUNS just before the review wall.
         case .email:
             withAnimation(.easeInOut(duration: 0.35)) { currentStep = .testimonials }
@@ -376,16 +376,16 @@ enum ProductStep: Int, CaseIterable {
     case rating          = 14  // rating ask at the personal-declaration peak
     case planBuilding    = 15  // "building your plan" loader (transition, no bar)
     case planReveal      = 16  // named 30-day plan reveal — sets up the paywall ask
+    // Declared where it RUNS, because `allCases` order is what the stage
+    // funnel is checked against. Its raw value is out of sequence on purpose:
+    // these values are the `step` dimension on the onboarding funnel, and
+    // giving email 17 would renumber the wall, the paywall and the
+    // notification step and make every earlier build incomparable.
+    // Remote-gated by `emailCaptureEnabled`.
+    case email           = 20  // pre-paywall email ask
     case testimonials    = 17  // App Store review wall — social proof right before the ask
     case paywall         = 18
     case notificationTime = 19 // terminal — completes onboarding
-    // Appended, not inserted, although it RUNS between .testimonials and
-    // .paywall. These raw values are the `step` dimension on the onboarding
-    // funnel; giving email a value of 18 would renumber the paywall and
-    // notification steps and make every build before this one incomparable.
-    // The order is expressed in `advance()` instead, which routes
-    // .testimonials → .email → .paywall. Remote-gated by `emailCaptureEnabled`.
-    case email           = 20
 
     // Index within the value-led intro + quiz screens, used to drive the
     // progress bar (visible investment across the question screens too).

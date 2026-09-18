@@ -290,7 +290,7 @@ struct CloserOnboardingView: View {
         switch currentStep {
         case .notificationTime:
             applyResponsesAndComplete()
-        // Out-of-band hop: .email's raw value is 25 (appended to protect the
+        // Out-of-band hop: .email's raw value is 25 (out of sequence to protect the
         // funnel's numbering) but it RUNS just before the review wall.
         case .email:
             withAnimation(.easeInOut(duration: 0.35)) { currentStep = .testimonials }
@@ -451,16 +451,16 @@ enum CloserStep: Int, CaseIterable {
     case planBuilding        = 19  // "building your plan" loader (transition, no bar)
     case planReveal          = 20  // named 30-day plan reveal
     case pledge              = 21  // unique to this arm: the "I'm In" commitment
+    // Declared where it RUNS, because `allCases` order is what the stage
+    // funnel is checked against. Its raw value is out of sequence on purpose:
+    // these values are the `step` dimension on the onboarding funnel, and
+    // giving email 22 would renumber the wall, the paywall and the
+    // notification step and make every earlier build incomparable.
+    // Remote-gated by `emailCaptureEnabled`.
+    case email               = 25  // pre-paywall email ask
     case testimonials        = 22  // App Store review wall — social proof right before the ask
     case paywall             = 23
     case notificationTime    = 24  // terminal — completes onboarding
-    // Appended, not inserted, although it RUNS between .testimonials and
-    // .paywall. These raw values are the `step` dimension on the onboarding
-    // funnel; giving email a value of 23 would renumber the paywall and
-    // notification steps and make every build before this one incomparable.
-    // The order is expressed in `advance()` instead, which routes
-    // .testimonials → .email → .paywall. Remote-gated by `emailCaptureEnabled`.
-    case email               = 25
 
     func valueScreenIndex(quizV2: Bool) -> Int? {
         var screens: [CloserStep] = [

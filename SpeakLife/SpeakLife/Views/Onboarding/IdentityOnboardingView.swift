@@ -164,7 +164,7 @@ struct IdentityOnboardingView: View {
         switch currentStep {
         case .notificationTime:
             applyResponsesAndComplete()
-        // Out-of-band hop: .email's raw value is 11 (appended to protect the
+        // Out-of-band hop: .email's raw value is 11 (out of sequence to protect the
         // funnel's numbering) but it RUNS just before the review wall.
         case .email:
             withAnimation(.easeInOut(duration: 0.35)) { currentStep = .testimonials }
@@ -276,16 +276,16 @@ enum IdentityStep: Int, CaseIterable {
     case firstDeclaration = 5
     case personalDeclaration = 6
     case rating          = 7   // rating ask at the personal-declaration peak
+    // Declared where it RUNS, because `allCases` order is what the stage
+    // funnel is checked against. Its raw value is out of sequence on purpose:
+    // these values are the `step` dimension on the onboarding funnel, and
+    // giving email 8 would renumber the wall, the paywall and the
+    // notification step and make every earlier build incomparable.
+    // Remote-gated by `emailCaptureEnabled`.
+    case email           = 11  // pre-paywall email ask
     case testimonials    = 8   // App Store review wall — social proof right before the ask
     case paywall         = 9
     case notificationTime = 10 // terminal — completes onboarding
-    // Appended, not inserted, although it RUNS between .testimonials and
-    // .paywall. These raw values are the `step` dimension on the onboarding
-    // funnel; giving email a value of 9 would renumber the paywall and
-    // notification steps and make every build before this one incomparable.
-    // The order is expressed in `advance()` instead, which routes
-    // .testimonials → .email → .paywall. Remote-gated by `emailCaptureEnabled`.
-    case email           = 11
 
     var valueScreenIndex: Int? {
         let screens: [IdentityStep] = [.lie, .verdict, .named, .mechanism, .identityPicker]

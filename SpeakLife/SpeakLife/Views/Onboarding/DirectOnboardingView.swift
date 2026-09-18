@@ -428,7 +428,7 @@ struct DirectOnboardingView: View {
         switch currentStep {
         case .notificationTime:
             applyResponsesAndComplete()
-        // Out-of-band hop: .email's raw value is 15 (appended to protect the
+        // Out-of-band hop: .email's raw value is 15 (out of sequence to protect the
         // funnel's numbering) but it RUNS just before the review wall.
         //
         // Running the ask BEFORE the wall also leaves `onboarding_completed`
@@ -621,17 +621,16 @@ enum DirectStep: Int, CaseIterable {
     case planBuilding     = 8  // "building your plan" loader (transition, no bar)
     case planReveal       = 9  // their named 30-day plan — the value crystallized before the ask
     case pledge           = 10 // "every morning, out loud" — the yes taken before the price
+    // Declared where it RUNS, because `allCases` order is what the stage
+    // funnel is checked against. Its raw value is out of sequence on purpose:
+    // these values are the `step` dimension on the onboarding funnel, and
+    // giving email 11 would renumber the wall, the paywall and everything
+    // after it. Remote-gated by `emailCaptureEnabled`.
+    case email            = 15 // pre-paywall email ask
     case testimonials     = 11 // the review wall, right before the ask
     case paywall          = 12
     case connectStyle     = 13 // setup, not persuasion — orders their daily rows from tomorrow
     case notificationTime = 14 // terminal — completes onboarding
-    // Appended, not inserted, although it RUNS between .testimonials and
-    // .paywall. These raw values are the `step` dimension on the onboarding
-    // funnel; giving email a value of 12 would renumber the paywall and
-    // everything after it. The order is expressed in `advance()` instead,
-    // which routes .testimonials → .email → .paywall. Remote-gated by
-    // `emailCaptureEnabled`.
-    case email            = 15
 
     /// Position in the question phase, for the progress bar.
     ///
@@ -678,7 +677,7 @@ enum DirectStep: Int, CaseIterable {
     /// question, and a progress bar over the whole one-tap half. Every step
     /// after the mechanism is renumbered again.
     /// 7 → 8: the email ask was added immediately before the review wall. The
-    /// raw values are untouched (`.email` is appended at 15 and reached by an
+    /// raw values are untouched (`.email` is numbered 15, out of sequence, and reached by an
     /// explicit hop in `advance()`), but a screen now stands between the pledge
     /// and the wall, so step-to-step drop-off is not comparable to schema-7's.
     static let flowSchema = 8
