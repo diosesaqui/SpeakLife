@@ -31,8 +31,25 @@ struct StandJoinView: View {
     @State private var name = UserDefaults.standard.string(forKey: "userName") ?? ""
     @State private var isWorking = false
     @State private var errorText: String?
-    @State private var conflict: StandJoinConflict?
+    /// The BOX, not the conflict.
+    ///
+    /// `ConflictBox` mints a fresh `UUID` on every init, and `.sheet(item:)`
+    /// re-presents whenever the item's id changes. Built as a computed
+    /// `Binding` whose `get` said `conflict.map { ConflictBox(value: $0) }`,
+    /// every single body evaluation handed SwiftUI a new identity for the same
+    /// conflict, so the sheet dismissed and re-presented in a loop. This view
+    /// lives inside `StandRedemptionModifier`'s sheet, whose closure re-runs on
+    /// every `AppState` publish, so those evaluations arrive constantly. Hold
+    /// the identity in state and it is minted once.
+    @State private var conflict: ConflictBox?
     @State private var joinedRoomId: String?
+    /// The room to open once the conflict is resolved.
+    ///
+    /// Navigation used to be kicked off in the same transaction that presented
+    /// the sheet, which pushed `StandRoomView` over the very view the sheet was
+    /// anchored to. The decision is what determines the campaign that room
+    /// shows, so it waits for it.
+    @State private var pendingRoomId: String?
     /// The campaign `joinStand` returned. Held because the conflict sheet
     /// resolves asynchronously, and by the time the user answers, this is still
     /// the only copy of the campaign the client has.
@@ -77,13 +94,14 @@ struct StandJoinView: View {
         }
         .navigationTitle("Stand together")
         .navigationBarTitleDisplayMode(.inline)
-        .sheet(item: Binding(
-            get: { conflict.map { ConflictBox(value: $0) } },
-            set: { if $0 == nil { conflict = nil } }
-        )) { box in
+        // `onDismiss` carries every exit: a decision, "Not now", and a swipe
+        // down. All three end in the room — they ARE a member by this point,
+        // and the only question the sheet asked was what to do with the
+        // campaign they were already running.
+        .sheet(item: $conflict, onDismiss: enterRoom) { box in
             StandConflictSheet(conflict: box.value) { decision in
-                conflict = nil
                 finishJoin(decision: decision)
+                conflict = nil
             }
         }
         .navigationDestination(item: $joinedRoomId) { id in
@@ -209,16 +227,18 @@ struct StandJoinView: View {
                 active: EnforcementService.shared.activeEnforcement,
                 hasUnseenCelebration: EnforcementService.shared.justCompleted != nil)
 
-            joinedRoomId = outcome.roomId
+            pendingRoomId = outcome.roomId
             joinedEnforcement = outcome.enforcement
             if case .clear = decision {
                 finishJoin(decision: .clear)
+                enterRoom()
             } else if case .sameCampaign = decision {
                 finishJoin(decision: .sameCampaign)
+                enterRoom()
             } else {
                 // Anything that would disturb a campaign in flight is the
                 // user's call, never the app's.
-                conflict = decision
+                conflict = ConflictBox(value: decision)
             }
         } catch {
             let standError = (error as? StandError) ?? StandError.unknown(error.localizedDescription)
@@ -228,6 +248,15 @@ struct StandJoinView: View {
             ])
         }
         isWorking = false
+    }
+
+    /// Pushes the room, once. Nothing to open means the conflict sheet was
+    /// dismissed after navigation already happened, and re-assigning
+    /// `joinedRoomId` there would push a second copy of the room.
+    private func enterRoom() {
+        guard let id = pendingRoomId else { return }
+        pendingRoomId = nil
+        joinedRoomId = id
     }
 
     /// Applies whatever the user agreed to.
@@ -257,6 +286,11 @@ struct StandJoinView: View {
 /// `StandJoinConflict` is an enum with associated values, and `.sheet(item:)`
 /// needs `Identifiable`. Boxed rather than making the domain type carry an id
 /// it has no use for.
+///
+/// Construct it ONCE, into `@State`. The id is minted per instance, so building
+/// one inside a computed `Binding`'s `get` — or anywhere else that re-runs on a
+/// body evaluation — changes the item's identity on every pass and makes the
+/// sheet dismiss and re-present in a loop.
 private struct ConflictBox: Identifiable {
     let id = UUID()
     let value: StandJoinConflict
