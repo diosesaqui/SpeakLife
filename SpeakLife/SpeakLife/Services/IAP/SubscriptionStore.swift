@@ -193,6 +193,31 @@ final class SubscriptionStore: ObservableObject {
         return useQuizOnboarding ? .quiz : .product
     }
 
+    /// Decide what a fresh purchase owes the email list, and do it.
+    ///
+    /// Two outcomes, never both:
+    ///   - We already hold an address → re-send it tagged `post_purchase`, with
+    ///     no UI at all. Segmentation gets what it needs; the buyer gets nothing
+    ///     put in front of them seconds after paying.
+    ///   - We hold none → raise the one ask this install ever gets.
+    ///
+    /// Gated on `emailCaptureEnabled` like every other surface, so the kill
+    /// switch takes the whole feature dark rather than most of it.
+    @MainActor
+    private func triggerPostPurchaseEmailCapture() {
+        guard emailCaptureEnabled else { return }
+
+        let service = EmailCaptureService.shared
+        if service.hasCapturedEmail {
+            service.retagAsPostPurchase()
+            return
+        }
+        // One ask per install, ever — the same `hasShownEmailCapture` flag the
+        // removed view used, so anyone who dismissed it before is left alone.
+        guard !service.hasShownPostPurchaseAsk else { return }
+        showEmailCaptureAfterPurchase = true
+    }
+
     /// Freeze the onboarding variant the first time onboarding is shown, so an ad
     /// deep link that resolves afterward can't restart the user in a different flow
     /// (and can't desync the started/finished analytics variant). Idempotent.
@@ -269,6 +294,30 @@ final class SubscriptionStore: ObservableObject {
     // `onboardingRatingEnabled` to false in Remote Config and each flow skips
     // the rating step, advancing straight to the screen after it.
     @Published var onboardingRatingEnabled = true
+
+    // MARK: - Email Capture After Purchase
+    // Drives the one post-purchase email ask, restored with the rest of the
+    // subsystem (removed in c605131f). Set once, on the first purchase where we
+    // hold no address; HomeView presents `EmailCaptureSheet` off it.
+    //
+    // There is no confirm-existing-address counterpart any more. The old build
+    // put a whole second sheet in front of users who had ALREADY given an
+    // address, purely to re-tag the profile as post_purchase;
+    // `EmailCaptureService.retagAsPostPurchase()` now does that silently.
+    @Published var showEmailCaptureAfterPurchase = false
+
+    // MARK: - Onboarding Email Capture Flag
+    // Kill switch for the pre-paywall email ask in every onboarding flow.
+    // Defaults true (registered in AppDelegate's Remote Config defaults); set
+    // `emailCaptureEnabled` to false in Remote Config and each flow skips the
+    // email step, advancing straight to the paywall.
+    //
+    // It gets its own switch for the same reason `closerPledgeEnabled` does:
+    // the ask sits one screen before a hard paywall, so it is the element most
+    // able to go NEGATIVE. Every address is worth something and a lost trial
+    // start is worth more, so if the arm's conversion drops when this is on,
+    // it comes off without waiting for a release.
+    @Published var emailCaptureEnabled = true
 
     // MARK: - Closer Arm Pledge Flag
     // Isolates the one element of the `closer` arm that could plausibly go
@@ -532,6 +581,7 @@ final class SubscriptionStore: ObservableObject {
         guardEnabled = flagValue("guardEnabled")
         onboardingRatingEnabled = flagValue("onboardingRatingEnabled")
         closerPledgeEnabled = flagValue("closerPledgeEnabled")
+        emailCaptureEnabled = flagValue("emailCaptureEnabled")
 
         evaluateForcedUpdate()
 
@@ -940,6 +990,7 @@ final class SubscriptionStore: ObservableObject {
             self.isInTrial = self.isPremium && RevenueCatManager.shared.isPremiumInTrial(customerInfo)
             self.isInDevotionalPremium = RevenueCatManager.shared.isDevotionalActive(customerInfo)
             self.subscriptionGroupStatus = .subscribed
+            self.triggerPostPurchaseEmailCapture()
         }
 
         if willStartTrial {

@@ -43,6 +43,12 @@ struct OnboardingAngle {
     /// Bumped whenever the step ORDER changes, so `<flow>_step_completed`'s
     /// integer `step` can still be interpreted. Ported arms keep the value they
     /// were already emitting.
+    ///
+    /// Last bump (+1 on every arm): `.email` inserted before `.testimonials`,
+    /// which shifts the index of the review wall, the paywall and the
+    /// notification step in every angle. Events either side of it are not
+    /// comparable by raw `step`, which is exactly what this field exists to
+    /// signal.
     let flowSchema: Int
     /// Icon treatment for the narrative screens. Warfare runs ember; the rest gold.
     let iconStyle: AngleIconStyle
@@ -143,6 +149,7 @@ enum AngleStep: Hashable {
     case rating
     case planBuilding
     case planReveal
+    case email
     case testimonials
     case paywall
     case notificationTime
@@ -166,7 +173,29 @@ extension OnboardingAngle {
         // `AngleOnboardingView.advance` skips over it instead.
         steps.append(contentsOf: [AngleStep.firstDeclaration, .personalDeclaration, .rating])
         if showsPlanBuilding { steps.append(.planBuilding) }
-        steps.append(contentsOf: [AngleStep.planReveal, .testimonials, .paywall, .notificationTime])
+        // `.email` sits BEFORE the review wall, not after it, for exactly one
+        // reason: the wall is social proof placed deliberately against the
+        // paywall. Putting a keyboard between them spends that adjacency to
+        // save a screen's travel, at the single tightest stretch of the funnel
+        // — 98.9% of the people who see the wall go on to see the paywall.
+        //
+        // It is NOT here to reach more people. An earlier draft of this comment
+        // claimed a slot ahead of the wall was in front of ~30% more users;
+        // that number came from a funnel spanning builds older than 4.42, which
+        // had no review wall at all, so their "drop" was a missing screen
+        // rather than a leaving user. On builds that actually have the wall,
+        // 894 people tap through the plan reveal and 890 reach the wall. The
+        // gain is four people. The adjacency argument is the whole case.
+        //
+        // Still pre-paywall, which is the part that matters: only ~11% of people
+        // who see the paywall ever reach a screen after it, so an ask placed
+        // past it would address a ninth of the audience.
+        //
+        // Remote-gated (`emailCaptureEnabled`) and skipped once an address is
+        // already held; like `.rating`, it stays in this list either way so the
+        // step indices never shift under a flag. `AngleOnboardingView.advance`
+        // jumps it.
+        steps.append(contentsOf: [AngleStep.planReveal, .email, .testimonials, .paywall, .notificationTime])
         return steps
     }
 
@@ -210,6 +239,7 @@ extension AngleStep: OnboardingFunnelStep {
         case .rating:              return "rating"
         case .planBuilding:        return "plan_building"
         case .planReveal:          return "plan_reveal"
+        case .email:               return "email_capture"
         case .testimonials:        return "testimonials"
         case .paywall:             return "paywall"
         case .notificationTime:    return "notification_time"
@@ -225,7 +255,7 @@ extension AngleStep: OnboardingFunnelStep {
         case .picker, .burdenScene,
              .battleDuration, .alreadyTried, .insight, .hitsHardest, .connectStyle, .belief, .dailyMinutes:
             return .personalize
-        case .firstDeclaration, .personalDeclaration, .rating, .planBuilding, .planReveal, .testimonials:
+        case .firstDeclaration, .personalDeclaration, .rating, .planBuilding, .planReveal, .email, .testimonials:
             return .value
         case .paywall:
             return .paywall

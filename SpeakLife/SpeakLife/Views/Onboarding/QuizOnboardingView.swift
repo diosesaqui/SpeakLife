@@ -406,6 +406,7 @@ struct QuizOnboardingView: View {
         case rating            // App Store review prompt — slotted before paywall so every funnel-progress user sees it (ASO velocity); placed AFTER matched declaration so the user has had at least one personalized payoff and BEFORE personalDeclaration/paywall so it doesn't compete with the trial decision
         case personalDeclaration
         case commitmentHold
+        case email             // pre-paywall email ask, so the address is captured from the majority who decline the trial. Remote-gated by `emailCaptureEnabled`
         case testimonials      // App Store review wall — social proof right before the ask
         case paywall
         case notificationTime  // post-paywall: pick a window, then iOS permission prompt
@@ -492,6 +493,14 @@ struct QuizOnboardingView: View {
                 case .testimonials:
                     TestimonialWallView(size: size, flow: "quiz") {
                         advanceFromTestimonials()
+                    }
+                case .email:
+                    EmailCaptureScreen(
+                        size: size,
+                        flow: "quiz",
+                        burden: selectedBurden?.rawValue
+                    ) {
+                        advanceFromEmail()
                     }
                 case .paywall:
                     HighConversionPaywallView(callback: {
@@ -782,6 +791,14 @@ struct QuizOnboardingView: View {
             "segment": segment.rawValue,
             "total_duration_seconds": totalDuration
         ])
+        // The email ask sits immediately BEFORE the review wall, so the wall
+        // keeps its adjacency to the paywall. Skipped when the ask is
+        // remote-disabled or an address is already held.
+        transition(to: subscriptionStore.shouldSkipEmailCapture ? .testimonials : .email)
+    }
+
+    private func advanceFromEmail() {
+        Juice.play(.tapLight)
         transition(to: .testimonials)
     }
 
@@ -930,6 +947,7 @@ extension QuizOnboardingView.Step: OnboardingFunnelStep {
         case .rating:              return "rating"
         case .personalDeclaration: return "personal_declaration"
         case .commitmentHold:      return "commitment_hold"
+        case .email:               return "email_capture"
         case .testimonials:        return "testimonials"
         case .paywall:             return "paywall"
         case .notificationTime:    return "notification_time"
@@ -943,7 +961,7 @@ extension QuizOnboardingView.Step: OnboardingFunnelStep {
         // the personalize block.
         case .quiz, .mirror, .beliefSequence, .burdenSelection:
             return .personalize
-        case .matchedDeclaration, .rating, .personalDeclaration, .commitmentHold, .testimonials:
+        case .matchedDeclaration, .rating, .personalDeclaration, .commitmentHold, .email, .testimonials:
             return .value
         case .paywall:
             return .paywall

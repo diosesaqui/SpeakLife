@@ -47,6 +47,32 @@ AND properties.$app_version IN ('4.54','4.55','4.56','4.57','4.58','4.59','4.60'
 Corollary: `days_since_install` is unusable as a cohorting dimension on older
 data. An in-app cancel-flow histogram built on it returned n=3 out of 22 events.
 
+**Corollary 2 — a funnel step that did not exist yet reads as drop-off.** This
+is the same rule wearing a different hat, and it is the more expensive one,
+because the result looks like a product problem rather than a data problem.
+
+The review wall (`testimonial_wall_shown`) first shipped in **4.42**. A 90-day
+`plan_reveal_shown → testimonial_wall_shown` funnel therefore reported a ~30%
+loss, and the `product` arm reported **0% conversion across 45 users** — which
+read exactly like a broken transition. Both were the same artifact: those users
+were on builds with no wall in them at all. Scoped to 4.42+, the real loss
+between tapping continue and reaching the wall is 4 people out of 894 (0.4%).
+
+A step whose conversion is 0 with a non-trivial denominator is almost never
+behaviour. Before diagnosing anything, check when the later event first fired:
+
+```sql
+SELECT properties.$app_version AS ver, uniq(person_id) AS users
+FROM events
+WHERE timestamp >= now() - INTERVAL 90 DAY AND event = '<later_event>'
+GROUP BY ver ORDER BY ver
+```
+
+If the early versions are absent rather than low, scope the funnel to the
+versions that shipped the screen. Screens land at different versions per arm, so
+check the specific arm too — `plan_reveal_continue` stops firing for `product`
+after 4.38, which is why that arm's window and the wall's window never overlap.
+
 ---
 
 ## Rule 2 — non-JSON property values are dropped silently

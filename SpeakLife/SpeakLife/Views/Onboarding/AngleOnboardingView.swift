@@ -218,6 +218,12 @@ struct AngleOnboardingView: View {
             ) { advance() }
         case .testimonials:
             TestimonialWallView(size: size, flow: angle.flow) { advance() }
+        case .email:
+            EmailCaptureScreen(
+                size: size,
+                flow: angle.flow,
+                burden: responses.heaviestBurden?.rawValue
+            ) { advance() }
         case .paywall:
             HighConversionPaywallView(callback: { advance() }, source: "onboarding", isHardPaywall: true)
         case .notificationTime:
@@ -279,6 +285,12 @@ struct AngleOnboardingView: View {
         // Rating ask is remote-gated (onboardingRatingEnabled); when off, skip
         // straight past it to the next step.
         if next < steps.count, steps[next] == .rating, !subscriptionStore.onboardingRatingEnabled {
+            next += 1
+        }
+        // Email ask is remote-gated (emailCaptureEnabled), and never shown to
+        // someone whose address we already hold — a replayed onboarding must
+        // not ask a second time for something already given.
+        if next < steps.count, steps[next] == .email, subscriptionStore.shouldSkipEmailCapture {
             next += 1
         }
         guard next < steps.count else {

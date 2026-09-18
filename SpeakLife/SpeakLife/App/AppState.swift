@@ -55,6 +55,15 @@ final class AppState: ObservableObject {
     /// dismissal.
     @AppStorage("pendingStandCode") var pendingStandCode = ""
 
+    /// The email address this install has given us, or "" for none.
+    ///
+    /// Restored with the email subsystem (removed in c605131f), and on the SAME
+    /// `@AppStorage` key it used before, so an install that subscribed back then
+    /// still shows its address in the Profile row and is never asked again.
+    /// `EmailCaptureService` writes this key too — it is the one place the
+    /// address lives.
+    @AppStorage("email") var email = ""
+
     /// A room to open, from a stand push. In memory only, deliberately: a room
     /// id is only meaningful while the app is running, and a persisted one
     /// would yank somebody into a room on next launch without them asking.
