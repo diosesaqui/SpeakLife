@@ -28,6 +28,9 @@ final class GrowthMetrics {
     private let defaults: UserDefaults
     private let lock = NSLock()
 
+    /// Last plan written this process. See `recordActivePlan`.
+    private var lastMirroredPlanSignature: String?
+
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
     }
@@ -246,8 +249,7 @@ final class GrowthMetrics {
         AnalyticsService.shared.setUserProperty(
             Person.trialStartedAt, value: Date().analyticsISO8601String
         )
-        AnalyticsService.shared.setUserProperty(Person.plan, value: plan)
-        AnalyticsService.shared.setUserProperty(Person.billingTerm, value: Self.billingTerm(for: productId))
+        setPlanProperties(productId: productId, plan: plan)
 
         // Trial length varies by SKU and Remote Config points the paywall at
         // different ones, so 3-day and 7-day trials convert at different rates
@@ -268,8 +270,57 @@ final class GrowthMetrics {
     /// Records which plan a person just bought. Non-revenue only: the amount,
     /// the renewal and the trial conversion all come from RevenueCat.
     func recordPurchaseDimensions(productId: String, plan: String) {
-        AnalyticsService.shared.setUserProperty(Person.plan, value: plan)
+        setPlanProperties(productId: productId, plan: plan)
+    }
+
+    /// Mirrors the plan behind the person's ACTIVE premium entitlement, read
+    /// from RevenueCat's customer info at launch and on every update.
+    ///
+    /// The two recorders above only run inside `SubscriptionStore.purchase`,
+    /// the in-app paywall purchase. Nobody else ever got a plan: subscribers
+    /// who bought before the property existed (2026-08-22), restores and
+    /// reinstalls, offer-code redemptions, App Store-side resubscribes and
+    /// plan changes, family sharing. Over 30 days that left 6 of 104 people
+    /// with RevenueCat trial/paid events carrying `plan`. Customer info is the
+    /// one place every one of those paths converges.
+    ///
+    /// Sent at most once per process for an unchanged plan: each property write
+    /// is a `$set` event, and RevenueCat's delegate can deliver the same
+    /// customer info several times in one session. In memory on purpose, so
+    /// every launch re-mirrors once and repairs a person that lost the value.
+    func recordActivePlan(productId: String, plan: String?) {
+        guard !productId.isEmpty else { return }
+        let signature = Self.planSignature(productId: productId, plan: plan)
+
+        lock.lock()
+        let unchanged = lastMirroredPlanSignature == signature
+        lock.unlock()
+
+        guard !unchanged else { return }
+        setPlanProperties(productId: productId, plan: plan)
+    }
+
+    private func setPlanProperties(productId: String, plan: String?) {
+        lock.lock()
+        lastMirroredPlanSignature = Self.planSignature(productId: productId, plan: plan)
+        lock.unlock()
+
+        AnalyticsService.shared.setUserProperty(
+            Person.plan, value: Self.resolvedPlan(productId: productId, plan: plan)
+        )
         AnalyticsService.shared.setUserProperty(Person.billingTerm, value: Self.billingTerm(for: productId))
+    }
+
+    /// The StoreKit-period label when there is one, otherwise the term read off
+    /// the product id. A non-subscription (lifetime) product has no period, so
+    /// it used to file as plan "unknown" beside billing_term "lifetime".
+    static func resolvedPlan(productId: String, plan: String?) -> String {
+        if let plan = plan, !plan.isEmpty, plan != "unknown" { return plan }
+        return billingTerm(for: productId)
+    }
+
+    private static func planSignature(productId: String, plan: String?) -> String {
+        "\(productId)|\(resolvedPlan(productId: productId, plan: plan))"
     }
 
     func recordChurn(reason: String) {
@@ -300,12 +351,16 @@ final class GrowthMetrics {
 
     /// Derived from the product id rather than passed in, so a new SKU cannot
     /// quietly land in the wrong LTV bucket.
-    private static func billingTerm(for productId: String) -> String {
+    ///
+    /// Every SKU id starts "SpeakLife", so a bare "life" match filed any id the
+    /// earlier checks missed as lifetime. The weekly SKU, `SpeakLife1Wk5`, has
+    /// no "week" in it and always missed them.
+    static func billingTerm(for productId: String) -> String {
         let id = productId.lowercased()
         if id.contains("1yr") || id.contains("year") || id.contains("annual") { return "annual" }
         if id.contains("1mo") || id.contains("month") { return "monthly" }
-        if id.contains("week") { return "weekly" }
-        if id.contains("life") { return "lifetime" }
+        if id.contains("1wk") || id.contains("week") { return "weekly" }
+        if id.contains("lifetime") { return "lifetime" }
         return "unknown"
     }
 

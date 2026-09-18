@@ -38,6 +38,9 @@ struct ProductOnboardingView: View {
     @StateObject private var responses = SurveyResponses()
     @State private var currentStep: ProductStep = .hook
     @State private var savedDeclaration: PersonalDeclaration? = nil
+    /// The step last logged to `onboarding_step_viewed`, so a repeat onAppear on
+    /// the same screen does not count it twice.
+    @State private var lastViewedStep: ProductStep? = nil
 
     // Quiz v2 flag, frozen at the flow's first appearance (mirroring
     // lockOnboardingVariant's intent) so a realtime Remote Config activation
@@ -85,7 +88,23 @@ struct ProductOnboardingView: View {
         .onAppear {
             if quizV2Snapshot == nil { quizV2Snapshot = subscriptionStore.useQuizV2 }
             AnalyticsService.shared.track("product_onboarding_started")
+            logStepViewed()
         }
+        // `advance()` assigns the step it actually lands on, having already
+        // jumped the skipped ones, so only displayed screens are logged.
+        .onChange(of: currentStep) { _, _ in logStepViewed() }
+    }
+
+    private func logStepViewed() {
+        guard !appState.debugReplayOnboarding, lastViewedStep != currentStep else { return }
+        lastViewedStep = currentStep
+        OnboardingFunnel.stepViewed(
+            variant: subscriptionStore.onboardingVariantName,
+            stepName: currentStep.funnelStepName,
+            stepIndex: currentStep.rawValue,  // == `step` on product_step_completed
+            stage: currentStep.funnelStage,
+            flowSchema: ProductStep.flowSchema
+        )
     }
 
     // Split to stay within SwiftUI's 10-branch ViewBuilder limit.
@@ -199,10 +218,7 @@ struct ProductOnboardingView: View {
 
     private func advance() {
         Juice.play(.tapLight)
-        // flow_schema 4 = email ask inserted immediately before the review wall
-        // (3 = testimonial wall inserted before paywall, 2 = pre-testimonials,
-        // 1 = pre-renumbering); bump when step raw values are renumbered again.
-        AnalyticsService.shared.track("product_step_completed", parameters: ["step": currentStep.rawValue, "flow_schema": 4])
+        AnalyticsService.shared.track("product_step_completed", parameters: ["step": currentStep.rawValue, "flow_schema": ProductStep.flowSchema])
 
         // Leaving the category picker: stamp the segment so downstream paywall
         // events carry a meaningful segment for this arm (quiz sets its own).
@@ -307,7 +323,7 @@ struct ProductOnboardingView: View {
             "victory_looks_like": responses.victoryOutcome ?? "unknown",
             "belief": responses.beliefLevel ?? "unknown",
             "quiz_version": quizV2 ? "v2" : "v1",
-            "flow_schema": 3,  // joins with product_step_completed; bump when step raw values are renumbered again
+            "flow_schema": ProductStep.flowSchema,  // joins with product_step_completed; bump when step raw values are renumbered again
             "set_personal_declaration": (savedDeclaration != nil) as NSNumber
         ])
 
@@ -383,6 +399,61 @@ enum ProductStep: Int, CaseIterable {
     }
 
     static func totalValueScreens(quizV2: Bool) -> Int { quizV2 ? 12 : 11 }
+
+    /// Stamped on every event that reports a step, so the per-arm
+    /// `product_step_completed` and the unified `onboarding_step_viewed` can
+    /// never disagree about which layout they were counting. 3 = testimonial
+    /// wall inserted before the paywall. Bump when raw values are renumbered.
+    /// 4 = email ask inserted immediately before the review wall; 3.
+    static let flowSchema = 4
+}
+
+// MARK: - Unified funnel mapping
+
+/// This arm's screens in the cross-arm `onboarding_step_viewed` funnel. The
+/// shared screens use the names every other arm uses for them.
+extension ProductStep: OnboardingFunnelStep {
+    var funnelStepName: String {
+        switch self {
+        case .hook:                return "hook"
+        case .speed:               return "speed"
+        case .mechanism:           return "mechanism"
+        case .experience:          return "experience"
+        case .categoryPicker:      return "category_picker"
+        case .battleDuration:      return "battle_duration"
+        case .alreadyTried:        return "already_tried"
+        case .insight:             return "insight"
+        case .hitsHardest:         return "hits_hardest"
+        case .connectStyle:        return "connect_style"
+        case .belief:              return "belief"
+        case .dailyMinutes:        return "daily_minutes"
+        case .firstDeclaration:    return "first_declaration"
+        case .personalDeclaration: return "personal_declaration"
+        case .rating:              return "rating"
+        case .planBuilding:        return "plan_building"
+        case .planReveal:          return "plan_reveal"
+        case .email:               return "email_capture"
+        case .testimonials:        return "testimonials"
+        case .paywall:             return "paywall"
+        case .notificationTime:    return "notification_time"
+        }
+    }
+
+    var funnelStage: OnboardingStage {
+        switch self {
+        case .hook, .speed, .mechanism, .experience:
+            return .hook
+        case .categoryPicker,
+             .battleDuration, .alreadyTried, .insight, .hitsHardest, .connectStyle, .belief, .dailyMinutes:
+            return .personalize
+        case .firstDeclaration, .personalDeclaration, .rating, .planBuilding, .planReveal, .email, .testimonials:
+            return .value
+        case .paywall:
+            return .paywall
+        case .notificationTime:
+            return .setup
+        }
+    }
 }
 
 // MARK: - Shared Components

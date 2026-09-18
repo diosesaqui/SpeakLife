@@ -41,7 +41,7 @@ Any audit of instrumentation quality must scope to current builds:
 -- Every shipped build since global context landed in 4.54. Extend this on
 -- every version bump: the list drops an unlisted build silently, and the
 -- newest build is the one an audit most needs to see.
-AND properties.$app_version IN ('4.54','4.55','4.56','4.57','4.58','4.59','4.60','4.61')
+AND properties.$app_version IN ('4.54','4.55','4.56','4.57','4.58','4.59','4.60','4.61','4.62','4.63','4.64','4.65')
 ```
 
 Corollary: `days_since_install` is unusable as a cohorting dimension on older
@@ -266,7 +266,7 @@ not trust any pre-fix cohort revenue number.
 
 | # | Metric | Event / person property | Gap it closed |
 |---|---|---|---|
-| 1 | **LTV / ARPU** | `rc_*` events' `revenue` (RevenueCat); person `plan`, `billing_term` | ~~`revenue_recorded` / `lifetime_revenue_usd`~~ **removed.** They accumulated `product.price` — the buyer's LOCAL currency — into a field named `_usd`, and only ever ran in-app, so renewals and trial conversions were never counted. RevenueCat owns revenue now: real USD, and it sees the server-side events. |
+| 1 | **LTV / ARPU** | `rc_*` events' `revenue` (RevenueCat); person `plan`, `billing_term` | ~~`revenue_recorded` / `lifetime_revenue_usd`~~ **removed.** They accumulated `product.price` — the buyer's LOCAL currency — into a field named `_usd`, and only ever ran in-app, so renewals and trial conversions were never counted. RevenueCat owns revenue now: real USD, and it sees the server-side events. **`plan` / `billing_term` trap:** up to and including 4.65 they were set only on an in-app `purchase` success, so restores, reinstalls, offer codes, App Store-side resubscribes and everyone who bought before 2026-08-22 had none (6 of 104 RC trial/paid people over 30 days). The weekly SKU `SpeakLife1Wk5` also read `billing_term = lifetime`. From the build after 4.65 both are mirrored from RevenueCat's active premium entitlement on every launch. |
 | 2 | **Activation** | `user_activated` (once ever); person `activated_at`, `hours_to_activate` | No definition of "an install became a user" existed. Fires on first declaration spoken, audio played, chat message or checklist task. |
 | 3 | **Retention / resurrection** | `app_day_started` (once per calendar day) | `Application Opened` is autocapture and fires on every foreground, so it counted app switching, not days. Carries `days_since_last_open` and `is_resurrected`. |
 | 4 | **Session length** | `session_ended` | `endSession()` had **zero call sites**: 32,444 sessions started over 90 days, none ended. Session duration was never measured. Now wired to `scenePhase == .background`. |
@@ -365,8 +365,53 @@ people. Upgrade events carry `is_upgrade = true`.
 | **Apple Search Ads** | Deterministic and complete. Apple's `AAAttribution` token is exchanged for campaign / ad group / keyword ids. Retries 3× because the endpoint 404s for a few seconds after install. `attribution: false` is a real answer — that install was not from a Search Ads click — and records nothing. |
 | **Meta** | **A floor, not a total.** Only fires for campaigns configured with a deferred deep link. A Meta install carrying no link is invisible: Meta reports it on its own side and no client API hands it back. Reconcile against Ads Manager. |
 | **Deep / universal links** | Full UTM set plus the app's `ob=` code. Covers owned channels (email, push, IG bio, QR) and any paid link carrying UTMs. |
-| **Branch** | Wired to read `~advertising_partner_name`, `~campaign`, `~ad_set_name`, `~creative_name`, but **BranchSDK is not in `Package.resolved`**, so the whole `BranchAttribution` enum is compiled out and contributes nothing today. Adding the package activates it. |
+| **Branch** | **Live.** The package is added and the key is set, so `initSession` runs on every launch. Records only when Branch matched a click (`+clicked_branch_link` true). Channel comes from `~advertising_partner_name`, then `~channel`, then `~feature`; a stand invite with none of those is `referral`, any other click with none is `owned_deeplink`. `acquisition_source` keeps the first of those raw strings, else `branch`. Campaign fields: `~campaign`, `~ad_set_name`, `~creative_name`, `~keyword`. **Builds up to and including 4.65 recorded every session, clicked or not — see the trap below.** |
 | **TikTok** | Not wired. The SDK is installed but its deferred-deeplink callback is not read, so TikTok installs land as `organic` unless the link carries UTMs. |
+
+### Trap: `owned_deeplink / branch` with no campaign is mostly organic
+
+On builds up to and including **4.65**, `BranchAttribution.apply` recorded an
+attribution for every Branch session, including the ones where no link was
+clicked. Branch's `initSession` calls back on every launch and returns params
+either way (`+clicked_branch_link: false`, `+is_first_session`,
+`+non_branch_link`), and each was filed as `acquisition_channel =
+owned_deeplink`, `acquisition_source = branch`, no campaign. Owned deep link
+outranks organic (60 vs 10), so this overwrote the real `organic` decision for
+nearly every install. Over 14 days of onboarding starters: 360
+`owned_deeplink / branch / (no campaign)`, 17 `organic`, 4 `meta`, 1
+`apple_search_ads`.
+
+- **Fixed in the build after 4.65.** From that build, Branch records only
+  matched clicks.
+- **On 4.65 and earlier, read `owned_deeplink` + `acquisition_source =
+  'branch'` + null `acquisition_campaign` as organic/unknown**, not as an owned
+  link. A real Branch click with no channel or campaign set lands in the same
+  bucket and cannot be told apart, but at 360 vs 17 organic the bucket is
+  overwhelmingly no-click launches. The UTM deep-link path
+  (`acquisition_source = 'deeplink'`) was not affected.
+- Channel-level CAC and LTV over that window are unusable without this
+  correction. Records seal at 24 hours, so existing people are never repaired;
+  compare channels only on `install_date` cohorts from the fixed build forward.
+
+```sql
+-- Channel with the pre-fix Branch contamination folded back into organic
+SELECT
+    if(person.properties.acquisition_channel = 'owned_deeplink'
+         AND person.properties.acquisition_source = 'branch'
+         AND isNull(person.properties.acquisition_campaign),
+       'organic_or_unknown (branch no-click)',
+       person.properties.acquisition_channel) AS channel,
+    uniq(person_id) AS people
+FROM events
+WHERE event = 'onboarding_started'
+  AND timestamp >= now() - INTERVAL 14 DAY
+GROUP BY channel
+ORDER BY people DESC
+```
+
+Same release also fixed `AcquisitionChannel.from` matching `ig` and `asa` as
+substrings ("digital", "signup", "casa" read as Meta or Apple Search Ads);
+both are whole-token matches now.
 
 Channel is also mirrored to RevenueCat's reserved subscriber attributes
 (`setMediaSource` / `setCampaign` / `setAdGroup` / `setCreative` /

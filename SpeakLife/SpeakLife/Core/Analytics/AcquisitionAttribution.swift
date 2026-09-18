@@ -76,16 +76,21 @@ enum AcquisitionChannel: String {
     /// Maps the free-text `utm_source` / network names that show up on links.
     static func from(sourceString raw: String?) -> AcquisitionChannel {
         guard let value = raw?.lowercased(), !value.isEmpty else { return .unknown }
-        if value.contains("apple") || value.contains("asa") { return .appleSearchAds }
+        // Short abbreviations match whole tokens only. As substrings, "ig"
+        // claimed "digital", "signup" and "bigfoot" for Meta, and "asa" claimed
+        // "casa" and "pleasant" for Apple Search Ads.
+        let tokens = Set(value.split { !$0.isLetter && !$0.isNumber }.map(String.init))
+        if value.contains("apple") || tokens.contains("asa") { return .appleSearchAds }
         if value.contains("facebook") || value.contains("meta")
-            || value.contains("instagram") || value.contains("ig") { return .meta }
+            || value.contains("instagram") || tokens.contains("ig") || tokens.contains("fb") { return .meta }
         // `bytedanceglobal_int` is how an MMP names TikTok's ad network, and it
         // contains neither "tiktok" nor anything else matched here.
         if value.contains("tiktok") || value.contains("bytedance") { return .tiktok }
         if value.contains("google") || value.contains("youtube") || value.contains("adwords") { return .google }
         if value.contains("email") || value.contains("push")
             || value.contains("qr") || value.contains("bio") { return .ownedDeeplink }
-        if value.contains("referral") || value.contains("share") || value.contains("friend") { return .referral }
+        if value.contains("referral") || value.contains("share") || value.contains("friend")
+            || value.contains("invite") { return .referral }
         return .unknown
     }
 }

@@ -382,7 +382,11 @@ enum UserPain: String, CaseIterable {
             ("sunrise.fill", "You walk in authority before the day starts", "One minute out loud every morning, and you take charge of \(domain) before anything else does."),
             ("headphones", "You stay unshakable all day", "Guided declarations over \(domain) for the morning, the commute, and before bed."),
             ("calendar", "You are training for reigning", "Thirty days of speaking over \(domain), because reigning in life gets trained into you, not wished onto you."),
-            ("bubble.left.and.bubble.right.fill", "You know exactly what God says", "Every promise about \(domain), chapter and verse, in seconds.")
+            // Identity voice from the copy pass, but the claim stays what the
+            // chat now actually does. "Chapter and verse in seconds" sells an
+            // answer, and every faith app answers; the difference is that this
+            // one hands back a line to speak and offers to save it.
+            ("bubble.left.and.bubble.right.fill", "You leave with something to speak", "Bring \(domain) and get back a declaration in your mouth, not just an answer.")
         ]
     }
 
@@ -997,7 +1001,13 @@ struct HighConversionPaywallView: View {
     private static let comparisonRows: [(feature: String, others: OthersMark)] = [
         ("You speak it, not just read it", .no),
         ("His Word in your ears all day",  .no),
-        ("Chapter and verse in seconds",   .yes),   // both have it — check on both columns
+        // Was "Chapter and verse in seconds" marked `.yes`: a checkmark in both
+        // columns, on the one row where the difference is now real. Every faith
+        // app has a chat that answers. This one ends the answer with a line to
+        // speak and offers to save it as a declaration you hear daily, which is
+        // the whole product in one row. Stated as what is actually being
+        // compared rather than conceding the category.
+        ("You leave with a line to speak",  .no),
         ("A record of what God did",       .some),
         ("Built for your exact fight",     .no)
     ]

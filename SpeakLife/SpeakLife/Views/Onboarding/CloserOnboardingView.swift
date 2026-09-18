@@ -73,6 +73,9 @@ struct CloserOnboardingView: View {
     @StateObject private var responses = SurveyResponses()
     @State private var currentStep: CloserStep = .storm
     @State private var savedDeclaration: PersonalDeclaration? = nil
+    /// The step last logged to `onboarding_step_viewed`, so a repeat onAppear on
+    /// the same screen does not count it twice.
+    @State private var lastViewedStep: CloserStep? = nil
 
     // The two front-half agreement answers. Recorded for analytics only — they
     // deliberately do not branch the flow, so every user walks the same steps.
@@ -126,7 +129,24 @@ struct CloserOnboardingView: View {
             AnalyticsService.shared.track("closer_onboarding_started", parameters: [
                 "pledge_enabled": pledgeEnabled as NSNumber
             ])
+            logStepViewed()
         }
+        // `advance()` assigns the step it actually lands on, having already
+        // jumped the skipped ones (including a remote-disabled pledge), so only
+        // displayed screens are logged.
+        .onChange(of: currentStep) { _, _ in logStepViewed() }
+    }
+
+    private func logStepViewed() {
+        guard !appState.debugReplayOnboarding, lastViewedStep != currentStep else { return }
+        lastViewedStep = currentStep
+        OnboardingFunnel.stepViewed(
+            variant: subscriptionStore.onboardingVariantName,
+            stepName: currentStep.funnelStepName,
+            stepIndex: currentStep.rawValue,  // == `step` on closer_step_completed
+            stage: currentStep.funnelStage,
+            flowSchema: CloserStep.flowSchema
+        )
     }
 
     @ViewBuilder
@@ -257,7 +277,7 @@ struct CloserOnboardingView: View {
         // nearness → pledge → paywall). Bump when step raw values are renumbered.
         AnalyticsService.shared.track("closer_step_completed", parameters: [
             "step": currentStep.rawValue,
-            "flow_schema": 3,
+            "flow_schema": CloserStep.flowSchema,
             "pledge_enabled": pledgeEnabled as NSNumber
         ])
 
@@ -373,7 +393,7 @@ struct CloserOnboardingView: View {
             "belief": responses.beliefLevel ?? "unknown",
             "quiz_version": quizV2 ? "v2" : "v1",
             "pledge_enabled": pledgeEnabled as NSNumber,
-            "flow_schema": 2,  // joins with closer_step_completed; bump when step raw values are renumbered
+            "flow_schema": CloserStep.flowSchema,  // joins with closer_step_completed; bump when step raw values are renumbered
             "set_personal_declaration": (savedDeclaration != nil) as NSNumber
         ])
 
@@ -452,6 +472,71 @@ enum CloserStep: Int, CaseIterable {
     }
 
     static func totalValueScreens(quizV2: Bool) -> Int { quizV2 ? 16 : 15 }
+
+    /// Stamped on every event that reports a step, so the per-arm
+    /// `closer_step_completed` and the unified `onboarding_step_viewed` can
+    /// never disagree about which layout they were counting. 2 = storm opener
+    /// prepended as step 0. Bump when raw values are renumbered.
+    /// 3 = email ask inserted immediately before the review wall; 2.
+    static let flowSchema = 3
+}
+
+// MARK: - Unified funnel mapping
+
+/// This arm's screens in the cross-arm `onboarding_step_viewed` funnel. The
+/// shared screens use the names every other arm uses for them.
+extension CloserStep: OnboardingFunnelStep {
+    var funnelStepName: String {
+        switch self {
+        case .storm:               return "storm"
+        case .nearness:            return "nearness"
+        case .longingQ:            return "longing_q"
+        case .growth:              return "growth"
+        case .driftQ:              return "drift_q"
+        case .spoken:              return "spoken"
+        case .rhythm:              return "rhythm"
+        case .experience:          return "experience"
+        case .closenessPicker:     return "closeness_picker"
+        case .battleDuration:      return "battle_duration"
+        case .alreadyTried:        return "already_tried"
+        case .insight:             return "insight"
+        case .hitsHardest:         return "hits_hardest"
+        case .connectStyle:        return "connect_style"
+        case .belief:              return "belief"
+        case .dailyMinutes:        return "daily_minutes"
+        case .firstDeclaration:    return "first_declaration"
+        case .personalDeclaration: return "personal_declaration"
+        case .rating:              return "rating"
+        case .planBuilding:        return "plan_building"
+        case .planReveal:          return "plan_reveal"
+        case .pledge:              return "pledge"
+        case .email:               return "email_capture"
+        case .testimonials:        return "testimonials"
+        case .paywall:             return "paywall"
+        case .notificationTime:    return "notification_time"
+        }
+    }
+
+    var funnelStage: OnboardingStage {
+        switch self {
+        // The two yes/no agreement questions are hook, not personalize: their
+        // answers are recorded for analytics only and neither branch the flow
+        // nor seed anything. Counting them as personalization would credit this
+        // arm with reaching the stage six screens before the picker that
+        // actually personalizes it.
+        case .storm, .nearness, .longingQ, .growth, .driftQ, .spoken, .rhythm, .experience:
+            return .hook
+        case .closenessPicker,
+             .battleDuration, .alreadyTried, .insight, .hitsHardest, .connectStyle, .belief, .dailyMinutes:
+            return .personalize
+        case .firstDeclaration, .personalDeclaration, .rating, .planBuilding, .planReveal, .pledge, .email, .testimonials:
+            return .value
+        case .paywall:
+            return .paywall
+        case .notificationTime:
+            return .setup
+        }
+    }
 }
 
 // MARK: - Canvas + insets
@@ -1489,7 +1574,7 @@ private struct CloserPledgeScreen: View {
 
     private let commitments: [String] = [
         "Declarations written for what you're carrying",
-        "Bible Chat when you need an answer tonight",
+        "Bible Chat that hands you a declaration, not just an answer",
         "Audio to speak over the drive, the gym, the dark",
         "Your own declaration, in your own words",
         "Reminders that keep you from drifting again"

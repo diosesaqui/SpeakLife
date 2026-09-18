@@ -338,6 +338,50 @@ final class OnboardingAngleTests: XCTestCase {
         }
     }
 
+    // MARK: - Bible Chat seeding
+
+    /// Bible Chat's empty state opens on a question built from the burden
+    /// onboarding recorded, and that lookup runs through two different enums:
+    /// `UserPreferencesTracker.CategoryType` (11 cases) and, for the burdens it
+    /// has no case for, `DeclarationCategory` via `BibleChatConversationView.extendedOpener`.
+    /// A burden that misses BOTH lands on the generic "what's the heaviest thing
+    /// on you right now?" — which is worst precisely where it costs most, on a
+    /// deep-linked arm where the ad already named the topic and the user knows
+    /// we know.
+    ///
+    /// This would have caught `?ob=provision` and `?ob=renewal` on the day they
+    /// landed: `abundance` seeds `.wealth` and `identity` seeds `.identity`, and
+    /// neither round-trips through `CategoryType(rawValue:)`.
+    ///
+    /// It reads `resolvedSeedCategory`, not the burden, so a single-issue arm's
+    /// per-row override is what gets checked — otherwise the four second-wave
+    /// arms would test the burden they stand nearest instead of the subject they
+    /// actually seed.
+    ///
+    /// `@MainActor` because `BibleChatConversationView` is a `View`, and `View` is
+    /// `@MainActor` on the iOS 17+ SDK — which isolates its static members too.
+    @MainActor
+    func testEveryAngleSeedsAPersonalChatOpener() {
+        for (id, angle) in OnboardingAngles.all {
+            for choice in angle.picker.choices {
+                let seed = choice.resolvedSeedCategory
+                let hasExtended = BibleChatConversationView.extendedOpener(for: seed) != nil
+                // nil and `.general` are the same outcome here: the generic opener.
+                let categoryType = UserPreferencesTracker.CategoryType(rawValue: seed.rawValue)
+                let hasCategoryType = categoryType != nil && categoryType != .general
+                XCTAssertTrue(
+                    hasExtended || hasCategoryType,
+                    """
+                    \(id): row '\(choice.id)' seeds \(seed.rawValue), which neither \
+                    CategoryType nor BibleChatConversationView.extendedOpener has an opener for, \
+                    so Bible Chat would open on the generic question. Add a case to \
+                    extendedOpener.
+                    """
+                )
+            }
+        }
+    }
+
     /// `HeaviestBurden` has seven cases and cannot name grief, the fear of death,
     /// a prodigal or purity, so those arms carry the category on the picker row.
     /// If a row ever loses its override it silently falls back to the nearest
@@ -396,5 +440,88 @@ final class OnboardingAngleTests: XCTestCase {
                              "\(id): row '\(choice.id)' overrides the seed; that arm is meant to follow its burden")
             }
         }
+    }
+
+    // MARK: - Unified step funnel (onboarding_step_viewed)
+
+    /// The cross-arm funnel is `onboarding_started → stage=personalize →
+    /// stage=paywall → onboarding_finished`. The compiler already forces every
+    /// step to HAVE a stage (the mappings are exhaustive switches); what it
+    /// cannot see is an arm whose step list, as assembled from data, never
+    /// reaches one of the stages the funnel is built on — which would drop the
+    /// whole arm out of the comparison without anything failing.
+    func testEveryAngleSatisfiesTheFunnelContract() {
+        XCTAssertFalse(OnboardingAngles.all.isEmpty)
+        for (id, angle) in OnboardingAngles.all {
+            assertFunnelContract(angle.steps, arm: id)
+        }
+    }
+
+    /// The bespoke drivers hold to the same contract. Their step enums are
+    /// `CaseIterable` in flow order, so `allCases` is the step list.
+    func testBespokeDriversSatisfyTheFunnelContract() {
+        assertFunnelContract(QuizOnboardingView.Step.allCases, arm: "quiz")
+        assertFunnelContract(ProductStep.allCases, arm: "product")
+        assertFunnelContract(IdentityStep.allCases, arm: "identity")
+        assertFunnelContract(CloserStep.allCases, arm: "closer")
+        assertFunnelContract(DirectStep.allCases, arm: "direct")
+    }
+
+    /// `stage_index` is the sort key a breakdown uses; it has to match the order
+    /// the stages are declared in, which is the order a user meets them.
+    func testStageIndicesFollowFunnelOrder() {
+        XCTAssertEqual(OnboardingStage.allCases.map(\.index), [0, 1, 2, 3, 4])
+        XCTAssertEqual(OnboardingStage.allCases.map(\.rawValue),
+                       ["hook", "personalize", "value", "paywall", "setup"])
+    }
+
+    /// `direct_step_completed` already carries `step_name`; the unified event
+    /// must use the same string or the two stop joining.
+    func testDirectFunnelNamesMatchItsPerArmEvent() {
+        for step in DirectStep.allCases {
+            XCTAssertEqual(step.funnelStepName, step.name)
+        }
+    }
+
+    private func assertFunnelContract<Step: OnboardingFunnelStep>(
+        _ steps: [Step],
+        arm: String,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) {
+        let stages = steps.map(\.funnelStage)
+        let names = steps.map(\.funnelStepName)
+
+        XCTAssertTrue(stages.contains(.personalize),
+                      "\(arm): no personalize step, so it drops out of the cross-arm funnel", file: file, line: line)
+        XCTAssertTrue(stages.contains(.paywall),
+                      "\(arm): no paywall step, so it drops out of the cross-arm funnel", file: file, line: line)
+
+        // A stage funnel is only ordered if no arm goes back to an earlier stage.
+        for (a, b) in zip(stages, stages.dropFirst()) where b.index < a.index {
+            XCTFail("\(arm): stage goes backwards (\(a.rawValue) → \(b.rawValue)) in \(names)", file: file, line: line)
+        }
+
+        // Per-arm drop-off is read as unique users per step_name within one
+        // variant; two screens sharing a name would be counted as one.
+        XCTAssertEqual(Set(names).count, names.count,
+                       "\(arm): duplicate step names in \(names)", file: file, line: line)
+
+        for name in names {
+            XCTAssertFalse(name.isEmpty, "\(arm): empty step name", file: file, line: line)
+            XCTAssertEqual(name, name.lowercased(), "\(arm): '\(name)' is not snake_case", file: file, line: line)
+            XCTAssertFalse(name.contains(" ") || name.contains("-"), "\(arm): '\(name)' is not snake_case", file: file, line: line)
+        }
+
+        // The shared screens carry one name in every arm.
+        for (stage, name) in zip(stages, names) where stage == .paywall {
+            XCTAssertEqual(name, "paywall", "\(arm): the paywall must be named 'paywall'", file: file, line: line)
+        }
+        XCTAssertEqual(stages.filter { $0 == .paywall }.count, 1,
+                       "\(arm): expected exactly one paywall step", file: file, line: line)
+        XCTAssertTrue(names.contains("notification_time"),
+                      "\(arm): the notification time screen must be named 'notification_time'", file: file, line: line)
+        XCTAssertTrue(names.contains("testimonials"),
+                      "\(arm): the testimonial wall must be named 'testimonials'", file: file, line: line)
     }
 }

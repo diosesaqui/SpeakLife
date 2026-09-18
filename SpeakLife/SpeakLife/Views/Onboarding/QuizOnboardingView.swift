@@ -413,6 +413,9 @@ struct QuizOnboardingView: View {
     }
 
     @State private var currentStep: Step = .quiz
+    /// The step last logged to `onboarding_step_viewed`, so a repeat onAppear on
+    /// the same screen does not count it twice.
+    @State private var lastViewedStep: Step? = nil
     @State private var selectedSegment: QuizSegment? = nil
     @State private var beliefIndex: Int = 0
     @State private var currentBeliefAnswer: BeliefAnswer? = nil
@@ -530,7 +533,29 @@ struct QuizOnboardingView: View {
             AnalyticsService.shared.track("onboarding_quiz_shown", parameters: [
                 "quiz_version": Self.quizVersion
             ])
+            logStepViewed()
         }
+        // Every exit routes through `transition(to:)`, which assigns the step
+        // actually shown (a disabled rating ask is never assigned), so observing
+        // the step logs exactly the displayed screens. The belief sequence's six
+        // questions change `beliefIndex`, not the step, and count as one screen
+        // here; `onboarding_belief_shown` still has them individually.
+        .onChange(of: currentStep) { _, _ in logStepViewed() }
+    }
+
+    private func logStepViewed() {
+        guard !appState.debugReplayOnboarding, lastViewedStep != currentStep else { return }
+        lastViewedStep = currentStep
+        OnboardingFunnel.stepViewed(
+            variant: subscriptionStore.onboardingVariantName,
+            stepName: currentStep.funnelStepName,
+            // This arm has no `<flow>_step_completed`; the raw value is its
+            // position in `Step`, which is also the order the flow walks.
+            stepIndex: currentStep.rawValue,
+            stage: currentStep.funnelStage,
+            // No flow_schema: this arm versions itself by `quiz_version`.
+            flowSchema: nil
+        )
     }
 
     // Drives SwiftUI to re-run transitions when we move within the belief
@@ -902,6 +927,47 @@ struct QuizOnboardingView: View {
         // feed seeded above. Pushes shouldn't surface content from categories
         // the user didn't pick.
         appState.selectedNotificationCategories = category.rawValue
+    }
+}
+
+// MARK: - Unified funnel mapping
+
+/// This arm's screens in the cross-arm `onboarding_step_viewed` funnel. The
+/// shared screens use the names every other arm uses for them.
+extension QuizOnboardingView.Step: OnboardingFunnelStep {
+    var funnelStepName: String {
+        switch self {
+        case .quiz:                return "segment_quiz"
+        case .mirror:              return "mirror"
+        case .beliefSequence:      return "belief_sequence"
+        case .burdenSelection:     return "burden_selection"
+        // Same role, and the same `onboarding_first_declaration_shown` event,
+        // as the other arms' first declaration screen.
+        case .matchedDeclaration:  return "first_declaration"
+        case .rating:              return "rating"
+        case .personalDeclaration: return "personal_declaration"
+        case .commitmentHold:      return "commitment_hold"
+        case .email:               return "email_capture"
+        case .testimonials:        return "testimonials"
+        case .paywall:             return "paywall"
+        case .notificationTime:    return "notification_time"
+        }
+    }
+
+    var funnelStage: OnboardingStage {
+        switch self {
+        // Screen one is a question, so this arm has no hook stage. The mirror
+        // plays the answer back between the questions, which keeps it inside
+        // the personalize block.
+        case .quiz, .mirror, .beliefSequence, .burdenSelection:
+            return .personalize
+        case .matchedDeclaration, .rating, .personalDeclaration, .commitmentHold, .email, .testimonials:
+            return .value
+        case .paywall:
+            return .paywall
+        case .notificationTime:
+            return .setup
+        }
     }
 }
 

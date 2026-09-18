@@ -1,68 +1,81 @@
 ---
 name: check-funnels
-description: Query the live SpeakLife PostHog funnels (Onboarding quiz flow + Activation→Trial) and report conversion rates and drop-off. Trigger when the user asks to check funnels, pull funnel numbers, see onboarding/activation conversion, "how are the funnels doing", or any on-demand read of SpeakLife analytics funnel performance.
+description: Query the live SpeakLife PostHog funnels (all-arm onboarding, onboarding → paid, activation, retention, subscriptions/LTV) and report conversion, drop-off and retention. Trigger when the user asks to check funnels, pull funnel numbers, see onboarding/activation/retention conversion, "how are the funnels doing", the weekly growth review, or any on-demand read of SpeakLife analytics funnel performance.
 ---
 
 # Check SpeakLife Funnels
 
-Pull the current numbers for SpeakLife's two PostHog funnels and report conversion +
-where users drop off. The funnel **definitions** live in `docs/ANALYTICS_FUNNELS.md`;
-this skill is the on-demand **read**.
+Pull the current numbers for SpeakLife's PostHog funnels and report conversion, where
+users drop off, and whether they come back. The funnel **definitions** live in
+`docs/ANALYTICS_FUNNELS.md`; read `docs/ANALYTICS_DATA_QUALITY.md` before quoting any
+number. This skill is the on-demand **read**.
 
 ## Context
 
 - PostHog project: **Default project**, id `455580`
-- Dashboard: **SpeakLife Funnels** — https://us.posthog.com/project/455580/dashboard/1673390
-- Saved insights:
-  - Onboarding Funnel (quiz flow) — short_id `JmNj0xoV` — https://us.posthog.com/project/455580/insights/JmNj0xoV
-  - Activation → Paid Funnel — short_id `Q9Sw8t24` — https://us.posthog.com/project/455580/insights/Q9Sw8t24
+- Primary dashboard: **SpeakLife — Weekly Growth Scorecard** — https://us.posthog.com/project/455580/dashboard/2102993
+- Also: **SpeakLife Funnels** (1673390), **SpeakLife — Subscription Funnel** (1970853)
+
+Saved insights, top of funnel to bottom:
+
+| Area | Insight | short_id |
+|---|---|---|
+| Onboarding, all arms | All arms, one funnel: start → personalize → paywall → finish → subscribe (by variant) | `5SClykhs` |
+| Onboarding, all arms | Screen-by-screen reach, every arm (SQL table) | `SK4dKteb` |
+| Onboarding A/B | Winner by Variant: start → finish → subscription | `QfVRKZ3H` |
+| Onboarding → paid | Onboarding → Paid Funnel (all arms, by variant) | `Q9Sw8t24` |
+| Activation | Install → onboarding → activated (7 days) | `4IioMFuz` |
+| Activation | Weekly install → activated rate | `tahiXWFQ` |
+| Retention | New users: day 1 / 7 / 30 return rate | `7tBLazhG` |
+| Retention | Return rate by onboarding variant | `px6AqUy0` |
+| Retention | Trialists: days they open the app during the trial | `MlyO1cah` |
+| Retention | Paid subscribers still renewing, by first-paid month | `5K3PjLql` |
+| Retention | Weekly retention / Growth accounting / WAU | `46ADQGA1` / `bwsyON1G` / `wbnncFSZ` |
+| Trial | App days in first 3 trial days vs trial → paid (SQL) | `eq48jypP` |
+| Paid | New paid subscribers per week (target 88) | `SqtO31aa` |
+| Paid | Gross subscription revenue per week (target ~$4.3K) | `X17LWcuv` |
+| Paid | Install → paywall → trial → paid (matured cohorts) | `uPC6kA4K` |
+| LTV | Revenue per install, by install week (SQL) | `10F1G7Sn` |
+| LTV | Revenue per onboarding starter, channel × variant (SQL) | `Bxp3WHNl` |
+| Subs | Active paid subscribers & renewing MRR estimate (SQL) | `zbMOZO9G` |
+| Churn | Paid cancellations, billing failures & refunds per week | `AmPfyTdp` |
+| Push | Notification open rate / opens by type | `TrqcHt4k` / `9VoacXiy` |
+
+`[Legacy — quiz arm only] Onboarding Funnel (quiz flow)` (`JmNj0xoV`) only sees the
+quiz arm. Do not report it as the onboarding funnel.
 
 The PostHog MCP tools are namespaced `mcp__<server>__<tool>` (server id is a UUID that
 can change between sessions). Find them with `ToolSearch` queries like
-`select:...insight-query` or keyword `posthog funnel`. If the PostHog MCP isn't
-connected, tell the user to add it (see `docs/ANALYTICS_FUNNELS.md`) and stop.
+`select:...exec` or keyword `posthog`. If the PostHog MCP isn't connected, tell the
+user to authorize it and stop.
 
 ## Steps
 
-1. **Re-run the saved insights** (preferred — stays in sync with the dashboard). Load
-   and call the `insight-query` tool with `short_id: JmNj0xoV`, then `short_id: Q9Sw8t24`.
-   - If `insight-query` is unavailable, fall back to `query-funnel` with the series and
-     settings below.
-2. **Honor any date range the user gives** ("last 7 days", "this month"). Default to the
-   range saved on the insight (last 90 days) otherwise. With `query-funnel`, pass
-   `dateRange: { date_from: "-7d" }` etc.
-3. **Report** per funnel:
-   - Count + conversion % at each step.
-   - Overall conversion (first step → last step).
-   - The single biggest drop-off step (largest % loss between consecutive steps).
-   - Median time to convert if the tool returns it.
-4. **If a funnel returns "No data recorded"**, say so plainly and remind the user this is
-   expected until a PostHog-enabled build ships and real users generate events (per the
-   warning in `docs/ANALYTICS_FUNNELS.md`). Do not treat it as a wiring bug.
+1. **Re-run the saved insights** with `insight-query` by short_id. Results for retention
+   insights are large; dump to a file and summarize with `jq` rather than reading inline.
+   Default read: `5SClykhs`, `Q9Sw8t24`, `4IioMFuz`, `7tBLazhG`, `SqtO31aa`, `10F1G7Sn`.
+   Add the rest when the user asks about that area.
+2. **Honor any date range the user gives.** Otherwise use the range saved on the insight.
+3. **Report**:
+   - Funnels: conversion % per step, overall conversion, the single biggest drop-off.
+     For by-variant funnels, lead with the best and worst arm and their sample sizes.
+   - Retention: day 1 and day 7 return rate, using only cohorts old enough to have that day.
+   - Paid/LTV: this week vs target, and D30 revenue per install.
+4. **Empty results are expected in two places**: `5SClykhs` and `SK4dKteb` run on
+   `onboarding_step_viewed`, which only exists from the first release after 4.65.
+   Say so plainly; it is not a wiring bug.
 
-## Fallback funnel definitions (if re-running by short_id fails)
+## Known caveats to state when relevant
 
-**Onboarding Funnel** — `funnelOrderType: ordered`, window **1 day**, ordered steps:
-`onboarding_quiz_shown` → `onboarding_quiz_answered` → `onboarding_belief_shown` →
-`onboarding_belief_spoken` → `onboarding_burden_answered` →
-`onboarding_first_declaration_spoken` → `onboarding_personal_declaration_completed` →
-`onboarding_completed` → `onboarding_notification_time_picked`
-(`onboarding_completed` fires at the commitment-hold screen BEFORE the paywall;
-`onboarding_notification_time_picked` fires post-paywall, so it is the true last step.)
-
-**Activation → Paid Funnel** — `funnelOrderType: ordered`, window **30 days**, ordered steps:
-`onboarding_completed` → `paywall_impression` → `trial_started` → `rc_trial_converted_event`
-(Steps 1–3 are in-app events; step 4 is RevenueCat's server-side PostHog integration. Identity
-joins via the `$posthogUserId` RC attribute, set in `GrowthMetrics.linkRevenueIdentity` on every
-launch. It was NOT set in `AnalyticsService.setUserId` as this file previously claimed — that
-method only calls PostHog's `identify`, so before the attribute existed every `rc_*` event landed
-on a RevenueCat-keyed person with no funnel steps on it and step 4 read zero for structural
-reasons, not product ones. Data before that fix shipped is still split. No `screen_viewed`
-or `paywall_conversion` step — both would mis-order or double-count. If `rc_trial_converted_event`
-reads zero, check the RC→PostHog integration is enabled, not just that no build shipped.)
+- `acquisition_channel = owned_deeplink` with source `branch` and no campaign is mostly
+  mis-attributed organic traffic on builds up to 4.65. Don't compare channels until the
+  fix has shipped for a few weeks.
+- RevenueCat (`rc_*`) history starts 2026-08-08, and ~20% of RC people don't link to an
+  app user. PostHog MRR undercounts annual subscribers bought before Aug 8; RevenueCat's
+  dashboard is the source of truth for totals.
+- Retention runs on `app_day_started` (once per calendar day), never `$screen`.
 
 ## Output format
 
-Give a short text summary per funnel (not a giant table dump). Lead with overall
-conversion and the worst drop-off — that's what the user wants first. Link the dashboard
-at the end.
+Short text per area (not a giant table dump). Lead with the number that changed most
+week over week and the worst drop-off. Link the Weekly Growth Scorecard at the end.
