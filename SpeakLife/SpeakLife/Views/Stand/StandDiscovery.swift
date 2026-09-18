@@ -334,6 +334,42 @@ struct StandInvitePromptSheet: View {
 // typing. All three land in `AppState.pendingStandCode`, and this is the one
 // place that turns it into a screen.
 
+/// Codes this install has already turned into a room.
+///
+/// Tapping your own invite link a second time used to put the join form back
+/// in front of you — with an empty name field, because the name typed on the
+/// first pass was never kept, so the button was disabled and the screen was a
+/// dead end for the one person guaranteed to be welcome.
+///
+/// `joinStand` does answer this (`alreadyMember`), but only after a submit the
+/// form would not let them make. There is no read-only lookup on the server, and
+/// calling `joinStand` on open would JOIN somebody who is not a member yet,
+/// skipping the name step that is their consent. So the client remembers what
+/// it redeemed: exact for the case people actually hit, the same device and the
+/// same link, and silent about every other one.
+///
+/// A second device still gets the form, which is correct there — it is a new
+/// install agreeing to something — and `alreadyMember` already makes it succeed.
+enum StandRedeemedCodes {
+
+    private static let key = "standRedeemedCodes"
+
+    static func roomId(for code: String) -> String? {
+        map()[code]
+    }
+
+    static func record(code: String, roomId: String) {
+        guard !code.isEmpty, !roomId.isEmpty else { return }
+        var m = map()
+        m[code] = roomId
+        UserDefaults.standard.set(m, forKey: key)
+    }
+
+    private static func map() -> [String: String] {
+        UserDefaults.standard.dictionary(forKey: key) as? [String: String] ?? [:]
+    }
+}
+
 struct StandRedemptionModifier: ViewModifier {
 
     /// Passed in, NOT read from the environment.
@@ -362,6 +398,10 @@ struct StandRedemptionModifier: ViewModifier {
             }
     }
 
+    // Reads `StandService.shared.rooms`, which is main-actor isolated. Every
+    // call site is a SwiftUI closure already on the main actor; the annotation
+    // is what lets the compiler see that, exactly as on `StandDiscovery`.
+    @MainActor
     private func evaluate() {
         guard FeatureFlag.standTogetherEnabled,
               !appState.pendingStandCode.isEmpty,
@@ -370,6 +410,26 @@ struct StandRedemptionModifier: ViewModifier {
               // onboarding has finished — and a join sheet fighting onboarding
               // is how the highest-intent install in the feature bounces.
               appState.isOnboarded else { return }
+
+        // Already theirs. Open the room, do not ask them to join it again.
+        //
+        // Gated on the room being one the listener actually has and still
+        // active: a remembered id we cannot show would swallow the link
+        // entirely, and the form at least reaches the server. Completed stands
+        // fall through for the same reason — `joinStand` gives them the real
+        // "this stand already finished" rather than a room that no longer
+        // takes them.
+        if let roomId = StandRedeemedCodes.roomId(for: appState.pendingStandCode),
+           StandService.shared.rooms.contains(where: { $0.id == roomId && $0.status == .active }) {
+            AnalyticsService.shared.track("stand_invite_opened", parameters: [
+                "source": "link",
+                "outcome": "already_member",
+            ])
+            appState.pendingStandCode = ""
+            appState.pendingStandRoomId = StandRoomRoute(value: roomId)
+            return
+        }
+
         showJoin = true
     }
 }
