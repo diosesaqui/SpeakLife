@@ -178,6 +178,40 @@ public struct StandRoom: Equatable, Identifiable {
         member(uid)?.spoke(on: stamp) ?? false
     }
 
+    /// The stand the campaign card's row should open, out of every stand this
+    /// person is in.
+    ///
+    /// Ranked, because the row is one line and there can be several stands.
+    /// A stand somebody is ACTUALLY IN outranks an empty one, whatever campaign
+    /// it runs — that is the whole point of the row. Preferring the card's own
+    /// campaign first meant an empty stand on this week hid a real stand with a
+    /// friend in it on another week, which is the same "you are in a stand and
+    /// cannot reach it" this row exists to fix.
+    ///
+    ///   3  this card's campaign, and somebody is in it
+    ///   2  another campaign, and somebody is in it
+    ///   1  this card's campaign, alone
+    ///   0  another campaign, alone
+    ///
+    /// Ties break on most recent activity rather than on `rooms` order, which
+    /// the listener does not promise — otherwise the row could flip between two
+    /// stands between launches.
+    public static func rowStand(in rooms: [StandRoom],
+                                campaignId: String,
+                                uid: String) -> StandRoom? {
+        func rank(_ room: StandRoom) -> Int {
+            let peopled = room.activeMembers.contains { $0.uid != uid }
+            return (peopled ? 2 : 0) + (room.enforcement.id == campaignId ? 1 : 0)
+        }
+        return rooms
+            .filter { $0.status == .active }
+            .max { lhs, rhs in
+                let l = rank(lhs), r = rank(rhs)
+                if l != r { return l < r }
+                return (lhs.lastActivityAt ?? .distantPast) < (rhs.lastActivityAt ?? .distantPast)
+            }
+    }
+
     /// The day to record for `uid` speaking on `todayStamp`, or nil when this
     /// stand should record nothing.
     ///

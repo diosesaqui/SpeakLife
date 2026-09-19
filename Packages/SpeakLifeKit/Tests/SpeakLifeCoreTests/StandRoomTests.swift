@@ -426,4 +426,91 @@ final class StandRoomTests: XCTestCase {
         XCTAssertEqual(r?.presenceSummary(todayStamp: "2026-09-01"),
                        "Waiting for someone to join.")
     }
+
+    // MARK: - Which stand the card row opens
+
+    /// Reported from the device: the card read "Your stand is ready / Nobody
+    /// else yet" while a friend was standing in another of this person's
+    /// stands. An empty stand on THIS card's campaign was outranking a real one
+    /// on another campaign, which is the same hole the fallback was added to
+    /// close.
+    func testRowStand_PrefersAStandSomebodyIsActuallyInOverAnEmptyOne() throws {
+        let emptyOnThisCampaign = try XCTUnwrap(room(roomDict(members: [
+            "me": memberDict(name: "Me", day: 0, spoken: [], owner: true),
+        ])))
+        let peopledOnAnother = try XCTUnwrap(StandRoom(
+            id: "r2",
+            data: roomDict(members: [
+                "me": memberDict(name: "Me", day: 1, spoken: stamps(1), owner: true),
+                "king": memberDict(name: "King", day: 1, spoken: stamps(1)),
+            ]).merging(["enforcement": enforcementDict(id: "healing")]) { _, new in new },
+            date: passthroughDate))
+
+        let picked = StandRoom.rowStand(in: [emptyOnThisCampaign, peopledOnAnother],
+                                        campaignId: "peace", uid: "me")
+        XCTAssertEqual(picked?.id, "r2",
+                       "a stand with somebody in it beats an empty one on this week")
+    }
+
+    /// With people in both, this card's own campaign is the right one to show.
+    func testRowStand_PrefersThisCampaignWhenBothHavePeople() throws {
+        let thisCampaign = try XCTUnwrap(room(roomDict(members: [
+            "me": memberDict(name: "Me", day: 1, spoken: stamps(1), owner: true),
+            "ann": memberDict(name: "Ann", day: 1, spoken: stamps(1)),
+        ])))
+        let other = try XCTUnwrap(StandRoom(
+            id: "r2",
+            data: roomDict(members: [
+                "me": memberDict(name: "Me", day: 1, spoken: stamps(1), owner: true),
+                "king": memberDict(name: "King", day: 1, spoken: stamps(1)),
+            ]).merging(["enforcement": enforcementDict(id: "healing")]) { _, new in new },
+            date: passthroughDate))
+
+        XCTAssertEqual(StandRoom.rowStand(in: [other, thisCampaign],
+                                          campaignId: "peace", uid: "me")?.id, "r1")
+    }
+
+    /// Alone in both: this card's campaign is still the better row.
+    func testRowStand_FallsBackToThisCampaignWhenAlone() throws {
+        let thisCampaign = try XCTUnwrap(room(roomDict(members: [
+            "me": memberDict(name: "Me", day: 0, spoken: [], owner: true),
+        ])))
+        let other = try XCTUnwrap(StandRoom(
+            id: "r2",
+            data: roomDict(members: [
+                "me": memberDict(name: "Me", day: 0, spoken: [], owner: true),
+            ]).merging(["enforcement": enforcementDict(id: "healing")]) { _, new in new },
+            date: passthroughDate))
+
+        XCTAssertEqual(StandRoom.rowStand(in: [other, thisCampaign],
+                                          campaignId: "peace", uid: "me")?.id, "r1")
+    }
+
+    /// A finished stand is not what the row opens.
+    func testRowStand_IgnoresStandsThatAreNotActive() throws {
+        let done = try XCTUnwrap(room(roomDict(members: [
+            "me": memberDict(name: "Me", day: 7, spoken: stamps(7), owner: true),
+            "king": memberDict(name: "King", day: 7, spoken: stamps(7)),
+        ], status: "completed")))
+        XCTAssertNil(StandRoom.rowStand(in: [done], campaignId: "peace", uid: "me"))
+        XCTAssertNil(StandRoom.rowStand(in: [], campaignId: "peace", uid: "me"))
+    }
+
+    /// A member who left does not make a stand peopled.
+    func testRowStand_DoesNotCountAMemberWhoLeftAsCompany() throws {
+        let abandoned = try XCTUnwrap(room(roomDict(members: [
+            "me": memberDict(name: "Me", day: 1, spoken: stamps(1), owner: true),
+            "gone": memberDict(name: "Gone", day: 1, spoken: stamps(1), left: true),
+        ])))
+        let peopled = try XCTUnwrap(StandRoom(
+            id: "r2",
+            data: roomDict(members: [
+                "me": memberDict(name: "Me", day: 1, spoken: stamps(1), owner: true),
+                "king": memberDict(name: "King", day: 1, spoken: stamps(1)),
+            ]).merging(["enforcement": enforcementDict(id: "healing")]) { _, new in new },
+            date: passthroughDate))
+
+        XCTAssertEqual(StandRoom.rowStand(in: [abandoned, peopled],
+                                          campaignId: "peace", uid: "me")?.id, "r2")
+    }
 }
