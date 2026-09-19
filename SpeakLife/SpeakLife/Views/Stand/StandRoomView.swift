@@ -155,9 +155,13 @@ struct StandRoomView: View {
 
     /// A stand of one is the normal state between tapping Invite and the other
     /// person accepting, so it reads as anticipation rather than failure.
+    ///
+    /// It also states the rule `dayToRecord` enforces: the shared week is held
+    /// at zero until somebody else is standing, so both members read Day 1 on
+    /// the same day rather than the invitee starting a week behind.
     private func aloneSoFar(_ room: StandRoom) -> some View {
         VStack(spacing: DS.Spacing.sm) {
-            Text("Nobody has joined yet.")
+            Text("Your seven days start when they do.")
                 .font(DS.Typography.callout)
                 .foregroundColor(DS.Palette.textSecondary)
             Button {
