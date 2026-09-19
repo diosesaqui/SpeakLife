@@ -100,11 +100,28 @@ struct StandInviteRow: View {
     @State private var showInvite = false
     @State private var showRoom = false
 
+    /// This card's own campaign first, then ANY active stand.
+    ///
+    /// Matching only this card's campaign left a joined stand with nowhere to
+    /// be: someone who taps a friend's link and keeps their own week ("Finish
+    /// mine first", "Not now") is in a room running a different campaign, so
+    /// the row found nothing and Profile → My Stands was the only door — and
+    /// that row is deliberately low-discovery, so in practice there was none.
     private var existingRoom: StandRoom? {
         service.rooms.first { $0.status == .active && $0.enforcement.id == enforcement.id }
+            ?? service.rooms.first { $0.status == .active }
     }
 
-    /// Somebody else is actually in it. A stand of one is still an invite row.
+    /// The stand we are showing is not this card's week. Its campaign gets
+    /// named, so a row that opens a different seven days does not read as a
+    /// mislabelled version of this one.
+    private var isOtherCampaign: Bool {
+        guard let existingRoom else { return false }
+        return existingRoom.enforcement.id != enforcement.id
+    }
+
+    /// Everyone in the stand but you. Drives the copy only: a stand of one is
+    /// still a stand, and the row opens it either way.
     private var companions: [StandMember] {
         guard let existingRoom else { return [] }
         return existingRoom.activeMembers.filter { $0.uid != auth.currentUid }
@@ -114,7 +131,13 @@ struct StandInviteRow: View {
         if FeatureFlag.standTogetherEnabled {
             Button {
                 PremiumHaptics.light()
-                if companions.isEmpty { showInvite = true } else { showRoom = true }
+                // Branches on being IN a stand, not on anyone else having
+                // arrived. A stand of one used to open the invite sheet, which
+                // meant the room had no entry point at all until somebody
+                // accepted — the state you are in for the whole window between
+                // sending an invite and it being taken. `aloneSoFar` inside the
+                // room carries "Send the invite again", so nothing is lost.
+                if existingRoom == nil { showInvite = true } else { showRoom = true }
             } label: {
                 HStack(spacing: DS.Spacing.sm) {
                     leading
@@ -171,12 +194,17 @@ struct StandInviteRow: View {
 
     // MARK: - Copy
     //
-    // Plain, and in the right voice. The row belongs to the person running the
-    // campaign, so it names what THEY are about to do.
+    // Plain, and in the right voice. The row is read by the person running the
+    // campaign, so it names what THEY are about to do — and when the stand it
+    // opens is one they joined rather than started, it names that campaign so
+    // the destination is never a surprise.
 
     private var title: String {
-        guard let first = companions.first else {
+        guard existingRoom != nil else {
             return "Invite someone to stand with you"
+        }
+        guard let first = companions.first else {
+            return "Your stand is ready"
         }
         if companions.count == 1 {
             return "\(first.displayName) is standing with you"
@@ -185,30 +213,45 @@ struct StandInviteRow: View {
     }
 
     private var subtitle: String {
-        guard let existingRoom, !companions.isEmpty else {
-            // "They speak the same words" described a mechanic and promised
-            // nothing. Enforcing is this product's verb: the card directly
-            // above this row reads ENFORCING HEALING.
-            //
-            // ⚠️ DO NOT INTERPOLATE `enforcementTitle` HERE. It is a campaign
-            // NAME, not a bare noun, and a dozen of them are first-person
-            // possessive — "My Marriage", "My Children", "My Purpose", "My
-            // Home", "My Walk With God". Dropped into this frame they read
-            // "They enforce my marriage with you", which is nonsense, and
-            // `.lowercased()` additionally turns "God's Promise" into "god's
-            // promise". "the same victory" is grammatical for every theme, and
-            // `victory` is already this feature's own word: it is what the
-            // eyebrow says and what `enforcementTitle` falls back to, and it is
-            // the one word that holds whatever the person walked in with.
-            // Someone enforcing peace over anxiety and someone enforcing their
-            // marriage are both enforcing a victory.
-            //
-            // It also claims only what the code guarantees. Two members share
-            // the campaign and today's anchor; the six lines behind it are
-            // drawn per install, so "the same words" was over-claiming.
-            return "They enforce victory with you, all 7 days."
+        if let existingRoom {
+            // Empty is the normal state between sending an invite and it being
+            // taken, so it reads as waiting rather than failure, and it says
+            // where the invite lives now that the row opens the room.
+            let status = companions.isEmpty
+                ? "Nobody else yet. Open it to invite."
+                : existingRoom.presenceSummary(todayStamp: StandDayStamp.stamp())
+            // Standalone, never inside a frame — that is what the note below
+            // forbids. "Enforcing Peace · Maria spoke today" is how the room
+            // header and My Stands already name a campaign, and it reads
+            // correctly for the possessive titles too.
+            return isOtherCampaign
+                ? "\(existingRoom.enforcement.displayTitle) · \(status)"
+                : status
         }
-        return existingRoom.presenceSummary(todayStamp: StandDayStamp.stamp())
+        // Not in a stand at all. The row is an invitation to make one.
+        //
+        // "They speak the same words" described a mechanic and promised
+        // nothing. Enforcing is this product's verb: the card directly
+        // above this row reads ENFORCING HEALING.
+        //
+        // ⚠️ DO NOT INTERPOLATE `enforcementTitle` INTO THIS FRAME. It is a
+        // campaign NAME, not a bare noun, and a dozen of them are first-person
+        // possessive — "My Marriage", "My Children", "My Purpose", "My Home",
+        // "My Walk With God". Dropped in here they read "They enforce my
+        // marriage with you", which is nonsense, and `.lowercased()`
+        // additionally turns "God's Promise" into "god's promise". "the same
+        // victory" is grammatical for every theme, and `victory` is already
+        // this feature's own word: it is what the eyebrow says and what
+        // `enforcementTitle` falls back to, and it is the one word that holds
+        // whatever the person walked in with. Someone enforcing peace over
+        // anxiety and someone enforcing their marriage are both enforcing a
+        // victory. (Naming a campaign on its own, as the branch above does, is
+        // a different thing and is fine.)
+        //
+        // It also claims only what the code guarantees. Two members share
+        // the campaign and today's anchor; the six lines behind it are
+        // drawn per install, so "the same words" was over-claiming.
+        return "They enforce victory with you, all 7 days."
     }
 
     @ViewBuilder
@@ -334,6 +377,42 @@ struct StandInvitePromptSheet: View {
 // typing. All three land in `AppState.pendingStandCode`, and this is the one
 // place that turns it into a screen.
 
+/// Codes this install has already turned into a room.
+///
+/// Tapping your own invite link a second time used to put the join form back
+/// in front of you — with an empty name field, because the name typed on the
+/// first pass was never kept, so the button was disabled and the screen was a
+/// dead end for the one person guaranteed to be welcome.
+///
+/// `joinStand` does answer this (`alreadyMember`), but only after a submit the
+/// form would not let them make. There is no read-only lookup on the server, and
+/// calling `joinStand` on open would JOIN somebody who is not a member yet,
+/// skipping the name step that is their consent. So the client remembers what
+/// it redeemed: exact for the case people actually hit, the same device and the
+/// same link, and silent about every other one.
+///
+/// A second device still gets the form, which is correct there — it is a new
+/// install agreeing to something — and `alreadyMember` already makes it succeed.
+enum StandRedeemedCodes {
+
+    private static let key = "standRedeemedCodes"
+
+    static func roomId(for code: String) -> String? {
+        map()[code]
+    }
+
+    static func record(code: String, roomId: String) {
+        guard !code.isEmpty, !roomId.isEmpty else { return }
+        var m = map()
+        m[code] = roomId
+        UserDefaults.standard.set(m, forKey: key)
+    }
+
+    private static func map() -> [String: String] {
+        UserDefaults.standard.dictionary(forKey: key) as? [String: String] ?? [:]
+    }
+}
+
 struct StandRedemptionModifier: ViewModifier {
 
     /// Passed in, NOT read from the environment.
@@ -362,6 +441,10 @@ struct StandRedemptionModifier: ViewModifier {
             }
     }
 
+    // Reads `StandService.shared.rooms`, which is main-actor isolated. Every
+    // call site is a SwiftUI closure already on the main actor; the annotation
+    // is what lets the compiler see that, exactly as on `StandDiscovery`.
+    @MainActor
     private func evaluate() {
         guard FeatureFlag.standTogetherEnabled,
               !appState.pendingStandCode.isEmpty,
@@ -370,6 +453,26 @@ struct StandRedemptionModifier: ViewModifier {
               // onboarding has finished — and a join sheet fighting onboarding
               // is how the highest-intent install in the feature bounces.
               appState.isOnboarded else { return }
+
+        // Already theirs. Open the room, do not ask them to join it again.
+        //
+        // Gated on the room being one the listener actually has and still
+        // active: a remembered id we cannot show would swallow the link
+        // entirely, and the form at least reaches the server. Completed stands
+        // fall through for the same reason — `joinStand` gives them the real
+        // "this stand already finished" rather than a room that no longer
+        // takes them.
+        if let roomId = StandRedeemedCodes.roomId(for: appState.pendingStandCode),
+           StandService.shared.rooms.contains(where: { $0.id == roomId && $0.status == .active }) {
+            AnalyticsService.shared.track("stand_invite_opened", parameters: [
+                "source": "link",
+                "outcome": "already_member",
+            ])
+            appState.pendingStandCode = ""
+            appState.pendingStandRoomId = StandRoomRoute(value: roomId)
+            return
+        }
+
         showJoin = true
     }
 }
