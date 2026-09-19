@@ -178,6 +178,34 @@ public struct StandRoom: Equatable, Identifiable {
         member(uid)?.spoke(on: stamp) ?? false
     }
 
+    /// The day to record for `uid` speaking on `todayStamp`, or nil when this
+    /// stand should record nothing.
+    ///
+    /// Two rules, both learned from the room reading wrong.
+    ///
+    /// 1. THE NUMBER IS DAYS SPOKEN IN THIS STAND, never the caller's local
+    ///    campaign day. `mirrorDay` used to write the local day straight in, so
+    ///    somebody who joined a stand running the very week they were already
+    ///    on ( `.sameCampaign`, which keeps their progress by design) appeared
+    ///    at day 3 without having spoken a word in the room.
+    ///
+    /// 2. THE WEEK STARTS WHEN THE STAND DOES. A stand of one is somebody
+    ///    waiting on an invite, not day 1 of anything, so nothing counts until
+    ///    a second person is standing with them. That is what lets both members
+    ///    read Day 1 on the same day instead of the invitee starting a week
+    ///    behind the person who sent the link.
+    ///
+    /// The count comes from `daysSpoken` rather than from `dayNumber`, so a
+    /// stale cached room self-corrects on the next day rather than compounding:
+    /// the stamps are the record, the number is a readout of them.
+    public func dayToRecord(for uid: String, todayStamp: String) -> Int? {
+        guard status == .active,
+              activeMembers.count > 1,
+              let me = member(uid),
+              !me.spoke(on: todayStamp) else { return nil }
+        return min(me.daysSpoken.count + 1, Enforcement.length)
+    }
+
     /// The line under the room title: who has spoken today.
     ///
     /// Deliberately never phrased as who has NOT. The room reports presence,
@@ -187,6 +215,11 @@ public struct StandRoom: Equatable, Identifiable {
     public func presenceSummary(todayStamp: String) -> String {
         let active = activeMembers
         guard !active.isEmpty else { return "" }
+        // A stand of one has not started. Its seven days begin when somebody
+        // else is standing too (`dayToRecord`), so reporting on today would be
+        // reporting on a week that is not running — and an owner who had just
+        // spoken read "Nobody has spoken yet today."
+        guard active.count > 1 else { return "Waiting for someone to join." }
         let spoken = active.filter { $0.spoke(on: todayStamp) }
         if spoken.isEmpty { return "Nobody has spoken yet today." }
         if spoken.count == active.count { return "Everyone has spoken today." }

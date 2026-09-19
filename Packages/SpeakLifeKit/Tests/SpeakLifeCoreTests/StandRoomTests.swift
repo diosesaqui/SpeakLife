@@ -320,4 +320,110 @@ final class StandRoomTests: XCTestCase {
         XCTAssertEqual(result, .awaitingCelebration,
                        "the one celebration they earned must not be swallowed")
     }
+
+    // MARK: - What a stand records
+    //
+    // The room read wrong in two different ways, and both land here.
+    //
+    // Stamps must be well formed. `StandRoom`'s decoder filters `daysSpoken`
+    // through `StandDayStamp.isWellFormed`, so a made-up fixture like "d1" is
+    // silently dropped and every member arrives having spoken nothing — which
+    // is exactly how the first version of these tests failed.
+
+    /// Day stamps that survive decoding, in order.
+    private func stamps(_ n: Int) -> [String] {
+        (1...max(n, 1)).prefix(n).map { String(format: "2026-09-%02d", $0) }
+    }
+
+    /// The number is days spoken IN THIS STAND. `mirrorDay` used to write the
+    /// caller's local campaign day straight in, so somebody who joined a stand
+    /// running the very week they were already on — `.sameCampaign`, which
+    /// keeps their progress by design — showed up at day 3 next to the owner's
+    /// day 5 without having spoken once in the room.
+    func testDayToRecord_CountsDaysSpokenInTheStandNotTheLocalCampaign() {
+        let r = room(roomDict(members: [
+            "owner": memberDict(name: "Ann", day: 5, spoken: stamps(5), owner: true),
+            "king": memberDict(name: "King", day: 3, spoken: [], owner: false),
+        ]))
+        // Joined mid-week, has spoken nothing here: their first day is day 1,
+        // whatever their own campaign says.
+        XCTAssertEqual(r?.dayToRecord(for: "king", todayStamp: "2026-09-06"), 1)
+        XCTAssertEqual(r?.dayToRecord(for: "owner", todayStamp: "2026-09-06"), 6)
+    }
+
+    /// The shared week starts when the stand does. A stand of one is somebody
+    /// waiting on an invite, not day 1 of anything — holding at zero is what
+    /// lets both members read Day 1 on the same day.
+    func testDayToRecord_RecordsNothingUntilSomebodyElseIsStanding() {
+        let alone = room(roomDict(members: [
+            "owner": memberDict(name: "Ann", day: 0, spoken: [], owner: true),
+        ]))
+        XCTAssertNil(alone?.dayToRecord(for: "owner", todayStamp: "2026-09-01"))
+
+        let joined = room(roomDict(members: [
+            "owner": memberDict(name: "Ann", day: 0, spoken: [], owner: true),
+            "king": memberDict(name: "King", day: 0, spoken: [], owner: false),
+        ]))
+        XCTAssertEqual(joined?.dayToRecord(for: "owner", todayStamp: "2026-09-01"), 1)
+        XCTAssertEqual(joined?.dayToRecord(for: "king", todayStamp: "2026-09-01"), 1)
+    }
+
+    /// A member who left does not make it a stand of two.
+    func testDayToRecord_IgnoresMembersWhoLeft() {
+        let r = room(roomDict(members: [
+            "owner": memberDict(name: "Ann", day: 2, spoken: stamps(2), owner: true),
+            "gone": memberDict(name: "Gone", day: 1, spoken: stamps(1), left: true),
+        ]))
+        XCTAssertNil(r?.dayToRecord(for: "owner", todayStamp: "2026-09-03"))
+    }
+
+    /// The burst can complete more than once in a day.
+    func testDayToRecord_IsIdempotentWithinADay() {
+        let r = room(roomDict(members: [
+            "owner": memberDict(name: "Ann", day: 2, spoken: stamps(2), owner: true),
+            "king": memberDict(name: "King", day: 2, spoken: stamps(2), owner: false),
+        ]))
+        XCTAssertNil(r?.dayToRecord(for: "owner", todayStamp: "2026-09-02"))
+        XCTAssertEqual(r?.dayToRecord(for: "owner", todayStamp: "2026-09-03"), 3)
+    }
+
+    /// Seven days is the whole campaign. A stale cache must not push anyone
+    /// past the end of one.
+    func testDayToRecord_NeverExceedsTheCampaignLength() {
+        let r = room(roomDict(members: [
+            "owner": memberDict(name: "Ann", day: Enforcement.length,
+                                spoken: stamps(Enforcement.length), owner: true),
+            "king": memberDict(name: "King", day: 1, spoken: stamps(1), owner: false),
+        ]))
+        XCTAssertEqual(r?.dayToRecord(for: "owner", todayStamp: "2026-09-08"),
+                       Enforcement.length)
+    }
+
+    /// A finished or dormant stand records nothing.
+    func testDayToRecord_RecordsNothingOnAStandThatIsNotActive() {
+        let r = room(roomDict(members: [
+            "owner": memberDict(name: "Ann", day: 7, spoken: stamps(1), owner: true),
+            "king": memberDict(name: "King", day: 7, spoken: stamps(1), owner: false),
+        ], status: "completed"))
+        XCTAssertNil(r?.dayToRecord(for: "owner", todayStamp: "2026-09-02"))
+    }
+
+    /// Somebody who is not in this stand.
+    func testDayToRecord_RecordsNothingForANonMember() {
+        let r = room(roomDict(members: [
+            "owner": memberDict(name: "Ann", day: 1, spoken: stamps(1), owner: true),
+            "king": memberDict(name: "King", day: 1, spoken: stamps(1), owner: false),
+        ]))
+        XCTAssertNil(r?.dayToRecord(for: "stranger", todayStamp: "2026-09-02"))
+    }
+
+    /// A stand of one reports waiting, not silence. An owner who had just
+    /// spoken was reading "Nobody has spoken yet today."
+    func testPresenceOnAStandOfOneReportsWaiting() {
+        let r = room(roomDict(members: [
+            "owner": memberDict(name: "Ann", day: 0, spoken: stamps(1), owner: true),
+        ]))
+        XCTAssertEqual(r?.presenceSummary(todayStamp: "2026-09-01"),
+                       "Waiting for someone to join.")
+    }
 }

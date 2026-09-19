@@ -207,6 +207,7 @@ struct StandJoinView: View {
 
             // Already in it — a second tap, or a second device. Straight in.
             if outcome.alreadyMember {
+                remember(outcome.roomId)
                 joinedRoomId = outcome.roomId
                 joinedEnforcement = outcome.enforcement
                 // A rejoin still needs the campaign if they are not running it —
@@ -227,6 +228,7 @@ struct StandJoinView: View {
                 active: EnforcementService.shared.activeEnforcement,
                 hasUnseenCelebration: EnforcementService.shared.justCompleted != nil)
 
+            remember(outcome.roomId)
             pendingRoomId = outcome.roomId
             joinedEnforcement = outcome.enforcement
             if case .clear = decision {
@@ -248,6 +250,27 @@ struct StandJoinView: View {
             ])
         }
         isWorking = false
+    }
+
+    /// Ties this code to the room it opened, and keeps the name.
+    ///
+    /// Both halves exist because of the same dead end: tapping your own link
+    /// again put the form back up with an empty name field and a disabled
+    /// button. The code lets `StandRedemptionModifier` skip the form entirely
+    /// next time; the name means that even where the form is right to appear —
+    /// a second device — it is answerable rather than a wall.
+    ///
+    /// `userName` is the app's one name for this person and is already read by
+    /// the checklist, notifications and `StandInviteSheet`. Only written when
+    /// it is empty: what they call themselves in a stand does not get to
+    /// overwrite the name they gave the app.
+    private func remember(_ roomId: String) {
+        StandRedeemedCodes.record(code: normalized, roomId: roomId)
+        let typed = name.trimmingCharacters(in: .whitespaces)
+        let stored = UserDefaults.standard.string(forKey: "userName") ?? ""
+        if stored.isEmpty, !typed.isEmpty {
+            UserDefaults.standard.set(typed, forKey: "userName")
+        }
     }
 
     /// Pushes the room, once. Nothing to open means the conflict sheet was

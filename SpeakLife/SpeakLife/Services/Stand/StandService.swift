@@ -86,27 +86,40 @@ final class StandService: ObservableObject, StandMirroring {
         }
     }
 
-    private func mirrorDay(_ dayNumber: Int) async {
+    /// `localDay` is the caller's own campaign day. It is reported to analytics
+    /// and NOTHING else: what a room records is `StandRoom.dayToRecord`, which
+    /// counts days spoken in that stand. Writing the local day here is what put
+    /// a member who joined mid-week into the room already several days in.
+    private func mirrorDay(_ localDay: Int) async {
         guard FeatureFlag.standTogetherEnabled, let uid else { return }
 
-        // Read room ids from the cache rather than the network: this runs the
+        // Read rooms from the cache rather than the network: this runs the
         // instant a burst completes, and the mirror must never make the
         // celebration wait on a round trip.
-        let ids = rooms.filter { $0.status == .active }.map(\.id)
-        guard !ids.isEmpty else { return }
+        let active = rooms.filter { $0.status == .active }
+        guard !active.isEmpty else { return }
 
         let stamp = StandDayStamp.stamp()
-        let payload: [String: Any] = [
-            "members.\(uid).dayNumber": dayNumber,
-            // arrayUnion makes a repeat write on the same day free, which is
-            // what lets this be called without tracking whether it already ran.
-            "members.\(uid).daysSpoken": FieldValue.arrayUnion([stamp]),
-            "members.\(uid).lastSpokeAt": FieldValue.serverTimestamp(),
-            "members.\(uid).tz": StandDayStamp.currentTimeZoneIdentifier,
-            "lastActivityAt": FieldValue.serverTimestamp(),
-        ]
+        var recorded = 0
 
-        for id in ids {
+        for room in active {
+            // Still touched for a stand of one, whose week has not started:
+            // `standSweep` deletes a single-member room by `lastActivityAt`,
+            // and an owner speaking every day while they wait for their invite
+            // to be taken must not look abandoned.
+            var payload: [String: Any] = ["lastActivityAt": FieldValue.serverTimestamp()]
+
+            if let day = room.dayToRecord(for: uid, todayStamp: stamp) {
+                payload["members.\(uid).dayNumber"] = day
+                // arrayUnion makes a repeat write on the same day free, which
+                // is what lets this be called without tracking whether it
+                // already ran.
+                payload["members.\(uid).daysSpoken"] = FieldValue.arrayUnion([stamp])
+                payload["members.\(uid).lastSpokeAt"] = FieldValue.serverTimestamp()
+                payload["members.\(uid).tz"] = StandDayStamp.currentTimeZoneIdentifier
+                recorded += 1
+            }
+
             // Nested field paths, so two members writing at the same moment
             // touch different paths in one document and neither clobbers the
             // other.
@@ -115,16 +128,19 @@ final class StandService: ObservableObject, StandMirroring {
             // Firestore queues this and flushes it on reconnect. A write that is
             // still rejected after that is a dot on a strip, and swallowing it
             // is the documented behavior, not an oversight.
-            db.collection("standRooms").document(id).updateData(payload) { error in
+            db.collection("standRooms").document(room.id).updateData(payload) { error in
                 if let error {
-                    print("⚠️ Stand mirror failed for \(id): \(error.localizedDescription)")
+                    print("⚠️ Stand mirror failed for \(room.id): \(error.localizedDescription)")
                 }
             }
         }
 
         AnalyticsService.shared.track("stand_day_spoken", parameters: [
-            "day": dayNumber,
-            "room_count": ids.count,
+            "day": localDay,
+            "room_count": active.count,
+            // Rooms this actually counted a day in. The gap between the two is
+            // stands still waiting on a second person.
+            "recorded_count": recorded,
         ])
     }
 
