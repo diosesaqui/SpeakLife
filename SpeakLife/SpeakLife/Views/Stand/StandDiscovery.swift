@@ -100,16 +100,17 @@ struct StandInviteRow: View {
     @State private var showInvite = false
     @State private var showRoom = false
 
-    /// This card's own campaign first, then ANY active stand.
+    /// The best of every stand this person is in — see `StandRoom.rowStand`,
+    /// which carries the ranking and why it is that way.
     ///
-    /// Matching only this card's campaign left a joined stand with nowhere to
-    /// be: someone who taps a friend's link and keeps their own week ("Finish
-    /// mine first", "Not now") is in a room running a different campaign, so
-    /// the row found nothing and Profile → My Stands was the only door — and
-    /// that row is deliberately low-discovery, so in practice there was none.
+    /// Two versions of the same bug live in that doc. Matching only this card's
+    /// campaign hid a stand joined on another week; then preferring this card's
+    /// campaign first let an EMPTY stand on this week hide a real one with a
+    /// friend in it. A stand somebody is actually in wins now, either way.
     private var existingRoom: StandRoom? {
-        service.rooms.first { $0.status == .active && $0.enforcement.id == enforcement.id }
-            ?? service.rooms.first { $0.status == .active }
+        StandRoom.rowStand(in: service.rooms,
+                           campaignId: enforcement.id,
+                           uid: auth.currentUid ?? "")
     }
 
     /// The stand we are showing is not this card's week. Its campaign gets
