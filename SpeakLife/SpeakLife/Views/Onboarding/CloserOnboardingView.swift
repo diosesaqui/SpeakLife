@@ -255,6 +255,12 @@ struct CloserOnboardingView: View {
             CloserPledgeScreen(size: size, burden: responses.heaviestBurden ?? .peace) { advance() }
         case .testimonials:
             TestimonialWallView(size: size, flow: "closer") { advance() }
+        case .email:
+            EmailCaptureScreen(
+                size: size,
+                flow: "closer",
+                burden: responses.heaviestBurden?.rawValue
+            ) { advance() }
         case .paywall:
             HighConversionPaywallView(callback: { advance() }, source: "onboarding", isHardPaywall: true)
         case .notificationTime:
@@ -266,7 +272,9 @@ struct CloserOnboardingView: View {
 
     private func advance() {
         Juice.play(.tapLight)
-        // flow_schema 2 = storm opener prepended as step 0 (1 = original closer arc, nearness → pledge → paywall). Bump when step raw values are renumbered.
+        // flow_schema 3 = email ask inserted immediately before the review wall
+        // (2 = storm opener prepended as step 0, 1 = original closer arc,
+        // nearness → pledge → paywall). Bump when step raw values are renumbered.
         AnalyticsService.shared.track("closer_step_completed", parameters: [
             "step": currentStep.rawValue,
             "flow_schema": CloserStep.flowSchema,
@@ -282,6 +290,10 @@ struct CloserOnboardingView: View {
         switch currentStep {
         case .notificationTime:
             applyResponsesAndComplete()
+        // Out-of-band hop: .email's raw value is 25 (out of sequence to protect the
+        // funnel's numbering) but it RUNS just before the review wall.
+        case .email:
+            withAnimation(.easeInOut(duration: 0.35)) { currentStep = .testimonials }
         default:
             var nextRaw = currentStep.rawValue + 1
             // FIRST, before the belief and rating gates below.
@@ -322,7 +334,15 @@ struct CloserOnboardingView: View {
                 onComplete()
                 return
             }
-            withAnimation(.easeInOut(duration: 0.35)) { currentStep = next }
+        // The email ask sits immediately BEFORE the review wall, so the wall
+        // keeps its adjacency to the paywall. This intercepts ARRIVAL at the
+        // wall rather than hooking whatever precedes it, because the
+        // predecessor is not fixed — the remote-gated rating step changes which
+        // screen leads here. Skipped when the ask is off or an address is
+        // already held, in which case the wall is reached directly.
+            let nextStep: CloserStep =
+                (next == .testimonials && !subscriptionStore.shouldSkipEmailCapture) ? .email : next
+            withAnimation(.easeInOut(duration: 0.35)) { currentStep = nextStep }
         }
     }
 
@@ -431,6 +451,13 @@ enum CloserStep: Int, CaseIterable {
     case planBuilding        = 19  // "building your plan" loader (transition, no bar)
     case planReveal          = 20  // named 30-day plan reveal
     case pledge              = 21  // unique to this arm: the "I'm In" commitment
+    // Declared where it RUNS, because `allCases` order is what the stage
+    // funnel is checked against. Its raw value is out of sequence on purpose:
+    // these values are the `step` dimension on the onboarding funnel, and
+    // giving email 22 would renumber the wall, the paywall and the
+    // notification step and make every earlier build incomparable.
+    // Remote-gated by `emailCaptureEnabled`.
+    case email               = 25  // pre-paywall email ask
     case testimonials        = 22  // App Store review wall — social proof right before the ask
     case paywall             = 23
     case notificationTime    = 24  // terminal — completes onboarding
@@ -450,7 +477,8 @@ enum CloserStep: Int, CaseIterable {
     /// `closer_step_completed` and the unified `onboarding_step_viewed` can
     /// never disagree about which layout they were counting. 2 = storm opener
     /// prepended as step 0. Bump when raw values are renumbered.
-    static let flowSchema = 2
+    /// 3 = email ask inserted immediately before the review wall; 2.
+    static let flowSchema = 3
 }
 
 // MARK: - Unified funnel mapping
@@ -482,6 +510,7 @@ extension CloserStep: OnboardingFunnelStep {
         case .planBuilding:        return "plan_building"
         case .planReveal:          return "plan_reveal"
         case .pledge:              return "pledge"
+        case .email:               return "email_capture"
         case .testimonials:        return "testimonials"
         case .paywall:             return "paywall"
         case .notificationTime:    return "notification_time"
@@ -500,7 +529,7 @@ extension CloserStep: OnboardingFunnelStep {
         case .closenessPicker,
              .battleDuration, .alreadyTried, .insight, .hitsHardest, .connectStyle, .belief, .dailyMinutes:
             return .personalize
-        case .firstDeclaration, .personalDeclaration, .rating, .planBuilding, .planReveal, .pledge, .testimonials:
+        case .firstDeclaration, .personalDeclaration, .rating, .planBuilding, .planReveal, .pledge, .email, .testimonials:
             return .value
         case .paywall:
             return .paywall

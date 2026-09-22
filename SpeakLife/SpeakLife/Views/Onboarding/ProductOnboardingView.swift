@@ -187,6 +187,12 @@ struct ProductOnboardingView: View {
             ) { advance() }
         case .testimonials:
             TestimonialWallView(size: size, flow: "product") { advance() }
+        case .email:
+            EmailCaptureScreen(
+                size: size,
+                flow: "product",
+                burden: responses.heaviestBurden?.rawValue
+            ) { advance() }
         case .paywall:
             HighConversionPaywallView(callback: { advance() }, source: "onboarding", isHardPaywall: true)
         case .notificationTime:
@@ -212,7 +218,6 @@ struct ProductOnboardingView: View {
 
     private func advance() {
         Juice.play(.tapLight)
-        // flow_schema 3 = testimonial wall inserted before paywall (2 = pre-testimonials, 1 = pre-renumbering); bump when step raw values are renumbered again.
         AnalyticsService.shared.track("product_step_completed", parameters: ["step": currentStep.rawValue, "flow_schema": ProductStep.flowSchema])
 
         // Leaving the category picker: stamp the segment so downstream paywall
@@ -224,6 +229,10 @@ struct ProductOnboardingView: View {
         switch currentStep {
         case .notificationTime:
             applyResponsesAndComplete()
+        // Out-of-band hop: .email's raw value is 20 (out of sequence to protect the
+        // funnel's numbering) but it RUNS just before the review wall.
+        case .email:
+            withAnimation(.easeInOut(duration: 0.35)) { currentStep = .testimonials }
         default:
             var nextRaw = currentStep.rawValue + 1
             // FIRST, before the belief and rating gates below.
@@ -258,7 +267,15 @@ struct ProductOnboardingView: View {
                 onComplete()
                 return
             }
-            withAnimation(.easeInOut(duration: 0.35)) { currentStep = next }
+        // The email ask sits immediately BEFORE the review wall, so the wall
+        // keeps its adjacency to the paywall. This intercepts ARRIVAL at the
+        // wall rather than hooking whatever precedes it, because the
+        // predecessor is not fixed — the remote-gated rating step changes which
+        // screen leads here. Skipped when the ask is off or an address is
+        // already held, in which case the wall is reached directly.
+            let nextStep: ProductStep =
+                (next == .testimonials && !subscriptionStore.shouldSkipEmailCapture) ? .email : next
+            withAnimation(.easeInOut(duration: 0.35)) { currentStep = nextStep }
         }
     }
 
@@ -359,6 +376,13 @@ enum ProductStep: Int, CaseIterable {
     case rating          = 14  // rating ask at the personal-declaration peak
     case planBuilding    = 15  // "building your plan" loader (transition, no bar)
     case planReveal      = 16  // named 30-day plan reveal — sets up the paywall ask
+    // Declared where it RUNS, because `allCases` order is what the stage
+    // funnel is checked against. Its raw value is out of sequence on purpose:
+    // these values are the `step` dimension on the onboarding funnel, and
+    // giving email 17 would renumber the wall, the paywall and the
+    // notification step and make every earlier build incomparable.
+    // Remote-gated by `emailCaptureEnabled`.
+    case email           = 20  // pre-paywall email ask
     case testimonials    = 17  // App Store review wall — social proof right before the ask
     case paywall         = 18
     case notificationTime = 19 // terminal — completes onboarding
@@ -380,7 +404,8 @@ enum ProductStep: Int, CaseIterable {
     /// `product_step_completed` and the unified `onboarding_step_viewed` can
     /// never disagree about which layout they were counting. 3 = testimonial
     /// wall inserted before the paywall. Bump when raw values are renumbered.
-    static let flowSchema = 3
+    /// 4 = email ask inserted immediately before the review wall; 3.
+    static let flowSchema = 4
 }
 
 // MARK: - Unified funnel mapping
@@ -407,6 +432,7 @@ extension ProductStep: OnboardingFunnelStep {
         case .rating:              return "rating"
         case .planBuilding:        return "plan_building"
         case .planReveal:          return "plan_reveal"
+        case .email:               return "email_capture"
         case .testimonials:        return "testimonials"
         case .paywall:             return "paywall"
         case .notificationTime:    return "notification_time"
@@ -420,7 +446,7 @@ extension ProductStep: OnboardingFunnelStep {
         case .categoryPicker,
              .battleDuration, .alreadyTried, .insight, .hitsHardest, .connectStyle, .belief, .dailyMinutes:
             return .personalize
-        case .firstDeclaration, .personalDeclaration, .rating, .planBuilding, .planReveal, .testimonials:
+        case .firstDeclaration, .personalDeclaration, .rating, .planBuilding, .planReveal, .email, .testimonials:
             return .value
         case .paywall:
             return .paywall

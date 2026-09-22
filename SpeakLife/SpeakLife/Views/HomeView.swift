@@ -171,6 +171,16 @@ struct HomeView: View {
                                     }
                                 }
                             }
+                            // The one post-purchase email ask, raised by
+                            // SubscriptionStore only when a fresh purchase found
+                            // no address on file. A buyer we already have an
+                            // address for is re-tagged silently and never sees
+                            // this.
+                            .sheet(isPresented: $subscriptionStore.showEmailCaptureAfterPurchase) {
+                                EmailCaptureSheet(source: "post_purchase")
+                                    .environmentObject(appState)
+                                    .environmentObject(subscriptionStore)
+                            }
                             .sheet(isPresented: $showSubscription, content: {
                                 OptimizedSubscriptionView {
                                     showSubscription = false

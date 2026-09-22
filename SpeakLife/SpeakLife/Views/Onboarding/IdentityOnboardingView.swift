@@ -126,6 +126,12 @@ struct IdentityOnboardingView: View {
             }
         case .testimonials:
             TestimonialWallView(size: size, flow: "identity") { advance() }
+        case .email:
+            EmailCaptureScreen(
+                size: size,
+                flow: "identity",
+                burden: responses.heaviestBurden?.rawValue
+            ) { advance() }
         case .paywall:
             HighConversionPaywallView(callback: { advance() }, source: "onboarding", isHardPaywall: true)
         case .notificationTime:
@@ -153,12 +159,15 @@ struct IdentityOnboardingView: View {
 
     private func advance() {
         Juice.play(.tapLight)
-        // flow_schema 2 = testimonial wall inserted before paywall (absent/1 = original layout); bump when step raw values are renumbered again.
         AnalyticsService.shared.track("identity_step_completed", parameters: ["step": currentStep.rawValue, "flow_schema": IdentityStep.flowSchema])
 
         switch currentStep {
         case .notificationTime:
             applyResponsesAndComplete()
+        // Out-of-band hop: .email's raw value is 11 (out of sequence to protect the
+        // funnel's numbering) but it RUNS just before the review wall.
+        case .email:
+            withAnimation(.easeInOut(duration: 0.35)) { currentStep = .testimonials }
         default:
             var nextRaw = currentStep.rawValue + 1
             // FIRST, before the belief and rating gates below.
@@ -188,7 +197,15 @@ struct IdentityOnboardingView: View {
                 onComplete()
                 return
             }
-            withAnimation(.easeInOut(duration: 0.35)) { currentStep = next }
+        // The email ask sits immediately BEFORE the review wall, so the wall
+        // keeps its adjacency to the paywall. This intercepts ARRIVAL at the
+        // wall rather than hooking whatever precedes it, because the
+        // predecessor is not fixed — the remote-gated rating step changes which
+        // screen leads here. Skipped when the ask is off or an address is
+        // already held, in which case the wall is reached directly.
+            let nextStep: IdentityStep =
+                (next == .testimonials && !subscriptionStore.shouldSkipEmailCapture) ? .email : next
+            withAnimation(.easeInOut(duration: 0.35)) { currentStep = nextStep }
         }
     }
 
@@ -259,6 +276,13 @@ enum IdentityStep: Int, CaseIterable {
     case firstDeclaration = 5
     case personalDeclaration = 6
     case rating          = 7   // rating ask at the personal-declaration peak
+    // Declared where it RUNS, because `allCases` order is what the stage
+    // funnel is checked against. Its raw value is out of sequence on purpose:
+    // these values are the `step` dimension on the onboarding funnel, and
+    // giving email 8 would renumber the wall, the paywall and the
+    // notification step and make every earlier build incomparable.
+    // Remote-gated by `emailCaptureEnabled`.
+    case email           = 11  // pre-paywall email ask
     case testimonials    = 8   // App Store review wall — social proof right before the ask
     case paywall         = 9
     case notificationTime = 10 // terminal — completes onboarding
@@ -274,7 +298,8 @@ enum IdentityStep: Int, CaseIterable {
     /// `identity_step_completed` and the unified `onboarding_step_viewed` can
     /// never disagree about which layout they were counting. 2 = testimonial
     /// wall inserted before the paywall. Bump when raw values are renumbered.
-    static let flowSchema = 2
+    /// 3 = email ask inserted immediately before the review wall; 2.
+    static let flowSchema = 3
 }
 
 // MARK: - Unified funnel mapping
@@ -292,6 +317,7 @@ extension IdentityStep: OnboardingFunnelStep {
         case .firstDeclaration:    return "first_declaration"
         case .personalDeclaration: return "personal_declaration"
         case .rating:              return "rating"
+        case .email:               return "email_capture"
         case .testimonials:        return "testimonials"
         case .paywall:             return "paywall"
         case .notificationTime:    return "notification_time"
@@ -305,7 +331,7 @@ extension IdentityStep: OnboardingFunnelStep {
         // The picker is this arm's only question.
         case .identityPicker:
             return .personalize
-        case .firstDeclaration, .personalDeclaration, .rating, .testimonials:
+        case .firstDeclaration, .personalDeclaration, .rating, .email, .testimonials:
             return .value
         case .paywall:
             return .paywall

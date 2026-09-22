@@ -310,6 +310,11 @@ final class AppDelegate: NSObject, MessagingDelegate {
             // "I'm In" pledge inside the closer onboarding arm ships on; flip to
             // false in Remote Config to run the arm's no-pledge cell.
             "closerPledgeEnabled": true as NSNumber,
+            // Pre-paywall email ask ships on; flip to false in Remote Config to
+            // skip the email step in every onboarding flow. It sits one screen
+            // before a hard paywall, so this is the switch to reach for if trial
+            // starts dip after it ships.
+            "emailCaptureEnabled": true as NSNumber,
             // Personalized audio category ordering ships dark; flip to true in
             // Remote Config (or via the A/B test) to promote each user's
             // best-matching categories to the front of the audio filter row.
@@ -388,6 +393,10 @@ final class AppDelegate: NSObject, MessagingDelegate {
         }
         // Lifecycle: track app open for lapsed re-engagement detection
         LifecycleNotificationService.shared.onAppOpen()
+        // An address typed during onboarding on a bad connection is queued to
+        // disk rather than lost. This is the retry: onboarding is the one time
+        // we get to ask, so a dropped send has to survive the app being killed.
+        EmailCaptureService.shared.retryPendingIfNeeded()
         return true
     }
     

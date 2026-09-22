@@ -1,0 +1,59 @@
+rules_version = '2';
+
+// =====================================================================
+// SpeakLife — Firestore security rules for the NAMED `speaklife` database
+// =====================================================================
+// This is a SECOND Firestore database, separate from the default one that
+// firestore.rules governs. It holds exactly one thing:
+//
+//   - email_list/{uid or sanitized email}       (server-only)
+//   - emailCaptureRateLimits/{sha256(ip)}       (server-only)
+//
+// Every address the app has ever collected lives here, written today by the
+// `collectEmail` Cloud Function and, before 2026-06-19, by the
+// EmailMarketingService that shipped inside the app.
+//
+// Deploy with:
+//   firebase deploy --only firestore:speaklife
+//
+// BEFORE THE FIRST DEPLOY: this REPLACES whatever rules the Firebase Console
+// currently holds for this database, which were never in source control. The
+// old app wrote email_list directly from the client, so those console rules
+// almost certainly allow client writes. Check the Console first and confirm
+// nothing else lives in this database — at the time of writing, no Swift file
+// in the app opens it (every other call site uses the default database), and
+// the only writer is the Cloud Function, which bypasses rules via the Admin
+// SDK.
+// =====================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Email list ────────────────────────────────────────────────────
+    //
+    // Closed to clients entirely, in BOTH directions, and neither half is
+    // optional.
+    //
+    // Read: this collection IS the marketing list. One readable document is
+    // every address the app has ever collected, harvestable by anyone who can
+    // point the SDK at this project.
+    //
+    // Write: the app no longer writes here. It posts to the `collectEmail`
+    // function, which validates the address and holds the Klaviyo key. This is
+    // the change that matters most versus the old design — a client-writable
+    // list lets anyone stuff it with addresses they do not own, which is how a
+    // sending domain gets burned.
+    //
+    // The Admin SDK bypasses these rules, so the Cloud Function is unaffected.
+
+    match /email_list/{docId} { allow read, write: if false; }
+
+    // Per-IP counters for the collectEmail rate limit. Server-only for the
+    // same reason as the list itself: a client that could write here could
+    // reset its own counter, which is the whole point of the limit.
+    match /emailCaptureRateLimits/{ipHash} { allow read, write: if false; }
+
+    // Anything else in this database is denied by default; there is no
+    // catch-all allow above, and nothing else is expected to live here.
+  }
+}

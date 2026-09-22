@@ -3,8 +3,16 @@
     "source": "functions",
     "runtime": "nodejs22"
   },
-  "firestore": {
-    "rules": "firestore.rules",
-    "indexes": "firestore.indexes.json"
-  }
+  "firestore": [
+    {
+      "database": "(default)",
+      "rules": "firestore.rules",
+      "indexes": "firestore.indexes.json"
+    },
+    {
+      "database": "speaklife",
+      "rules": "firestore.speaklife.rules",
+      "indexes": "firestore.speaklife.indexes.json"
+    }
+  ]
 }

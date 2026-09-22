@@ -339,6 +339,16 @@ struct DirectOnboardingView: View {
             ) { advance() }
         case .testimonials:
             TestimonialWallView(size: size, flow: "direct") { advance() }
+        case .email:
+            // This arm classifies the pain from what the user wrote, at a finer
+            // granularity than the seven burdens, so send that rather than the
+            // rounded-off burden. Falls back to the burden for users who never
+            // got a declaration.
+            EmailCaptureScreen(
+                size: size,
+                flow: "direct",
+                burden: pain?.rawValue ?? responses.heaviestBurden?.rawValue
+            ) { advance() }
         case .paywall:
             HighConversionPaywallView(callback: { advance() }, source: "onboarding", isHardPaywall: true)
         case .connectStyle:
@@ -418,6 +428,15 @@ struct DirectOnboardingView: View {
         switch currentStep {
         case .notificationTime:
             applyResponsesAndComplete()
+        // Out-of-band hop: .email's raw value is 15 (out of sequence to protect the
+        // funnel's numbering) but it RUNS just before the review wall.
+        //
+        // Running the ask BEFORE the wall also leaves `onboarding_completed`
+        // alone: it is keyed to leaving the wall, and the wall now leads
+        // straight into the paywall again, so that milestone fires exactly
+        // where it always did.
+        case .email:
+            withAnimation(.easeInOut(duration: 0.35)) { currentStep = .testimonials }
         default:
             var nextRaw = currentStep.rawValue + 1
             // The picker and the retry are both recovery, not part of the flow.
@@ -434,7 +453,15 @@ struct DirectOnboardingView: View {
                 onComplete()
                 return
             }
-            withAnimation(.easeInOut(duration: 0.35)) { currentStep = next }
+            // The email ask sits immediately BEFORE the review wall, so the
+            // wall keeps its adjacency to the paywall. This intercepts ARRIVAL
+            // at the wall rather than hooking whatever precedes it, because the
+            // predecessor is not fixed — this arm skips the picker and the
+            // retry for users whose declaration landed. Skipped when the ask is
+            // off or an address is already held.
+            let nextStep: DirectStep =
+                (next == .testimonials && !subscriptionStore.shouldSkipEmailCapture) ? .email : next
+            withAnimation(.easeInOut(duration: 0.35)) { currentStep = nextStep }
         }
     }
 
@@ -594,6 +621,12 @@ enum DirectStep: Int, CaseIterable {
     case planBuilding     = 8  // "building your plan" loader (transition, no bar)
     case planReveal       = 9  // their named 30-day plan — the value crystallized before the ask
     case pledge           = 10 // "every morning, out loud" — the yes taken before the price
+    // Declared where it RUNS, because `allCases` order is what the stage
+    // funnel is checked against. Its raw value is out of sequence on purpose:
+    // these values are the `step` dimension on the onboarding funnel, and
+    // giving email 11 would renumber the wall, the paywall and everything
+    // after it. Remote-gated by `emailCaptureEnabled`.
+    case email            = 15 // pre-paywall email ask
     case testimonials     = 11 // the review wall, right before the ask
     case paywall          = 12
     case connectStyle     = 13 // setup, not persuasion — orders their daily rows from tomorrow
@@ -643,7 +676,11 @@ enum DirectStep: Int, CaseIterable {
     /// that answers it, a pledge before the ask, auto-advance on every one-tap
     /// question, and a progress bar over the whole one-tap half. Every step
     /// after the mechanism is renumbered again.
-    static let flowSchema = 7
+    /// 7 → 8: the email ask was added immediately before the review wall. The
+    /// raw values are untouched (`.email` is numbered 15, out of sequence, and reached by an
+    /// explicit hop in `advance()`), but a screen now stands between the pledge
+    /// and the wall, so step-to-step drop-off is not comparable to schema-7's.
+    static let flowSchema = 8
 
     /// Stable analytics name. Funnels and breakdowns are built on this, not on
     /// the raw Int — a `step_name` of "mechanism" is readable in PostHog where
@@ -665,6 +702,7 @@ enum DirectStep: Int, CaseIterable {
         case .paywall:          return "paywall"
         case .connectStyle:     return "connect_style"
         case .notificationTime: return "notification_time"
+        case .email:            return "email_capture"
         }
     }
 }
@@ -687,7 +725,7 @@ extension DirectStep: OnboardingFunnelStep {
         case .declaration, .painFallback, .declarationRetry,
              .mechanism, .carriedDuration, .longEnough, .victoryOutcome, .dailyMinutes:
             return .personalize
-        case .planBuilding, .planReveal, .pledge, .testimonials:
+        case .planBuilding, .planReveal, .pledge, .email, .testimonials:
             return .value
         case .paywall:
             return .paywall

@@ -15,7 +15,10 @@ rules_version = '2';
 //   - standNudges/{uid}                         (server-only)
 //   - accountMerges/{ticket}                    (server-only)
 //
-// See docs/STAND_TOGETHER_SPEC.md.
+// Email collection lives in a DIFFERENT database (`speaklife`, collection
+// `email_list`) and is governed by firestore.speaklife.rules, not this file.
+//
+// See docs/STAND_TOGETHER_SPEC.md and docs/EMAIL_COLLECTION.md.
 //
 // Apply via:
 //   1. Firebase Console → Firestore → Rules → paste this block, OR
