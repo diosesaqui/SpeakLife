@@ -240,6 +240,36 @@ public struct StandRoom: Equatable, Identifiable {
         return min(me.daysSpoken.count + 1, Enforcement.length)
     }
 
+    /// The day this room is missing for `uid`, given what their own device
+    /// already banked today. Nil when there is nothing to repair.
+    ///
+    /// This exists because the mirror write is a single fire-and-forget attempt
+    /// made inside the burst-completion call stack, and every way that instant
+    /// can miss is silent and permanent:
+    ///
+    /// - the room listener had not delivered this room yet, so the write loop
+    ///   had nothing to iterate and returned;
+    /// - the local day was already banked before the stand was joined, so
+    ///   `advanceIfNeeded` answered `.alreadyAdvancedToday` and the mirror was
+    ///   never called at all;
+    /// - the write was queued offline and the app died before it flushed.
+    ///
+    /// In all three the speaker's own progress says they spoke today and the
+    /// room disagrees, with nothing in the system that would ever notice. This
+    /// turns that disagreement into something a caller can act on every time a
+    /// room arrives, which is what makes the mirror eventually consistent
+    /// rather than one-shot.
+    ///
+    /// `spokeTodayLocally` is the caller's `EnforcementProgress.hasAdvancedToday`
+    /// — LOCAL truth, deliberately. The room is still only ever a mirror of it
+    /// (spec §2); this re-asserts local into the room and never the reverse.
+    public func dayToBackfill(for uid: String,
+                              todayStamp: String,
+                              spokeTodayLocally: Bool) -> Int? {
+        guard spokeTodayLocally else { return nil }
+        return dayToRecord(for: uid, todayStamp: todayStamp)
+    }
+
     /// The line under the room title: who has spoken today.
     ///
     /// Deliberately never phrased as who has NOT. The room reports presence,
