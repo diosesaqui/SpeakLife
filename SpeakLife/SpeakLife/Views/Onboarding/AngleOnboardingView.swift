@@ -394,6 +394,10 @@ struct AngleOnboardingView: View {
             appState.endTimeIndex   = notifTime.endTimeIndex
         }
         let categories: Set<DeclarationCategory> = [seedCategory]
+        // The D1–D30 lifecycle copy is written from the goal word at schedule
+        // time and only scheduled once, so it has to be saved before the grant
+        // below rather than at completion. Same value completion writes.
+        appState.surveyGoalWord = responses.resolvedGoalWord.rawValue
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
             AnalyticsService.shared.track("notification_permission", parameters: [
                 "granted": granted,
