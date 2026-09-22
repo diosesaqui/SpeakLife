@@ -13,8 +13,8 @@
 //    [storm opener] → narrative scenes → [product recap] → burden picker
 //      → [burden-matched payoff] → extended quiz (per-angle: the full Q2–Q6 +
 //      insight block, or a shorter one) → first declaration → record your own
-//      → [rating] → [plan loader] → plan reveal → testimonials → paywall
-//      → notification time
+//      → [rating] → [plan loader] → plan reveal → notification time → [email]
+//      → testimonials → paywall
 //
 //  Bracketed screens are per-angle; everything else is fixed. Keeping the depth
 //  equal is what lets an A/B across angles isolate the ANGLE, so an arm that
@@ -50,6 +50,9 @@ struct AngleOnboardingView: View {
     /// The index last logged to `onboarding_step_viewed`, so a repeat onAppear
     /// on the same screen does not count it twice.
     @State private var lastViewedStepIndex: Int? = nil
+    /// True while the system push prompt is up, so the notification screen's
+    /// button cannot fire the request twice.
+    @State private var isRequestingNotifications = false
 
     // Quiz v2 flag, frozen at the flow's first appearance (mirroring
     // lockOnboardingVariant's intent) so a realtime Remote Config activation
@@ -261,12 +264,27 @@ struct AngleOnboardingView: View {
             appState.onboardingSegment = "\(angle.flow)_\(choice.segmentLabel)"
         }
 
-        if currentStep == .notificationTime {
+        // The paywall is terminal: paying or closing it both finish onboarding.
+        if currentStep == .paywall {
             applyResponsesAndComplete()
             return
         }
 
-        var next = stepIndex + 1
+        // Ask for push here, before the paywall, and only move on once the
+        // system prompt is answered. The flag stops a second tap from asking twice.
+        if currentStep == .notificationTime {
+            guard !isRequestingNotifications else { return }
+            isRequestingNotifications = true
+            requestNotificationPermission { moveToStep(after: stepIndex) }
+            return
+        }
+
+        moveToStep(after: stepIndex)
+    }
+
+    private func moveToStep(after index: Int) {
+
+        var next = index + 1
         // FIRST, before the gates below, which only test the immediately next
         // step: skipping onto .rating after its gate has been evaluated would
         // show the rating ask with the remote kill switch off.
@@ -294,7 +312,7 @@ struct AngleOnboardingView: View {
             next += 1
         }
         guard next < steps.count else {
-            assertionFailure("AngleOnboardingView.advance(): no successor for step \(stepIndex) in angle \(angle.id). .notificationTime should be terminal.")
+            assertionFailure("AngleOnboardingView.advance(): no successor for step \(index) in angle \(angle.id). .paywall should be terminal.")
             onComplete()
             return
         }
@@ -309,15 +327,7 @@ struct AngleOnboardingView: View {
         if let style = responses.primaryDeclarationStyle {
             appState.selectedDeclarationStyles = [style.rawValue]
         }
-        // Seeded from the burden, not from the goal word's branding category,
-        // except where the chosen row names its own category. A single-issue arm
-        // whose subject has no `HeaviestBurden` (grief, purity, salvation, the
-        // fear of death) carries it on the row instead, so the ad's angle still
-        // decides the first morning's feed rather than the nearest neighbouring
-        // burden. See `AnglePickerChoice.seedCategory`.
-        let pickedChoice = angle.picker.choices.first { $0.id == selectedChoiceID }
-        let category = pickedChoice?.resolvedSeedCategory ?? responses.seedCategory
-        let notificationCategoriesSet: Set<DeclarationCategory> = [category]
+        let category = seedCategory
         appState.selectedNotificationCategories = category.rawValue
         UserDefaults.standard.set(category.rawValue, forKey: "selectedCategory")
         UserPreferencesTracker.shared.trackCategorySelection(category.rawValue)
@@ -360,12 +370,40 @@ struct AngleOnboardingView: View {
             "set_personal_declaration": (savedDeclaration != nil) as NSNumber
         ])
 
-        requestNotificationPermissionThenComplete(categories: notificationCategoriesSet)
+        onComplete()
     }
 
-    private func requestNotificationPermissionThenComplete(categories: Set<DeclarationCategory>) {
+    /// Seeded from the burden, not from the goal word's branding category,
+    /// except where the chosen row names its own category. A single-issue arm
+    /// whose subject has no `HeaviestBurden` (grief, purity, salvation, the
+    /// fear of death) carries it on the row instead, so the ad's angle still
+    /// decides the first morning's feed rather than the nearest neighbouring
+    /// burden. See `AnglePickerChoice.seedCategory`.
+    private var seedCategory: DeclarationCategory {
+        let pickedChoice = angle.picker.choices.first { $0.id == selectedChoiceID }
+        return pickedChoice?.resolvedSeedCategory ?? responses.seedCategory
+    }
+
+    /// Asks for push and, if granted, schedules everything that brings a user
+    /// back right away rather than at completion. The paywall that follows is
+    /// hard, so someone who closes the app on it never completes: anything left
+    /// for completion or for the next launch would never be scheduled for them.
+    private func requestNotificationPermission(then next: @escaping () -> Void) {
+        if let notifTime = responses.notificationTime {
+            appState.startTimeIndex = notifTime.startTimeIndex
+            appState.endTimeIndex   = notifTime.endTimeIndex
+        }
+        let categories: Set<DeclarationCategory> = [seedCategory]
+        // The D1–D30 lifecycle copy is written from the goal word at schedule
+        // time and only scheduled once, so it has to be saved before the grant
+        // below rather than at completion. Same value completion writes.
+        appState.surveyGoalWord = responses.resolvedGoalWord.rawValue
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
-            AnalyticsService.shared.track("notification_permission", parameters: ["granted": granted, "source": "\(angle.flow)_onboarding"])
+            AnalyticsService.shared.track("notification_permission", parameters: [
+                "granted": granted,
+                "source": "\(angle.flow)_onboarding",
+                "placement": "before_paywall"
+            ])
             DispatchQueue.main.async {
                 appState.notificationEnabled = granted
                 if granted {
@@ -377,10 +415,19 @@ struct AngleOnboardingView: View {
                         categories: categories
                     )
                     appState.lastNotificationSetDate = Date()
-                    // Trial pushes may have been scheduled pre-authorization on the paywall; re-add now that delivery is guaranteed.
-                    TrialExperienceService.shared.reschedulePendingTrialPushesIfNeeded()
+                    // The daily burst push is the one users open most. It is
+                    // otherwise only scheduled at launch.
+                    DailyDeclarationReminderService.shared.setupDailyReminders()
+                    // Day 1–30 lifecycle series. Idempotent, so the call
+                    // HomeView makes at completion becomes a no-op.
+                    LifecycleNotificationService.shared.scheduleLifecycleNotifications()
+                    LifecycleNotificationService.shared.scheduleBedtimeAudio(
+                        isPremium: subscriptionStore.isPremium,
+                        category: seedCategory.rawValue
+                    )
                 }
-                onComplete()
+                isRequestingNotifications = false
+                next()
             }
         }
     }

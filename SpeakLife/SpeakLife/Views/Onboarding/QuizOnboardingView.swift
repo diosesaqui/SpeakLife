@@ -711,23 +711,49 @@ struct QuizOnboardingView: View {
 
         // Ask for notification permission now — the user has just told us their
         // struggle, so this is the contextual moment to offer daily declarations
-        // for it. Scheduling still happens after they pick a time post-paywall.
-        requestNotificationPermissionAtBurdenSelection()
+        // for it. Everything is scheduled on the grant, not after the paywall:
+        // the paywall is hard, so anyone who leaves on it never reaches
+        // `finishOnboarding` and would otherwise get no pushes at all.
+        requestNotificationPermissionAtBurdenSelection(burden: burden)
 
         transition(to: .matchedDeclaration)
         fireMatchedDeclarationShown()
     }
 
-    private func requestNotificationPermissionAtBurdenSelection() {
+    private func requestNotificationPermissionAtBurdenSelection(burden: HeaviestBurden) {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
             AnalyticsService.shared.track("notification_permission", parameters: [
                 "granted": granted,
-                "source": "quiz_onboarding_burden"
+                "source": "quiz_onboarding_burden",
+                "placement": "before_paywall"
             ])
             DispatchQueue.main.async {
                 appState.notificationEnabled = granted
                 if granted {
                     UIApplication.shared.registerForRemoteNotifications()
+                    // The all-day window the notification screen would pick.
+                    // `finishOnboarding` reschedules from the same answer;
+                    // registerNotifications clears before it adds, so the
+                    // second pass replaces this one rather than doubling it.
+                    appState.startTimeIndex = NotificationTime.allDay.startTimeIndex
+                    appState.endTimeIndex   = NotificationTime.allDay.endTimeIndex
+                    NotificationManager.shared.registerNotifications(
+                        count: appState.notificationCount,
+                        startTime: appState.startTimeIndex,
+                        endTime: appState.endTimeIndex,
+                        categories: [burden.seedCategory]
+                    )
+                    appState.lastNotificationSetDate = Date()
+                    // The daily burst push is the one users open most. It is
+                    // otherwise only scheduled at launch.
+                    DailyDeclarationReminderService.shared.setupDailyReminders()
+                    // Day 1–30 lifecycle series. Idempotent, so the call
+                    // HomeView makes at completion becomes a no-op.
+                    LifecycleNotificationService.shared.scheduleLifecycleNotifications()
+                    LifecycleNotificationService.shared.scheduleBedtimeAudio(
+                        isPremium: subscriptionStore.isPremium,
+                        category: burden.seedCategory.rawValue
+                    )
                 }
             }
         }

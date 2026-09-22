@@ -298,6 +298,12 @@ struct SpeakLifeApp: App {
                 //    .environmentObject(timeTracker)
             }
         }
+        // isPremium starts false and flips once RevenueCat answers, which is
+        // after the first scenePhase .active has already queued the bedtime
+        // push. Requeue it so a subscriber gets the premium episode.
+        .onChange(of: subscriptionStore.isPremium) { isPremium in
+            LifecycleNotificationService.shared.scheduleBedtimeAudio(isPremium: isPremium)
+        }
         .onChange(of: scenePhase) { (newScenePhase) in
             switch newScenePhase {
             case .active:
@@ -370,6 +376,9 @@ struct SpeakLifeApp: App {
                 // cold launch). Without this, a user who background/foregrounds for
                 // days never resets lapsed_d5/lapsed_d10, so they fire incorrectly.
                 LifecycleNotificationService.shared.onAppOpen()
+                // Rewrites the nightly 9:30 PM audio push for the current category
+                // and plan, and moves its copy to today's line.
+                LifecycleNotificationService.shared.scheduleBedtimeAudio(isPremium: subscriptionStore.isPremium)
 
                 // Re-queue the personal declaration daily push every foreground.
                 // The trigger is repeats=true, but we've seen iOS drop the request
@@ -503,6 +512,22 @@ struct SpeakLifeApp: App {
                                                fallbackBody: content.body) {
                     appState.remoteMessage = message
                 }
+                return
+            case "audio":
+                // Audio push: open the Audio tab and play the named episode.
+                // Rides the checklist's deep link, which already waits for the
+                // catalog to load, expires after five minutes and never falls
+                // back onto a different episode. With no `audioId` it just
+                // opens the tab.
+                let audioId = (content.userInfo["audioId"] as? String) ?? ""
+                if !audioId.isEmpty {
+                    audioDeclarationViewModel.pendingChecklistDeepLink =
+                        .init(audioId: audioId, requestedAt: Date())
+                }
+                tabViewModel.goToAudio()
+                AnalyticsService.shared.track("audio_push_opened", parameters: [
+                    "audio_id": audioId.isEmpty ? "none" : audioId
+                ])
                 return
             default:
                 break

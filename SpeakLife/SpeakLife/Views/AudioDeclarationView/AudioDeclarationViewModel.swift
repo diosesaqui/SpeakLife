@@ -31,8 +31,8 @@ final class AudioDeclarationViewModel: ObservableObject {
     @Published var playedFilter: PlayedFilter = .all {  // Played / Unplayed sub-filter
         didSet { if oldValue != playedFilter { refreshFilteredContent(resetPaging: true) } }
     }
-    // Foundation week deep-link from the Today checklist: the exact episode to
-    // play. Consumed atomically by AudioDeclarationView once the catalog can
+    // Foundation week deep-link from the Today checklist, or an audio push
+    // (`deepLink: "audio"`, see SpeakLifeApp): the exact episode to play. Consumed atomically by AudioDeclarationView once the catalog can
     // resolve it. Carries its request time so a link that never resolved
     // (e.g. tapped offline) expires instead of ghost-autoplaying on a later,
     // unrelated visit to the tab.

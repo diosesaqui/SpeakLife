@@ -46,7 +46,11 @@ struct ReminderView: View {
                                     .cornerRadius(DS.Radius.md)
                                     .padding(.horizontal)
                             }
-                            
+
+                            BedtimeAudioReminderCell(showConfirmation: $showConfirmation)
+                                .cornerRadius(DS.Radius.md)
+                                .padding(.horizontal)
+
 //                            // Checklist Notifications Section
 //                            ChecklistNotificationSettings(showConfirmation: $showConfirmation)
 //                                .cornerRadius(16)
@@ -180,5 +184,54 @@ struct ToastView: View {
             )
             .transition(.move(edge: .bottom).combined(with: .opacity))
             .padding(.bottom, 40)
+    }
+}
+
+/// On/off for the nightly 9:30 PM bedtime audio push. The push itself, and
+/// which episode it opens, live in `LifecycleNotificationService`; this only
+/// flips the flag it reads and reschedules on the spot so the change is real
+/// before the next app open.
+struct BedtimeAudioReminderCell: View {
+    @EnvironmentObject var subscriptionStore: SubscriptionStore
+    @AppStorage(LifecycleNotificationService.bedtimeAudioEnabledKey) private var isEnabled = true
+    @Binding var showConfirmation: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DS.Spacing.sm) {
+            Toggle(isOn: $isEnabled) {
+                Text("Bedtime Audio")
+                    .font(.headline)
+                    .foregroundColor(.white)
+            }
+            .toggleStyle(SwitchToggleStyle(tint: Constants.DAMidBlue))
+            .onChange(of: isEnabled) { enabled in
+                LifecycleNotificationService.shared.scheduleBedtimeAudio(isPremium: subscriptionStore.isPremium)
+                AnalyticsService.shared.track("bedtime_audio_toggled", parameters: ["enabled": enabled])
+                showToast()
+            }
+
+            Text("Every night at 9:30 PM, an audio of God's promises to fall asleep to.")
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.7))
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
+                .fill(Color.white.opacity(0.05))
+                .background(.ultraThinMaterial)
+                .dsShadow(DS.Elevation.low)
+        )
+    }
+
+    private func showToast() {
+        withAnimation {
+            showConfirmation = true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+            withAnimation {
+                showConfirmation = false
+            }
+        }
     }
 }

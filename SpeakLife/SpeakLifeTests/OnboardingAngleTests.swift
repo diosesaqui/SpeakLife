@@ -17,8 +17,10 @@
 //
 //  The numbers below are one higher from the review wall on than the
 //  hand-written enums', because `.email` was inserted immediately before the
-//  wall and every arm's `flowSchema` was bumped with it. Everything earlier is
-//  untouched, which is why only the tail indices moved.
+//  wall and every arm's `flowSchema` was bumped with it. A second bump then
+//  moved `.notificationTime` from after the paywall to straight after the plan
+//  reveal, so the tail now reads plan reveal → notification time → email →
+//  wall → paywall. Everything before the plan reveal is untouched.
 //
 
 import XCTest
@@ -74,10 +76,10 @@ final class OnboardingAngleTests: XCTestCase {
         XCTAssertEqual(steps[13], .belief)
         XCTAssertEqual(steps[14], .dailyMinutes)
         XCTAssertEqual(steps[17], .rating)
-        XCTAssertEqual(steps[20], .email)
-        XCTAssertEqual(steps[21], .testimonials)
-        XCTAssertEqual(steps[22], .paywall)
-        XCTAssertEqual(steps[23], .notificationTime)
+        XCTAssertEqual(steps[20], .notificationTime)
+        XCTAssertEqual(steps[21], .email)
+        XCTAssertEqual(steps[22], .testimonials)
+        XCTAssertEqual(steps[23], .paywall)
     }
 
     /// Raw values from `WarfareStep`, before the port. Warfare is the one PORTED
@@ -96,10 +98,10 @@ final class OnboardingAngleTests: XCTestCase {
         XCTAssertEqual(steps[12], .belief)
         XCTAssertEqual(steps[13], .dailyMinutes)
         XCTAssertEqual(steps[16], .rating)
-        XCTAssertEqual(steps[19], .email)
-        XCTAssertEqual(steps[20], .testimonials)
-        XCTAssertEqual(steps[21], .paywall)
-        XCTAssertEqual(steps[22], .notificationTime)
+        XCTAssertEqual(steps[19], .notificationTime)
+        XCTAssertEqual(steps[20], .email)
+        XCTAssertEqual(steps[21], .testimonials)
+        XCTAssertEqual(steps[22], .paywall)
     }
 
     /// Raw values from `OutcomesStep`, before the port.
@@ -110,9 +112,10 @@ final class OnboardingAngleTests: XCTestCase {
         XCTAssertEqual(steps[1], .scene(0))       // stakes
         XCTAssertEqual(steps[6], .experience)
         XCTAssertEqual(steps[7], .picker)
-        XCTAssertEqual(steps[20], .email)
-        XCTAssertEqual(steps[21], .testimonials)
-        XCTAssertEqual(steps[23], .notificationTime)
+        XCTAssertEqual(steps[20], .notificationTime)
+        XCTAssertEqual(steps[21], .email)
+        XCTAssertEqual(steps[22], .testimonials)
+        XCTAssertEqual(steps[23], .paywall)
     }
 
     /// The command arm is the lean one: no storm opener, no product recap, three
@@ -134,10 +137,10 @@ final class OnboardingAngleTests: XCTestCase {
         XCTAssertEqual(steps[7], .firstDeclaration)
         XCTAssertEqual(steps[9], .rating)
         XCTAssertEqual(steps[10], .planReveal)
-        XCTAssertEqual(steps[11], .email)
-        XCTAssertEqual(steps[12], .testimonials)
-        XCTAssertEqual(steps[13], .paywall)
-        XCTAssertEqual(steps[14], .notificationTime)
+        XCTAssertEqual(steps[11], .notificationTime)
+        XCTAssertEqual(steps[12], .email)
+        XCTAssertEqual(steps[13], .testimonials)
+        XCTAssertEqual(steps[14], .paywall)
         // The trimmed screens are gone, not reordered.
         for dropped in [AngleStep.storm, .experience, .battleDuration, .alreadyTried,
                         .insight, .hitsHardest, .belief, .planBuilding] {
@@ -249,7 +252,20 @@ final class OnboardingAngleTests: XCTestCase {
             // The picker is what writes heaviestBurden. Without it the flow would
             // reach the plan reveal and the feed seeding with no answer at all.
             XCTAssertTrue(angle.steps.contains(.picker), "\(id): missing the picker step")
-            XCTAssertEqual(angle.steps.last, .notificationTime, "\(id): notificationTime must be terminal")
+            XCTAssertEqual(angle.steps.last, .paywall, "\(id): the paywall must be terminal")
+            // Push is asked BEFORE the hard paywall, or anyone who leaves on it
+            // is unreachable. It rides straight after the plan reveal so it
+            // never lands between the review wall and the paywall.
+            if let notifIndex = angle.steps.firstIndex(of: .notificationTime),
+               let revealIndex = angle.steps.firstIndex(of: .planReveal),
+               let paywallIndex = angle.steps.firstIndex(of: .paywall) {
+                XCTAssertEqual(notifIndex, revealIndex + 1,
+                               "\(id): the push ask belongs right after the plan reveal")
+                XCTAssertLessThan(notifIndex, paywallIndex,
+                                  "\(id): push has to be asked before the paywall")
+            } else {
+                XCTFail("\(id): missing the notification time, plan reveal or paywall step")
+            }
 
             let ids = angle.picker.choices.map(\.id)
             XCTAssertEqual(Set(ids).count, ids.count, "\(id): duplicate picker choice ids would merge in analytics")
