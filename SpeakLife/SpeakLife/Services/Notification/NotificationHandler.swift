@@ -126,7 +126,10 @@ final class NotificationHandler: NSObject, ObservableObject, UNUserNotificationC
         // arrives while the app is in the foreground we only want the banner —
         // the screen should appear when the user actually taps it (handled in
         // didReceive), not pop up unsolicited over whatever they're doing.
-        if (content.userInfo["deepLink"] as? String) == "message" {
+        // Audio pushes are the same, and more so: routing one on arrival would
+        // start playing an episode over whatever the user is doing.
+        let deepLink = content.userInfo["deepLink"] as? String
+        if deepLink == "message" || deepLink == "audio" {
             completionHandler([.banner, .sound])
             return
         }

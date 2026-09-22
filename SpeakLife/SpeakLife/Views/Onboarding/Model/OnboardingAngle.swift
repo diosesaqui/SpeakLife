@@ -7,7 +7,7 @@
 //  The promises, warfare and outcomes arms were three ~800-line files that
 //  differed only in COPY. The narrative screens, the burden picker, the extended
 //  quiz, the back-half (taste → record your own → rating → plan loader → plan
-//  reveal → testimonials → paywall → notification time), the progress bar, the
+//  reveal → notification time → email → testimonials → paywall), the progress bar, the
 //  quiz-v2 skip logic, the rating gate and the completion/seeding block were
 //  duplicated verbatim in all three. `AngleOnboardingView` now owns that
 //  machinery once, and an arm is a value of this type: scenes, a picker, and a
@@ -44,11 +44,12 @@ struct OnboardingAngle {
     /// integer `step` can still be interpreted. Ported arms keep the value they
     /// were already emitting.
     ///
-    /// Last bump (+1 on every arm): `.email` inserted before `.testimonials`,
-    /// which shifts the index of the review wall, the paywall and the
-    /// notification step in every angle. Events either side of it are not
-    /// comparable by raw `step`, which is exactly what this field exists to
-    /// signal.
+    /// Last bump (+1 on every arm): `.notificationTime` moved from after the
+    /// paywall to straight after the plan reveal, which shifts email, the
+    /// review wall and the paywall down one in every angle. The bump before
+    /// that (+1 on every arm) inserted `.email` before `.testimonials`. Events
+    /// either side of a bump are not comparable by raw `step`, which is exactly
+    /// what this field exists to signal.
     let flowSchema: Int
     /// Icon treatment for the narrative screens. Warfare runs ember; the rest gold.
     let iconStyle: AngleIconStyle
@@ -195,7 +196,14 @@ extension OnboardingAngle {
         // already held; like `.rating`, it stays in this list either way so the
         // step indices never shift under a flag. `AngleOnboardingView.advance`
         // jumps it.
-        steps.append(contentsOf: [AngleStep.planReveal, .email, .testimonials, .paywall, .notificationTime])
+        //
+        // Notification time comes straight after the plan reveal, so it is
+        // asked BEFORE the paywall. The paywall is hard, and anyone who closed
+        // the app on it had never been asked for push, so nothing could ever
+        // bring them back: in Sep 2026 only 26% of installs were ever asked.
+        // It goes ahead of email rather than between the wall and the paywall
+        // to keep the adjacency argued for above.
+        steps.append(contentsOf: [AngleStep.planReveal, .notificationTime, .email, .testimonials, .paywall])
         return steps
     }
 
@@ -255,12 +263,13 @@ extension AngleStep: OnboardingFunnelStep {
         case .picker, .burdenScene,
              .battleDuration, .alreadyTried, .insight, .hitsHardest, .connectStyle, .belief, .dailyMinutes:
             return .personalize
-        case .firstDeclaration, .personalDeclaration, .rating, .planBuilding, .planReveal, .email, .testimonials:
+        // Notification time sits before the paywall in these arms, so it belongs
+        // to the value block: `.setup` would make the stage go backwards.
+        case .firstDeclaration, .personalDeclaration, .rating, .planBuilding, .planReveal, .notificationTime,
+             .email, .testimonials:
             return .value
         case .paywall:
             return .paywall
-        case .notificationTime:
-            return .setup
         }
     }
 }

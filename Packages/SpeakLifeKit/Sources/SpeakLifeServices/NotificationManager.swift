@@ -212,7 +212,8 @@ public final class NotificationManager: NSObject {
     ///
     /// iOS allows up to 64 pending notifications per app. We share that budget
     /// with 7 lifecycle pushes (D1-D30) + 14 daily burst weekday triggers
-    /// (7 morning + 7 evening) + a few streak/lapsed slots. 40 leaves ~24 slots
+    /// (7 morning + 7 evening) + a few streak/lapsed slots + 1 repeating
+    /// bedtime audio push (LifecycleNotificationService). 40 leaves ~24 slots
     /// of headroom, keeping us under the OS cap so iOS never silently drops
     /// sends.
     ///   count=5  → 8 days (40 notifications) + ~21 system = 61 total

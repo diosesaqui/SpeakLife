@@ -11,6 +11,8 @@
 //      streak_break next morning 9am (replaces old +2h; comeback > guilt)
 //  Lapsed:
 //      lapsed_d5, lapsed_d10 — soft re-engagement based on no app open
+//  Bedtime audio:
+//      bedtime_audio nightly 9:30pm (one repeating slot), rewritten on every app open
 //
 //  Call .scheduleLifecycleNotifications() once after onboarding completes.
 //  Call .onAppOpen() on every cold launch + warm foreground to reset lapsed timers.
@@ -465,6 +467,107 @@ private extension SurveyGoalWord {
         case .confidence: return "your confidence"
         case .healing:    return "your healing"
         case .prosperity: return "your overflow"
+        }
+    }
+}
+
+// MARK: - Bedtime Audio
+
+// Audio listening peaks twice a day: 6–9 AM, and again 10 PM–midnight, when
+// almost no push lands (Sep 2026, US users). The morning slot already belongs
+// to the burst push, so this takes the empty one: a nightly 9:30 PM nudge that
+// opens a sleep-time episode and starts it playing (`deepLink: "audio"`,
+// SpeakLifeApp).
+//
+// ONE repeating request, not a week of dated ones. The 64-pending budget is
+// already spoken for (see `NotificationManager.daysAhead`), and seven more
+// would make iOS silently drop other sends. It is rewritten on every app open,
+// so the episode follows the user's current category and plan and the copy
+// moves to the next line; someone who never reopens keeps tonight's line.
+extension LifecycleNotificationService {
+
+    static let bedtimeAudioEnabledKey = "bedtimeAudioEnabled"
+    private static let bedtimeHour = 21
+    private static let bedtimeMinute = 30
+    private static let bedtimeID = "bedtime_audio"
+
+    private struct BedtimeEpisode {
+        let audioId: String
+        let copy: [(title: String, body: String)]
+    }
+
+    // Free episodes only for free users: a paywall is the wrong thing to hand
+    // someone at bedtime. Peace Beyond Understanding is premium, so it is kept
+    // for subscribers.
+    private static let psalm91 = BedtimeEpisode(audioId: "psalm9_11.mp3", copy: [
+        ("Rest under His shadow 🕊️", "You dwell in the shelter of the Most High tonight (Ps 91:1). Let Psalm 91 play as you fall asleep."),
+        ("Hear it before you sleep", "Faith comes by hearing (Rom 10:17). Let His promises be the last words you hear today."),
+        ("Safe through the night", "\"You will not fear the terror of night.\" (Ps 91:5) Press play on Psalm 91 and rest in it."),
+        ("Your refuge tonight", "He is your refuge and your fortress (Ps 91:2). Hear Psalm 91 over you and sleep in His peace."),
+        ("End the day in the Word", "Before the screen goes dark, let the Word go in. Psalm 91 is ready for you."),
+        ("His angels keep watch", "\"He will command His angels concerning you.\" (Ps 91:11) Hear it tonight, then rest."),
+        ("Sleep covered 🎧", "Covered by His feathers, sheltered under His wings (Ps 91:4). Let Psalm 91 carry you to sleep.")
+    ])
+
+    private static let healing = BedtimeEpisode(audioId: "healed_v2.mp3", copy: [
+        ("Health to all your flesh", "His words are life and health to all your flesh (Prov 4:22). Take tonight's dose before you sleep."),
+        ("One more dose tonight 💊", "Let His Word work while you rest. Play Healing Declarations and fall asleep in His promise."),
+        ("By His wounds", "\"By His wounds you have been healed.\" (1 Pet 2:24) Hear it over your body tonight.")
+    ])
+
+    private static let peace = BedtimeEpisode(audioId: "peace_v2.mp3", copy: [
+        ("Peace for tonight 🕊️", "His peace guards your heart and your mind (Phil 4:7). Play Peace Beyond Understanding and rest."),
+        ("Sweet sleep is yours", "\"When you lie down, your sleep will be sweet.\" (Prov 3:24) Let His Word be the last thing you hear."),
+        ("A sound mind at rest", "You have the mind of Christ (1 Cor 2:16). Hear His promises of peace tonight and rest in them.")
+    ])
+
+    private static func bedtimeEpisode(isPremium: Bool, category: String?) -> BedtimeEpisode {
+        let category = category ?? UserDefaults.standard.string(forKey: "selectedCategory") ?? ""
+        switch category {
+        case "health", "wellness", "fertility":
+            return healing
+        case "anxiety", "fear", "mentalHealth", "rest":
+            return isPremium ? peace : psalm91
+        default:
+            return psalm91
+        }
+    }
+
+    /// Schedules the nightly bedtime audio push, replacing the queued one.
+    /// Safe to call on every open. No-op without permission; clears it when
+    /// the user has turned it off.
+    ///
+    /// `category` overrides the saved one: onboarding schedules this before
+    /// the category is saved, since the paywall comes first.
+    func scheduleBedtimeAudio(isPremium: Bool, category: String? = nil) {
+        let enabled = UserDefaults.standard.object(forKey: Self.bedtimeAudioEnabledKey) as? Bool ?? true
+        center.removePendingNotificationRequests(withIdentifiers: [Self.bedtimeID])
+        guard enabled else { return }
+
+        let episode = Self.bedtimeEpisode(isPremium: isPremium, category: category)
+        center.getNotificationSettings { [weak self] settings in
+            guard let self = self, settings.authorizationStatus == .authorized else { return }
+
+            // Rotate by calendar day, so opening the app picks today's line
+            // rather than resetting everyone to the first.
+            let day = Calendar.current.ordinality(of: .day, in: .era, for: Date()) ?? 0
+            let line = episode.copy[day % episode.copy.count]
+
+            let content = UNMutableNotificationContent()
+            content.title = line.title
+            content.body = line.body
+            content.sound = .default
+            content.userInfo = [
+                "action": "bedtime_audio",   // notification_opened type
+                "deepLink": "audio",
+                "audioId": episode.audioId
+            ]
+
+            var comps = DateComponents()
+            comps.hour = Self.bedtimeHour
+            comps.minute = Self.bedtimeMinute
+            let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: true)
+            self.center.add(UNNotificationRequest(identifier: Self.bedtimeID, content: content, trigger: trigger))
         }
     }
 }
