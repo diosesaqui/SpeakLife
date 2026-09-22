@@ -535,18 +535,35 @@ extension LifecycleNotificationService {
 
     /// Schedules the nightly bedtime audio push, replacing the queued one.
     /// Safe to call on every open. No-op without permission; clears it when
-    /// the user has turned it off.
+    /// the user has turned it off. The first call with permission sets the
+    /// on/off default from the Daily Declaration Reminder switch.
     ///
     /// `category` overrides the saved one: onboarding schedules this before
     /// the category is saved, since the paywall comes first.
     func scheduleBedtimeAudio(isPremium: Bool, category: String? = nil) {
-        let enabled = UserDefaults.standard.object(forKey: Self.bedtimeAudioEnabledKey) as? Bool ?? true
+        let defaults = UserDefaults.standard
         center.removePendingNotificationRequests(withIdentifiers: [Self.bedtimeID])
-        guard enabled else { return }
+        // Turned off on the Reminders screen.
+        if defaults.object(forKey: Self.bedtimeAudioEnabledKey) as? Bool == false { return }
 
         let episode = Self.bedtimeEpisode(isPremium: isPremium, category: category)
         center.getNotificationSettings { [weak self] settings in
             guard let self = self, settings.authorizationStatus == .authorized else { return }
+
+            // First schedule with permission: inherit the in-app Daily
+            // Declaration Reminder switch. Someone who turned reminders off
+            // but kept iOS permission (common for users who update into this
+            // feature) must not start getting a nightly push they never asked
+            // for. Seeded here, behind the permission check, because
+            // `notificationEnabled` is false for every install until
+            // onboarding grants, and seeding earlier would switch bedtime off
+            // for all of them. From then on only the Bedtime Audio toggle
+            // decides.
+            if defaults.object(forKey: Self.bedtimeAudioEnabledKey) == nil {
+                let remindersOn = defaults.bool(forKey: "notificationEnabled")
+                defaults.set(remindersOn, forKey: Self.bedtimeAudioEnabledKey)
+                guard remindersOn else { return }
+            }
 
             // Rotate by calendar day, so opening the app picks today's line
             // rather than resetting everyone to the first.
