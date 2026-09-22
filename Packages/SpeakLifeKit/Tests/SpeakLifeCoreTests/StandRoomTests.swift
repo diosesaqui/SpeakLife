@@ -417,6 +417,67 @@ final class StandRoomTests: XCTestCase {
         XCTAssertNil(r?.dayToRecord(for: "stranger", todayStamp: "2026-09-02"))
     }
 
+    // MARK: - Backfill
+    //
+    // The reported bug: the invitee finished their burst and the inviter's room
+    // still read "Nobody has spoken yet today". The mirror write is one
+    // fire-and-forget attempt made inside the burst's own call stack, so it is
+    // lost for good whenever that instant was not ready — the room had not been
+    // delivered to the invitee yet, or the day was banked BEFORE they joined so
+    // `advanceIfNeeded` answered `.alreadyAdvancedToday` and never called the
+    // mirror at all. Local progress says they spoke; the room disagrees; and
+    // nothing in the system would ever have noticed.
+
+    /// The repair: local says today is banked, the room has no stamp for it.
+    func testDayToBackfill_RepairsARoomMissingADayTheDeviceAlreadyBanked() {
+        let r = room(roomDict(members: [
+            "owner": memberDict(name: "Ann", day: 1, spoken: stamps(1), owner: true),
+            "king": memberDict(name: "King", day: 0, spoken: [], owner: false),
+        ]))
+        XCTAssertEqual(
+            r?.dayToBackfill(for: "king", todayStamp: "2026-09-02",
+                             spokeTodayLocally: true),
+            1,
+            "the invitee's burst completed locally, so the room owes them day 1")
+    }
+
+    /// The guard that keeps this a mirror rather than an invention. Without a
+    /// local day banked there is nothing to re-assert, and a snapshot must not
+    /// manufacture a day the speaker never spoke.
+    func testDayToBackfill_WritesNothingWhenTheDeviceHasNotSpokenToday() {
+        let r = room(roomDict(members: [
+            "owner": memberDict(name: "Ann", day: 1, spoken: stamps(1), owner: true),
+            "king": memberDict(name: "King", day: 0, spoken: [], owner: false),
+        ]))
+        XCTAssertNil(r?.dayToBackfill(for: "king", todayStamp: "2026-09-02",
+                                      spokeTodayLocally: false))
+    }
+
+    /// Self-terminating. The write echoes back as a snapshot, and that snapshot
+    /// must not start another write — otherwise the repair loops forever
+    /// against its own success.
+    func testDayToBackfill_StopsOnceTheStampHasLanded() {
+        let r = room(roomDict(members: [
+            "owner": memberDict(name: "Ann", day: 1, spoken: stamps(1), owner: true),
+            "king": memberDict(name: "King", day: 1, spoken: stamps(1), owner: false),
+        ]))
+        XCTAssertNil(r?.dayToBackfill(for: "king", todayStamp: "2026-09-01",
+                                      spokeTodayLocally: true),
+                     "the stamp is already there; there is nothing left to repair")
+    }
+
+    /// The day-1 hold outranks the repair. A stand still waiting on its second
+    /// person has not started, so a banked local day backfills nothing — the
+    /// same rule `dayToRecord` enforces, and the reason both members read Day 1
+    /// on the same day.
+    func testDayToBackfill_RespectsTheHoldOnAStandOfOne() {
+        let alone = room(roomDict(members: [
+            "owner": memberDict(name: "Ann", day: 0, spoken: [], owner: true),
+        ]))
+        XCTAssertNil(alone?.dayToBackfill(for: "owner", todayStamp: "2026-09-01",
+                                          spokeTodayLocally: true))
+    }
+
     /// A stand of one reports waiting, not silence. An owner who had just
     /// spoken was reading "Nobody has spoken yet today."
     func testPresenceOnAStandOfOneReportsWaiting() {

@@ -52,6 +52,10 @@ final class StandService: ObservableObject, StandMirroring {
     private var listeners: [String: ListenerRegistration] = [:]
     private let cacheKey = "cachedStandRooms"
 
+    /// A backfill write is out and its echo has not arrived. See
+    /// `reconcileToday`, which sets and clears it.
+    private var isBackfilling = false
+
     private var uid: String? { StandAuthCoordinator.shared.currentUid }
 
     private init() {}
@@ -107,32 +111,9 @@ final class StandService: ObservableObject, StandMirroring {
             // `standSweep` deletes a single-member room by `lastActivityAt`,
             // and an owner speaking every day while they wait for their invite
             // to be taken must not look abandoned.
-            var payload: [String: Any] = ["lastActivityAt": FieldValue.serverTimestamp()]
-
-            if let day = room.dayToRecord(for: uid, todayStamp: stamp) {
-                payload["members.\(uid).dayNumber"] = day
-                // arrayUnion makes a repeat write on the same day free, which
-                // is what lets this be called without tracking whether it
-                // already ran.
-                payload["members.\(uid).daysSpoken"] = FieldValue.arrayUnion([stamp])
-                payload["members.\(uid).lastSpokeAt"] = FieldValue.serverTimestamp()
-                payload["members.\(uid).tz"] = StandDayStamp.currentTimeZoneIdentifier
-                recorded += 1
-            }
-
-            // Nested field paths, so two members writing at the same moment
-            // touch different paths in one document and neither clobbers the
-            // other.
-            //
-            // No await on the result and no retry: with offline persistence on,
-            // Firestore queues this and flushes it on reconnect. A write that is
-            // still rejected after that is a dot on a strip, and swallowing it
-            // is the documented behavior, not an oversight.
-            db.collection("standRooms").document(room.id).updateData(payload) { error in
-                if let error {
-                    print("⚠️ Stand mirror failed for \(room.id): \(error.localizedDescription)")
-                }
-            }
+            let day = room.dayToRecord(for: uid, todayStamp: stamp)
+            if day != nil { recorded += 1 }
+            write(day: day, into: room.id, uid: uid, stamp: stamp)
         }
 
         AnalyticsService.shared.track("stand_day_spoken", parameters: [
@@ -141,6 +122,89 @@ final class StandService: ObservableObject, StandMirroring {
             // Rooms this actually counted a day in. The gap between the two is
             // stands still waiting on a second person.
             "recorded_count": recorded,
+        ])
+    }
+
+    /// One room's mirror write. `day` nil touches `lastActivityAt` only.
+    private func write(day: Int?, into roomId: String, uid: String, stamp: String) {
+        var payload: [String: Any] = ["lastActivityAt": FieldValue.serverTimestamp()]
+
+        if let day {
+            payload["members.\(uid).dayNumber"] = day
+            // arrayUnion makes a repeat write on the same day free, which is
+            // what lets this be called without tracking whether it already ran
+            // — and what makes the backfill below safe to attempt on every
+            // snapshot.
+            payload["members.\(uid).daysSpoken"] = FieldValue.arrayUnion([stamp])
+            payload["members.\(uid).lastSpokeAt"] = FieldValue.serverTimestamp()
+            payload["members.\(uid).tz"] = StandDayStamp.currentTimeZoneIdentifier
+        }
+
+        // Nested field paths, so two members writing at the same moment touch
+        // different paths in one document and neither clobbers the other.
+        //
+        // No await on the result and no retry here: with offline persistence
+        // on, Firestore queues this and flushes it on reconnect, and anything
+        // still missing afterwards is repaired by `reconcileToday` the next
+        // time the room arrives.
+        db.collection("standRooms").document(roomId).updateData(payload) { error in
+            if let error {
+                print("⚠️ Stand mirror failed for \(roomId): \(error.localizedDescription)")
+            }
+        }
+    }
+
+    /// Re-assert today's local truth into any room that is missing it.
+    ///
+    /// `mirrorDay` is one fire-and-forget attempt made inside the burst's own
+    /// call stack, so it misses silently and permanently whenever that instant
+    /// was not ready — the room listener had not delivered yet, the day was
+    /// banked before the stand was joined so `advanceIfNeeded` answered
+    /// `.alreadyAdvancedToday` and never called the mirror at all, or the
+    /// queued write died with the app. The reported symptom of all three is the
+    /// same: the invitee finishes their burst and the inviter's room still
+    /// reads "Nobody has spoken yet today", forever.
+    ///
+    /// So the mirror stops being one-shot. Every room snapshot re-checks local
+    /// progress against the room and repairs the gap. This does not make the
+    /// room authoritative — it is the opposite, local `hasAdvancedToday` is the
+    /// input and the room is the thing corrected (spec §2).
+    ///
+    /// Self-terminating: once the stamp lands, `dayToBackfill` returns nil for
+    /// the echoed snapshot and every one after it.
+    private func reconcileToday() {
+        guard FeatureFlag.standTogetherEnabled, let uid else { return }
+        // Local truth, read once. Cheap, but it takes EnforcementService's lock.
+        // Also the daily reset: on a new day this goes false and re-arms below.
+        guard EnforcementService.shared.progressSnapshot.hasAdvancedToday() else {
+            isBackfilling = false
+            return
+        }
+
+        let stamp = StandDayStamp.stamp()
+        let missing = rooms.filter {
+            $0.dayToBackfill(for: uid, todayStamp: stamp, spokeTodayLocally: true) != nil
+        }
+        guard !missing.isEmpty else {
+            // Either the write landed or there was never a gap. Re-arm, so a
+            // later miss — a room joined after this, a stand that gains its
+            // second member tonight — is still repaired.
+            isBackfilling = false
+            return
+        }
+
+        // Snapshots arrive in bursts; without this each one issues its own
+        // write before the first echo comes back.
+        guard !isBackfilling else { return }
+        isBackfilling = true
+
+        for room in missing {
+            write(day: room.dayToRecord(for: uid, todayStamp: stamp),
+                  into: room.id, uid: uid, stamp: stamp)
+        }
+
+        AnalyticsService.shared.track("stand_day_backfilled", parameters: [
+            "room_count": missing.count,
         ])
     }
 
@@ -245,6 +309,12 @@ final class StandService: ObservableObject, StandMirroring {
             ])
         }
         saveCache()
+
+        // Every arrival is a chance to notice that this room is missing a day
+        // this device already banked, and to fix it. This is the moment the
+        // burst-time mirror could not cover: the room it needed had not been
+        // delivered yet.
+        reconcileToday()
     }
 
     // MARK: - Callables
