@@ -443,12 +443,22 @@ test('a duo does not re-push when the same member writes twice in a day', async 
   assert.strictEqual(sent.length, 1, 'one push per speaker per day');
 });
 
+/** Seven well-formed day stamps: a member who genuinely finished. */
+const SEVEN_DAYS = [
+  '2026-09-09', '2026-09-10', '2026-09-11', '2026-09-12',
+  '2026-09-13', '2026-09-14', '2026-09-15',
+];
+
 test('everyone reaching day 7 completes the room and pushes once each', async () => {
   const { roomId, room, before } = await roomWith(2);
   const after = JSON.parse(JSON.stringify(before));
   for (const uid of ['owner', 'm1']) {
+    // Seven STAMPS, not a stored seven. Completion is judged on days spoken
+    // here — see `standDay`. This fixture used to carry `dayNumber: 7` with a
+    // single stamp, which is precisely the state that let an older client's
+    // inflated number archive a stand nobody had finished.
     after.members[uid].dayNumber = 7;
-    after.members[uid].daysSpoken = ['2026-09-15'];
+    after.members[uid].daysSpoken = [...SEVEN_DAYS];
   }
   after.enforcement = room.enforcement;
   after.notifiedMilestones = [];
@@ -469,6 +479,30 @@ test('everyone reaching day 7 completes the room and pushes once each', async ()
   after.lastNotifiedDay = saved.lastNotifiedDay;
   await fireUpdate(roomId, before, after);
   assert.strictEqual(sent.length, n, 'a replayed event must be silent');
+});
+
+test('an inflated dayNumber does not archive a stand nobody finished', async () => {
+  // The state a build older than the client's `dayToRecord` leaves behind: it
+  // wrote the speaker's LOCAL campaign day into `dayNumber`, so two people who
+  // have each spoken once here can both carry a seven.
+  //
+  // Completing on that number is not a cosmetic error. It sets status
+  // 'completed', which stops the room recording days at all — the stand ends,
+  // and both people are congratulated for a week neither of them held.
+  const { roomId, room, before } = await roomWith(2);
+  const after = JSON.parse(JSON.stringify(before));
+  for (const uid of ['owner', 'm1']) {
+    after.members[uid].dayNumber = 7;
+    after.members[uid].daysSpoken = ['2026-09-15'];
+  }
+  after.enforcement = room.enforcement;
+  after.notifiedMilestones = [];
+
+  await fireUpdate(roomId, before, after);
+  const saved = (await db.collection('standRooms').doc(roomId).get()).data();
+  assert.notStrictEqual(saved.status, 'completed', 'one day spoken is not a finished week');
+  assert.ok(!(saved.notifiedMilestones || []).includes('all_day_7'));
+  assert.strictEqual(sent.filter((m) => /finished/.test(m.notification.title)).length, 0);
 });
 
 // ═══ Nudges ═════════════════════════════════════════════════════════════════
@@ -494,8 +528,11 @@ test('the nudge fires when someone else has spoken today', async () => {
   await withToken('mom');
 
   const today = H.localDayStamp('UTC');
+  // Three STAMPS, because the headline's day is read from them rather than
+  // from `dayNumber` (see `standDay`). The two padding days are fixed in the
+  // past so they can never collide with today and miscount.
   await db.collection('standRooms').doc(roomId).update({
-    'members.owner.daysSpoken': [today],
+    'members.owner.daysSpoken': ['1999-01-01', '1999-01-02', today],
     'members.owner.dayNumber': 3,
   });
   await db.collection('standNudges').doc('mom').set({
@@ -515,7 +552,8 @@ test('nudges back off, then stop, rather than nagging forever', async () => {
   await withToken('mom');
   const today = H.localDayStamp('UTC');
   await db.collection('standRooms').doc(roomId).update({
-    'members.owner.daysSpoken': [today], 'members.owner.dayNumber': 3,
+    'members.owner.daysSpoken': ['1999-01-01', '1999-01-02', today],
+    'members.owner.dayNumber': 3,
   });
 
   const runWith = async (misses) => {
@@ -590,8 +628,12 @@ test('merge unions the work when both identities are in one room', async () => {
   await fns.completeAccountMerge.run(req('apple1', { ticket }));
 
   const m = (await db.collection('standRooms').doc(roomId).get()).data().members.apple1;
-  assert.strictEqual(m.dayNumber, 5, 'the further progress wins');
   assert.deepStrictEqual(m.daysSpoken, ['2026-09-11', '2026-09-12', '2026-09-13']);
+  // The union of the stamps IS the progress, and the number follows it. This
+  // used to take `Math.max` of the two stored numbers and answer 5 — carrying
+  // the more inflated of two untrustworthy values forward over three days
+  // actually spoken. See `standDay`.
+  assert.strictEqual(m.dayNumber, 3, 'three days spoken between them is day 3');
   assert.strictEqual(m.left, false);
 });
 

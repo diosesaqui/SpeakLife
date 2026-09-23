@@ -227,6 +227,24 @@ function activeMembers(room) {
 }
 
 /**
+ * Days this member has spoken IN THIS ROOM.
+ *
+ * Mirrors `StandMember.standDay` on the client, and exists for the same
+ * reason: `dayNumber` is a stored number that cannot be trusted to agree with
+ * `daysSpoken`. Builds older than the client's `dayToRecord` wrote the
+ * speaker's LOCAL campaign day into it, so a member running their own week
+ * elsewhere sits in this room stamped several days in without having spoken
+ * here once — and nothing ever recomputes it downward.
+ *
+ * Reading that number server-side is worse than reading it on a screen: it
+ * decided when a stand was declared FINISHED, which archives the room and
+ * stops it recording days. The stamps are the record.
+ */
+function standDay(member) {
+  return Math.min((member?.daysSpoken || []).length, ENFORCEMENT_LENGTH);
+}
+
+/**
  * Validates a campaign before it is stored and served to other people's
  * devices. A room's `enforcement` blob is the one piece of client-supplied
  * content other users render, so it is bounded here rather than trusted.
@@ -624,15 +642,21 @@ exports.onStandRoomUpdated = onDocumentUpdated('standRooms/{roomId}', async (eve
         .set({ lastNotifiedDay: { [speaker]: stamp } }, { merge: true });
 
       await push(partnerUid,
-        `${m.name} spoke Day ${m.dayNumber}`,
+        `${m.name} spoke Day ${standDay(m)}`,
         'Stand with them.',
         { deepLink: 'stand', roomId });
     }
   }
 
   // Everyone finished.
+  //
+  // From days SPOKEN here. This used to read `dayNumber`, which an older
+  // client inflated with the speaker's local campaign day — so a room where
+  // two people had each spoken once could be declared finished, archived, and
+  // congratulated for a week nobody held. Archiving also flips `status` off
+  // `active`, which stops the room recording days at all: the stand ends.
   const allDone = members.length > 0 &&
-                  members.every(([, m]) => m.dayNumber >= ENFORCEMENT_LENGTH);
+                  members.every(([, m]) => standDay(m) >= ENFORCEMENT_LENGTH);
   if (allDone && !(after.notifiedMilestones || []).includes('all_day_7')) {
     await db.collection('standRooms').doc(roomId).set({
       status: 'completed',
@@ -750,7 +774,7 @@ exports.standDailyNudge = onSchedule('every 60 minutes', async () => {
         if (others.length > 0 && !headline) {
           roomId = id;
           headline = members.length === 2
-            ? `${others[0][1].name} spoke Day ${others[0][1].dayNumber}`
+            ? `${others[0][1].name} spoke Day ${standDay(others[0][1])}`
             : `${others.length} of ${members.length} have spoken today`;
         }
       }
@@ -839,16 +863,23 @@ exports.completeAccountMerge = onCall(async (request) => {
       if (!from) return;                    // already migrated; a retry no-ops
       const to = room.members?.[toUid];
 
+      // Union of the two identities' stamps: the record both numbers are read
+      // from, so it is computed once and the number derived from it below.
+      const mergedDays = Array.from(new Set([
+        ...(to?.daysSpoken || []), ...(from.daysSpoken || []),
+      ])).sort().slice(-14);
+
       const next = to
         ? {
             // Both identities are in this room: the user joined their own
             // family's stand twice, once per account. Union the work rather
             // than picking a winner.
             ...to,
-            dayNumber: Math.max(to.dayNumber || 0, from.dayNumber || 0),
-            daysSpoken: Array.from(new Set([
-              ...(to.daysSpoken || []), ...(from.daysSpoken || []),
-            ])).sort().slice(-14),
+            // From the union, not `Math.max` of two stored numbers — taking
+            // the larger of two values that may both be inflated carries the
+            // worse one forward. See `standDay`.
+            dayNumber: Math.min(mergedDays.length, ENFORCEMENT_LENGTH),
+            daysSpoken: mergedDays,
             joinedAt: (to.joinedAt?.toMillis?.() || 0) <= (from.joinedAt?.toMillis?.() || 0)
               ? to.joinedAt : from.joinedAt,
             isOwner: !!(to.isOwner || from.isOwner),
