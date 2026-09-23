@@ -391,7 +391,9 @@ final class StandService: ObservableObject, StandMirroring {
 
         AnalyticsService.shared.track("stand_left", parameters: [
             "room_id": roomId,
-            "day_number": room?.member(uid ?? "")?.dayNumber ?? 0,
+            // Days spoken here, so "how far in did they get before leaving"
+            // measures the same thing the room showed them.
+            "day_number": room?.member(uid ?? "")?.standDay ?? 0,
             "was_owner": room?.member(uid ?? "")?.isOwner ?? false,
         ])
     }

@@ -115,7 +115,11 @@ struct StandRoomView: View {
     /// member speaks the same words on their own day N.
     @ViewBuilder
     private func todayAnchor(_ room: StandRoom) -> some View {
-        let myDay = max(room.member(auth.currentUid ?? "")?.dayNumber ?? 0, 0) + 1
+        // From days spoken here, not the stored `dayNumber` — see
+        // `StandMember.standDay`. The two disagree in any room written by a
+        // build older than `dayToRecord`, and this header is one of the places
+        // that showed it.
+        let myDay = (room.member(auth.currentUid ?? "")?.standDay ?? 0) + 1
         if let day = room.enforcement.day(min(myDay, Enforcement.length)) {
             VStack(alignment: .leading, spacing: DS.Spacing.sm) {
                 Text("DAY \(min(myDay, Enforcement.length)) OF \(Enforcement.length)")
@@ -274,7 +278,7 @@ struct StandMemberRow: View {
 
     private var dayLabel: String {
         member.hasStarted
-            ? "Day \(member.dayNumber) of \(Enforcement.length)"
+            ? "Day \(member.standDay) of \(Enforcement.length)"
             : "Just joined"
     }
 

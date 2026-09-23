@@ -188,24 +188,65 @@ final class StandRoomTests: XCTestCase {
         XCTAssertFalse(r.isDuo)
     }
 
+    /// Finished means seven days SPOKEN here, not a stored number claiming so.
+    /// These fixtures carry stamps for that reason: `dayNumber` alone is what
+    /// the room used to be judged on, and it is exactly the field that cannot
+    /// be trusted (see `StandMember.standDay`).
     func testEveryoneFinished() throws {
         let done = try XCTUnwrap(room(roomDict(members: [
-            "a": memberDict(name: "A", day: 7, spoken: []),
-            "b": memberDict(name: "B", day: 7, spoken: []),
+            "a": memberDict(name: "A", day: 7, spoken: stamps(7)),
+            "b": memberDict(name: "B", day: 7, spoken: stamps(7)),
         ])))
         XCTAssertTrue(done.everyoneFinished)
 
         let partial = try XCTUnwrap(room(roomDict(members: [
-            "a": memberDict(name: "A", day: 7, spoken: []),
-            "b": memberDict(name: "B", day: 6, spoken: []),
+            "a": memberDict(name: "A", day: 7, spoken: stamps(7)),
+            "b": memberDict(name: "B", day: 6, spoken: stamps(6)),
         ])))
         XCTAssertFalse(partial.everyoneFinished)
     }
 
+    /// The case that sent this screen wrong: a room written by a build that
+    /// stamped the speaker's LOCAL campaign day into `dayNumber`. Seven there,
+    /// nothing spoken here — nobody has finished anything.
+    func testAnInflatedDayNumberDoesNotCountAsFinished() throws {
+        let r = try XCTUnwrap(room(roomDict(members: [
+            "a": memberDict(name: "A", day: 7, spoken: stamps(1)),
+            "b": memberDict(name: "B", day: 7, spoken: stamps(1)),
+        ])))
+        XCTAssertFalse(r.everyoneFinished)
+        XCTAssertEqual(r.member("a")?.standDay, 1, "one day spoken here is day 1")
+    }
+
+    /// "Just joined" is the absence of a spoken day, not of a stored number.
+    /// An inflated `dayNumber` used to make a member who had never spoken here
+    /// read as several days in.
+    func testStandDayTreatsAnUnspokenMemberAsJustJoined() throws {
+        let r = try XCTUnwrap(room(roomDict(members: [
+            "spoken": memberDict(name: "S", day: 4, spoken: stamps(2)),
+            "silent": memberDict(name: "Q", day: 4, spoken: []),
+        ])))
+        XCTAssertEqual(r.member("spoken")?.standDay, 2)
+        XCTAssertTrue(r.member("spoken")?.hasStarted == true)
+        XCTAssertEqual(r.member("silent")?.standDay, 0)
+        XCTAssertFalse(r.member("silent")?.hasStarted == true)
+    }
+
+    /// The stored number is still decoded and still clamped — it is written for
+    /// other clients and the nudge functions. It is only no longer what the
+    /// room is read from.
+    func testStandDayIsCappedAtTheCampaignLength() throws {
+        let r = try XCTUnwrap(room(roomDict(members: [
+            "a": memberDict(name: "A", day: 7, spoken: stamps(10)),
+            "b": memberDict(name: "B", day: 7, spoken: stamps(7)),
+        ])))
+        XCTAssertEqual(r.member("a")?.standDay, Enforcement.length)
+    }
+
     func testADepartedMemberDoesNotHoldUpCompletion() throws {
         let r = try XCTUnwrap(room(roomDict(members: [
-            "a": memberDict(name: "A", day: 7, spoken: []),
-            "gone": memberDict(name: "", day: 2, spoken: [], left: true),
+            "a": memberDict(name: "A", day: 7, spoken: stamps(7)),
+            "gone": memberDict(name: "", day: 2, spoken: stamps(2), left: true),
         ])))
         XCTAssertTrue(r.everyoneFinished)
     }
