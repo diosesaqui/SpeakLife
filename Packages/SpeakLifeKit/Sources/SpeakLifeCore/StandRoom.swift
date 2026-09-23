@@ -84,11 +84,28 @@ public struct StandMember: Equatable, Identifiable {
         daysSpoken.contains(stamp)
     }
 
-    public var hasFinished: Bool { dayNumber >= Enforcement.length }
+    /// Days spoken IN THIS STAND. The number every surface should show.
+    ///
+    /// `dayNumber` is the stored field, and it cannot be trusted to agree with
+    /// `daysSpoken`. Before `dayToRecord` existed, `mirrorDay` wrote the
+    /// speaker's LOCAL campaign day into it, so somebody running their own
+    /// week elsewhere was stamped into this room several days in without
+    /// having spoken here once. `dayToRecord` fixed what gets written, but
+    /// nothing recomputes a number already stored — so those rooms still read
+    /// "Day 5 of 7" next to a week strip with one dot lit, and a header day
+    /// that matches neither.
+    ///
+    /// Deriving it here ends that. The stamps are the record and the number is
+    /// a readout of them — the rule `dayToRecord` already states, now actually
+    /// enforced at the point of display, which also means a stale room repairs
+    /// itself on sight with no migration.
+    public var standDay: Int { min(daysSpoken.count, Enforcement.length) }
+
+    public var hasFinished: Bool { standDay >= Enforcement.length }
 
     /// A member who joined and has never spoken. The UI shows them present but
     /// never marks them late — the feature does not shame anyone.
-    public var hasStarted: Bool { dayNumber > 0 }
+    public var hasStarted: Bool { standDay > 0 }
 
     /// Name for display. A member who left, or an archived room, has had the
     /// name cleared server-side; the row survives so the strip does not
