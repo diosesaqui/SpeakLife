@@ -21,6 +21,7 @@
 
 import Foundation
 import Combine
+import UIKit
 import FirebaseFirestore
 import FirebaseFunctions
 import SpeakLifeCore
@@ -58,7 +59,23 @@ final class StandService: ObservableObject, StandMirroring {
 
     private var uid: String? { StandAuthCoordinator.shared.currentUid }
 
-    private init() {}
+    private init() {
+        // The repair must not depend on a room snapshot happening to arrive.
+        // A room nobody else touched today delivers nothing, so a missed write
+        // sat missing until somebody else spoke. Foregrounding is a free,
+        // bounded retry: once per return to the app, never a loop.
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.didBecomeActiveNotification,
+            object: nil, queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                guard let self else { return }
+                // A write that failed earlier latched this; give it one retry.
+                self.isBackfilling = false
+                self.reconcileToday()
+            }
+        }
+    }
 
     // No deinit.
     //
@@ -177,9 +194,16 @@ final class StandService: ObservableObject, StandMirroring {
     /// the echoed snapshot and every one after it.
     private func reconcileToday() {
         guard FeatureFlag.standTogetherEnabled, let uid else { return }
-        // Local truth, read once. Cheap, but it takes EnforcementService's lock.
-        // Also the daily reset: on a new day this goes false and re-arms below.
-        guard EnforcementService.shared.progressSnapshot.hasAdvancedToday() else {
+        // Local truth, read once. Also the daily reset: on a new day this goes
+        // false and re-arms below.
+        //
+        // A Burst spoken today, OR a campaign day banked today. The campaign
+        // alone missed everyone speaking without a campaign of their own
+        // running — and anyone who spoke before joining, whose Burst task was
+        // already ticked so nothing ever called the mirror at all.
+        let spokeToday = BurstCompletionTracker.shared.hasTodaysCompletion()
+            || EnforcementService.shared.progressSnapshot.hasAdvancedToday()
+        guard spokeToday else {
             isBackfilling = false
             return
         }

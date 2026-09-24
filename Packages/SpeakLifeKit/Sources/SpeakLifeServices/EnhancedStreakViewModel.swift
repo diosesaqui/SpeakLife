@@ -652,8 +652,17 @@ public final class EnhancedStreakViewModel: ObservableObject {
                     "enforcement_id": id, "elapsed_days": elapsedDays
                 ])
             case .notActive, .alreadyAdvancedToday:
-                break
+                // The stand still hears about it. A stand reports who SPOKE
+                // today, and speaking is the Burst — not the local campaign
+                // moving. Mirroring only on `.advanced` meant a member with no
+                // campaign of their own running (they finished theirs, or
+                // tapped Done on the celebration) could speak every day and
+                // never light a dot in the room.
+                StandMirror.recordDay(EnforcementService.shared.progressSnapshot.currentDay)
             }
+        } else if taskId == "complete_daily_burst" {
+            // Enforcement switched off: same reasoning, the room still counts.
+            StandMirror.recordDay(0)
         }
 
         saveData()
