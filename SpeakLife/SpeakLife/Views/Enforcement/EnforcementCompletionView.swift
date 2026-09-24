@@ -13,6 +13,10 @@ struct EnforcementCompletionView: View {
     let completed: Enforcement
     let nextOptions: [Enforcement]
     let isPremium: Bool
+    /// The week of a stand they are already in, when it is not the one they
+    /// just finished. Leads the screen: it is the thing they were waiting on.
+    var standCampaign: Enforcement? = nil
+    var onStartStand: () -> Void = {}
 
     let onStartNext: (Enforcement) -> Void
     let onDone: () -> Void
@@ -62,6 +66,40 @@ struct EnforcementCompletionView: View {
                 .padding(.horizontal, DS.Spacing.lg)
 
                 Spacer(minLength: 0)
+
+                // Not premium-gated: a stand runs on a Stand Pass as well.
+                if let standCampaign {
+                    VStack(spacing: DS.Spacing.sm) {
+                        Text("YOUR STAND IS WAITING")
+                            .font(.system(size: 11, weight: .bold))
+                            .tracking(1.4)
+                            .foregroundColor(DS.Palette.gold.opacity(0.9))
+
+                        Button(action: onStartStand) {
+                            HStack {
+                                Image(systemName: "person.2.fill")
+                                    .font(.system(size: 14, weight: .semibold))
+                                Text("Start \(standCampaign.displayTitle)")
+                                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.85)
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 13, weight: .bold))
+                                    .opacity(0.6)
+                            }
+                            .foregroundColor(.black)
+                            .padding(.horizontal, DS.Spacing.md)
+                            .padding(.vertical, 14)
+                            .background(
+                                RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
+                                    .fill(DS.Palette.gold)
+                            )
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
+                    .padding(.horizontal, DS.Spacing.lg)
+                }
 
                 if isPremium && !nextOptions.isEmpty {
                     VStack(spacing: DS.Spacing.sm) {

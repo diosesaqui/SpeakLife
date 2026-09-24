@@ -449,6 +449,33 @@ final class StandRoomTests: XCTestCase {
         XCTAssertNil(r?.dayToRecord(for: "owner", todayStamp: "2026-09-02"))
     }
 
+    /// The rules hold `dayNumber` monotonic. A room written by an older build
+    /// stores King's LOCAL campaign day (3) while `dayToRecord` counts stamps
+    /// (1). Sending 1 failed the rule, so the stamp never landed, the partner
+    /// got no push, and the room read "Nobody has spoken yet today".
+    func testDayNumberToWrite_NeverGoesBelowWhatIsStored() {
+        let r = room(roomDict(members: [
+            "owner": memberDict(name: "Ann", day: 5, spoken: stamps(5), owner: true),
+            "king": memberDict(name: "King", day: 3, spoken: [], owner: false),
+        ]))
+        let day = r?.dayToRecord(for: "king", todayStamp: "2026-09-06")
+        XCTAssertEqual(day, 1)
+        XCTAssertEqual(r?.dayNumberToWrite(for: "king", recording: day ?? 0), 3)
+        // A clean room writes the counted day unchanged.
+        XCTAssertEqual(r?.dayNumberToWrite(for: "owner", recording: 6), 6)
+    }
+
+    /// The speaker's own phone says "You", not their own name.
+    func testPresenceSummary_NamesTheViewerAsYou() throws {
+        let today = "2026-09-15"
+        let duo = try XCTUnwrap(room(roomDict(members: [
+            "a": memberDict(name: "Sarah", day: 3, spoken: [today]),
+            "b": memberDict(name: "Mom", day: 2, spoken: []),
+        ])))
+        XCTAssertEqual(duo.presenceSummary(todayStamp: today, viewer: "a"), "You spoke today.")
+        XCTAssertEqual(duo.presenceSummary(todayStamp: today, viewer: "b"), "Sarah spoke today.")
+    }
+
     /// Somebody who is not in this stand.
     func testDayToRecord_RecordsNothingForANonMember() {
         let r = room(roomDict(members: [

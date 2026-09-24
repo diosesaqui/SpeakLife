@@ -113,7 +113,7 @@ final class StandService: ObservableObject, StandMirroring {
             // to be taken must not look abandoned.
             let day = room.dayToRecord(for: uid, todayStamp: stamp)
             if day != nil { recorded += 1 }
-            write(day: day, into: room.id, uid: uid, stamp: stamp)
+            write(day: day, into: room, uid: uid, stamp: stamp)
         }
 
         AnalyticsService.shared.track("stand_day_spoken", parameters: [
@@ -126,11 +126,14 @@ final class StandService: ObservableObject, StandMirroring {
     }
 
     /// One room's mirror write. `day` nil touches `lastActivityAt` only.
-    private func write(day: Int?, into roomId: String, uid: String, stamp: String) {
+    private func write(day: Int?, into room: StandRoom, uid: String, stamp: String) {
+        let roomId = room.id
         var payload: [String: Any] = ["lastActivityAt": FieldValue.serverTimestamp()]
 
         if let day {
-            payload["members.\(uid).dayNumber"] = day
+            // Never below what is stored: the rules hold `dayNumber` monotonic,
+            // and an older build left it inflated. See `dayNumberToWrite`.
+            payload["members.\(uid).dayNumber"] = room.dayNumberToWrite(for: uid, recording: day)
             // arrayUnion makes a repeat write on the same day free, which is
             // what lets this be called without tracking whether it already ran
             // — and what makes the backfill below safe to attempt on every
@@ -200,7 +203,7 @@ final class StandService: ObservableObject, StandMirroring {
 
         for room in missing {
             write(day: room.dayToRecord(for: uid, todayStamp: stamp),
-                  into: room.id, uid: uid, stamp: stamp)
+                  into: room, uid: uid, stamp: stamp)
         }
 
         AnalyticsService.shared.track("stand_day_backfilled", parameters: [
@@ -281,7 +284,12 @@ final class StandService: ObservableObject, StandMirroring {
             lastError = error.localizedDescription
             return
         }
-        guard let data = snapshot?.data() else {
+        // `.estimate`, not the default. Our own write carries
+        // `serverTimestamp()` fields, and until the server echoes them the
+        // default behavior reads them as null — so `lastActivityAt` went nil,
+        // the list re-sorted, and `rowStand` could flip to a different stand
+        // and back again the moment a burst finished.
+        guard let data = snapshot?.data(with: .estimate) else {
             // The room was deleted — the last member left, or it was swept.
             rooms.removeAll { $0.id == id }
             listeners[id]?.remove()

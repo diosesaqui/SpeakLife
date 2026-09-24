@@ -375,6 +375,19 @@ final class EnforcementServiceTests: XCTestCase {
                      "a celebration already shown must not re-present on next launch")
     }
 
+    /// A celebration still pending when the next week starts belongs to a week
+    /// that is over. Left armed, it showed "You finished" days into the next one.
+    func testStartingANewCampaign_ClearsAStaleCelebration() {
+        service.startEnforcement(id: "peace", isPremium: true)
+        advance(Enforcement.length)
+        XCTAssertEqual(service.justCompleted?.id, "peace")
+
+        service.startEnforcement(id: "warfare", isPremium: true)
+        XCTAssertNil(service.justCompleted)
+        let relaunched = EnforcementService(defaults: defaults, calendar: .current, catalog: catalog)
+        XCTAssertNil(relaunched.justCompleted)
+    }
+
     // MARK: - Switching campaigns
 
     /// Without a way out, picking the wrong theme locks the user in for a week.

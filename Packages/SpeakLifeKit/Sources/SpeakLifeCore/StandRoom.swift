@@ -257,6 +257,24 @@ public struct StandRoom: Equatable, Identifiable {
         return min(me.daysSpoken.count + 1, Enforcement.length)
     }
 
+    /// The `dayNumber` to send with a write that records `day` for `uid`.
+    ///
+    /// NOT the same number as `dayToRecord`, and the difference is the whole
+    /// reason a duo's day stopped landing. `firestore.rules` holds `dayNumber`
+    /// monotonic — it may never go down. Rooms written before `dayToRecord`
+    /// existed carry the speaker's inflated LOCAL campaign day there (5, 6),
+    /// while `dayToRecord` now counts stamps (1, 2). Sending the smaller number
+    /// made every write fail the rule: the stamp never landed, the partner got
+    /// no push, the room read "Nobody has spoken yet today", and the optimistic
+    /// local write flickered the home row before Firestore rolled it back.
+    ///
+    /// Nothing reads `dayNumber` for display any more (`standDay` derives from
+    /// the stamps, client and server), so carrying the stored value forward
+    /// when it is higher costs nothing and is what lets the stamp through.
+    public func dayNumberToWrite(for uid: String, recording day: Int) -> Int {
+        max(day, member(uid)?.dayNumber ?? 0)
+    }
+
     /// The day this room is missing for `uid`, given what their own device
     /// already banked today. Nil when there is nothing to repair.
     ///
@@ -293,7 +311,10 @@ public struct StandRoom: Equatable, Identifiable {
     /// not absence — that is the difference between accountability and a
     /// scoreboard, and it is the reason there is no "behind" state anywhere in
     /// this model.
-    public func presenceSummary(todayStamp: String) -> String {
+    ///
+    /// `viewer` is the uid reading it, so a duo reads "You spoke today." on the
+    /// speaker's own phone instead of their own name in the third person.
+    public func presenceSummary(todayStamp: String, viewer: String? = nil) -> String {
         let active = activeMembers
         guard !active.isEmpty else { return "" }
         // A stand of one has not started. Its seven days begin when somebody
@@ -305,7 +326,7 @@ public struct StandRoom: Equatable, Identifiable {
         if spoken.isEmpty { return "Nobody has spoken yet today." }
         if spoken.count == active.count { return "Everyone has spoken today." }
         if active.count == 2, let one = spoken.first {
-            return "\(one.displayName) spoke today."
+            return one.uid == viewer ? "You spoke today." : "\(one.displayName) spoke today."
         }
         return "\(spoken.count) of \(active.count) have spoken today."
     }

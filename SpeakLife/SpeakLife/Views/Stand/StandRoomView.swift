@@ -103,7 +103,7 @@ struct StandRoomView: View {
                 .tracking(1.4)
                 .foregroundColor(DS.Palette.gold.opacity(0.9))
 
-            Text(room.presenceSummary(todayStamp: todayStamp))
+            Text(room.presenceSummary(todayStamp: todayStamp, viewer: auth.currentUid))
                 .font(.system(size: 22, weight: .bold, design: .rounded))
                 .foregroundColor(DS.Palette.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
