@@ -119,7 +119,15 @@ struct StandRoomView: View {
         // `StandMember.standDay`. The two disagree in any room written by a
         // build older than `dayToRecord`, and this header is one of the places
         // that showed it.
-        let myDay = (room.member(auth.currentUid ?? "")?.standDay ?? 0) + 1
+        //
+        // Once today is spoken the header shows TODAY's day, the one just
+        // spoken — not tomorrow's. It used to always read one ahead, so a
+        // member who had spoken read "DAY 3 OF 7" directly above their own row
+        // saying "Day 2 of 7".
+        let me = room.member(auth.currentUid ?? "")
+        let spoken = me?.standDay ?? 0
+        let spokeToday = me?.spoke(on: todayStamp) ?? false
+        let myDay = max(spokeToday ? spoken : spoken + 1, 1)
         if let day = room.enforcement.day(min(myDay, Enforcement.length)) {
             VStack(alignment: .leading, spacing: DS.Spacing.sm) {
                 Text("DAY \(min(myDay, Enforcement.length)) OF \(Enforcement.length)")
@@ -150,7 +158,6 @@ struct StandRoomView: View {
                 StandMemberRow(
                     member: member,
                     isYou: member.uid == auth.currentUid,
-                    week: StandDayStamp.lastDays(7),
                     todayStamp: todayStamp
                 )
             }
@@ -220,34 +227,43 @@ struct StandMemberRow: View {
 
     let member: StandMember
     let isYou: Bool
-    /// The last seven local days, oldest first.
-    let week: [String]
     let todayStamp: String
 
     private var spokeToday: Bool { member.spoke(on: todayStamp) }
 
     var body: some View {
-        HStack(spacing: DS.Spacing.sm) {
-            avatar
+        VStack(alignment: .leading, spacing: DS.Spacing.sm) {
+            HStack(spacing: DS.Spacing.sm) {
+                avatar
 
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: DS.Spacing.xxs) {
-                    Text(isYou ? "You" : member.displayName)
-                        .font(.system(size: 16, weight: .semibold, design: .rounded))
-                        .foregroundColor(DS.Palette.textPrimary)
-                    if member.isOwner {
-                        Image(systemName: "crown.fill")
-                            .font(.system(size: 10))
-                            .foregroundColor(DS.Palette.gold.opacity(0.8))
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: DS.Spacing.xxs) {
+                        Text(isYou ? "You" : member.displayName)
+                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+                            .foregroundColor(DS.Palette.textPrimary)
+                        if member.isOwner {
+                            Image(systemName: "crown.fill")
+                                .font(.system(size: 10))
+                                .foregroundColor(DS.Palette.gold.opacity(0.8))
+                        }
                     }
+                    Text(dayLabel)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(DS.Palette.textSecondary)
                 }
-                Text(dayLabel)
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(DS.Palette.textSecondary)
+
+                Spacer(minLength: DS.Spacing.xs)
+
+                // Said in words, not left to a ring someone has to decode.
+                // Only ever the positive: there is no "not yet" badge.
+                if spokeToday {
+                    Label("Spoke today", systemImage: "checkmark.circle.fill")
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundColor(DS.Palette.gold)
+                }
             }
 
-            Spacer(minLength: DS.Spacing.xs)
-            weekStrip
+            dayTrack
         }
         .padding(DS.Spacing.sm)
         .background(
@@ -282,14 +298,29 @@ struct StandMemberRow: View {
             : "Just joined"
     }
 
-    private var weekStrip: some View {
-        HStack(spacing: 5) {
-            ForEach(week, id: \.self) { stamp in
-                Circle()
-                    .fill(member.spoke(on: stamp)
-                          ? DS.Palette.gold
-                          : Color.white.opacity(0.14))
-                    .frame(width: 8, height: 8)
+    /// The seven days of this stand, numbered, filled for each day spoken.
+    ///
+    /// Two earlier versions were unlabeled dots and nobody could read them.
+    /// The first was the last seven CALENDAR days, so the far-left dot was
+    /// simply whatever happened six days ago and the far-right one was today —
+    /// beside "Day 2 of 7" it looked like day 7 was done. The second filled
+    /// from the left but was still seven anonymous dots. Numbering them makes
+    /// the track say what it is on its own: days 1 and 2 done, 3 to 7 ahead.
+    private var dayTrack: some View {
+        HStack(spacing: 6) {
+            ForEach(1...Enforcement.length, id: \.self) { day in
+                let done = day <= member.standDay
+                Text("\(day)")
+                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                    .foregroundColor(done ? .black : DS.Palette.textSecondary)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 24)
+                    .background(
+                        Capsule().fill(done ? DS.Palette.gold : Color.white.opacity(0.06))
+                    )
+                    .overlay(
+                        Capsule().stroke(Color.white.opacity(done ? 0 : 0.12), lineWidth: 1)
+                    )
             }
         }
         .accessibilityHidden(true)
