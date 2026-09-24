@@ -461,6 +461,14 @@ public final class EnforcementService: ObservableObject {
             p.startedOn = Date()
             p.completedEnforcementIds = history
         }
+        // A celebration still pending for the LAST week is stale the moment a
+        // new one starts. Left armed, it surfaced whenever the Today tab next
+        // got a chance — "You finished Enforcing Peace" on day 2 of Provision.
+        let clearStaleCelebration = { [weak self] in
+            guard let self, self.justCompleted != nil else { return }
+            self.justCompleted = nil
+        }
+        if Thread.isMainThread { clearStaleCelebration() } else { DispatchQueue.main.async(execute: clearStaleCelebration) }
     }
 
     /// Marks today's Enforcement day complete. Called when the daily burst completes.

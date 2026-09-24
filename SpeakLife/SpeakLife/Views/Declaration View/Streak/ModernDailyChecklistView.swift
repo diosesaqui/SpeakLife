@@ -89,6 +89,17 @@ struct ModernDailyChecklistView: View {
     // Modal presentations surfaced directly on the Today tab (instead of routing
     // the user over to the Speak feed and presenting there).
     @State private var showDailyBurst = false
+    /// The finished campaign whose celebration is on screen.
+    ///
+    /// A copy of `EnforcementService.justCompleted`, taken only once the Burst
+    /// is off screen. The cover used to bind straight to `justCompleted`, which
+    /// is set from INSIDE the Burst (day 7 banks in `finishBurst`) while the
+    /// Burst's own cover is still up on this same view. Two covers on one view
+    /// cannot both show: SwiftUI swapped the Burst out for the celebration while
+    /// `showDailyBurst` stayed true, then put the Burst back — at its intro
+    /// screen — the moment the celebration closed. That was the Burst
+    /// "re-prompting itself" straight after it was finished.
+    @State private var celebratingCampaign: Enforcement?
     /// Which door opened the burst. The checklist row is the campaign's task; the
     /// Jump Back In tile is the user's own.
     @State private var burstSource: BurstSource = .dailyTask
@@ -156,6 +167,36 @@ struct ModernDailyChecklistView: View {
     private func openTakeItCaptive(fromIntent: Bool = false) {
         takeItCaptiveFromIntent = fromIntent
         showTakeItCaptive = true
+    }
+
+    /// Raise the campaign celebration, but never over the Burst. See
+    /// `celebratingCampaign`.
+    private func presentCelebrationIfReady() {
+        guard !showDailyBurst, celebratingCampaign == nil,
+              let pending = enforcementService.justCompleted else { return }
+        celebratingCampaign = pending
+    }
+
+    private func endCelebration() {
+        celebratingCampaign = nil
+        enforcementService.justCompleted = nil
+    }
+
+    /// A stand this person is in that runs a DIFFERENT week from the one they
+    /// just finished — the "Finish mine first" path in `StandConflictSheet`,
+    /// or an invite made for a campaign they never started locally.
+    ///
+    /// The celebration used to offer only the generic catalog, so somebody who
+    /// had put a friend's stand on hold to finish their own week was told
+    /// "You finished" and handed three unrelated choices, with the stand they
+    /// were waiting to start nowhere on the screen.
+    private func standWaiting(after completed: Enforcement) -> StandRoom? {
+        guard FeatureFlag.standTogetherEnabled else { return nil }
+        let uid = StandAuthCoordinator.shared.currentUid ?? ""
+        let candidates = StandService.shared.rooms.filter {
+            $0.enforcement.id != completed.id && $0.member(uid) != nil
+        }
+        return StandRoom.rowStand(in: candidates, campaignId: "", uid: uid)
     }
 
     /// Present the daily burst right here on the Today tab instead of routing
@@ -849,22 +890,43 @@ struct ModernDailyChecklistView: View {
         // cover with no content — a blank full-screen sheet the user cannot
         // dismiss. Here the nil assignment IS the dismissal, so the two can't
         // disagree, and the campaign that finished is non-optional inside.
-        .fullScreenCover(item: $enforcementService.justCompleted) { completed in
+        .fullScreenCover(item: $celebratingCampaign,
+                         onDismiss: { enforcementService.justCompleted = nil }) { completed in
+            let stand = standWaiting(after: completed)
             EnforcementCompletionView(
                 completed: completed,
-                nextOptions: enforcementService.catalog.filter { $0.id != completed.id },
+                nextOptions: enforcementService.catalog.filter {
+                    $0.id != completed.id && $0.id != stand?.enforcement.id
+                },
                 isPremium: subscriptionStore.isPremium,
+                standCampaign: stand?.enforcement,
+                onStartStand: {
+                    guard let stand else { return }
+                    // startShared, not startEnforcement: not premium-gated, for
+                    // the same reason joining is not — an invitee on a Stand
+                    // Pass must be able to run the week they were invited into.
+                    enforcementService.startShared(stand.enforcement)
+                    AnalyticsService.shared.track("enforcement_started", parameters: [
+                        "theme": stand.enforcement.theme.rawValue, "source": "completion_stand"
+                    ])
+                    viewModel.refreshTasksForCampaignChange()
+                    endCelebration()
+                },
                 onStartNext: { enforcement in
                     guard enforcementService.startEnforcement(id: enforcement.id,
                                                   isPremium: subscriptionStore.isPremium) else { return }
                     AnalyticsService.shared.track("enforcement_started",
                                                   parameters: ["theme": enforcement.theme.rawValue, "source": "completion"])
                     viewModel.refreshTasksForCampaignChange()
-                    enforcementService.justCompleted = nil
+                    endCelebration()
                 },
-                onDone: { enforcementService.justCompleted = nil }
+                onDone: { endCelebration() }
             )
         }
+        .onChange(of: enforcementService.justCompleted?.id) { _, _ in
+            presentCelebrationIfReady()
+        }
+        .onAppear { presentCelebrationIfReady() }
         .sheet(isPresented: $showBibleChat) {
             // The conversational Bible Chat (not the topic picker). Still reached
             // from a daily task's .bibleChat destination even though the quick
@@ -919,7 +981,14 @@ struct ModernDailyChecklistView: View {
         // Daily burst — presented modally on Today. Env objects injected
         // explicitly since SwiftUI doesn't reliably propagate them across the
         // cover hop. (viewModel is the EnhancedStreakViewModel the burst wants.)
-        .fullScreenCover(isPresented: $showDailyBurst) {
+        .fullScreenCover(isPresented: $showDailyBurst, onDismiss: {
+            // Day 7 was banked inside the Burst. Its celebration waited for the
+            // Burst to leave; the delay is the dismissal animation, without
+            // which the new cover is dropped mid-transition.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
+                presentCelebrationIfReady()
+            }
+        }) {
             DailyDeclarationBurstView(source: burstSource)
                 .environmentObject(declarationStore)
                 .environmentObject(themeViewModel)

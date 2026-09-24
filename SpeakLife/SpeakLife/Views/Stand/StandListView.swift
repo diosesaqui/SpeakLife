@@ -93,7 +93,8 @@ struct StandListView: View {
     private func subtitle(_ room: StandRoom) -> String {
         switch room.status {
         case .active:
-            return room.presenceSummary(todayStamp: StandDayStamp.stamp())
+            return room.presenceSummary(todayStamp: StandDayStamp.stamp(),
+                                        viewer: StandAuthCoordinator.shared.currentUid)
         case .completed:
             // Named as finished, never as over. Seven days held together is the
             // thing this whole feature exists to produce.

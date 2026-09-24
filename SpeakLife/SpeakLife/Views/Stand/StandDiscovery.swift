@@ -220,7 +220,8 @@ struct StandInviteRow: View {
             // where the invite lives now that the row opens the room.
             let status = companions.isEmpty
                 ? "Nobody else yet. Open it to invite."
-                : existingRoom.presenceSummary(todayStamp: StandDayStamp.stamp())
+                : existingRoom.presenceSummary(todayStamp: StandDayStamp.stamp(),
+                                               viewer: auth.currentUid)
             // Standalone, never inside a frame — that is what the note below
             // forbids. "Enforcing Peace · Maria spoke today" is how the room
             // header and My Stands already name a campaign, and it reads
