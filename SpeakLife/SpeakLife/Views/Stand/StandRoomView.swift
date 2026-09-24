@@ -119,7 +119,15 @@ struct StandRoomView: View {
         // `StandMember.standDay`. The two disagree in any room written by a
         // build older than `dayToRecord`, and this header is one of the places
         // that showed it.
-        let myDay = (room.member(auth.currentUid ?? "")?.standDay ?? 0) + 1
+        //
+        // Once today is spoken the header shows TODAY's day, the one just
+        // spoken — not tomorrow's. It used to always read one ahead, so a
+        // member who had spoken read "DAY 3 OF 7" directly above their own row
+        // saying "Day 2 of 7".
+        let me = room.member(auth.currentUid ?? "")
+        let spoken = me?.standDay ?? 0
+        let spokeToday = me?.spoke(on: todayStamp) ?? false
+        let myDay = max(spokeToday ? spoken : spoken + 1, 1)
         if let day = room.enforcement.day(min(myDay, Enforcement.length)) {
             VStack(alignment: .leading, spacing: DS.Spacing.sm) {
                 Text("DAY \(min(myDay, Enforcement.length)) OF \(Enforcement.length)")
@@ -150,7 +158,6 @@ struct StandRoomView: View {
                 StandMemberRow(
                     member: member,
                     isYou: member.uid == auth.currentUid,
-                    week: StandDayStamp.lastDays(7),
                     todayStamp: todayStamp
                 )
             }
@@ -220,8 +227,6 @@ struct StandMemberRow: View {
 
     let member: StandMember
     let isYou: Bool
-    /// The last seven local days, oldest first.
-    let week: [String]
     let todayStamp: String
 
     private var spokeToday: Bool { member.spoke(on: todayStamp) }
@@ -282,11 +287,19 @@ struct StandMemberRow: View {
             : "Just joined"
     }
 
+    /// The seven days of THIS stand, filled up to the days spoken.
+    ///
+    /// It used to be the last seven calendar days with a dot per day spoken.
+    /// Next to "Day 2 of 7" that read as a seven-day progress rail, so today's
+    /// dot at the far right looked like day 7 already done, and a gap between
+    /// two dots marked a missed day — the absence this screen promises never
+    /// to show. Filling from the left matches the number beside it; who spoke
+    /// TODAY is already the gold ring on the avatar.
     private var weekStrip: some View {
         HStack(spacing: 5) {
-            ForEach(week, id: \.self) { stamp in
+            ForEach(1...Enforcement.length, id: \.self) { day in
                 Circle()
-                    .fill(member.spoke(on: stamp)
+                    .fill(day <= member.standDay
                           ? DS.Palette.gold
                           : Color.white.opacity(0.14))
                     .frame(width: 8, height: 8)
