@@ -107,7 +107,7 @@ struct TestimonialsOnboardingView: View {
                 VStack(spacing: 32) {
                     // Title
                     VStack(spacing: 8) {
-                        Text("Join 100K+ Believers")
+                        Text("Join \(SocialProof.believersCount) Believers")
                             .font(.system(size: 34, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
                         
@@ -127,7 +127,7 @@ struct TestimonialsOnboardingView: View {
                                     .font(.system(size: 20))
                                     .foregroundColor(Color(red: 0.2, green: 0.8, blue: 0.4))
                                 
-                                Text("100K+")
+                                Text(SocialProof.believersCount)
                                     .font(.system(size: 28, weight: .bold, design: .rounded))
                                     .foregroundColor(.white)
                             }
