@@ -87,7 +87,8 @@ struct EnforcementCard: View {
         if service.isEligible(totalDaysCompleted: totalDaysCompleted) {
             Group {
                 if let enforcement = service.activeEnforcement, let day = service.activeDay {
-                    activeCard(enforcement: enforcement, day: day)
+                    activeCard(enforcement: enforcement,
+                               day: enforcement.day(displayedDay) ?? day)
                 } else if let finished = service.completionToAcknowledge {
                     // Ahead of both the invitation and the paywall. A week that
                     // was actually held outranks an offer, and it outranks an
@@ -138,8 +139,8 @@ struct EnforcementCard: View {
             // displayTitle, not title: a campaign begun before the naming fix
             // has "Enforcing Warfare & Victory" persisted in its blob, and this
             // is the loudest type on the card.
-            eyebrow("DAY \(service.progress.currentDay) OF \(Enforcement.length) · \(enforcement.displayTitle.uppercased())")
-                .accessibilityLabel("Day \(service.progress.currentDay) of \(Enforcement.length), \(enforcement.displayTitle)")
+            eyebrow("DAY \(displayedDay) OF \(Enforcement.length) · \(enforcement.displayTitle.uppercased())")
+                .accessibilityLabel("Day \(displayedDay) of \(Enforcement.length), \(enforcement.displayTitle)")
 
             Text(day.anchorText)
                 .font(.system(size: 17, weight: .semibold, design: .rounded))
@@ -224,6 +225,17 @@ struct EnforcementCard: View {
         if service.progress.hasAdvancedToday() { return .advanced }
         if burstCompletedToday { return .startsTomorrow }
         return .speak
+    }
+
+    /// The day the card is about: TODAY's day.
+    ///
+    /// `currentDay` rolls forward the moment a day is banked, so the eyebrow and
+    /// anchor used to jump to tomorrow's day and line straight after the Burst
+    /// — "DAY 3 OF 7" over "Day 2 spoken · Day 3 opens tomorrow", with Day 3's
+    /// verse on show a day early. Once today is banked, the card stays on the
+    /// day just spoken; tomorrow it moves on.
+    private var displayedDay: Int {
+        todayCTAState == .advanced ? spokenDay : service.progress.currentDay
     }
 
     /// The day that opens next. Once a day is banked `currentDay` has already
