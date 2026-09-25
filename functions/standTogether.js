@@ -193,6 +193,35 @@ async function push(uid, title, body, data = {}) {
   }
 }
 
+/**
+ * Names the stand in the push body. A day number alone is ambiguous the moment
+ * somebody is in more than one stand, and the push is the one surface that
+ * never showed which.
+ */
+function standBody(room) {
+  const title = room?.enforcement?.title;
+  return title ? `${title}. Stand with them.` : 'Stand with them.';
+}
+
+/**
+ * Claims the right to send `partner` the "speaker spoke" push for `stamp`.
+ * `create` fails if the doc exists, so exactly one room wins however many
+ * trigger at once. Server-only collection (closed in firestore.rules by the
+ * default deny); `expireAt` is for a Firestore TTL policy to sweep it.
+ */
+async function claimDuoPush(partner, speaker, stamp, roomId) {
+  try {
+    await db.collection('standPushLog').doc(`${partner}_${speaker}_${stamp}`).create({
+      roomId,
+      expireAt: Timestamp.fromMillis(Date.now() + 3 * 86400000),
+    });
+    return true;
+  } catch (err) {
+    if (err.code === 6 || /already exists/i.test(err.message || '')) return false;
+    throw err;
+  }
+}
+
 // ─── Misc ───────────────────────────────────────────────────────────────────
 
 function requireAuth(request) {
@@ -641,9 +670,16 @@ exports.onStandRoomUpdated = onDocumentUpdated('standRooms/{roomId}', async (eve
       await db.collection('standRooms').doc(roomId)
         .set({ lastNotifiedDay: { [speaker]: stamp } }, { merge: true });
 
+      // ...and one per speaker per day ACROSS rooms. The client mirrors a
+      // Burst into every stand its speaker is in, so two people sharing two
+      // stands got two pushes for one Burst — each quoting that room's own
+      // day count, so the second one ("King spoke Day 3") contradicted the
+      // room the partner then opened ("Day 2 of 7").
+      if (!(await claimDuoPush(partnerUid, speaker, stamp, roomId))) continue;
+
       await push(partnerUid,
         `${m.name} spoke Day ${standDay(m)}`,
-        'Stand with them.',
+        standBody(after),
         { deepLink: 'stand', roomId });
     }
   }
@@ -754,6 +790,7 @@ exports.standDailyNudge = onSchedule('every 60 minutes', async () => {
       let spokeToday = false;
       let othersToday = 0;
       let headline = null;
+      let headlineBody = null;
       let roomId = null;
 
       for (const id of n.roomIds || []) {
@@ -776,6 +813,7 @@ exports.standDailyNudge = onSchedule('every 60 minutes', async () => {
           headline = members.length === 2
             ? `${others[0][1].name} spoke Day ${standDay(others[0][1])}`
             : `${others.length} of ${members.length} have spoken today`;
+          headlineBody = standBody(room);
         }
       }
 
@@ -788,7 +826,7 @@ exports.standDailyNudge = onSchedule('every 60 minutes', async () => {
         continue;
       }
 
-      const sent = await push(uid, headline, 'Stand with them.',
+      const sent = await push(uid, headline, headlineBody || 'Stand with them.',
         { deepLink: 'stand', roomId: roomId || '' });
 
       await nudgeDoc.ref.set(

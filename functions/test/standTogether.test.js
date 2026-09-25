@@ -50,7 +50,7 @@ const req = (uid, data = {}) => ({ auth: { uid }, data });
 async function wipe() {
   sent.length = 0;
   for (const c of ['standRooms', 'standInvites', 'standNudges', 'users',
-                   'accountMerges', 'standRateLimits']) {
+                   'accountMerges', 'standRateLimits', 'standPushLog']) {
     const snap = await db.collection(c).get();
     await Promise.all(snap.docs.map((d) => d.ref.delete()));
   }
@@ -409,6 +409,32 @@ test('a duo pushes exactly once when one partner speaks', async () => {
   assert.strictEqual(sent.length, 1, 'the partner, and only the partner');
   assert.strictEqual(sent[0].token, 'tok_m1');
   assert.match(sent[0].notification.title, /spoke Day 1/);
+});
+
+test('a duo push names the stand it came from', async () => {
+  const { roomId, room, before } = await roomWith(2);
+  const after = JSON.parse(JSON.stringify(before));
+  after.members.owner.daysSpoken = ['2026-09-15'];
+  after.enforcement = room.enforcement;
+
+  await fireUpdate(roomId, before, after);
+  assert.strictEqual(sent.length, 1);
+  assert.match(sent[0].notification.body, new RegExp(room.enforcement.title));
+});
+
+test('two people sharing two stands get ONE push per Burst, not one per room', async () => {
+  // The client mirrors a Burst into every stand its speaker is in. Each room
+  // fired its own push quoting its own day count, so the partner got
+  // "spoke Day 3" from one room and opened another reading "Day 2 of 7".
+  const a = await roomWith(2);
+  const b = await roomWith(2);
+  for (const r of [a, b]) {
+    const after = JSON.parse(JSON.stringify(r.before));
+    after.members.owner.daysSpoken = ['2026-09-15'];
+    after.enforcement = r.room.enforcement;
+    await fireUpdate(r.roomId, r.before, after);
+  }
+  assert.strictEqual(sent.length, 1, 'one Burst, one push');
 });
 
 test('a group of five pushes ZERO times when members speak', async () => {
