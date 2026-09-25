@@ -172,7 +172,7 @@ struct TransformationSocialProofScreen: View {
                 Spacer()
                 VStack(spacing: 28) {
                     VStack(spacing: 6) {
-                        Text("100,000+")
+                        Text(SocialProof.believersCount)
                             .font(.system(size: 48, weight: .black, design: .rounded))
                             .foregroundColor(.white)
                         Text("believers have made this shift")
