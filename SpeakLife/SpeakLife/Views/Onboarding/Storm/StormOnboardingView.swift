@@ -21,6 +21,7 @@
 import SwiftUI
 import UserNotifications
 import UIKit
+import AVFoundation
 
 // MARK: - Steps
 
@@ -139,10 +140,19 @@ struct StormOnboardingView: View {
             StormSpeakScreen(
                 line: resolvedStorm.firstDeclaration,
                 eyebrow: "SPEAK THIS OUT LOUD",
-                title: "Speak to your storm",
-                allowsSilentRead: true
-            ) { spoke in
+                title: resolvedStorm == .grief ? "Let this be spoken over you" : "Speak to your storm",
+                backup: StormSpeakBackup(config: subscriptionStore.stormSpeakBackup)
+            ) { outcome in
+                let spoke = outcome == .spoken
                 spokeFirstDeclaration = spoke
+                if outcome == .heard {
+                    AnalyticsService.shared.track("first_declaration_heard", parameters: [
+                        "storm": resolvedStorm.rawValue,
+                        "step_index": StormStep.speak.rawValue,
+                        "variant": subscriptionStore.onboardingVariantName,
+                        "seconds_since_start": Int(Date().timeIntervalSince(startedAt))
+                    ])
+                }
                 if spoke {
                     AnalyticsService.shared.track("first_declaration_spoken", parameters: [
                         "storm": resolvedStorm.rawValue,
@@ -151,7 +161,7 @@ struct StormOnboardingView: View {
                         "seconds_since_start": Int(Date().timeIntervalSince(startedAt))
                     ])
                     GrowthMetrics.shared.trackActivation(action: "declaration_spoken")
-                } else {
+                } else if outcome == .readSilently {
                     AnalyticsService.shared.track("first_declaration_read_silently", parameters: [
                         "storm": resolvedStorm.rawValue
                     ])
@@ -220,6 +230,8 @@ struct StormOnboardingView: View {
         switch candidate {
         case .storm:
             return preselectedStorm != nil
+        case .promise:
+            return !subscriptionStore.stormBenefitScreen
         case .rating:
             // Only right after a real spoken win, and never with the kill switch off.
             return !spokeFirstDeclaration || !subscriptionStore.onboardingRatingEnabled
@@ -633,16 +645,72 @@ private struct StormMechanismScreen: View {
 
 // MARK: - 5. Speak it (also used after purchase)
 
+/// How a speak screen ended.
+enum StormSpeakOutcome {
+    /// Held the button all the way through while saying it.
+    case spoken
+    /// Tapped "Hear it spoken over you" and listened to the end.
+    case heard
+    /// Tapped "Read silently instead".
+    case readSilently
+}
+
+/// The speak screen's secondary option, Remote Config `stormSpeakBackup`.
+enum StormSpeakBackup {
+    case hear, read
+
+    init(config: String) { self = config.lowercased() == "read" ? .read : .hear }
+}
+
+/// Reads a declaration aloud in the voice the feed's speaker button uses.
+/// Not `SpeechCoordinator` itself: that restarts the app's background music
+/// when it finishes, which has no place in the middle of onboarding.
+@MainActor
+final class StormVoice: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
+    @Published private(set) var isSpeaking = false
+    private let synthesizer = AVSpeechSynthesizer()
+    var onFinish: (() -> Void)?
+
+    override init() {
+        super.init()
+        synthesizer.delegate = self
+    }
+
+    func speak(_ text: String) {
+        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .spokenAudio)
+        try? AVAudioSession.sharedInstance().setActive(true)
+        let utterance = AVSpeechUtterance(string: text)
+        utterance.voice = SpeechCoordinator().bestVoice(gender: .female) ?? AVSpeechSynthesisVoice(language: "en-US")
+        utterance.rate = 0.46
+        isSpeaking = true
+        synthesizer.speak(utterance)
+    }
+
+    func stop() {
+        synthesizer.stopSpeaking(at: .immediate)
+        isSpeaking = false
+    }
+
+    nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
+        Task { @MainActor in
+            self.isSpeaking = false
+            self.onFinish?()
+        }
+    }
+}
+
 /// The declaration card and the hold-to-speak control. No microphone and no
 /// permission prompt: the hold paces the line and the user says it out loud.
 struct StormSpeakScreen: View {
     let line: StormLine
     let eyebrow: String
     let title: String
-    let allowsSilentRead: Bool
-    /// `true` when they held all the way through, `false` for "read silently".
-    let onDone: (Bool) -> Void
+    let backup: StormSpeakBackup
+    let onDone: (StormSpeakOutcome) -> Void
 
+    @StateObject private var voice = StormVoice()
+    private var finishedByListening: Bool { finished && !isSealed && !isCharging && voiceUsed }
+    @State private var voiceUsed = false
     @State private var isCharging = false
     @State private var isSealed = false
     @State private var finished = false
@@ -693,7 +761,7 @@ struct StormSpeakScreen: View {
                     .frame(maxWidth: .infinity)
                     .background(
                         RoundedRectangle(cornerRadius: 22, style: .continuous)
-                            .fill(Color.white.opacity(isSealed || finished ? 0.14 : 0.08))
+                            .fill(Color.white.opacity(isSealed || finished || voice.isSpeaking ? 0.14 : 0.08))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 22, style: .continuous)
                                     .strokeBorder(StormStyle.gold.opacity(isCharging || isSealed || finished ? 0.9 : 0.3),
@@ -712,7 +780,8 @@ struct StormSpeakScreen: View {
 
                 VStack(spacing: 12) {
                     if finished {
-                        Label("Spoken. It's done.", systemImage: "checkmark.seal.fill")
+                        Label(finishedByListening ? "Spoken over you." : "Spoken. It's done.",
+                              systemImage: "checkmark.seal.fill")
                             .font(.title3.weight(.semibold))
                             .foregroundColor(StormStyle.gold)
                             .frame(minHeight: 58)
@@ -734,12 +803,32 @@ struct StormSpeakScreen: View {
                                 guard sealed else { return }
                                 withAnimation { finished = true }
                                 UINotificationFeedbackGenerator().notificationOccurred(.success)
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 1.1) { onDone(true) }
+                                voice.stop()
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 1.1) { onDone(.spoken) }
                             }
                         )
                     }
-                    if allowsSilentRead && !finished {
-                        StormTextButton(title: "Read silently instead") { onDone(false) }
+                    if !finished {
+                        switch backup {
+                        case .read:
+                            StormTextButton(title: "Read silently instead") { onDone(.readSilently) }
+                        case .hear:
+                            if voice.isSpeaking {
+                                Label("Listening…", systemImage: "speaker.wave.2.fill")
+                                    .font(.body.weight(.medium))
+                                    .foregroundColor(StormStyle.gold)
+                                    .frame(minHeight: 44)
+                            } else {
+                                StormTextButton(title: "Hear it spoken over you") {
+                                    voice.onFinish = {
+                                        withAnimation { finished = true }
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) { onDone(.heard) }
+                                    }
+                                    voiceUsed = true
+                                    voice.speak(line.text)
+                                }
+                            }
+                        }
                     }
                 }
                 .padding(.horizontal, 24)
@@ -748,6 +837,7 @@ struct StormSpeakScreen: View {
             }
         }
         .onAppear { v = true }
+        .onDisappear { voice.stop() }
     }
 }
 
@@ -822,24 +912,22 @@ private struct StormPromiseScreen: View {
                         .fixedSize(horizontal: false, vertical: true)
                         .stormAppear(v)
                     VStack(spacing: 6) {
-                        Text("\u{201C}\(config.benefitVerse.text)\u{201D}")
+                        Text("\u{201C}Death and life are in the power of the tongue.\u{201D}")
                             .font(.system(.title3, design: .serif).italic())
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
-                        Text(config.benefitVerse.reference)
+                        Text("Proverbs 18:21")
                             .font(.callout.weight(.semibold))
                             .foregroundColor(StormStyle.gold)
                     }
                     .stormAppear(v, delay: 0.08)
-                    if !config.benefitBody.isEmpty {
-                        Text(config.benefitBody)
-                            .font(.body)
-                            .foregroundColor(StormStyle.secondary)
-                            .multilineTextAlignment(.center)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .stormAppear(v, delay: 0.16)
-                    }
+                    Text("When you speak God's promises over your \(config.bodyLabel), you're not hoping harder. You're agreeing with what He already said.")
+                        .font(.body)
+                        .foregroundColor(StormStyle.secondary)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .stormAppear(v, delay: 0.16)
                     VStack(alignment: .leading, spacing: 14) {
                         ForEach(Array(config.promises.enumerated()), id: \.offset) { index, promise in
                             HStack(alignment: .firstTextBaseline, spacing: 12) {

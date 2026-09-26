@@ -203,6 +203,18 @@ final class SubscriptionStore: ObservableObject {
     /// storm benefits. Remote Config `stormAlsoIncluded`, the with/without test.
     @Published var stormAlsoIncluded = false
 
+    /// Storm onboarding benefit screen (6b) on/off, for its with/without test.
+    /// Remote Config `stormBenefitScreen`, default on.
+    @Published var stormBenefitScreen = true
+
+    /// Speak screen's secondary option: "hear" (the declaration read aloud to
+    /// her, default) or "read" (read silently). Remote Config `stormSpeakBackup`.
+    @Published var stormSpeakBackup = "hear"
+
+    /// Trial-week audio and Bible chat pushes on/off, for their with/without
+    /// test. Remote Config `stormTrialPushes`, default on.
+    @Published var stormTrialPushes = true
+
     /// The storm an ad install arrives with, when the coin flip sent it to the
     /// storm arm. The flow preselects it and skips the picker.
     var adPreselectedStorm: Storm? {
@@ -225,7 +237,7 @@ final class SubscriptionStore: ObservableObject {
             // own angle arm. Only after Remote Config is ready, so the share is
             // the configured one rather than the in-app 0; the onboarding gate
             // waits for that (see init) and nothing renders before it.
-            if Storm(adCode: ad) != nil, remoteConfigReady,
+            if StormConfigStore.isStormAdCode(ad), remoteConfigReady,
                StormOnboarding.resolveAdBucket(share: stormAdShare) == "storm" {
                 return (.storm, "ad_storm")
             }
@@ -507,7 +519,7 @@ final class SubscriptionStore: ObservableObject {
         // ready immediately; otherwise a hard timeout guarantees onboarding shows
         // within a few seconds even if the RC fetch is slow, fails, or is offline.
         // A storm-mappable ad still waits: its coin flip reads `stormAdShare`.
-        if let ad = adOnboardingVariant, Storm(adCode: ad) == nil {
+        if let ad = adOnboardingVariant, !StormConfigStore.isStormAdCode(ad) {
             remoteConfigReady = true
         } else {
             DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
@@ -648,6 +660,9 @@ final class SubscriptionStore: ObservableObject {
             ?? remoteConfig["stormAdShare"].numberValue.doubleValue
         stormCtaCopy = stringValue("stormCtaCopy")
         stormAlsoIncluded = flagValue("stormAlsoIncluded")
+        stormBenefitScreen = flagValue("stormBenefitScreen")
+        stormTrialPushes = flagValue("stormTrialPushes")
+        stormSpeakBackup = stringValue("stormSpeakBackup").isEmpty ? "hear" : stringValue("stormSpeakBackup")
         // Whole storm config file (same shape as storm_configs.json). Empty
         // keeps the bundled copy. Copy A/B tests are variants of this key.
         StormConfigStore.applyRemote(stringValue("stormConfigs"))

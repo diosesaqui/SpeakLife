@@ -98,23 +98,14 @@ enum Storm: String, CaseIterable, Identifiable {
         }
     }
 
-    /// The storm an ad's `ob=` code is about, or nil when the ad angle names no
-    /// single storm (warfare, promises, command, ...). Only these codes are
-    /// eligible for the ad coin flip.
+    /// The storm an ad's `ob=` code is about, per the storm config's `ob_code`,
+    /// or nil when the angle names no single storm (`command` and the rest).
     init?(adCode: String) {
         // The live storm config owns the mapping (its `ob_code` lists), so a
         // new ad angle can point at a storm without a release. The switch
         // below is the fallback if no config loaded at all.
-        if let storm = StormConfigStore.storm(forAdCode: adCode) { self = storm; return }
-        switch adCode.lowercased() {
-        case "healing":              self = .health
-        case "provision":            self = .finances
-        case "anxiety", "fear":      self = .fear
-        case "grief":                self = .grief
-        case "marriage":             self = .marriage
-        case "parenting":            self = .family
-        default:                     return nil
-        }
+        guard let storm = StormConfigStore.storm(forAdCode: adCode) else { return nil }
+        self = storm
     }
 
     // MARK: Content
@@ -128,16 +119,18 @@ enum Storm: String, CaseIterable, Identifiable {
     var planDays: [StormLine] { [lines[0]] + Array(lines[2..<8]) }
 
     /// Every line is copied verbatim from `declarationsv10.json` (same text,
-    /// verse and reference, same category), so it has already passed the
-    /// fifteen rules in CLAUDE.md. Nothing unreviewed reaches the moment a
+    /// verse and reference), so it has already passed the fifteen rules in
+    /// CLAUDE.md. The first line is the pool's declaration for the storm
+    /// config's `verse` reference (marriage borrows Joshua 24:15 from the
+    /// parenting set, the pool's only line for it). Nothing unreviewed reaches the moment a
     /// person speaks over their own storm. Change a line there first, then here.
     private var lines: [StormLine] {
         switch self {
         case .health:
             return [
-            .init(text: "Thank You Jesus, by Your wounds I am healed and whole.",
-                  verse: "But he was pierced for our transgressions, he was crushed for our iniquities; the punishment that brought us peace was on him, and by his wounds we are healed.",
-                  reference: "Isaiah 53:5"),
+            .init(text: "You sent Your Word and healed me, and that Word still stands over me today.",
+                  verse: "He sent out his word and healed them; he rescued them from the grave.",
+                  reference: "Psalm 107:20"),
             .init(text: "Thank You Jesus, You took all my sickness, and strength rises in this body every morning.",
                   verse: "This was to fulfill what was spoken through the prophet Isaiah: 'He took up our infirmities and bore our diseases.'",
                   reference: "Matthew 8:17"),
@@ -189,9 +182,9 @@ enum Storm: String, CaseIterable, Identifiable {
             ]
         case .marriage:
             return [
-            .init(text: "With You as the third strand, my marriage is a cord that holds.",
-                  verse: "Though one may be overpowered, two can defend themselves. A cord of three strands is not quickly broken.",
-                  reference: "Ecclesiastes 4:12"),
+            .init(text: "As for me and my household, we serve You all the days of our lives.",
+                  verse: "But if serving the Lord seems undesirable to you, then choose for yourselves this day whom you will serve... But as for me and my household, we will serve the Lord.",
+                  reference: "Joshua 24:15"),
             .init(text: "I am clothed in Your love, and it binds my marriage in perfect unity.",
                   verse: "And over all these virtues put on love, which binds them all together in perfect unity.",
                   reference: "Colossians 3:14"),
@@ -270,9 +263,9 @@ enum Storm: String, CaseIterable, Identifiable {
             ]
         case .grief:
             return [
-            .init(text: "You heal my heart and bind up my wounds, and I am whole again.",
-                  verse: "He heals the brokenhearted and binds up their wounds.",
-                  reference: "Psalm 147:3"),
+            .init(text: "You hold me close and steady my spirit with Your own strength today.",
+                  verse: "The LORD is close to the brokenhearted and saves those who are crushed in spirit.",
+                  reference: "Psalm 34:18"),
             .init(text: "You turned my grief into joy, and no one takes that joy from me.",
                   verse: "So with you: Now is your time of grief, but I will see you again and you will rejoice, and no one will take away your joy.",
                   reference: "John 16:22"),
@@ -297,9 +290,9 @@ enum Storm: String, CaseIterable, Identifiable {
             ]
         case .identity:
             return [
-            .init(text: "I am a new creation in You, and the old is gone for good.",
-                  verse: "Therefore, if anyone is in Christ, the new creation has come: The old has gone, the new is here!",
-                  reference: "2 Corinthians 5:17"),
+            .init(text: "I am in Christ, so I stand completely clean before You today.",
+                  verse: "Therefore, there is now no condemnation for those who are in Christ Jesus.",
+                  reference: "Romans 8:1"),
             .init(text: "You formed me, redeemed me, and called me by name, and I am Yours forever.",
                   verse: "But now, this is what the Lord says—he who created you, Jacob, he who formed you, Israel: 'Do not fear, for I have redeemed you; I have summoned you by name; you are mine.'",
                   reference: "Isaiah 43:1"),
@@ -522,11 +515,25 @@ enum StormTrialReminder {
 // MARK: - Trial week feature pushes
 
 /// Users who touch audio and Bible chat during the trial convert more, so the
-/// trial week introduces both: audio on the first night (see
+/// trial week introduces both: audio at 8:30pm on the first night (see
 /// `LifecycleNotificationService.scheduleTrialFirstNightAudio`), Bible chat on
-/// Day 2, tied to their storm.
+/// Day 2, tied to their storm. Each is cancelled the moment she uses that
+/// feature on her own (`cancel(for:)`). Remote Config `stormTrialPushes`
+/// switches both off for the with/without test.
 enum StormTrialPushes {
     static let bibleChatID = "trial_bible_chat_d2"
+
+    static func cancel(forFeature feature: String) {
+        switch feature {
+        case "audio":
+            UNUserNotificationCenter.current().removePendingNotificationRequests(
+                withIdentifiers: [LifecycleNotificationService.trialAudioID])
+        case "bible_chat":
+            UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [bibleChatID])
+        default:
+            break
+        }
+    }
 
     static func schedule(storm: Storm, trialStart: Date, calendar: Calendar = .current) {
         let config = StormConfigStore.resolved(for: storm)
@@ -536,9 +543,11 @@ enum StormTrialPushes {
             body: config.audioPush.body
         )
 
-        // Day 2, midday: clear of the morning Burst and the evening audio.
+        // Day 2, four hours after the morning she chose: clear of the Burst.
+        let morning = StormOnboarding.morningTime ?? (7, 0)
+        let hour = min(morning.hour + 4, 20)
         guard let day2 = calendar.date(byAdding: .day, value: 1, to: trialStart),
-              let fire = calendar.date(bySettingHour: 12, minute: 30, second: 0, of: day2),
+              let fire = calendar.date(bySettingHour: hour, minute: morning.minute, second: 0, of: day2),
               fire > Date() else { return }
         let content = UNMutableNotificationContent()
         content.title = config.chatPush.title
@@ -608,26 +617,24 @@ enum StormFreeLayer {
 // MARK: - Storm config
 
 /// Every storm-specific string on the benefit screen, the plan screen, the
-/// paywall and the trial pushes, in one place per storm so a promise cannot
-/// drift between screens. Ships as `storm_configs.json` in the bundle; Remote
-/// Config `stormConfigs` (the whole file, same shape) replaces it without a
-/// release, and is how a copy A/B test runs: each variant is a config.
+/// paywall and the trial pushes, one object per storm, so a promise cannot
+/// drift between screens (spec: "SpeakLife Paywall + Benefit Screen Update").
+/// Ships as `storm_configs.json`; Remote Config `stormConfigs` (the whole file,
+/// same shape) replaces it without a release, and is how copy tests run: each
+/// variant is a config, so the benefit screen and paywall stay matched.
 ///
-/// A storm entry only names what differs from `default`; everything else is
-/// read from `default`. The declarations the user speaks are NOT here: those
-/// stay in `Storm.lines`, copied from the reviewed declaration pool.
+/// The declarations the user speaks are NOT here. Those stay in `Storm.lines`,
+/// copied from the reviewed pool; each storm's first line is the pool's
+/// declaration for the config's verse reference, so screen and config agree.
 struct StormConfigFile: Decodable {
     let version: Int?
-    let `default`: StormConfig
-    let storms: [String: StormConfig]
+    let storms: [StormConfig]
 }
 
 struct StormConfig: Decodable {
-    struct Verse: Decodable { let text: String; let reference: String }
+    struct Verse: Decodable { let text: String; let ref: String }
     struct BenefitScreen: Decodable {
         let headline: String?
-        let verse: Verse?
-        let body: String?
         let promises: [String]?
     }
     struct Benefit: Decodable { let when: String; let text: String }
@@ -641,47 +648,64 @@ struct StormConfig: Decodable {
         let chat_day2: Push?
     }
 
-    let id: String?
+    let id: String
     let label: String?
-    let ob_code: [String]?
+    /// What `{storm_label}` becomes mid-sentence ("over your ___"). Falls back
+    /// to `label` lowercased, which reads wrong for "Who I am" and friends.
+    let body_label: String?
+    let ob_codes: [String]
+    let verse: Verse?
     let benefit_screen: BenefitScreen?
     let plan_title: String?
     let paywall: Paywall?
     let pushes: Pushes?
+    /// The question Ask the Bible opens with. Derived from `chat_day2` when absent.
+    let chat_question: String?
 
     private enum CodingKeys: String, CodingKey {
-        case id, label, ob_code, benefit_screen, plan_title, paywall, pushes
+        case id, label, body_label, ob_code, verse, benefit_screen, plan_title, paywall, pushes, chat_question
     }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        id = try c.decodeIfPresent(String.self, forKey: .id)
+        id = try c.decode(String.self, forKey: .id)
         label = try c.decodeIfPresent(String.self, forKey: .label)
-        // The spec writes one code; some storms answer to more than one.
+        body_label = try c.decodeIfPresent(String.self, forKey: .body_label)
+        // One code, null, or a list: a storm can answer to several ad angles.
         if let many = try? c.decodeIfPresent([String].self, forKey: .ob_code) {
-            ob_code = many
+            ob_codes = many
+        } else if let one = try? c.decodeIfPresent(String.self, forKey: .ob_code) {
+            ob_codes = [one]
         } else {
-            ob_code = (try? c.decodeIfPresent(String.self, forKey: .ob_code)).flatMap { $0 }.map { [$0] }
+            ob_codes = []
         }
+        verse = try c.decodeIfPresent(Verse.self, forKey: .verse)
         benefit_screen = try c.decodeIfPresent(BenefitScreen.self, forKey: .benefit_screen)
         plan_title = try c.decodeIfPresent(String.self, forKey: .plan_title)
         paywall = try c.decodeIfPresent(Paywall.self, forKey: .paywall)
         pushes = try c.decodeIfPresent(Pushes.self, forKey: .pushes)
+        chat_question = try c.decodeIfPresent(String.self, forKey: .chat_question)
     }
 }
 
-/// A storm's config with `default` filled in and `{storm_label}` substituted.
+/// A storm's config with `default` filled in.
 struct ResolvedStormConfig {
-    let label: String
+    let id: String
+    /// Lowercased, mid-sentence form: "health", "family", "mind".
+    let bodyLabel: String
     let benefitHeadline: String
-    let benefitVerse: StormConfig.Verse
-    let benefitBody: String
     let promises: [String]
     let planTitle: String
     let paywallHeadline: String
     let paywallBenefits: [StormConfig.Benefit]
     let audioPush: StormConfig.Push
     let chatPush: StormConfig.Push
+    let chatQuestion: String?
+}
+
+extension Storm {
+    /// The config entry's `id`. The fear storm is "anxiety" there.
+    var configID: String { self == .fear ? "anxiety" : rawValue }
 }
 
 enum StormConfigStore {
@@ -695,6 +719,10 @@ enum StormConfigStore {
     }()
 
     private static var file: StormConfigFile? { remote ?? bundled }
+
+    private static func entry(_ id: String) -> StormConfig? {
+        file?.storms.first { $0.id == id }
+    }
 
     /// Called from Remote Config apply. Empty or undecodable leaves the
     /// bundled file in charge, so a bad paste in Firebase cannot blank a screen.
@@ -718,40 +746,51 @@ enum StormConfigStore {
         return "bundled_v\(bundled?.version ?? 0)"
     }
 
-    /// The storm an ad code names, from the live config.
+    /// The storm an ad code names, or nil (including `command`, which names
+    /// none: those users get the picker).
     static func storm(forAdCode code: String) -> Storm? {
         let code = code.lowercased()
-        guard let storms = file?.storms else { return nil }
-        for storm in Storm.allCases where storms[storm.rawValue]?.ob_code?.contains(code) == true {
-            return storm
-        }
-        return nil
+        return Storm.allCases.first { entry($0.configID)?.ob_codes.contains(code) == true }
+    }
+
+    /// True when an ad code belongs in the storm arm's coin flip: any code a
+    /// config lists, `default`'s included.
+    static func isStormAdCode(_ code: String) -> Bool {
+        let code = code.lowercased()
+        return file?.storms.contains { $0.ob_codes.contains(code) } == true
     }
 
     static func resolved(for storm: Storm?) -> ResolvedStormConfig {
-        let d = file?.default
-        let s = storm.flatMap { file?.storms[$0.rawValue] }
-        let label = s?.label ?? d?.label ?? "life"
-        func fill(_ text: String) -> String { text.replacingOccurrences(of: "{storm_label}", with: label.lowercased()) }
+        let d = entry("default")
+        let s = storm.flatMap { entry($0.configID) }
+        let bodyLabel = (s?.body_label ?? s?.label ?? d?.body_label ?? "life").lowercased()
+        func fill(_ text: String) -> String { text.replacingOccurrences(of: "{storm_label}", with: bodyLabel) }
+        let chat = (s?.pushes?.chat_day2 ?? d?.pushes?.chat_day2)
+            ?? .init(title: "ASK WHAT SCRIPTURE SAYS 💬", body: "Ask, and get answers rooted in verses.")
 
-        let promises = s?.benefit_screen?.promises ?? d?.benefit_screen?.promises ?? []
         return ResolvedStormConfig(
-            label: label,
+            id: s?.id ?? "default",
+            bodyLabel: bodyLabel,
             benefitHeadline: fill(s?.benefit_screen?.headline ?? d?.benefit_screen?.headline ?? "Your words carry weight."),
-            benefitVerse: s?.benefit_screen?.verse ?? d?.benefit_screen?.verse
-                ?? .init(text: "Death and life are in the power of the tongue.", reference: "Proverbs 18:21"),
-            benefitBody: fill(s?.benefit_screen?.body ?? d?.benefit_screen?.body ?? ""),
-            promises: promises.map(fill),
+            promises: (s?.benefit_screen?.promises ?? d?.benefit_screen?.promises ?? []).map(fill),
             planTitle: fill(s?.plan_title ?? d?.plan_title ?? "Your 7-day plan"),
             paywallHeadline: fill(s?.paywall?.headline ?? d?.paywall?.headline ?? "Your plan is ready."),
             paywallBenefits: (s?.paywall?.benefits ?? d?.paywall?.benefits ?? [])
                 .map { .init(when: fill($0.when), text: fill($0.text)) },
             audioPush: (s?.pushes?.audio_day1 ?? d?.pushes?.audio_day1)
                 .map { .init(title: fill($0.title), body: fill($0.body)) }
-                ?? .init(title: "For tonight's quiet 🎧", body: "A short audio declaration for before you sleep."),
-            chatPush: (s?.pushes?.chat_day2 ?? d?.pushes?.chat_day2)
-                .map { .init(title: fill($0.title), body: fill($0.body)) }
-                ?? .init(title: "Ask the Bible", body: "Get an answer rooted in verses.")
+                ?? .init(title: "FOR TONIGHT'S QUIET 🎧", body: "Hear God's promises spoken over you before you sleep."),
+            chatPush: .init(title: fill(chat.title), body: fill(chat.body)),
+            chatQuestion: s?.chat_question ?? Self.question(in: fill(chat.body))
         )
+    }
+
+    /// "What does God's Word say about your healing? Ask, and ..." becomes the
+    /// question as she would type it: "What does God's Word say about my healing?"
+    private static func question(in body: String) -> String? {
+        guard let mark = body.firstIndex(of: "?") else { return nil }
+        let q = String(body[...mark])
+        return q.replacingOccurrences(of: " your ", with: " my ")
+            .replacingOccurrences(of: "who you are", with: "who I am")
     }
 }

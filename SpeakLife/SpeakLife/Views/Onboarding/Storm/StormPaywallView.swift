@@ -96,10 +96,10 @@ struct StormPaywallView: View {
                 line: storm.planDays[1],
                 eyebrow: "ONE MORE, ON US",
                 title: "Here's Day 2 of your plan",
-                allowsSilentRead: true
-            ) { spoke in
+                backup: StormSpeakBackup(config: subscriptionStore.stormSpeakBackup)
+            ) { outcome in
                 AnalyticsService.shared.track("objection_extra_declaration", parameters: [
-                    "spoken": spoke, "storm": storm.rawValue
+                    "outcome": "\(outcome)", "storm": storm.rawValue
                 ])
                 phase = .oneMoreDone
             }
@@ -126,10 +126,10 @@ struct StormPaywallView: View {
                 line: storm.secondDeclaration,
                 eyebrow: "YOUR FIRST WIN AS A MEMBER",
                 title: "Speak it again, stronger",
-                allowsSilentRead: true
-            ) { spoke in
+                backup: StormSpeakBackup(config: subscriptionStore.stormSpeakBackup)
+            ) { outcome in
                 AnalyticsService.shared.track("second_declaration_spoken", parameters: [
-                    "spoken": spoke, "storm": storm.rawValue, "placement": placement
+                    "outcome": "\(outcome)", "storm": storm.rawValue, "placement": placement
                 ])
                 phase = .morningConfirm
             }
@@ -182,7 +182,9 @@ struct StormPaywallView: View {
 
     private func handlePurchased(isTrial: Bool) {
         purchasedWithTrial = isTrial
-        StormPlan.start(storm: storm, isTrial: isTrial, enforcementEnabled: subscriptionStore.enforcementEnabled)
+        StormPlan.start(storm: storm, isTrial: isTrial,
+                        enforcementEnabled: subscriptionStore.enforcementEnabled,
+                        pushesEnabled: subscriptionStore.stormTrialPushes)
         UINotificationFeedbackGenerator().notificationOccurred(.success)
         phase = .success
     }
@@ -418,7 +420,7 @@ private struct StormPaywallMain: View {
 
     private var hero: some View {
         VStack(spacing: 10) {
-            StormGoldHeadline(text: config.paywallHeadline, highlight: storm.planName)
+            StormGoldHeadline(text: config.paywallHeadline)
                 .font(.title.weight(.bold))
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
@@ -487,7 +489,8 @@ private struct StormPaywallMain: View {
             Image(systemName: "checkmark.circle.fill")
                 .foregroundColor(StormStyle.gold)
                 .accessibilityHidden(true)
-            (Text(benefit.when).bold() + Text(" " + benefit.text))
+            (Text(benefit.when.hasSuffix(":") ? benefit.when : benefit.when + ":").bold()
+             + Text(" " + benefit.text))
                 .font(.body)
                 .foregroundColor(.white)
                 .fixedSize(horizontal: false, vertical: true)
@@ -724,16 +727,21 @@ private struct StormPaywallMain: View {
     }
 }
 
-/// A headline with the storm's name in gold when it appears in the text; the
-/// whole line in white when the config words it another way (grief does).
+/// The config headline with its storm name in gold: the words between "Your"
+/// and "plan" ("Your **Health storm** plan is ready."), or after "plan for"
+/// ("Your plan for **your family** is ready."). All white if neither fits.
 private struct StormGoldHeadline: View {
     let text: String
-    let highlight: String
+
+    private var highlightRange: Range<String.Index>? {
+        if let r = text.range(of: #"(?<=plan for ).+(?= is ready)"#, options: .regularExpression) { return r }
+        return text.range(of: #"(?<=^Your ).+?(?=( storm)? plan)"#, options: .regularExpression)
+    }
 
     var body: some View {
-        if let range = text.range(of: highlight) {
+        if let range = highlightRange {
             (Text(String(text[..<range.lowerBound]))
-             + Text(highlight).foregroundColor(StormStyle.gold)
+             + Text(String(text[range])).foregroundColor(StormStyle.gold)
              + Text(String(text[range.upperBound...])))
         } else {
             Text(text)
@@ -1286,7 +1294,7 @@ enum StormPlan {
     /// date (the morning push reads the day's line from it), and starts the
     /// in-app Enforcement week with exactly those lines so the app and the
     /// preview never disagree.
-    static func start(storm: Storm, isTrial: Bool, enforcementEnabled: Bool) {
+    static func start(storm: Storm, isTrial: Bool, enforcementEnabled: Bool, pushesEnabled: Bool) {
         guard StormOnboarding.planStartedOn == nil else { return }
         StormOnboarding.selectedStorm = storm
         StormOnboarding.planStartedOn = Date()
@@ -1298,7 +1306,7 @@ enum StormPlan {
             )
         }
         DailyDeclarationReminderService.shared.setupDailyReminders()
-        if isTrial { StormTrialPushes.schedule(storm: storm, trialStart: Date()) }
+        if isTrial && pushesEnabled { StormTrialPushes.schedule(storm: storm, trialStart: Date()) }
         AnalyticsService.shared.track("storm_plan_started", parameters: ["storm": storm.rawValue, "is_trial": isTrial])
     }
 }

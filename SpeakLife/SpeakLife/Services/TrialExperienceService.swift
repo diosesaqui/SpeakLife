@@ -89,9 +89,9 @@ final class TrialExperienceService: ObservableObject {
         // Start every trial at "not used", so a trial that never touches a
         // feature reads false rather than missing, and the two groups can be
         // compared on trial-to-paid.
-        for feature in Self.trackedTrialFeatures {
-            UserDefaults.standard.removeObject(forKey: "trial_used_\(feature)")
-            AnalyticsService.shared.setUserProperty("trial_used_\(feature)", value: false)
+        for (_, property) in Self.trackedTrialFeatures {
+            UserDefaults.standard.removeObject(forKey: property)
+            AnalyticsService.shared.setUserProperty(property, value: false)
         }
         AnalyticsService.shared.track("trial_experience_started", parameters: [
             "trial_length_days": length
@@ -115,18 +115,23 @@ final class TrialExperienceService: ObservableObject {
         }
     }
 
-    /// Features whose use during the trial is recorded per user.
-    static let trackedTrialFeatures = ["audio", "bible_chat"]
+    /// Features whose use during the trial is recorded per user, and the
+    /// PostHog person property each one sets.
+    static let trackedTrialFeatures: [String: String] = [
+        "audio": "used_audio_in_trial",
+        "bible_chat": "used_chat_in_trial"
+    ]
 
-    /// Records the first use of a feature inside an active trial: person
-    /// property `trial_used_<feature>` flips to true and `trial_feature_used`
-    /// fires once, with the trial day. Joined to RevenueCat's conversion, this
+    /// Records the first use of a feature inside an active trial: its person
+    /// property (`used_audio_in_trial`, `used_chat_in_trial`) flips to true and
+    /// `trial_feature_used` fires once, with the trial day. The trial-week push
+    /// introducing that feature is cancelled: she found it already. Joined to RevenueCat's conversion, this
     /// is how the "users who touch audio / Bible chat convert more" claim gets
     /// confirmed. No-op outside a trial and after the first use.
     func recordTrialFeatureUse(_ feature: String) {
-        guard isTrialActive else { return }
-        let key = "trial_used_\(feature)"
+        guard isTrialActive, let key = Self.trackedTrialFeatures[feature] else { return }
         guard !UserDefaults.standard.bool(forKey: key) else { return }
+        StormTrialPushes.cancel(forFeature: feature)
         UserDefaults.standard.set(true, forKey: key)
         AnalyticsService.shared.setUserProperty(key, value: true)
         AnalyticsService.shared.track("trial_feature_used", parameters: [

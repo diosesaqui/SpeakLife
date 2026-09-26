@@ -502,8 +502,9 @@ extension LifecycleNotificationService {
         // Turned off on the Reminders screen: no bedtime push of any kind.
         if UserDefaults.standard.object(forKey: Self.bedtimeAudioEnabledKey) as? Bool == false { return }
         let calendar = Calendar.current
-        guard let fire = calendar.date(bySettingHour: Self.bedtimeHour, minute: Self.bedtimeMinute,
-                                       second: 0, of: Date()),
+        // 8:30pm, an hour ahead of the regular 9:30pm bedtime push, which
+        // stands down tonight (see scheduleBedtimeAudio).
+        guard let fire = calendar.date(bySettingHour: 20, minute: 30, second: 0, of: Date()),
               fire > Date() else { return }
         let episode = Self.bedtimeEpisode(isPremium: true, category: category)
 
