@@ -342,7 +342,8 @@ final class AppDelegate: NSObject, MessagingDelegate {
             // Storm arm. Share of storm-mappable ad installs flipped into it
             // (0 = dormant), and the paywall button copy test.
             "stormAdShare": 0 as NSNumber,
-            "stormCtaCopy": "" as NSString
+            "stormCtaCopy": "" as NSString,
+            "stormAlsoIncluded": false as NSNumber
         ])
 
         // Wire the domain-facing feature-flag seam to Firebase Remote Config now

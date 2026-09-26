@@ -45,6 +45,10 @@ class TabViewModel: ObservableObject {
         selectedTab = feedTabTag  // Swipeable declaration feed
     }
 
+    func goToBibleChat() {
+        selectedTab = 4  // "Ask the Bible"
+    }
+
     func resetToHome() {
         selectedTab = 0  // Home tab — checklist when enabled, feed when not
     }

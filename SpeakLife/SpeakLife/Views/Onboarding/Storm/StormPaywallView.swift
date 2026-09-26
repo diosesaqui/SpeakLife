@@ -182,7 +182,7 @@ struct StormPaywallView: View {
 
     private func handlePurchased(isTrial: Bool) {
         purchasedWithTrial = isTrial
-        StormPlan.start(storm: storm, enforcementEnabled: subscriptionStore.enforcementEnabled)
+        StormPlan.start(storm: storm, isTrial: isTrial, enforcementEnabled: subscriptionStore.enforcementEnabled)
         UINotificationFeedbackGenerator().notificationOccurred(.success)
         phase = .success
     }
@@ -444,8 +444,39 @@ private struct StormPaywallMain: View {
             benefitRow("7 scriptures for \(storm.domain) every morning")
             benefitRow("A Daily Burst built around your storm")
             benefitRow("Spoken out loud, in your own voice")
+            if subscriptionStore.stormAlsoIncluded {
+                alsoIncluded.padding(.top, 4)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// Supporting value under the storm promise, not competing with it.
+    /// Remote Config `stormAlsoIncluded` turns it on for the with/without test.
+    private var alsoIncluded: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Also included")
+                .font(.subheadline.weight(.semibold))
+                .foregroundColor(StormStyle.gold)
+            alsoRow("headphones", "Scripture audio for the nights your mind won't rest")
+            alsoRow("bubble.left.and.text.bubble.right.fill", "Ask any Bible question and get answers rooted in verses")
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color.white.opacity(0.06)))
+    }
+
+    private func alsoRow(_ symbol: String, _ text: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
+            Image(systemName: symbol)
+                .foregroundColor(StormStyle.secondary)
+                .frame(width: 22)
+                .accessibilityHidden(true)
+            Text(text)
+                .font(.callout)
+                .foregroundColor(StormStyle.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 
     private func benefitRow(_ text: String) -> some View {
@@ -629,7 +660,8 @@ private struct StormPaywallMain: View {
             "price": product.displayPrice,
             "trial_eligible": model.isTrialEligible,
             "trial_days": model.trialDays,
-            "cta": ctaTitle
+            "cta": ctaTitle,
+            "also_included": subscriptionStore.stormAlsoIncluded
         ])
         // The cross-arm event every other paywall fires, so the existing
         // onboarding funnels count this one without a special case.
@@ -1233,7 +1265,7 @@ enum StormPlan {
     /// date (the morning push reads the day's line from it), and starts the
     /// in-app Enforcement week with exactly those lines so the app and the
     /// preview never disagree.
-    static func start(storm: Storm, enforcementEnabled: Bool) {
+    static func start(storm: Storm, isTrial: Bool, enforcementEnabled: Bool) {
         guard StormOnboarding.planStartedOn == nil else { return }
         StormOnboarding.selectedStorm = storm
         StormOnboarding.planStartedOn = Date()
@@ -1245,6 +1277,7 @@ enum StormPlan {
             )
         }
         DailyDeclarationReminderService.shared.setupDailyReminders()
-        AnalyticsService.shared.track("storm_plan_started", parameters: ["storm": storm.rawValue])
+        if isTrial { StormTrialPushes.schedule(storm: storm, trialStart: Date()) }
+        AnalyticsService.shared.track("storm_plan_started", parameters: ["storm": storm.rawValue, "is_trial": isTrial])
     }
 }

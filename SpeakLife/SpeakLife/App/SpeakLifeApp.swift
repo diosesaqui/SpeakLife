@@ -513,6 +513,13 @@ struct SpeakLifeApp: App {
                     appState.remoteMessage = message
                 }
                 return
+            case "bibleChat":
+                // Trial push introducing Bible chat: open the Ask the Bible tab.
+                tabViewModel.goToBibleChat()
+                AnalyticsService.shared.track("bible_chat_push_opened", parameters: [
+                    "push": content.userInfo["action"] as? String ?? "unknown"
+                ])
+                return
             case "audio":
                 // Audio push: open the Audio tab and play the named episode.
                 // Rides the checklist's deep link, which already waits for the

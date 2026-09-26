@@ -98,6 +98,19 @@ enum Storm: String, CaseIterable, Identifiable {
         }
     }
 
+    /// What to ask Bible chat about, for the Day-2 trial push.
+    var chatTopic: String {
+        switch self {
+        case .health:   return "your health"
+        case .family:   return "your children"
+        case .marriage: return "your marriage"
+        case .finances: return "your finances"
+        case .fear:     return "fear and worry"
+        case .grief:    return "losing someone you love"
+        case .identity: return "who you are in Christ"
+        }
+    }
+
     /// The storm an ad's `ob=` code is about, or nil when the ad angle names no
     /// single storm (warfare, promises, command, ...). Only these codes are
     /// eligible for the ad coin flip.
@@ -512,6 +525,42 @@ enum StormTrialReminder {
 
     static func cancel() {
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [identifier])
+    }
+}
+
+// MARK: - Trial week feature pushes
+
+/// Users who touch audio and Bible chat during the trial convert more, so the
+/// trial week introduces both: audio on the first night (see
+/// `LifecycleNotificationService.scheduleTrialFirstNightAudio`), Bible chat on
+/// Day 2, tied to their storm.
+enum StormTrialPushes {
+    static let bibleChatID = "trial_bible_chat_d2"
+
+    static func schedule(storm: Storm, trialStart: Date, calendar: Calendar = .current) {
+        LifecycleNotificationService.shared.scheduleTrialFirstNightAudio(
+            category: storm.category.rawValue,
+            domain: storm.domain
+        )
+
+        // Day 2, midday: clear of the morning Burst and the evening audio.
+        guard let day2 = calendar.date(byAdding: .day, value: 1, to: trialStart),
+              let fire = calendar.date(bySettingHour: 12, minute: 30, second: 0, of: day2),
+              fire > Date() else { return }
+        let content = UNMutableNotificationContent()
+        content.title = "Ask what Scripture says about \(storm.chatTopic)"
+        content.body = "Type any question in Ask the Bible and get an answer rooted in verses."
+        content.sound = .default
+        content.userInfo = ["action": bibleChatID, "deepLink": "bibleChat"]
+        let comps = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: fire)
+        UNUserNotificationCenter.current().add(UNNotificationRequest(
+            identifier: bibleChatID,
+            content: content,
+            trigger: UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)
+        ))
+        AnalyticsService.shared.track("trial_feature_pushes_scheduled", parameters: [
+            "storm": storm.rawValue
+        ])
     }
 }
 

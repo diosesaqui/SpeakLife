@@ -199,6 +199,10 @@ final class SubscriptionStore: ObservableObject {
     /// "try_free" → "Try it free". Remote Config `stormCtaCopy`.
     @Published var stormCtaCopy: String = ""
 
+    /// Storm paywall "Also included" row (audio + Bible chat) under the three
+    /// storm benefits. Remote Config `stormAlsoIncluded`, the with/without test.
+    @Published var stormAlsoIncluded = false
+
     /// The storm an ad install arrives with, when the coin flip sent it to the
     /// storm arm. The flow preselects it and skips the picker.
     var adPreselectedStorm: Storm? {
@@ -643,6 +647,7 @@ final class SubscriptionStore: ObservableObject {
         stormAdShare = DebugOverrides.string("stormAdShare").flatMap(Double.init)
             ?? remoteConfig["stormAdShare"].numberValue.doubleValue
         stormCtaCopy = stringValue("stormCtaCopy")
+        stormAlsoIncluded = flagValue("stormAlsoIncluded")
     }
 
     /// Remote Config value for a boolean flag, unless a debug override is set.

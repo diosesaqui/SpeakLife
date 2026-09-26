@@ -490,6 +490,41 @@ extension LifecycleNotificationService {
     private static let bedtimeHour = 21
     private static let bedtimeMinute = 30
     private static let bedtimeID = "bedtime_audio"
+    static let trialAudioID = "trial_audio_d1"
+    private static let trialAudioNightKey = "trial_audio_d1_night"
+
+    /// Day 1 of a trial: tonight's bedtime push introduces the audio library
+    /// in the storm's words ("For tonight's quiet") instead of the usual line.
+    /// It replaces tonight's nightly push rather than adding a second one.
+    /// Users who touch audio in the trial convert more, so the first night is
+    /// where it is introduced.
+    func scheduleTrialFirstNightAudio(category: String, domain: String) {
+        // Turned off on the Reminders screen: no bedtime push of any kind.
+        if UserDefaults.standard.object(forKey: Self.bedtimeAudioEnabledKey) as? Bool == false { return }
+        let calendar = Calendar.current
+        guard let fire = calendar.date(bySettingHour: Self.bedtimeHour, minute: Self.bedtimeMinute,
+                                       second: 0, of: Date()),
+              fire > Date() else { return }
+        let episode = Self.bedtimeEpisode(isPremium: true, category: category)
+
+        let content = UNMutableNotificationContent()
+        content.title = "For tonight's quiet 🎧"
+        content.body = "A short audio declaration over \(domain), for before you sleep. Press play and rest."
+        content.sound = .default
+        content.userInfo = [
+            "action": Self.trialAudioID,
+            "deepLink": "audio",
+            "audioId": episode.audioId
+        ]
+        let comps = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: fire)
+        UserDefaults.standard.set(Date(), forKey: Self.trialAudioNightKey)
+        center.removePendingNotificationRequests(withIdentifiers: [Self.bedtimeID])
+        center.add(UNNotificationRequest(
+            identifier: Self.trialAudioID,
+            content: content,
+            trigger: UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)
+        ))
+    }
 
     private struct BedtimeEpisode {
         let audioId: String
@@ -542,6 +577,11 @@ extension LifecycleNotificationService {
     /// the category is saved, since the paywall comes first.
     func scheduleBedtimeAudio(isPremium: Bool, category: String? = nil) {
         let defaults = UserDefaults.standard
+        // Tonight belongs to the trial's first-night audio push. The nightly
+        // request repeats, so re-adding it now would send both at 9:30pm; it
+        // comes back on the first open after tonight.
+        if let night = defaults.object(forKey: Self.trialAudioNightKey) as? Date,
+           Calendar.current.isDateInToday(night) { return }
         center.removePendingNotificationRequests(withIdentifiers: [Self.bedtimeID])
         // Turned off on the Reminders screen.
         if defaults.object(forKey: Self.bedtimeAudioEnabledKey) as? Bool == false { return }

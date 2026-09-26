@@ -86,6 +86,13 @@ final class TrialExperienceService: ObservableObject {
         UserDefaults.standard.set(length, forKey: kTrialLengthDays)
 
         scheduleTrialPushes(from: now, trialLengthDays: length)
+        // Start every trial at "not used", so a trial that never touches a
+        // feature reads false rather than missing, and the two groups can be
+        // compared on trial-to-paid.
+        for feature in Self.trackedTrialFeatures {
+            UserDefaults.standard.removeObject(forKey: "trial_used_\(feature)")
+            AnalyticsService.shared.setUserProperty("trial_used_\(feature)", value: false)
+        }
         AnalyticsService.shared.track("trial_experience_started", parameters: [
             "trial_length_days": length
         ])
@@ -108,6 +115,26 @@ final class TrialExperienceService: ObservableObject {
         }
     }
 
+    /// Features whose use during the trial is recorded per user.
+    static let trackedTrialFeatures = ["audio", "bible_chat"]
+
+    /// Records the first use of a feature inside an active trial: person
+    /// property `trial_used_<feature>` flips to true and `trial_feature_used`
+    /// fires once, with the trial day. Joined to RevenueCat's conversion, this
+    /// is how the "users who touch audio / Bible chat convert more" claim gets
+    /// confirmed. No-op outside a trial and after the first use.
+    func recordTrialFeatureUse(_ feature: String) {
+        guard isTrialActive else { return }
+        let key = "trial_used_\(feature)"
+        guard !UserDefaults.standard.bool(forKey: key) else { return }
+        UserDefaults.standard.set(true, forKey: key)
+        AnalyticsService.shared.setUserProperty(key, value: true)
+        AnalyticsService.shared.track("trial_feature_used", parameters: [
+            "feature": feature,
+            "trial_day": trialDay
+        ])
+    }
+
     /// Call on every swipe_affirmation or declaration spoken during trial
     func onDeclarationSpoken() {
         guard isTrialActive else { return }
@@ -118,7 +145,7 @@ final class TrialExperienceService: ObservableObject {
     /// Call when user converts (premium_succeeded)
     func onTrialConverted() {
         UserDefaults.standard.set(false, forKey: kTrialActive)
-        center.removePendingNotificationRequests(withIdentifiers: ["trial_d2", "trial_d3", StormTrialReminder.identifier])
+        center.removePendingNotificationRequests(withIdentifiers: ["trial_d2", "trial_d3", StormTrialReminder.identifier, StormTrialPushes.bibleChatID])
         AnalyticsService.shared.track("trial_experience_converted", parameters: [
             "declarations_during_trial": declarationCountDuringTrial,
             "trial_day": trialDay
