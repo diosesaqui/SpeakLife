@@ -672,9 +672,17 @@ private struct StormPaywallMain: View {
         .padding(.top, 14)
         .padding(.bottom, 30)
         .background(
-            StormStyle.navyDeep.opacity(0.96)
-                .shadow(color: .black.opacity(0.35), radius: 12, y: -4)
-                .ignoresSafeArea(edges: .bottom)
+            // Content dissolves into the footer instead of being cut by it.
+            VStack(spacing: 0) {
+                LinearGradient(colors: [StormStyle.navyDeep.opacity(0), StormStyle.navyDeep],
+                               startPoint: .top, endPoint: .bottom)
+                    .frame(height: 28)
+                    .offset(y: -28)
+                    .frame(height: 0, alignment: .top)
+                StormStyle.navyDeep
+            }
+            .ignoresSafeArea(edges: .bottom)
+            .accessibilityHidden(true)
         )
     }
 
@@ -700,11 +708,14 @@ private struct StormPaywallMain: View {
                         .font(.body)
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
                 } else {
                     (Text("\(model.annualPrice)/year").font(.title3.weight(.bold))
                      + Text("  (\(model.monthlyEquivalent)/mo)"))
                         .font(.body)
                         .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
         }
@@ -978,55 +989,63 @@ private struct StormObjectionScreen: View {
     let onPick: (StormObjection) -> Void
     let onClose: () -> Void
     @State private var v = false
+    @State private var picked: StormObjection?
 
     var body: some View {
-        VStack(spacing: 0) {
-            HStack {
-                Button(action: onClose) {
-                    Image(systemName: "xmark")
-                        .font(.title3.weight(.semibold))
-                        .foregroundColor(.white.opacity(0.6))
-                        .frame(width: 44, height: 44)
-                }
-                .accessibilityLabel("Close")
-                Spacer()
-            }
-            .padding(.horizontal, 12)
-            .padding(.top, 52)
-            Spacer()
-            VStack(spacing: 12) {
-                Text("What's holding you back?")
-                    .font(.title.weight(.bold))
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.center)
-                Text("Tell us, and we'll answer it honestly.")
-                    .font(.body)
-                    .foregroundColor(StormStyle.secondary)
-            }
-            .padding(.horizontal, 24)
-            .stormAppear(v)
-            VStack(spacing: 10) {
-                ForEach(StormObjection.allCases) { reason in
-                    Button { onPick(reason) } label: {
-                        HStack {
-                            Text(reason.label)
-                                .font(.body.weight(.semibold))
-                                .foregroundColor(.white)
-                            Spacer()
-                            Image(systemName: "chevron.right").foregroundColor(StormStyle.secondary)
-                        }
-                        .padding(.horizontal, 18)
-                        .frame(minHeight: 58)
-                        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color.white.opacity(0.08)))
+        ZStack(alignment: .topLeading) {
+            StormScaffold(topInset: 100) {
+                VStack(spacing: 26) {
+                    VStack(spacing: 12) {
+                        Text("What's holding you back?")
+                            .font(.title.weight(.bold))
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text("Tell us, and we'll answer it honestly.")
+                            .font(.body)
+                            .foregroundColor(StormStyle.secondary)
+                            .multilineTextAlignment(.center)
                     }
-                    .buttonStyle(.dsPressable(feel: .tapLight))
+                    .stormAppear(v)
+                    VStack(spacing: 10) {
+                        ForEach(StormObjection.allCases) { reason in
+                            Button {
+                                guard picked == nil else { return }
+                                picked = reason
+                                onPick(reason)
+                            } label: {
+                                HStack {
+                                    Text(reason.label)
+                                        .font(.body.weight(.semibold))
+                                        .foregroundColor(.white)
+                                        .multilineTextAlignment(.leading)
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .foregroundColor(StormStyle.secondary)
+                                        .accessibilityHidden(true)
+                                }
+                                .padding(.horizontal, 18)
+                                .frame(minHeight: 58)
+                                .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color.white.opacity(0.08)))
+                            }
+                            .buttonStyle(.dsPressable(feel: .tapLight))
+                        }
+                    }
+                    .stormAppear(v, delay: 0.1)
                 }
+                .padding(.horizontal, 20)
+            } footer: {
+                Color.clear.frame(height: 40)
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 26)
-            .stormAppear(v, delay: 0.1)
-            Spacer()
-            Spacer()
+            Button(action: onClose) {
+                Image(systemName: "xmark")
+                    .font(.title3.weight(.semibold))
+                    .foregroundColor(.white.opacity(0.6))
+                    .frame(width: 44, height: 44)
+            }
+            .accessibilityLabel("Close")
+            .padding(.leading, 12)
+            .padding(.top, 52)
         }
         .onAppear { v = true }
     }
@@ -1063,8 +1082,7 @@ private struct StormPriceOfferScreen: View {
     @State private var alertMessage: String?
 
     var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
+        StormScaffold {
             VStack(spacing: 16) {
                 Text("A one-time price, just for you")
                     .font(.title.weight(.bold))
@@ -1089,7 +1107,7 @@ private struct StormPriceOfferScreen: View {
                 }
             }
             .padding(.horizontal, 24)
-            Spacer()
+        } footer: {
             VStack(spacing: 8) {
                 StormPrimaryButton(
                     title: model.isTrialEligible ? model.trialCTA : "Claim \(model.annualPrice)/year",
@@ -1134,8 +1152,7 @@ private struct StormOneMoreDoneScreen: View {
     let onDecline: () -> Void
 
     var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
+        StormScaffold {
             VStack(spacing: 14) {
                 Image(systemName: "checkmark.seal.fill")
                     .font(.system(size: 52))
@@ -1153,7 +1170,7 @@ private struct StormOneMoreDoneScreen: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             .padding(.horizontal, 28)
-            Spacer()
+        } footer: {
             VStack(spacing: 8) {
                 StormPrimaryButton(title: "See my plan", action: onBackToPaywall)
                 StormTextButton(title: "Maybe later", action: onDecline)
@@ -1189,7 +1206,7 @@ private struct StormReassuranceScreen: View {
                     if model.state == .ready {
                         if model.isTrialEligible {
                             StormTrialTimeline(trialDays: model.trialDays, price: model.annualPrice)
-                            Text("Nothing is charged today. We send you a reminder two days before your trial ends, and you can cancel in Settings with two taps.")
+                            Text("Nothing is charged today. We send you a reminder two days before your trial ends, and you can cancel anytime in Settings.")
                                 .font(.body)
                                 .foregroundColor(StormStyle.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -1282,8 +1299,7 @@ private struct StormMorningConfirmScreen: View {
     @State private var editing = false
 
     var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
+        StormScaffold {
             VStack(spacing: 14) {
                 Image(systemName: "alarm.fill")
                     .font(.system(size: 50))
@@ -1303,7 +1319,7 @@ private struct StormMorningConfirmScreen: View {
                 }
             }
             .padding(.horizontal, 28)
-            Spacer()
+        } footer: {
             VStack(spacing: 8) {
                 StormPrimaryButton(title: "Perfect") { save() }
                 if !editing {
@@ -1333,8 +1349,7 @@ private struct StormSaveAccountScreen: View {
     let onDone: () -> Void
 
     var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
+        StormScaffold {
             VStack(spacing: 14) {
                 Image(systemName: "icloud.and.arrow.up.fill")
                     .font(.system(size: 50))
@@ -1353,7 +1368,7 @@ private struct StormSaveAccountScreen: View {
                 }
             }
             .padding(.horizontal, 28)
-            Spacer()
+        } footer: {
             VStack(spacing: 8) {
                 StormPrimaryButton(title: "Sign in with Apple", isLoading: appleSignIn.isLoading) {
                     AnalyticsService.shared.track("storm_save_account_tapped")

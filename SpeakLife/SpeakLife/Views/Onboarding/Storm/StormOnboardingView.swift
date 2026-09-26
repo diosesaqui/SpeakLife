@@ -409,6 +409,32 @@ private struct StormProgressBar: View {
     }
 }
 
+/// The layout every centred storm screen shares: content centred in the space
+/// above a pinned footer, scrolling only when large text makes it taller than
+/// the screen, so the button is always reachable.
+struct StormScaffold<Content: View, Footer: View>: View {
+    var topInset: CGFloat = 80
+    @ViewBuilder let content: Content
+    @ViewBuilder let footer: Footer
+
+    var body: some View {
+        VStack(spacing: 0) {
+            GeometryReader { geo in
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 0) {
+                        Spacer(minLength: topInset)
+                        content
+                        Spacer(minLength: 24)
+                    }
+                    .frame(maxWidth: .infinity, minHeight: geo.size.height)
+                }
+                .scrollBounceBehavior(.basedOnSize)
+            }
+            footer
+        }
+    }
+}
+
 /// The one primary button: gold fill, navy text, 58pt, 16pt corners.
 struct StormPrimaryButton: View {
     let title: String
@@ -546,17 +572,32 @@ private struct StormChoiceRow: View {
 private struct StormWelcomeScreen: View {
     let onContinue: () -> Void
     @State private var v = false
+    /// The storm clears to sun a beat after the screen appears: the whole
+    /// promise of the app in one motion.
+    @State private var calmed = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
+        StormScaffold {
             VStack(spacing: 22) {
-                Image(systemName: "cloud.bolt.rain.fill")
-                    .font(.system(size: 56))
-                    .symbolRenderingMode(.hierarchical)
+                ZStack {
+                    Circle()
+                        .fill(StormStyle.gold.opacity(calmed ? 0.22 : 0.08))
+                        .frame(width: 132, height: 132)
+                        .blur(radius: 24)
+                    Image(systemName: calmed ? "sun.max.fill" : "cloud.bolt.rain.fill")
+                        .font(.system(size: 60))
+                        .symbolRenderingMode(.hierarchical)
+                        .foregroundStyle(StormStyle.gold)
+                        .contentTransition(.symbolEffect(.replace.downUp))
+                }
+                .accessibilityHidden(true)
+                .stormAppear(v)
+                Text("SPEAKLIFE")
+                    .font(.footnote.weight(.bold))
+                    .kerning(2)
                     .foregroundColor(StormStyle.gold)
-                    .accessibilityHidden(true)
-                    .stormAppear(v)
+                    .stormAppear(v, delay: 0.04)
                 Text("Victory over every storm.")
                     .font(.largeTitle.weight(.bold))
                     .foregroundColor(.white)
@@ -571,13 +612,18 @@ private struct StormWelcomeScreen: View {
                     .stormAppear(v, delay: 0.16)
             }
             .padding(.horizontal, 28)
-            Spacer()
+        } footer: {
             StormPrimaryButton(title: "Continue", action: onContinue)
                 .padding(.horizontal, 24)
                 .padding(.bottom, 44)
                 .stormAppear(v, delay: 0.24)
         }
         .onAppear { v = true }
+        .task {
+            if reduceMotion { calmed = true; return }
+            try? await Task.sleep(nanoseconds: 1_300_000_000)
+            withAnimation(.easeInOut(duration: 0.8)) { calmed = true }
+        }
     }
 }
 
@@ -669,8 +715,7 @@ private struct StormMechanismScreen: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
+        StormScaffold {
             VStack(spacing: 20) {
                 Text("MARK 4:39")
                     .font(.footnote.weight(.bold))
@@ -697,7 +742,7 @@ private struct StormMechanismScreen: View {
                     .stormAppear(v, delay: 0.24)
             }
             .padding(.horizontal, 28)
-            Spacer()
+        } footer: {
             StormPrimaryButton(title: "I'm ready to speak", action: onContinue)
                 .padding(.horizontal, 24)
                 .padding(.bottom, 44)
@@ -963,8 +1008,7 @@ private struct StormFeelingScreen: View {
     @State private var v = false
 
     var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
+        StormScaffold {
             StormHeader(title: "How was that?", subtitle: "You just spoke God's Word over your storm.", shown: v)
             LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
                 ForEach(StormFeeling.allCases) { feeling in
@@ -992,7 +1036,7 @@ private struct StormFeelingScreen: View {
             .padding(.horizontal, 20)
             .padding(.top, 28)
             .stormAppear(v, delay: 0.12)
-            Spacer()
+        } footer: {
             StormTextButton(title: "Skip") {
                 guard picked == nil else { return }
                 onPick(nil)
@@ -1098,8 +1142,7 @@ private struct StormMorningTimeScreen: View {
     @State private var v = false
 
     var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
+        StormScaffold {
             StormHeader(title: "When will you speak each morning?",
                         subtitle: "Your Daily Burst will be ready: 7 scriptures to speak before the day starts talking to you.",
                         shown: v)
@@ -1109,7 +1152,7 @@ private struct StormMorningTimeScreen: View {
                 .colorScheme(.dark)
                 .padding(.top, 12)
                 .stormAppear(v, delay: 0.12)
-            Spacer()
+        } footer: {
             StormPrimaryButton(title: "Continue", action: onContinue)
                 .padding(.horizontal, 24)
                 .padding(.bottom, 44)
@@ -1128,38 +1171,83 @@ private struct StormReminderExplainerScreen: View {
     @State private var v = false
 
     var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
-            VStack(spacing: 20) {
-                Image(systemName: "bell.badge.fill")
-                    .font(.system(size: 52))
-                    .symbolRenderingMode(.hierarchical)
-                    .foregroundColor(StormStyle.gold)
-                    .accessibilityHidden(true)
-                    .stormAppear(v)
-                Text("Your Daily Burst, every morning at \(time.formatted(date: .omitted, time: .shortened))")
-                    .font(.title2.weight(.bold))
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .stormAppear(v, delay: 0.08)
-                Text("One reminder a day. Tap it and speak 7 scriptures for \(storm.domain) out loud. That's the whole habit.")
-                    .font(.body)
-                    .foregroundColor(StormStyle.secondary)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .stormAppear(v, delay: 0.16)
+        StormScaffold(topInset: 90) {
+            VStack(spacing: 26) {
+                VStack(spacing: 12) {
+                    Text("Your Daily Burst, every morning at \(time.formatted(date: .omitted, time: .shortened))")
+                        .font(.title2.weight(.bold))
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("One reminder a day. Tap it and speak 7 scriptures for \(storm.domain) out loud.")
+                        .font(.body)
+                        .foregroundColor(StormStyle.secondary)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .stormAppear(v)
+
+                // What will actually arrive, shown the way iOS will show it.
+                StormNotificationPreview(
+                    time: time,
+                    title: "Your Daily Burst is ready",
+                    message: "7 scriptures for \(storm.domain), opening with: \(storm.planDays[1].text)"
+                )
+                .stormAppear(v, delay: 0.15)
             }
-            .padding(.horizontal, 28)
-            Spacer()
+            .padding(.horizontal, 24)
+        } footer: {
             VStack(spacing: 8) {
                 StormPrimaryButton(title: "Turn on my reminder", isLoading: isBusy) { onChoice(true) }
                 StormTextButton(title: "Not now") { onChoice(false) }
+                    .disabled(isBusy)
             }
             .padding(.horizontal, 24)
             .padding(.bottom, 32)
         }
         .onAppear { v = true }
+    }
+}
+
+/// A lock-screen notification, drawn in the system's own shape and material,
+/// so she sees exactly what she is saying yes to.
+private struct StormNotificationPreview: View {
+    let time: Date
+    let title: String
+    let message: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image("appIconDisplay")
+                .resizable()
+                .scaledToFill()
+                .frame(width: 38, height: 38)
+                .background(StormStyle.navy)
+                .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                HStack {
+                    Text(title)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(.primary)
+                    Spacer(minLength: 8)
+                    Text(time.formatted(date: .omitted, time: .shortened))
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                }
+                Text(message)
+                    .font(.subheadline)
+                    .foregroundColor(.primary)
+                    .lineLimit(3)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(14)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .environment(\.colorScheme, .light)
+        .shadow(color: .black.opacity(0.35), radius: 18, y: 8)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Notification preview. \(title). \(message)")
     }
 }
 
@@ -1170,6 +1258,12 @@ private struct StormPlanScreen: View {
     let morning: Date
     let onContinue: () -> Void
     @State private var v = false
+
+    /// Real weekdays make the week feel booked, not abstract. Day 2 is tomorrow.
+    private func weekday(offset: Int) -> String {
+        let date = Calendar.current.date(byAdding: .day, value: offset, to: Date()) ?? Date()
+        return offset == 1 ? "Tomorrow" : date.formatted(.dateTime.weekday(.wide))
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -1204,7 +1298,7 @@ private struct StormPlanScreen: View {
                                     }
                                 }
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text(index == 0 ? "Day 1 · Spoken today" : "Day \(index + 1)")
+                                    Text(index == 0 ? "Day 1 · Spoken today" : "Day \(index + 1) · \(weekday(offset: index))")
                                         .font(.body.weight(.semibold))
                                         .foregroundColor(.white)
                                     Text(index == 0 ? line.reference : "\(line.reference) + 6 more")
