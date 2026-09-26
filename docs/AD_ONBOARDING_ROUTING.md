@@ -20,8 +20,18 @@ All three funnel into the same in-app override:
 `SubscriptionStore.handleIncomingURL` / `assignOnboardingVariantFromAd` →
 `resolvedOnboardingVariant` returns the ad-matched arm above the Remote Config
 experiment. The variant is **frozen** once onboarding appears
-(`lockOnboardingVariant`) so a late link can't swap the flow mid-run. An
-`onboarding_variant_assigned` event (`{ variant, source }`) fires for analytics.
+(`lockOnboardingVariant`) so a late link can't swap the flow mid-run. The link
+arriving fires `onboarding_ad_link_received` (`{ variant, source }`, source =
+deeplink/ad/branch/...). The arm itself is reported for EVERY install, once,
+when onboarding locks it: `onboarding_variant_assigned` (`{ variant, source,
+storm_ad_bucket? }`, source = debug/ad/ad_storm/remote_config/legacy_default).
+Before the storm-arm build that event fired only at ad-link time (~2% of
+installs) with the link source; do not compare the two.
+
+Storm arm: ad codes listed in `storm_configs.json` (`ob_code`) are flipped once,
+at lock, between the storm arm and their own angle arm by Remote Config
+`stormAdShare`. Compare `variant = storm` (source `ad_storm`) against
+`storm_ad_bucket = control`, never against the broad arms.
 
 ## The variants
 

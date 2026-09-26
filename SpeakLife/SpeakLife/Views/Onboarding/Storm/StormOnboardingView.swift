@@ -726,14 +726,24 @@ enum StormSpeakBackup {
     init(config: String) { self = config.lowercased() == "read" ? .read : .hear }
 }
 
-/// Reads a declaration aloud in the voice the feed's speaker button uses.
-/// Not `SpeechCoordinator` itself: that restarts the app's background music
-/// when it finishes, which has no place in the middle of onboarding.
+/// Reads a declaration aloud in the app's warm voice (the best installed
+/// English voice, as the feed's speaker button picks it). Not
+/// `SpeechCoordinator` itself: that restarts the app's background music when
+/// it finishes and resets the audio session in its initializer, neither of
+/// which belongs in the middle of onboarding.
 @MainActor
 final class StormVoice: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
     @Published private(set) var isSpeaking = false
     private let synthesizer = AVSpeechSynthesizer()
+    /// Called only when the line was read to the end, never on a stop.
     var onFinish: (() -> Void)?
+
+    private static let voice: AVSpeechSynthesisVoice? = {
+        let english = AVSpeechSynthesisVoice.speechVoices().filter { $0.language.hasPrefix("en") }
+        return english.first { $0.quality == .premium && $0.gender == .female }
+            ?? english.first { $0.quality == .enhanced && $0.gender == .female }
+            ?? AVSpeechSynthesisVoice(language: "en-US")
+    }()
 
     override init() {
         super.init()
@@ -741,25 +751,37 @@ final class StormVoice: NSObject, ObservableObject, AVSpeechSynthesizerDelegate 
     }
 
     func speak(_ text: String) {
-        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .spokenAudio)
-        try? AVAudioSession.sharedInstance().setActive(true)
+        let session = AVAudioSession.sharedInstance()
+        try? session.setCategory(.playback, mode: .spokenAudio, options: [.duckOthers])
+        try? session.setActive(true)
         let utterance = AVSpeechUtterance(string: text)
-        utterance.voice = SpeechCoordinator().bestVoice(gender: .female) ?? AVSpeechSynthesisVoice(language: "en-US")
+        utterance.voice = Self.voice
         utterance.rate = 0.46
         isSpeaking = true
         synthesizer.speak(utterance)
     }
 
     func stop() {
+        guard isSpeaking else { return }
         synthesizer.stopSpeaking(at: .immediate)
+        finish()
+    }
+
+    private func finish() {
         isSpeaking = false
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 
     nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
         Task { @MainActor in
-            self.isSpeaking = false
+            guard self.isSpeaking else { return }
+            self.finish()
             self.onFinish?()
         }
+    }
+
+    nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
+        Task { @MainActor in self.finish() }
     }
 }
 
@@ -773,13 +795,16 @@ struct StormSpeakScreen: View {
     let onDone: (StormSpeakOutcome) -> Void
 
     @StateObject private var voice = StormVoice()
-    private var finishedByListening: Bool { finished && !isSealed && !isCharging && voiceUsed }
-    @State private var voiceUsed = false
+    /// Set once, by whichever way the screen ends first. Every exit goes
+    /// through `complete(_:)`, so a hold and a finished voice landing
+    /// together still end the screen exactly once.
+    @State private var outcome: StormSpeakOutcome?
     @State private var isCharging = false
     @State private var isSealed = false
-    @State private var finished = false
     @State private var v = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var finished: Bool { outcome != nil }
 
     /// Long enough to say the line at an unhurried pace.
     private var chargeDuration: Double {
@@ -787,121 +812,146 @@ struct StormSpeakScreen: View {
         return min(max(Double(words) * 0.36, 2.8), 6.5)
     }
 
+    private func complete(_ result: StormSpeakOutcome) {
+        guard outcome == nil else { return }
+        withAnimation(reduceMotion ? nil : .spring(response: 0.45, dampingFraction: 0.8)) { outcome = result }
+        voice.stop()
+        if result != .readSilently {
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + (result == .readSilently ? 0 : 1.1)) { onDone(result) }
+    }
+
     var body: some View {
         GeometryReader { geo in
             VStack(spacing: 0) {
-                Spacer(minLength: 90)
-                VStack(spacing: 18) {
-                    Text(eyebrow)
-                        .font(.footnote.weight(.bold))
-                        .kerning(1.4)
-                        .foregroundColor(StormStyle.gold)
-                        .stormAppear(v)
-                    Text(title)
-                        .font(.title2.weight(.bold))
-                        .foregroundColor(.white)
-                        .multilineTextAlignment(.center)
-                        .stormAppear(v, delay: 0.06)
-
-                    VStack(spacing: 16) {
-                        Text(line.text)
-                            .font(.title2.weight(.semibold))
+                // Scrolls only when it has to: at the largest text sizes the
+                // card grows past the screen, and the controls below must stay
+                // reachable or nobody can finish onboarding.
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 18) {
+                        Text(eyebrow)
+                            .font(.footnote.weight(.bold))
+                            .kerning(1.4)
+                            .foregroundColor(StormStyle.gold)
+                            .stormAppear(v)
+                        Text(title)
+                            .font(.title2.weight(.bold))
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
-                        VStack(spacing: 6) {
-                            Text("\u{201C}\(line.verse)\u{201D}")
-                                .font(.system(.callout, design: .serif).italic())
-                                .foregroundColor(StormStyle.secondary)
-                                .multilineTextAlignment(.center)
-                                .fixedSize(horizontal: false, vertical: true)
-                                .lineLimit(5)
-                            Text(line.reference)
-                                .font(.callout.weight(.semibold))
-                                .foregroundColor(StormStyle.gold)
-                        }
+                            .stormAppear(v, delay: 0.06)
+                        card.stormAppear(v, delay: 0.12)
                     }
-                    .padding(22)
-                    .frame(maxWidth: .infinity)
-                    .background(
-                        RoundedRectangle(cornerRadius: 22, style: .continuous)
-                            .fill(Color.white.opacity(isSealed || finished || voice.isSpeaking ? 0.14 : 0.08))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                                    .strokeBorder(StormStyle.gold.opacity(isCharging || isSealed || finished ? 0.9 : 0.3),
-                                                  lineWidth: isCharging ? 2 : 1)
-                            )
-                            .shadow(color: StormStyle.gold.opacity(isSealed || finished ? 0.45 : 0),
-                                    radius: 24)
-                    )
-                    .scaleEffect(isCharging && !reduceMotion ? 1.02 : 1)
-                    .animation(reduceMotion ? nil : .easeInOut(duration: 0.4), value: isCharging)
-                    .stormAppear(v, delay: 0.12)
+                    .padding(.horizontal, 22)
+                    .padding(.top, 96)
+                    .padding(.bottom, 16)
+                    .frame(minHeight: geo.size.height * 0.62)
                 }
-                .padding(.horizontal, 22)
+                .scrollBounceBehavior(.basedOnSize)
 
-                Spacer(minLength: 24)
-
-                VStack(spacing: 12) {
-                    if finished {
-                        Label(finishedByListening ? "Spoken over you." : "Spoken. It's done.",
-                              systemImage: "checkmark.seal.fill")
-                            .font(.title3.weight(.semibold))
-                            .foregroundColor(StormStyle.gold)
-                            .frame(minHeight: 58)
-                            .transition(.opacity)
-                    } else {
-                        Text(isCharging ? "Keep speaking…" : "Hold the button and say it out loud.")
-                            .font(.body)
-                            .foregroundColor(StormStyle.secondary)
-                            .multilineTextAlignment(.center)
-                        HoldToDeclareButton(
-                            title: "Hold and speak",
-                            width: geo.size.width - 48,
-                            chargeDuration: chargeDuration,
-                            isLocked: finished,
-                            isCharging: $isCharging,
-                            isSealed: $isSealed,
-                            onSealed: { PremiumHaptics.safeHeartbeat() },
-                            onRelease: { sealed in
-                                guard sealed else { return }
-                                withAnimation { finished = true }
-                                UINotificationFeedbackGenerator().notificationOccurred(.success)
-                                voice.stop()
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 1.1) { onDone(.spoken) }
-                            }
-                        )
-                    }
-                    if !finished {
-                        switch backup {
-                        case .read:
-                            StormTextButton(title: "Read silently instead") { onDone(.readSilently) }
-                        case .hear:
-                            if voice.isSpeaking {
-                                Label("Listening…", systemImage: "speaker.wave.2.fill")
-                                    .font(.body.weight(.medium))
-                                    .foregroundColor(StormStyle.gold)
-                                    .frame(minHeight: 44)
-                            } else {
-                                StormTextButton(title: "Hear it spoken over you") {
-                                    voice.onFinish = {
-                                        withAnimation { finished = true }
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) { onDone(.heard) }
-                                    }
-                                    voiceUsed = true
-                                    voice.speak(line.text)
-                                }
-                            }
-                        }
-                    }
-                }
-                .padding(.horizontal, 24)
-                .padding(.bottom, 36)
-                .stormAppear(v, delay: 0.2)
+                controls(width: geo.size.width - 48)
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 36)
+                    .stormAppear(v, delay: 0.2)
             }
         }
         .onAppear { v = true }
         .onDisappear { voice.stop() }
+        // Starting to speak silences the voice: her own voice wins.
+        .onChange(of: isCharging) { _, charging in
+            if charging { voice.stop() }
+        }
+    }
+
+    private var card: some View {
+        VStack(spacing: 16) {
+            Text(line.text)
+                .font(.title2.weight(.semibold))
+                .foregroundColor(.white)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+            VStack(spacing: 6) {
+                Text("\u{201C}\(line.verse)\u{201D}")
+                    .font(.system(.callout, design: .serif).italic())
+                    .foregroundColor(StormStyle.secondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(line.reference)
+                    .font(.callout.weight(.semibold))
+                    .foregroundColor(StormStyle.gold)
+            }
+        }
+        .padding(22)
+        .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .fill(Color.white.opacity(isSealed || finished || voice.isSpeaking ? 0.14 : 0.08))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                        .strokeBorder(StormStyle.gold.opacity(isCharging || isSealed || finished || voice.isSpeaking ? 0.9 : 0.3),
+                                      lineWidth: isCharging ? 2 : 1)
+                )
+                .shadow(color: StormStyle.gold.opacity(isSealed || finished ? 0.45 : 0), radius: 24)
+        )
+        .scaleEffect(isCharging && !reduceMotion ? 1.02 : 1)
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.4), value: isCharging)
+    }
+
+    @ViewBuilder
+    private func controls(width: CGFloat) -> some View {
+        VStack(spacing: 12) {
+            if let outcome {
+                Label(outcome == .heard ? "Spoken over you." : "Spoken. It's done.",
+                      systemImage: "checkmark.seal.fill")
+                    .font(.title3.weight(.semibold))
+                    .foregroundColor(StormStyle.gold)
+                    .symbolEffect(.bounce, value: outcome == .spoken)
+                    .frame(minHeight: 58)
+                    .transition(.scale(scale: 0.9).combined(with: .opacity))
+            } else {
+                Text(isCharging ? "Keep speaking…" : "Hold the button and say it out loud.")
+                    .font(.body)
+                    .foregroundColor(StormStyle.secondary)
+                    .multilineTextAlignment(.center)
+                    .contentTransition(.opacity)
+                HoldToDeclareButton(
+                    title: "Hold and speak",
+                    width: width,
+                    chargeDuration: chargeDuration,
+                    isLocked: finished,
+                    isCharging: $isCharging,
+                    isSealed: $isSealed,
+                    onSealed: { PremiumHaptics.safeHeartbeat() },
+                    onRelease: { sealed in
+                        if sealed { complete(.spoken) }
+                    }
+                )
+                switch backup {
+                case .read:
+                    StormTextButton(title: "Read silently instead") { complete(.readSilently) }
+                case .hear:
+                    if voice.isSpeaking {
+                        Button { voice.stop() } label: {
+                            Label("Listening… tap to stop", systemImage: "speaker.wave.2.fill")
+                                .font(.body.weight(.medium))
+                                .foregroundColor(StormStyle.gold)
+                                .symbolEffect(.variableColor.iterative, isActive: !reduceMotion)
+                                .frame(minHeight: 44)
+                        }
+                    } else {
+                        StormTextButton(title: "Hear it spoken over you") {
+                            voice.onFinish = {
+                                // A hold in progress wins over the voice.
+                                guard !isCharging else { return }
+                                complete(.heard)
+                            }
+                            voice.speak(line.text)
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -943,7 +993,10 @@ private struct StormFeelingScreen: View {
             .padding(.top, 28)
             .stormAppear(v, delay: 0.12)
             Spacer()
-            StormTextButton(title: "Skip") { onPick(nil) }
+            StormTextButton(title: "Skip") {
+                guard picked == nil else { return }
+                onPick(nil)
+            }
                 .padding(.bottom, 40)
         }
         .onAppear { v = true }

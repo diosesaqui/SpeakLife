@@ -11,15 +11,16 @@
 //  This file holds the model and the small services the arm needs. The screens
 //  live in StormOnboardingView.swift and StormPaywallView.swift.
 //
-//  Assignment (see SubscriptionStore.computedAssignment):
+//  Assignment (see SubscriptionStore.lockOnboardingVariant):
 //    - Organic installs: Remote Config `onboardingVariant = "storm"`.
-//    - Ad installs whose `ob=` names a storm (healing, provision, anxiety, fear,
-//      grief, marriage, parenting): a one-time coin flip weighted by Remote
-//      Config `stormAdShare` (0...1, default 0 so it ships dormant). Winners get
-//      this flow with their storm preselected; the rest keep their angle arm and
-//      are stamped `storm_ad_bucket = control`, which is the comparison group.
+//    - Ad installs whose `ob=` code appears in the storm config (`ob_code`;
+//      today healing, provision, anxiety, renewal, and command via `default`):
+//      a one-time coin flip weighted by Remote Config `stormAdShare` (0...1,
+//      default 0 so it ships dormant), run once as onboarding starts. Winners
+//      get this flow, with their storm preselected when the code names one;
+//      the rest keep their angle arm and are stamped
+//      `storm_ad_bucket = control`, the comparison group.
 //
-
 import Foundation
 import SwiftUI
 import UserNotifications
@@ -474,37 +475,66 @@ enum StormOnboarding {
 /// worded plainly: when the charge happens, how much, and how to cancel.
 enum StormTrialReminder {
     static let identifier = "trial_d5"
+    /// Shorter trials have no "two days before" that is still inside the trial.
+    static let minimumTrialDays = 3
 
-    /// - Returns: the fire date, or nil when the slot has already passed.
-    @discardableResult
+    private static let ownsKey = "storm_owns_trial_warning"
+
+    /// Set when a storm paywall starts a purchase. `TrialExperienceService`
+    /// then skips its own "ends tomorrow" push, which would otherwise land on
+    /// the same day as this one and say something different.
+    static var ownsTrialWarning: Bool {
+        get { UserDefaults.standard.bool(forKey: ownsKey) }
+        set { UserDefaults.standard.set(newValue, forKey: ownsKey) }
+    }
+
+    /// Asks for notification permission if it has never been asked. The
+    /// paywall's reminder switch is on by default, so the default alone must
+    /// be enough to make the promise deliverable.
+    static func requestPermissionIfNeeded() async {
+        let center = UNUserNotificationCenter.current()
+        guard await center.notificationSettings().authorizationStatus == .notDetermined else { return }
+        let granted = (try? await center.requestAuthorization(options: [.alert, .badge, .sound])) ?? false
+        AnalyticsService.shared.track("notification_permission", parameters: [
+            "granted": granted, "source": "storm_trial_reminder", "placement": "paywall_cta"
+        ])
+    }
+
+    /// Two days before the charge, an hour after her morning Burst (not on
+    /// top of it), in plain words: when, how much, how to cancel.
     static func schedule(trialStart: Date, trialDays: Int, priceText: String,
-                         calendar: Calendar = .current) -> Date? {
-        guard trialDays >= 3 else { return nil }
-        let chargeDate = calendar.date(byAdding: .day, value: trialDays, to: trialStart) ?? trialStart
-        // Two days before the charge, on the morning they speak.
-        guard let day = calendar.date(byAdding: .day, value: trialDays - 2, to: trialStart) else { return nil }
-        let time = StormOnboarding.morningTime ?? (8, 0)
-        guard let fire = calendar.date(bySettingHour: time.hour, minute: time.minute, second: 0, of: day),
-              fire > Date() else { return nil }
+                         calendar: Calendar = .current) {
+        guard trialDays >= minimumTrialDays,
+              let chargeDate = calendar.date(byAdding: .day, value: trialDays, to: trialStart),
+              let day = calendar.date(byAdding: .day, value: trialDays - 2, to: trialStart) else { return }
+        let morning = StormOnboarding.morningTime ?? (7, 0)
+        guard let fire = calendar.date(bySettingHour: min(morning.hour + 1, 21), minute: morning.minute,
+                                       second: 0, of: day),
+              fire > Date() else { return }
 
         let content = UNMutableNotificationContent()
-        content.title = "Your free week ends in 2 days"
+        content.title = "Your free trial ends in 2 days"
         let chargeDay = chargeDate.formatted(.dateTime.weekday(.wide).month(.wide).day())
         content.body = "If you keep SpeakLife, \(priceText) begins on \(chargeDay). To cancel, open Settings, tap your name, then Subscriptions."
         content.sound = .default
         content.userInfo = ["lifecycle_id": identifier]
 
         let comps = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: fire)
-        UNUserNotificationCenter.current().add(UNNotificationRequest(
+        let center = UNUserNotificationCenter.current()
+        center.add(UNNotificationRequest(
             identifier: identifier,
             content: content,
             trigger: UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)
         ))
-        AnalyticsService.shared.track("trial_reminder_scheduled", parameters: [
-            "scheduled_for": ISO8601DateFormatter().string(from: fire),
-            "trial_days": trialDays
-        ])
-        return fire
+        // Counted as scheduled only when it can actually reach her.
+        center.getNotificationSettings { settings in
+            let deliverable = settings.authorizationStatus == .authorized
+                || settings.authorizationStatus == .provisional
+            AnalyticsService.shared.track(deliverable ? "trial_reminder_scheduled" : "trial_reminder_undeliverable", parameters: [
+                "scheduled_for": ISO8601DateFormatter().string(from: fire),
+                "trial_days": trialDays
+            ])
+        }
     }
 
     static func cancel() {
@@ -535,7 +565,10 @@ enum StormTrialPushes {
         }
     }
 
-    static func schedule(storm: Storm, trialStart: Date, calendar: Calendar = .current) {
+    /// - Parameter includeBibleChat: false when Ask the Bible is switched off
+    ///   (`enableAIFeatures`): its tab is then the prayer wall.
+    static func schedule(storm: Storm, trialStart: Date, includeBibleChat: Bool,
+                         calendar: Calendar = .current) {
         let config = StormConfigStore.resolved(for: storm)
         LifecycleNotificationService.shared.scheduleTrialFirstNightAudio(
             category: storm.category.rawValue,
@@ -543,6 +576,7 @@ enum StormTrialPushes {
             body: config.audioPush.body
         )
 
+        guard includeBibleChat else { return }
         // Day 2, four hours after the morning she chose: clear of the Burst.
         let morning = StormOnboarding.morningTime ?? (7, 0)
         let hour = min(morning.hour + 4, 20)

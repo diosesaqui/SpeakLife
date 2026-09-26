@@ -177,16 +177,31 @@ class DailyDeclarationReminderService: ObservableObject {
 
     /// The storm plan's line for the next date falling on `weekday`, while the
     /// plan is running. Nil outside the plan window.
+    ///
+    /// These triggers repeat weekly and the copy is fixed when scheduled, so
+    /// it names no day number: a user who never reopens the app keeps hearing
+    /// a real line from her plan, never "Day 3" in week four. Today's weekday
+    /// is skipped once its time has passed, because that slot next fires in
+    /// seven days, after the plan.
     private static func stormPlanCopy(forWeekday weekday: Int) -> (title: String, body: String)? {
         let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
+        let now = Date()
+        let today = calendar.startOfDay(for: now)
+        let time = burstTimeAvoidingUserReminders()
         for offset in 0..<7 {
             guard let date = calendar.date(byAdding: .day, value: offset, to: today),
                   calendar.component(.weekday, from: date) == weekday else { continue }
+            if offset == 0,
+               let slot = calendar.date(bySettingHour: time.hour, minute: time.minute, second: 0, of: date),
+               slot <= now { return nil }
             guard let plan = StormOnboarding.planLine(on: date) else { return nil }
+            // The day's line leads the Burst only while its Enforcement week runs.
+            let leads = EnforcementService.shared.activeEnforcement != nil
             return (
-                title: "Day \(plan.day): your Daily Burst is ready",
-                body: "7 scriptures for \(plan.storm.domain), opening with: \(plan.line.text)"
+                title: "Your Daily Burst is ready",
+                body: leads
+                    ? "7 scriptures for \(plan.storm.domain), opening with: \(plan.line.text)"
+                    : "7 scriptures for \(plan.storm.domain) are ready to speak."
             )
         }
         return nil

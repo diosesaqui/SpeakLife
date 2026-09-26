@@ -52,6 +52,11 @@ struct StormPaywallView: View {
     /// closes rather than looping the user through it again.
     @State private var objectionShown = false
     @State private var purchasedWithTrial = false
+    /// Held here, not in the paywall screen: "Not sure I'll use it" leaves the
+    /// paywall and comes back, and neither the impression count nor her
+    /// reminder choice should reset on the way.
+    @State private var remindMe = true
+    @State private var viewedLogged = false
 
     private var paywallName: String { "storm_v1_\(placement)" }
 
@@ -90,6 +95,8 @@ struct StormPaywallView: View {
                 storm: storm,
                 placement: placement,
                 paywallName: paywallName,
+                remindMe: $remindMe,
+                viewedLogged: $viewedLogged,
                 onPurchased: handlePurchased,
                 onCancelledOnSheet: { routeToObjection(trigger: "sheet_cancel") },
                 onClose: { routeToObjection(trigger: "close") }
@@ -199,7 +206,8 @@ struct StormPaywallView: View {
         purchasedWithTrial = isTrial
         StormPlan.start(storm: storm, isTrial: isTrial,
                         enforcementEnabled: subscriptionStore.enforcementEnabled,
-                        pushesEnabled: subscriptionStore.stormTrialPushes)
+                        pushesEnabled: subscriptionStore.stormTrialPushes,
+                        bibleChatEnabled: subscriptionStore.enableAIFeatures)
         UINotificationFeedbackGenerator().notificationOccurred(.success)
         phase = .success
     }
@@ -333,6 +341,56 @@ final class StormPurchaseModel: ObservableObject {
         }
     }
 
+    enum CheckoutResult {
+        case purchased(isTrial: Bool)
+        case cancelled
+        case message(String)
+        /// A purchase was already running, or nothing is loaded yet.
+        case ignored
+    }
+
+    /// Buys the loaded product: the one way every storm purchase button does it.
+    ///
+    /// The reminder the paywall promises is made real here: permission is
+    /// asked BEFORE Apple's sheet when it has never been asked (a switch that
+    /// is merely on by default never asked anyone), and the storm reminder
+    /// replaces the older "ends tomorrow" push instead of adding a second
+    /// trial warning on the same day.
+    func checkout(store: SubscriptionStore, paywallName: String, wantsReminder: Bool) async -> CheckoutResult {
+        guard let product, !isPurchasing else { return .ignored }
+        isPurchasing = true
+        defer { isPurchasing = false }
+
+        let trialDays = self.trialDays
+        let remind = wantsReminder && trialDays >= StormTrialReminder.minimumTrialDays
+        if remind { await StormTrialReminder.requestPermissionIfNeeded() }
+        StormTrialReminder.ownsTrialWarning = true
+
+        do {
+            switch try await store.purchaseOutcome(product, paywallName: paywallName) {
+            case .purchased:
+                if remind {
+                    StormTrialReminder.schedule(trialStart: Date(), trialDays: trialDays,
+                                                priceText: "\(annualPrice)/year")
+                }
+                return .purchased(isTrial: trialDays > 0)
+            case .cancelled:
+                return .cancelled
+            case .pending:
+                return .message("Your purchase is waiting for approval. You'll have full access as soon as it's approved.")
+            case .notEntitled:
+                return .message("Your purchase went through, but we couldn't unlock it yet. Tap Restore in a moment.")
+            }
+        } catch {
+            return .message("Something went wrong with the App Store. Please try again.")
+        }
+    }
+
+    /// "Start my free week" for a 7-day trial, "Start my 3-day free trial" otherwise.
+    var trialCTA: String {
+        trialDays == 7 ? "Start my free week" : "Start my \(trialDays)-day free trial"
+    }
+
     func retry(from store: SubscriptionStore, pick: @escaping (SubscriptionStore) -> Product?) {
         state = .loading
         Task {
@@ -366,26 +424,29 @@ private struct StormPaywallMain: View {
     let storm: Storm
     let placement: String
     let paywallName: String
+    @Binding var remindMe: Bool
+    @Binding var viewedLogged: Bool
     let onPurchased: (Bool) -> Void
     let onCancelledOnSheet: () -> Void
     let onClose: () -> Void
 
+    /// A paywall living in a tab has nothing to close back to.
+    private var showsClose: Bool { placement != "premium_tab" }
+
     @StateObject private var model = StormPurchaseModel()
-    @State private var remindMe = true
     @State private var notificationsDenied = false
     @State private var v = false
     @State private var pulse = false
     @State private var todayGlow = false
     @State private var alertMessage: String?
     @State private var showPrivacy = false
-    @State private var viewedLogged = false
 
     private var ctaTitle: String {
         guard model.isTrialEligible else {
             return "Continue — \(model.annualPrice)/year"
         }
         if subscriptionStore.stormCtaCopy == "try_free" { return "Try it free" }
-        return model.trialDays == 7 ? "Start my free week" : "Start my \(model.trialDays)-day free trial"
+        return model.trialCTA
     }
 
     var body: some View {
@@ -395,7 +456,8 @@ private struct StormPaywallMain: View {
                 VStack(spacing: 22) {
                     hero.stormAppear(v)
                     if model.state == .ready && model.isTrialEligible {
-                        StormTrialTimeline(trialDays: model.trialDays, price: model.annualPrice, glowToday: todayGlow)
+                        StormTrialTimeline(trialDays: model.trialDays, price: model.annualPrice,
+                                           glowToday: todayGlow, remindsYou: remindMe)
                             .stormAppear(v, delay: 0.15)
                     }
                     benefits.stormAppear(v, delay: 0.25)
@@ -443,11 +505,14 @@ private struct StormPaywallMain: View {
                     .frame(width: 44, height: 44)
             }
             .accessibilityLabel("Close")
+            .opacity(showsClose ? 1 : 0)
+            .disabled(!showsClose || model.isPurchasing)
             Spacer()
             Button("Restore", action: restore)
                 .font(.body.weight(.medium))
                 .foregroundColor(StormStyle.secondary)
                 .frame(minHeight: 44)
+                .disabled(model.isPurchasing)
         }
         .padding(.horizontal, 12)
         .padding(.top, 52)
@@ -544,7 +609,7 @@ private struct StormPaywallMain: View {
     private var belowFold: some View {
         VStack(spacing: 22) {
             StormReviewCard()
-            if model.isTrialEligible {
+            if model.isTrialEligible && model.trialDays >= StormTrialReminder.minimumTrialDays {
                 VStack(alignment: .leading, spacing: 8) {
                     Toggle(isOn: $remindMe) {
                         Text("Remind me 2 days before my trial ends")
@@ -594,7 +659,7 @@ private struct StormPaywallMain: View {
                 ) { purchase() }
                 .scaleEffect(pulse ? 1.03 : 1)
             }
-            Text(model.isTrialEligible
+            Text(model.isTrialEligible && remindMe && model.trialDays >= StormTrialReminder.minimumTrialDays
                  ? "Cancel anytime · Reminder 2 days before"
                  : "Cancel anytime in Settings.")
                 .font(.subheadline)
@@ -648,47 +713,31 @@ private struct StormPaywallMain: View {
     // MARK: Actions
 
     private func purchase() {
-        guard let product = model.product, !model.isPurchasing else { return }
+        guard model.product != nil, !model.isPurchasing else { return }
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
         AnalyticsService.shared.track("paywall_cta_tapped", parameters: [
-            "placement": placement, "paywall": paywallName, "product_id": product.id,
+            "placement": placement, "paywall": paywallName, "product_id": model.product?.id ?? "",
             "trial_eligible": model.isTrialEligible, "cta": ctaTitle
         ])
-        model.isPurchasing = true
-        let trialDays = model.trialDays
-        let priceText = "\(model.annualPrice)/year"
-        let wantsReminder = remindMe
         Task {
-            defer { model.isPurchasing = false }
-            do {
-                let outcome = try await subscriptionStore.purchaseOutcome(product, paywallName: paywallName)
-                switch outcome {
-                case .purchased:
-                    if trialDays > 0 && wantsReminder {
-                        StormTrialReminder.schedule(trialStart: Date(), trialDays: trialDays, priceText: priceText)
-                    }
-                    onPurchased(trialDays > 0)
-                case .cancelled:
-                    onCancelledOnSheet()
-                case .pending:
-                    alertMessage = "Your purchase is waiting for approval. You'll have full access as soon as it's approved."
-                case .notEntitled:
-                    alertMessage = "Your purchase went through, but we couldn't unlock it yet. Tap Restore in a moment."
-                }
-            } catch {
-                alertMessage = "Something went wrong with the App Store. Please try again."
+            switch await model.checkout(store: subscriptionStore, paywallName: paywallName, wantsReminder: remindMe) {
+            case .purchased(let isTrial): onPurchased(isTrial)
+            case .cancelled:              onCancelledOnSheet()
+            case .message(let text):      alertMessage = text
+            case .ignored:                break
             }
         }
     }
 
     private func restore() {
+        guard !model.isPurchasing else { return }
         Task {
             model.isPurchasing = true
             let restored = await subscriptionStore.restore()
             model.isPurchasing = false
             AnalyticsService.shared.track("paywall_restore", parameters: ["restored": restored, "paywall": paywallName])
             if restored {
-                alertMessage = "Welcome back. Your membership is restored."
+                // Straight into the welcome screen, which says it better than an alert.
                 onPurchased(false)
             } else {
                 alertMessage = "We couldn't find a membership on this Apple ID to restore."
@@ -791,19 +840,42 @@ private struct StormGoldHeadline: View {
     }
 }
 
+/// A spinner while prices load; a retry once loading has given up. Never a
+/// spinner that spins forever.
+private struct StormLoadingOrRetry: View {
+    let state: StormPurchaseModel.LoadState
+    let retry: () -> Void
+
+    var body: some View {
+        if state == .failed {
+            StormTextButton(title: "Couldn't load pricing. Tap to retry.", action: retry)
+        } else {
+            ProgressView().tint(.white)
+        }
+    }
+}
+
 // MARK: - Trial timeline
 
 struct StormTrialTimeline: View {
     let trialDays: Int
     let price: String
     var glowToday = false
+    /// Whether the reminder switch is on. The timeline only promises what
+    /// will actually be sent.
+    var remindsYou = true
 
     private var reminderDay: Int { max(trialDays - 2, 1) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             node(icon: "lock.open.fill", title: "Today", detail: "Full access. Start speaking.", highlighted: true, isLast: false)
-            node(icon: "bell.fill", title: "Day \(reminderDay)", detail: "We'll remind you before your trial ends.", highlighted: false, isLast: false)
+            if trialDays >= StormTrialReminder.minimumTrialDays {
+                node(icon: remindsYou ? "bell.fill" : "calendar",
+                     title: "Day \(reminderDay)",
+                     detail: remindsYou ? "We'll remind you before your trial ends." : "Two days left in your trial.",
+                     highlighted: false, isLast: false)
+            }
             node(icon: "creditcard.fill", title: "Day \(trialDays)", detail: "\(price)/year begins. Cancel anytime before.", highlighted: false, isLast: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -1011,14 +1083,16 @@ private struct StormPriceOfferScreen: View {
                             .padding(.top, 8)
                     }
                 } else {
-                    ProgressView().tint(.white)
+                    StormLoadingOrRetry(state: model.state) {
+                        model.retry(from: subscriptionStore) { $0.currentOfferedDiscount }
+                    }
                 }
             }
             .padding(.horizontal, 24)
             Spacer()
             VStack(spacing: 8) {
                 StormPrimaryButton(
-                    title: model.isTrialEligible ? "Start my free week" : "Claim \(model.annualPrice)/year",
+                    title: model.isTrialEligible ? model.trialCTA : "Claim \(model.annualPrice)/year",
                     isEnabled: model.state == .ready,
                     isLoading: model.isPurchasing
                 ) { purchase() }
@@ -1043,28 +1117,12 @@ private struct StormPriceOfferScreen: View {
     }
 
     private func purchase() {
-        guard let product = model.product, !model.isPurchasing else { return }
-        model.isPurchasing = true
-        let trialDays = model.trialDays
-        let priceText = "\(model.annualPrice)/year"
         Task {
-            defer { model.isPurchasing = false }
-            do {
-                switch try await subscriptionStore.purchaseOutcome(product, paywallName: paywallName) {
-                case .purchased:
-                    if trialDays > 0 {
-                        StormTrialReminder.schedule(trialStart: Date(), trialDays: trialDays, priceText: priceText)
-                    }
-                    onPurchased(trialDays > 0)
-                case .cancelled:
-                    onDecline()
-                case .pending:
-                    alertMessage = "Your purchase is waiting for approval."
-                case .notEntitled:
-                    alertMessage = "Your purchase went through, but we couldn't unlock it yet. Tap Restore in a moment."
-                }
-            } catch {
-                alertMessage = "Something went wrong with the App Store. Please try again."
+            switch await model.checkout(store: subscriptionStore, paywallName: paywallName, wantsReminder: true) {
+            case .purchased(let isTrial): onPurchased(isTrial)
+            case .cancelled:              onDecline()
+            case .message(let text):      alertMessage = text
+            case .ignored:                break
             }
         }
     }
@@ -1142,14 +1200,16 @@ private struct StormReassuranceScreen: View {
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                     } else {
-                        ProgressView().tint(.white)
+                        StormLoadingOrRetry(state: model.state) {
+                            model.retry(from: subscriptionStore) { $0.currentOfferedPremium }
+                        }
                     }
                 }
                 .padding(.horizontal, 24)
             }
             VStack(spacing: 8) {
                 StormPrimaryButton(
-                    title: model.isTrialEligible ? "Start my free week" : "Continue — \(model.annualPrice)/year",
+                    title: model.isTrialEligible ? model.trialCTA : "Continue — \(model.annualPrice)/year",
                     isEnabled: model.state == .ready,
                     isLoading: model.isPurchasing
                 ) { purchase() }
@@ -1165,28 +1225,12 @@ private struct StormReassuranceScreen: View {
     }
 
     private func purchase() {
-        guard let product = model.product, !model.isPurchasing else { return }
-        model.isPurchasing = true
-        let trialDays = model.trialDays
-        let priceText = "\(model.annualPrice)/year"
         Task {
-            defer { model.isPurchasing = false }
-            do {
-                switch try await subscriptionStore.purchaseOutcome(product, paywallName: paywallName) {
-                case .purchased:
-                    if trialDays > 0 {
-                        StormTrialReminder.schedule(trialStart: Date(), trialDays: trialDays, priceText: priceText)
-                    }
-                    onPurchased(trialDays > 0)
-                case .cancelled:
-                    onCancelledOnSheet()
-                case .pending:
-                    alertMessage = "Your purchase is waiting for approval."
-                case .notEntitled:
-                    alertMessage = "Your purchase went through, but we couldn't unlock it yet. Tap Restore in a moment."
-                }
-            } catch {
-                alertMessage = "Something went wrong with the App Store. Please try again."
+            switch await model.checkout(store: subscriptionStore, paywallName: paywallName, wantsReminder: true) {
+            case .purchased(let isTrial): onPurchased(isTrial)
+            case .cancelled:              onCancelledOnSheet()
+            case .message(let text):      alertMessage = text
+            case .ignored:                break
             }
         }
     }
@@ -1336,7 +1380,8 @@ enum StormPlan {
     /// date (the morning push reads the day's line from it), and starts the
     /// in-app Enforcement week with exactly those lines so the app and the
     /// preview never disagree.
-    static func start(storm: Storm, isTrial: Bool, enforcementEnabled: Bool, pushesEnabled: Bool) {
+    static func start(storm: Storm, isTrial: Bool, enforcementEnabled: Bool,
+                      pushesEnabled: Bool, bibleChatEnabled: Bool) {
         guard StormOnboarding.planStartedOn == nil else { return }
         StormOnboarding.selectedStorm = storm
         StormOnboarding.planStartedOn = Date()
@@ -1348,7 +1393,9 @@ enum StormPlan {
             )
         }
         DailyDeclarationReminderService.shared.setupDailyReminders()
-        if isTrial && pushesEnabled { StormTrialPushes.schedule(storm: storm, trialStart: Date()) }
+        if isTrial && pushesEnabled {
+            StormTrialPushes.schedule(storm: storm, trialStart: Date(), includeBibleChat: bibleChatEnabled)
+        }
         AnalyticsService.shared.track("storm_plan_started", parameters: ["storm": storm.rawValue, "is_trial": isTrial])
     }
 }

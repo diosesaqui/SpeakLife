@@ -14,6 +14,8 @@ struct PremiumView: View {
     
     @EnvironmentObject var subscriptionStore: SubscriptionStore
     @EnvironmentObject var appState: AppState
+    /// True while the storm paywall's own flow is on screen.
+    @State private var stormFlowOpen = false
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     @State private var countdown: TimeInterval = 0
     @State private var showCancelConfirmation = false
@@ -21,7 +23,7 @@ struct PremiumView: View {
     
     var body: some View {
         GeometryReader { geometry in
-            if !subscriptionStore.isPremium {
+            if !subscriptionStore.isPremium || stormFlowOpen {
 //                if appState.offerDiscount {
 //                    OfferPageView(countdown: $countdown) { }
 //                } else {
@@ -29,7 +31,12 @@ struct PremiumView: View {
 //                        OptimizedSubscriptionViewV2() { }
 //                    } else {
                     if StormOnboarding.isMember {
-                        StormPaywallSheet(placement: "premium_tab", callback: nil)
+                        // Stays mounted after the purchase flips isPremium, so
+                        // the welcome, second declaration and sign-in still run.
+                        StormPaywallView(storm: StormOnboarding.selectedStorm ?? .fear, placement: "premium_tab") { _ in
+                            stormFlowOpen = false
+                        }
+                        .onAppear { stormFlowOpen = true }
                     } else {
                         HighConversionPaywallView() { }
                     }

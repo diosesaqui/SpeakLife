@@ -1092,14 +1092,15 @@ final class SubscriptionStore: ObservableObject {
             "trial_eligible": willStartTrial,
             "variant": onboardingVariantName
         ]
-        // The sheet is about to open. Paired with purchase_cancelled this is
-        // the Apple-sheet completion rate, the biggest leak in the funnel.
-        AnalyticsService.shared.track("purchase_sheet_opened", parameters: attempt)
-
         // NOTE: Do NOT fire conversion analytics before RC confirms — RC validates the receipt.
         let result: RevenueCatManager.StorePurchaseResult
         do {
-            result = try await RevenueCatManager.shared.purchase(storeProduct: product)
+            result = try await RevenueCatManager.shared.purchase(storeProduct: product) {
+                // The sheet is about to open. Paired with purchase_cancelled
+                // this is the Apple-sheet completion rate, the funnel's
+                // biggest leak.
+                AnalyticsService.shared.track("purchase_sheet_opened", parameters: attempt)
+            }
         } catch let error as RevenueCat.ErrorCode where error == .paymentPendingError {
             AnalyticsService.shared.track("purchase_pending", parameters: attempt)
             return .pending

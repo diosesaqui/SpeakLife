@@ -66,6 +66,13 @@ final class TrialExperienceService: ObservableObject {
         UserDefaults.standard.integer(forKey: kTrialDeclarationCount)
     }
 
+    /// Now is before the trial's end date.
+    private var isWithinTrialWindow: Bool {
+        guard let start = trialStartDate,
+              let end = Calendar.current.date(byAdding: .day, value: trialLengthDays, to: start) else { return false }
+        return Date() < end
+    }
+
     private var trialStartDate: Date? {
         UserDefaults.standard.object(forKey: kTrialStartDate) as? Date
     }
@@ -129,7 +136,11 @@ final class TrialExperienceService: ObservableObject {
     /// is how the "users who touch audio / Bible chat convert more" claim gets
     /// confirmed. No-op outside a trial and after the first use.
     func recordTrialFeatureUse(_ feature: String) {
-        guard isTrialActive, let key = Self.trackedTrialFeatures[feature] else { return }
+        // `isTrialActive` is only cleared by an in-app purchase, so a trial
+        // that lapsed or renewed on its own still reads active. The window
+        // check keeps a first listen three months later out of the numbers.
+        guard isTrialActive, isWithinTrialWindow,
+              let key = Self.trackedTrialFeatures[feature] else { return }
         guard !UserDefaults.standard.bool(forKey: key) else { return }
         StormTrialPushes.cancel(forFeature: feature)
         UserDefaults.standard.set(true, forKey: key)
@@ -190,7 +201,10 @@ final class TrialExperienceService: ObservableObject {
             // and pending requests added pre-authorization deliver normally once
             // the user grants permission. Only a hard denial makes them pointless.
             guard settings.authorizationStatus != .denied else { return }
-            if trialLengthDays >= 2 {
+            // A storm-paywall purchase has its own "ends in 2 days" reminder
+            // (the one the user switched on, or off). Sending this one too put
+            // two different trial warnings on the same morning.
+            if trialLengthDays >= 2 && !StormTrialReminder.ownsTrialWarning {
                 self?.scheduleDay2Push(from: startDate, trialLengthDays: trialLengthDays)
             }
             self?.scheduleDay3Push(from: startDate, trialLengthDays: trialLengthDays)

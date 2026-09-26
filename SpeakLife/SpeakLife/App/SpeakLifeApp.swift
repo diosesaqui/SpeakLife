@@ -515,7 +515,12 @@ struct SpeakLifeApp: App {
                 return
             case "bibleChat":
                 // Trial push introducing Bible chat: open the Ask the Bible tab.
-                tabViewModel.goToBibleChat()
+                // With AI features off that tab is the prayer wall; go home.
+                if subscriptionStore.enableAIFeatures {
+                    tabViewModel.goToBibleChat()
+                } else {
+                    tabViewModel.resetToHome()
+                }
                 AnalyticsService.shared.track("bible_chat_push_opened", parameters: [
                     "push": content.userInfo["action"] as? String ?? "unknown"
                 ])

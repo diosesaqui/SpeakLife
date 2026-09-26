@@ -156,12 +156,17 @@ final class RevenueCatManager {
 
     /// Purchase by StoreKit Product — used when views pass a `StoreKit.Product` directly.
     /// Looks up the matching RC Package from current offerings.
-    func purchase(storeProduct: StoreKit.Product) async throws -> StorePurchaseResult {
+    /// - Parameter willPresentSheet: called immediately before Apple's sheet is
+    ///   requested, after the offerings lookup, so a lookup failure is never
+    ///   counted as a sheet that opened.
+    func purchase(storeProduct: StoreKit.Product,
+                  willPresentSheet: () -> Void = {}) async throws -> StorePurchaseResult {
         // Fetch current offering to find the matching package
         let offerings = try await Purchases.shared.offerings()
         let allPackages = offerings.current?.availablePackages ?? []
 
         if let match = allPackages.first(where: { $0.storeProduct.productIdentifier == storeProduct.id }) {
+            willPresentSheet()
             let result = try await Purchases.shared.purchase(package: match)
             return StorePurchaseResult(customerInfo: result.customerInfo, userCancelled: result.userCancelled)
         }
@@ -172,6 +177,7 @@ final class RevenueCatManager {
             throw NSError(domain: "RevenueCat", code: -1,
                           userInfo: [NSLocalizedDescriptionKey: "Product not found in RC: \(storeProduct.id)"])
         }
+        willPresentSheet()
         let result = try await Purchases.shared.purchase(product: rcProduct)
         return StorePurchaseResult(customerInfo: result.customerInfo, userCancelled: result.userCancelled)
     }
