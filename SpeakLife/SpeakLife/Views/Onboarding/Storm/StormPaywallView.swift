@@ -423,7 +423,7 @@ private struct StormPaywallMain: View {
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
-            Text("Seven mornings of Scripture, starting with \(storm.firstDeclaration.reference).")
+            Text("7 mornings, 7 scriptures each, starting with \(storm.firstDeclaration.reference).")
                 .font(.body)
                 .foregroundColor(StormStyle.secondary)
                 .multilineTextAlignment(.center)
@@ -441,9 +441,9 @@ private struct StormPaywallMain: View {
 
     private var benefits: some View {
         VStack(alignment: .leading, spacing: 14) {
-            benefitRow("Declarations over \(storm.domain) every morning")
-            benefitRow("Every one rooted in a verse")
-            benefitRow("60 seconds, out loud, in your own voice")
+            benefitRow("7 scriptures for \(storm.domain) every morning")
+            benefitRow("A Daily Burst built around your storm")
+            benefitRow("Spoken out loud, in your own voice")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -985,7 +985,7 @@ private struct StormOneMoreDoneScreen: View {
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("Your \(storm.planName) plan brings you a new line every morning.")
+                Text("Your \(storm.planName) plan brings you 7 scriptures every morning.")
                     .font(.body)
                     .foregroundColor(StormStyle.secondary)
                     .multilineTextAlignment(.center)
@@ -1145,7 +1145,7 @@ private struct StormMorningConfirmScreen: View {
                 Text("Tomorrow at \(time.formatted(date: .omitted, time: .shortened))")
                     .font(.title.weight(.bold))
                     .foregroundColor(.white)
-                Text("Day 2 of your \(storm.planName) plan: \(storm.planDays[1].reference).")
+                Text("Your Daily Burst: 7 scriptures for \(storm.domain), opening with \(storm.planDays[1].reference).")
                     .font(.body)
                     .foregroundColor(StormStyle.secondary)
                     .multilineTextAlignment(.center)

@@ -175,7 +175,7 @@ struct StormOnboardingView: View {
                 advance()
             }
         case .reminder:
-            StormReminderExplainerScreen(time: morning, isBusy: isRequestingNotifications) { wantsReminders in
+            StormReminderExplainerScreen(storm: resolvedStorm, time: morning, isBusy: isRequestingNotifications) { wantsReminders in
                 guard wantsReminders else {
                     AnalyticsService.shared.track("notification_permission", parameters: [
                         "granted": false, "source": "storm_onboarding",
@@ -803,7 +803,7 @@ private struct StormMorningTimeScreen: View {
         VStack(spacing: 0) {
             Spacer()
             StormHeader(title: "When will you speak each morning?",
-                        subtitle: "Sixty seconds, before the day starts talking to you.",
+                        subtitle: "Your Daily Burst will be ready: 7 scriptures to speak before the day starts talking to you.",
                         shown: v)
             DatePicker("Morning time", selection: $time, displayedComponents: .hourAndMinute)
                 .datePickerStyle(.wheel)
@@ -823,6 +823,7 @@ private struct StormMorningTimeScreen: View {
 // MARK: - 7b. Reminder explainer, then the iOS prompt
 
 private struct StormReminderExplainerScreen: View {
+    let storm: Storm
     let time: Date
     let isBusy: Bool
     let onChoice: (Bool) -> Void
@@ -838,13 +839,13 @@ private struct StormReminderExplainerScreen: View {
                     .foregroundColor(StormStyle.gold)
                     .accessibilityHidden(true)
                     .stormAppear(v)
-                Text("Your declaration, every morning at \(time.formatted(date: .omitted, time: .shortened))")
+                Text("Your Daily Burst, every morning at \(time.formatted(date: .omitted, time: .shortened))")
                     .font(.title2.weight(.bold))
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
                     .stormAppear(v, delay: 0.08)
-                Text("One reminder with the day's line from your plan. Tap it and speak. That's the whole habit.")
+                Text("One reminder a day. Tap it and speak 7 scriptures for \(storm.domain) out loud. That's the whole habit.")
                     .font(.body)
                     .foregroundColor(StormStyle.secondary)
                     .multilineTextAlignment(.center)
@@ -882,7 +883,7 @@ private struct StormPlanScreen: View {
                             .font(.title.weight(.bold))
                             .foregroundColor(.white)
                             .multilineTextAlignment(.center)
-                        Text("One declaration each morning at \(morning.formatted(date: .omitted, time: .shortened)), each one rooted in a verse.")
+                        Text("Every morning at \(morning.formatted(date: .omitted, time: .shortened)), a Daily Burst of 7 scriptures for \(storm.domain). Each day opens with its own promise.")
                             .font(.body)
                             .foregroundColor(StormStyle.secondary)
                             .multilineTextAlignment(.center)
@@ -908,7 +909,7 @@ private struct StormPlanScreen: View {
                                     Text(index == 0 ? "Day 1 · Spoken today" : "Day \(index + 1)")
                                         .font(.body.weight(.semibold))
                                         .foregroundColor(.white)
-                                    Text(line.reference)
+                                    Text(index == 0 ? line.reference : "\(line.reference) + 6 more")
                                         .font(.callout)
                                         .foregroundColor(index == 0 ? StormStyle.gold : StormStyle.secondary)
                                 }

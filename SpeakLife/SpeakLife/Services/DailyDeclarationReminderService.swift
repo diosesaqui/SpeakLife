@@ -185,8 +185,8 @@ class DailyDeclarationReminderService: ObservableObject {
                   calendar.component(.weekday, from: date) == weekday else { continue }
             guard let plan = StormOnboarding.planLine(on: date) else { return nil }
             return (
-                title: "Day \(plan.day) of your \(plan.storm.planName) plan",
-                body: plan.line.text
+                title: "Day \(plan.day): your Daily Burst is ready",
+                body: "7 scriptures for \(plan.storm.domain), opening with: \(plan.line.text)"
             )
         }
         return nil
