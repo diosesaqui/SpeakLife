@@ -212,10 +212,15 @@ struct DeclarationContentView: View {
                     isRevertingFreeLimit = false
                     return
                 }
-                if StormFreeLayer.isActive(hasFullAccess: subscriptionStore.hasFullAccess) {
+                // Only a swipe FORWARD to a card not yet seen spends the day's
+                // declaration. Swiping back is free, and a jump to 0 is the
+                // list resetting itself (category change, reload), not a swipe.
+                let isNewCard = newIndex > lastAllowedTab
+                if StormFreeLayer.isActive(subscriptionStore), isNewCard {
                     guard StormFreeLayer.hasAllowanceLeft else {
                         isRevertingFreeLimit = true
-                        withAnimation { viewModel.selectedTab = lastAllowedTab }
+                        let safeIndex = min(lastAllowedTab, max(viewModel.declarations.count - 1, 0))
+                        withAnimation { viewModel.selectedTab = safeIndex }
                         showStormFreeLimit = true
                         AnalyticsService.shared.track("storm_free_limit_hit", parameters: [
                             "free_day": StormFreeLayer.freeDay

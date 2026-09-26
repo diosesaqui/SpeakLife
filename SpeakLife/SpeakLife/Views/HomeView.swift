@@ -130,7 +130,7 @@ struct HomeView: View {
                 LandingView()
             // `debugReplayOnboarding` forces the onboarding branch for a tester
             // who is already onboarded. It is never true on an App Store build.
-            } else if appState.isOnboarded && !appState.debugReplayOnboarding {
+            } else if appState.isOnboarded && !appState.debugReplayOnboarding && !StormDebugReview.isActive {
                 homeView
                     .onAppear() {
                                 showSubscription = subscriptionStore.showSubscription && !subscriptionStore.isPremium && !appState.firstOpen
@@ -1012,6 +1012,11 @@ class TrackingManager {
     static let shared = TrackingManager()
 
     func requestTrackingPermission(completion: @escaping (ATTrackingManager.AuthorizationStatus) -> Void) {
+        #if DEBUG
+        // Screen-by-screen design review (STORM_STEP / STORM_PHASE launches)
+        // needs the system prompt out of the way.
+        if ProcessInfo.processInfo.environment["SKIP_ATT"] != nil { return }
+        #endif
         ATTrackingManager.requestTrackingAuthorization { status in
             DispatchQueue.main.async {
                 completion(status)

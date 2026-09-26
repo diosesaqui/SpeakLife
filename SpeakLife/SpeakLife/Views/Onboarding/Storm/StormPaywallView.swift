@@ -65,6 +65,21 @@ struct StormPaywallView: View {
         .environment(\.colorScheme, .dark)
         .dynamicTypeSize(...DynamicTypeSize.accessibility2)
         .animation(.easeInOut(duration: 0.3), value: phase)
+        #if DEBUG
+        .onAppear {
+            // Design review: STORM_PHASE=objection|reassurance|success|second|morning|save
+            switch ProcessInfo.processInfo.environment["STORM_PHASE"] {
+            case "objection":   phase = .objection(trigger: "debug")
+            case "reassurance": phase = .reassurance
+            case "success":     phase = .success
+            case "second":      phase = .secondDeclaration
+            case "morning":     phase = .morningConfirm
+            case "save":        phase = .saveAccount
+            case "onemore":     phase = .oneMoreDone
+            default:            break
+            }
+        }
+        #endif
     }
 
     @ViewBuilder
@@ -271,7 +286,21 @@ final class StormPurchaseModel: ObservableObject {
 
     private var loadTask: Task<Void, Never>?
 
+    #if DEBUG
+    /// Design review without StoreKit: launch with STORM_MOCK_TRIAL=7 (or 0 for
+    /// an ineligible account) to render the ready paywall with sample prices.
+    private var mockPrices: (annual: String, monthly: String)?
+    #endif
+
     func load(from store: SubscriptionStore, pick: @escaping (SubscriptionStore) -> Product?) {
+        #if DEBUG
+        if let mock = ProcessInfo.processInfo.environment["STORM_MOCK_TRIAL"].flatMap(Int.init) {
+            mockPrices = ("$49.99", "$4.17")
+            trialDays = mock
+            state = .ready
+            return
+        }
+        #endif
         loadTask?.cancel()
         state = .loading
         loadTask = Task { [weak self] in
@@ -312,9 +341,17 @@ final class StormPurchaseModel: ObservableObject {
         }
     }
 
-    var annualPrice: String { product?.displayPrice ?? "" }
+    var annualPrice: String {
+        #if DEBUG
+        if let mockPrices { return mockPrices.annual }
+        #endif
+        return product?.displayPrice ?? ""
+    }
 
     var monthlyEquivalent: String {
+        #if DEBUG
+        if let mockPrices { return mockPrices.monthly }
+        #endif
         guard let product else { return "" }
         return (product.price / 12).formatted(product.priceFormatStyle)
     }
@@ -355,7 +392,7 @@ private struct StormPaywallMain: View {
         VStack(spacing: 0) {
             topBar
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 26) {
+                VStack(spacing: 22) {
                     hero.stormAppear(v)
                     if model.state == .ready && model.isTrialEligible {
                         StormTrialTimeline(trialDays: model.trialDays, price: model.annualPrice, glowToday: todayGlow)
@@ -431,11 +468,16 @@ private struct StormPaywallMain: View {
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.vertical, 18)
+        .padding(.vertical, 6)
         .frame(maxWidth: .infinity)
+        // A soft light behind the promise. A blurred shape has no edges; the
+        // radial gradient it replaces was clipped into a visible rectangle.
         .background(
-            RadialGradient(colors: [StormStyle.gold.opacity(0.18), .clear],
-                           center: .center, startRadius: 4, endRadius: 200)
+            Ellipse()
+                .fill(StormStyle.gold.opacity(0.16))
+                .frame(width: 320, height: 150)
+                .blur(radius: 50)
+                .accessibilityHidden(true)
         )
     }
 
@@ -553,7 +595,7 @@ private struct StormPaywallMain: View {
                 .scaleEffect(pulse ? 1.03 : 1)
             }
             Text(model.isTrialEligible
-                 ? "No payment due now · Cancel anytime · We'll remind you."
+                 ? "Cancel anytime · Reminder 2 days before"
                  : "Cancel anytime in Settings.")
                 .font(.subheadline)
                 .foregroundColor(StormStyle.secondary)

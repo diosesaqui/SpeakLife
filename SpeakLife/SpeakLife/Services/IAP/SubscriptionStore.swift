@@ -195,6 +195,12 @@ final class SubscriptionStore: ObservableObject {
     /// `stormAdShare`, 0...1. Unset reads 0, so the flip ships dormant.
     @Published var stormAdShare: Double = 0
 
+    /// True once RevenueCat has answered at least once this launch. `isPremium`
+    /// starts false on every launch, so anything that RESTRICTS a free user
+    /// (the storm free layer) must wait for this, or a paying member opening
+    /// the app from a push is briefly treated as free.
+    @Published private(set) var entitlementsResolved = false
+
     /// Storm paywall button copy test: "" / "free_week" → "Start my free week",
     /// "try_free" → "Try it free". Remote Config `stormCtaCopy`.
     @Published var stormCtaCopy: String = ""
@@ -234,11 +240,12 @@ final class SubscriptionStore: ObservableObject {
            let v = OnboardingVariant(code: forced) { return (v, "debug") }
         if let ad = adOnboardingVariant, let v = OnboardingVariant(code: ad) {
             // A storm-mappable ad is flipped once between the storm arm and its
-            // own angle arm. Only after Remote Config is ready, so the share is
-            // the configured one rather than the in-app 0; the onboarding gate
-            // waits for that (see init) and nothing renders before it.
-            if StormConfigStore.isStormAdCode(ad), remoteConfigReady,
-               StormOnboarding.resolveAdBucket(share: stormAdShare) == "storm" {
+            // own angle arm. The flip itself happens only in
+            // `lockOnboardingVariant`, as onboarding starts; this property is
+            // read all over (every purchase event reads the variant name) and
+            // must never enrol an install that finished onboarding long ago.
+            // Here the persisted result is only read back.
+            if StormConfigStore.isStormAdCode(ad), StormOnboarding.adBucket == "storm" {
                 return (.storm, "ad_storm")
             }
             return (v, "ad")
@@ -277,10 +284,16 @@ final class SubscriptionStore: ObservableObject {
     /// (and can't desync the started/finished analytics variant). Idempotent.
     func lockOnboardingVariant() {
         guard lockedOnboardingVariant == nil else { return }
+        // The one place the storm ad coin flip runs: onboarding is starting,
+        // Remote Config has had its chance to deliver the share (see init),
+        // and the result is persisted before the arm is read.
+        if DebugOverrides.string("onboardingVariant") == nil,
+           let ad = adOnboardingVariant, StormConfigStore.isStormAdCode(ad) {
+            _ = StormOnboarding.resolveAdBucket(share: stormAdShare)
+        }
         let assignment = computedAssignment
         lockedOnboardingVariant = assignment.variant
         lockedOnboardingSource = assignment.source
-        if assignment.variant == .storm { StormOnboarding.enroll() }
     }
 
     /// Drops the freeze so the next onboarding run re-resolves the arm. Only the
@@ -518,8 +531,17 @@ final class SubscriptionStore: ObservableObject {
         // Onboarding A/B gate: an ad-matched arm needs no RC round-trip, so it's
         // ready immediately; otherwise a hard timeout guarantees onboarding shows
         // within a few seconds even if the RC fetch is slow, fails, or is offline.
-        // A storm-mappable ad still waits: its coin flip reads `stormAdShare`.
-        if let ad = adOnboardingVariant, !StormConfigStore.isStormAdCode(ad) {
+        // A storm-mappable ad waits for Remote Config, because its coin flip
+        // reads `stormAdShare` - but only when the share can matter: a fresh
+        // install (nothing fetched yet) or a cached share above 0. Otherwise
+        // ad installs keep opening onboarding instantly, as before.
+        let stormFlipPending: Bool = {
+            guard let ad = adOnboardingVariant, StormConfigStore.isStormAdCode(ad),
+                  StormOnboarding.adBucket == nil else { return false }
+            return remoteConfig.lastFetchTime == nil
+                || remoteConfig["stormAdShare"].numberValue.doubleValue > 0
+        }()
+        if adOnboardingVariant != nil, !stormFlipPending {
             remoteConfigReady = true
         } else {
             DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
@@ -871,6 +893,7 @@ final class SubscriptionStore: ObservableObject {
 
     @MainActor
     private func applyCustomerInfo(_ info: RevenueCat.CustomerInfo) {
+        defer { entitlementsResolved = true }
         let premiumActive   = RevenueCatManager.shared.isPremiumActive(info)
         let devotionalActive = RevenueCatManager.shared.isDevotionalActive(info)
 

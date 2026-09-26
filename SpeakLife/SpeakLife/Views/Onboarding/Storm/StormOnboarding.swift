@@ -576,8 +576,11 @@ enum StormFreeLayer {
     private static let dayKey = "storm_free_day"
     private static let countKey = "storm_free_count"
 
-    static func isActive(hasFullAccess: Bool) -> Bool {
-        StormOnboarding.isMember && !hasFullAccess
+    /// Only once entitlements are known: until RevenueCat answers, everyone
+    /// is treated as a member with full access rather than risk limiting a
+    /// paying one.
+    @MainActor static func isActive(_ store: SubscriptionStore) -> Bool {
+        StormOnboarding.isMember && store.entitlementsResolved && !store.hasFullAccess
     }
 
     /// Declarations a free member gets per day.

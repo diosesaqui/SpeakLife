@@ -76,6 +76,9 @@ struct StormOnboardingView: View {
     @State private var lastLoggedStep: StormStep?
     @State private var isRequestingNotifications = false
     @State private var startedAt = Date()
+    /// Screens actually shown, in order, for Back. Skipped steps never enter it.
+    @State private var history: [StormStep] = []
+    @State private var isGoingBack = false
 
     private var resolvedStorm: Storm { storm ?? preselectedStorm ?? .fear }
 
@@ -91,15 +94,29 @@ struct StormOnboardingView: View {
 
             screen
                 .transition(.asymmetric(
-                    insertion: .opacity.combined(with: .offset(y: 20)),
+                    insertion: .opacity.combined(with: .offset(y: isGoingBack ? -20 : 20)),
                     removal: .opacity
                 ))
                 .id(step)
 
             if step != .paywall && step != .rating {
-                StormProgressBar(progress: progress)
-                    .padding(.horizontal, 28)
-                    .padding(.top, size.height * 0.065)
+                HStack(spacing: 6) {
+                    Button(action: goBack) {
+                        Image(systemName: "chevron.left")
+                            .font(.body.weight(.semibold))
+                            .foregroundColor(.white.opacity(0.8))
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .accessibilityLabel("Back")
+                    .opacity(canGoBack ? 1 : 0)
+                    .disabled(!canGoBack)
+                    StormProgressBar(progress: progress)
+                    // Balances the back button so the bar stays centred.
+                    Color.clear.frame(width: 44, height: 44)
+                }
+                .padding(.horizontal, 8)
+                .padding(.top, size.height * 0.065 - 20)
             }
         }
         .ignoresSafeArea()
@@ -107,6 +124,13 @@ struct StormOnboardingView: View {
         .dynamicTypeSize(...DynamicTypeSize.accessibility2)
         .onAppear {
             if storm == nil { storm = preselectedStorm }
+            #if DEBUG
+            // Design review: STORM_STEP=<step name, e.g. speak>, STORM=<storm>.
+            let env = ProcessInfo.processInfo.environment
+            if let s = env["STORM"].flatMap(Storm.init(rawValue:)) { storm = s }
+            if let name = env["STORM_STEP"],
+               let target = StormStep.allCases.first(where: { "\($0)" == name }) { step = target }
+            #endif
             if let preselectedStorm { StormOnboarding.selectedStorm = preselectedStorm }
             startedAt = Date()
             logStepViewed()
@@ -118,13 +142,13 @@ struct StormOnboardingView: View {
     private var screen: some View {
         switch step {
         case .welcome:
-            StormWelcomeScreen { advance() }
+            StormWelcomeScreen { advance(from: .welcome) }
         case .storm:
             StormPickerScreen(selection: storm) { picked in
                 storm = picked
                 StormOnboarding.selectedStorm = picked
                 AnalyticsService.shared.track("storm_selected", parameters: ["storm": picked.rawValue])
-                advance()
+                advance(from: .storm)
             }
         case .posture:
             StormPostureScreen(selection: posture) { picked in
@@ -132,10 +156,10 @@ struct StormOnboardingView: View {
                 AnalyticsService.shared.track("storm_posture_selected", parameters: [
                     "posture": picked.rawValue, "storm": resolvedStorm.rawValue
                 ])
-                advance()
+                advance(from: .posture)
             }
         case .mechanism:
-            StormMechanismScreen(storm: resolvedStorm, posture: posture) { advance() }
+            StormMechanismScreen(storm: resolvedStorm, posture: posture) { advance(from: .mechanism) }
         case .speak:
             StormSpeakScreen(
                 line: resolvedStorm.firstDeclaration,
@@ -166,7 +190,7 @@ struct StormOnboardingView: View {
                         "storm": resolvedStorm.rawValue
                     ])
                 }
-                advance()
+                advance(from: .speak)
             }
         case .feeling:
             StormFeelingScreen { feeling in
@@ -175,10 +199,10 @@ struct StormOnboardingView: View {
                         "feeling": feeling.rawValue, "storm": resolvedStorm.rawValue
                     ])
                 }
-                advance()
+                advance(from: .feeling)
             }
         case .promise:
-            StormPromiseScreen(storm: resolvedStorm) { advance() }
+            StormPromiseScreen(storm: resolvedStorm) { advance(from: .promise) }
         case .morningTime:
             StormMorningTimeScreen(time: $morning) {
                 let c = Calendar.current.dateComponents([.hour, .minute], from: morning)
@@ -186,7 +210,7 @@ struct StormOnboardingView: View {
                 AnalyticsService.shared.track("storm_morning_time_selected", parameters: [
                     "hour": c.hour ?? 7, "minute": c.minute ?? 0
                 ])
-                advance()
+                advance(from: .morningTime)
             }
         case .reminder:
             StormReminderExplainerScreen(storm: resolvedStorm, time: morning, isBusy: isRequestingNotifications) { wantsReminders in
@@ -195,17 +219,17 @@ struct StormOnboardingView: View {
                         "granted": false, "source": "storm_onboarding",
                         "placement": "before_paywall", "asked": false
                     ])
-                    advance()
+                    advance(from: .reminder)
                     return
                 }
                 guard !isRequestingNotifications else { return }
                 isRequestingNotifications = true
-                requestNotificationPermission { advance() }
+                requestNotificationPermission { advance(from: .reminder) }
             }
         case .plan:
-            StormPlanScreen(storm: resolvedStorm, morning: morning) { advance() }
+            StormPlanScreen(storm: resolvedStorm, morning: morning) { advance(from: .plan) }
         case .rating:
-            RatingView(size: size) { advance() }
+            RatingView(size: size) { advance(from: .rating) }
         case .paywall:
             StormPaywallView(storm: resolvedStorm, placement: "onboarding") { _ in
                 complete()
@@ -215,7 +239,11 @@ struct StormOnboardingView: View {
 
     // MARK: Navigation
 
-    private func advance() {
+    /// Moves on from `from`, and only from it. A second tap that lands during
+    /// the 0.3s transition, or a callback that fires twice, finds `step` has
+    /// already moved and does nothing, so no screen is ever skipped.
+    private func advance(from: StormStep) {
+        guard step == from else { return }
         Juice.play(.tapLight)
         AnalyticsService.shared.track("storm_step_completed", parameters: [
             "step": step.rawValue, "step_name": step.funnelStepName
@@ -223,7 +251,26 @@ struct StormOnboardingView: View {
         var next = step.rawValue + 1
         while let candidate = StormStep(rawValue: next), shouldSkip(candidate) { next += 1 }
         guard let target = StormStep(rawValue: next) else { complete(); return }
+        history.append(step)
+        isGoingBack = false
         withAnimation(.easeInOut(duration: 0.3)) { step = target }
+    }
+
+    /// Back is offered on every question screen, so a wrong tap on the storm
+    /// picker is one tap to fix. Not on the welcome, the rating ask or the
+    /// paywall (which has its own close), and not while the push prompt is up.
+    private var canGoBack: Bool {
+        !history.isEmpty && step != .paywall && step != .rating && !isRequestingNotifications
+    }
+
+    private func goBack() {
+        guard canGoBack, let previous = history.popLast() else { return }
+        Juice.play(.tapLight)
+        AnalyticsService.shared.track("storm_step_back", parameters: [
+            "from": step.funnelStepName, "to": previous.funnelStepName
+        ])
+        isGoingBack = true
+        withAnimation(.easeInOut(duration: 0.3)) { step = previous }
     }
 
     private func shouldSkip(_ candidate: StormStep) -> Bool {
@@ -260,6 +307,10 @@ struct StormOnboardingView: View {
     private func complete() {
         let storm = resolvedStorm
         let category = storm.category
+        // Membership starts here, after the flow was actually walked, not when
+        // onboarding first rendered: an iCloud-restored install can flash the
+        // onboarding branch before the restore bypass skips it.
+        StormOnboarding.enroll()
         StormOnboarding.selectedStorm = storm
         appState.selectedNotificationCategories = category.rawValue
         UserDefaults.standard.set(category.rawValue, forKey: "selectedCategory")
@@ -312,6 +363,19 @@ struct StormOnboardingView: View {
                 next()
             }
         }
+    }
+}
+
+/// Launching a Debug build with STORM_STEP or STORM_PHASE opens the storm flow
+/// on that screen, onboarded or not, for screen-by-screen design review.
+enum StormDebugReview {
+    static var isActive: Bool {
+        #if DEBUG
+        let env = ProcessInfo.processInfo.environment
+        return env["STORM_STEP"] != nil || env["STORM_PHASE"] != nil
+        #else
+        return false
+        #endif
     }
 }
 
