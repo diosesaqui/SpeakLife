@@ -343,7 +343,8 @@ final class AppDelegate: NSObject, MessagingDelegate {
             // (0 = dormant), and the paywall button copy test.
             "stormAdShare": 0 as NSNumber,
             "stormCtaCopy": "" as NSString,
-            "stormAlsoIncluded": false as NSNumber
+            "stormAlsoIncluded": false as NSNumber,
+            "stormPromiseCopy": "a" as NSString
         ])
 
         // Wire the domain-facing feature-flag seam to Firebase Remote Config now

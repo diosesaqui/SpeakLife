@@ -6,8 +6,9 @@
 //  new user to speak their first declaration out loud over the storm they
 //  named, before they ever see a price.
 //
-//    welcome → storm → posture → mechanism → SPEAK → feeling → morning time
-//      → reminder explainer (+ iOS prompt) → 7-day plan → [rating] → paywall
+//    welcome → storm → posture → mechanism → SPEAK → feeling → promise
+//      → morning time → reminder explainer (+ iOS prompt) → 7-day plan
+//      → [rating] → paywall
 //
 //  `storm` is skipped when an ad already named it. `rating` only follows a
 //  declaration that was actually spoken, and honours the remote kill switch.
@@ -24,7 +25,7 @@ import UIKit
 // MARK: - Steps
 
 enum StormStep: Int, CaseIterable, OnboardingFunnelStep {
-    case welcome, storm, posture, mechanism, speak, feeling, morningTime, reminder, plan, rating, paywall
+    case welcome, storm, posture, mechanism, speak, feeling, promise, morningTime, reminder, plan, rating, paywall
 
     var funnelStepName: String {
         switch self {
@@ -34,6 +35,7 @@ enum StormStep: Int, CaseIterable, OnboardingFunnelStep {
         case .mechanism:   return "mechanism"
         case .speak:       return "first_declaration"
         case .feeling:     return "declaration_feeling"
+        case .promise:     return "scripture_promise"
         case .morningTime: return "notification_time"
         case .reminder:    return "reminder_explainer"
         case .plan:        return "plan_reveal"
@@ -46,7 +48,7 @@ enum StormStep: Int, CaseIterable, OnboardingFunnelStep {
         switch self {
         case .welcome, .mechanism:             return .hook
         case .storm, .posture:                 return .personalize
-        case .speak, .feeling, .plan, .rating: return .value
+        case .speak, .feeling, .promise, .plan, .rating: return .value
         case .morningTime, .reminder:          return .setup
         case .paywall:                         return .paywall
         }
@@ -165,6 +167,11 @@ struct StormOnboardingView: View {
                 }
                 advance()
             }
+        case .promise:
+            StormPromiseScreen(
+                storm: resolvedStorm,
+                copy: StormPromiseCopy(variant: subscriptionStore.stormPromiseCopy)
+            ) { advance() }
         case .morningTime:
             StormMorningTimeScreen(time: $morning) {
                 let c = Calendar.current.dateComponents([.hour, .minute], from: morning)
@@ -789,6 +796,107 @@ private struct StormFeelingScreen: View {
                 .padding(.bottom, 40)
         }
         .onAppear { v = true }
+    }
+}
+
+// MARK: - 6b. Why speaking works
+
+/// Copy variants for the promise screen, picked by Remote Config
+/// `stormPromiseCopy`. Unknown or empty values fall back to "a". Add an option
+/// by adding a case here; the screen and analytics pick it up.
+struct StormPromiseCopy {
+    let id: String
+    let title: String
+    let verse: String
+    let reference: String
+    let body: (Storm) -> String
+    let bullets: [String]
+
+    init(variant: String) {
+        switch variant.lowercased() {
+        default:
+            // Option A: the Scripture promise.
+            id = "a"
+            title = "Your words carry weight."
+            verse = "Death and life are in the power of the tongue."
+            reference = "Proverbs 18:21"
+            body = { storm in
+                "When you speak God's promises over \(storm.overPhrase), you're not hoping harder. You're agreeing with what He already said."
+            }
+            bullets = [
+                "Wake up with His word before worry gets the first word",
+                "Know exactly what to say when fear shows up",
+                "Face the day standing, not braced"
+            ]
+        }
+    }
+}
+
+private struct StormPromiseScreen: View {
+    let storm: Storm
+    let copy: StormPromiseCopy
+    let onContinue: () -> Void
+    @State private var v = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 22) {
+                    Spacer().frame(height: 100)
+                    Text(copy.title)
+                        .font(.title.weight(.bold))
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .stormAppear(v)
+                    VStack(spacing: 6) {
+                        Text("\u{201C}\(copy.verse)\u{201D}")
+                            .font(.system(.title3, design: .serif).italic())
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text(copy.reference)
+                            .font(.callout.weight(.semibold))
+                            .foregroundColor(StormStyle.gold)
+                    }
+                    .stormAppear(v, delay: 0.08)
+                    Text(copy.body(storm))
+                        .font(.body)
+                        .foregroundColor(StormStyle.secondary)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .stormAppear(v, delay: 0.16)
+                    VStack(alignment: .leading, spacing: 14) {
+                        ForEach(copy.bullets, id: \.self) { bullet in
+                            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(StormStyle.gold)
+                                    .accessibilityHidden(true)
+                                Text(bullet)
+                                    .font(.body)
+                                    .foregroundColor(.white)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                    }
+                    .padding(18)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(Color.white.opacity(0.06)))
+                    .stormAppear(v, delay: 0.24)
+                }
+                .padding(.horizontal, 24)
+            }
+            StormPrimaryButton(title: "Continue", action: onContinue)
+                .padding(.horizontal, 24)
+                .padding(.top, 8)
+                .padding(.bottom, 40)
+        }
+        .onAppear {
+            v = true
+            AnalyticsService.shared.track("storm_promise_shown", parameters: [
+                "copy": copy.id, "storm": storm.rawValue
+            ])
+        }
     }
 }
 

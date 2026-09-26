@@ -98,6 +98,19 @@ enum Storm: String, CaseIterable, Identifiable {
         }
     }
 
+    /// "When you speak God's promises over ___".
+    var overPhrase: String {
+        switch self {
+        case .health:   return "your health"
+        case .family:   return "your family"
+        case .marriage: return "your marriage"
+        case .finances: return "your finances"
+        case .fear:     return "your mind"
+        case .grief:    return "your heart"
+        case .identity: return "who you are"
+        }
+    }
+
     /// What to ask Bible chat about, for the Day-2 trial push.
     var chatTopic: String {
         switch self {
