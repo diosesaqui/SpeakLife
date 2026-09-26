@@ -203,11 +203,6 @@ final class SubscriptionStore: ObservableObject {
     /// storm benefits. Remote Config `stormAlsoIncluded`, the with/without test.
     @Published var stormAlsoIncluded = false
 
-    /// Storm onboarding promise-screen copy test. Remote Config
-    /// `stormPromiseCopy`: "a" (default) and any option added to
-    /// `StormPromiseCopy`.
-    @Published var stormPromiseCopy: String = ""
-
     /// The storm an ad install arrives with, when the coin flip sent it to the
     /// storm arm. The flow preselects it and skips the picker.
     var adPreselectedStorm: Storm? {
@@ -653,7 +648,9 @@ final class SubscriptionStore: ObservableObject {
             ?? remoteConfig["stormAdShare"].numberValue.doubleValue
         stormCtaCopy = stringValue("stormCtaCopy")
         stormAlsoIncluded = flagValue("stormAlsoIncluded")
-        stormPromiseCopy = stringValue("stormPromiseCopy")
+        // Whole storm config file (same shape as storm_configs.json). Empty
+        // keeps the bundled copy. Copy A/B tests are variants of this key.
+        StormConfigStore.applyRemote(stringValue("stormConfigs"))
     }
 
     /// Remote Config value for a boolean flag, unless a debug override is set.

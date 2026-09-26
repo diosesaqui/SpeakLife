@@ -98,36 +98,14 @@ enum Storm: String, CaseIterable, Identifiable {
         }
     }
 
-    /// "When you speak God's promises over ___".
-    var overPhrase: String {
-        switch self {
-        case .health:   return "your health"
-        case .family:   return "your family"
-        case .marriage: return "your marriage"
-        case .finances: return "your finances"
-        case .fear:     return "your mind"
-        case .grief:    return "your heart"
-        case .identity: return "who you are"
-        }
-    }
-
-    /// What to ask Bible chat about, for the Day-2 trial push.
-    var chatTopic: String {
-        switch self {
-        case .health:   return "your health"
-        case .family:   return "your children"
-        case .marriage: return "your marriage"
-        case .finances: return "your finances"
-        case .fear:     return "fear and worry"
-        case .grief:    return "losing someone you love"
-        case .identity: return "who you are in Christ"
-        }
-    }
-
     /// The storm an ad's `ob=` code is about, or nil when the ad angle names no
     /// single storm (warfare, promises, command, ...). Only these codes are
     /// eligible for the ad coin flip.
     init?(adCode: String) {
+        // The live storm config owns the mapping (its `ob_code` lists), so a
+        // new ad angle can point at a storm without a release. The switch
+        // below is the fallback if no config loaded at all.
+        if let storm = StormConfigStore.storm(forAdCode: adCode) { self = storm; return }
         switch adCode.lowercased() {
         case "healing":              self = .health
         case "provision":            self = .finances
@@ -551,9 +529,11 @@ enum StormTrialPushes {
     static let bibleChatID = "trial_bible_chat_d2"
 
     static func schedule(storm: Storm, trialStart: Date, calendar: Calendar = .current) {
+        let config = StormConfigStore.resolved(for: storm)
         LifecycleNotificationService.shared.scheduleTrialFirstNightAudio(
             category: storm.category.rawValue,
-            domain: storm.domain
+            title: config.audioPush.title,
+            body: config.audioPush.body
         )
 
         // Day 2, midday: clear of the morning Burst and the evening audio.
@@ -561,8 +541,8 @@ enum StormTrialPushes {
               let fire = calendar.date(bySettingHour: 12, minute: 30, second: 0, of: day2),
               fire > Date() else { return }
         let content = UNMutableNotificationContent()
-        content.title = "Ask what Scripture says about \(storm.chatTopic)"
-        content.body = "Type any question in Ask the Bible and get an answer rooted in verses."
+        content.title = config.chatPush.title
+        content.body = config.chatPush.body
         content.sound = .default
         content.userInfo = ["action": bibleChatID, "deepLink": "bibleChat"]
         let comps = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: fire)
@@ -622,5 +602,156 @@ enum StormFreeLayer {
     private static func dayStamp(_ date: Date) -> String {
         let c = Calendar.current.dateComponents([.year, .month, .day], from: date)
         return "\(c.year ?? 0)-\(c.month ?? 0)-\(c.day ?? 0)"
+    }
+}
+
+// MARK: - Storm config
+
+/// Every storm-specific string on the benefit screen, the plan screen, the
+/// paywall and the trial pushes, in one place per storm so a promise cannot
+/// drift between screens. Ships as `storm_configs.json` in the bundle; Remote
+/// Config `stormConfigs` (the whole file, same shape) replaces it without a
+/// release, and is how a copy A/B test runs: each variant is a config.
+///
+/// A storm entry only names what differs from `default`; everything else is
+/// read from `default`. The declarations the user speaks are NOT here: those
+/// stay in `Storm.lines`, copied from the reviewed declaration pool.
+struct StormConfigFile: Decodable {
+    let version: Int?
+    let `default`: StormConfig
+    let storms: [String: StormConfig]
+}
+
+struct StormConfig: Decodable {
+    struct Verse: Decodable { let text: String; let reference: String }
+    struct BenefitScreen: Decodable {
+        let headline: String?
+        let verse: Verse?
+        let body: String?
+        let promises: [String]?
+    }
+    struct Benefit: Decodable { let when: String; let text: String }
+    struct Paywall: Decodable {
+        let headline: String?
+        let benefits: [Benefit]?
+    }
+    struct Push: Decodable { let title: String; let body: String }
+    struct Pushes: Decodable {
+        let audio_day1: Push?
+        let chat_day2: Push?
+    }
+
+    let id: String?
+    let label: String?
+    let ob_code: [String]?
+    let benefit_screen: BenefitScreen?
+    let plan_title: String?
+    let paywall: Paywall?
+    let pushes: Pushes?
+
+    private enum CodingKeys: String, CodingKey {
+        case id, label, ob_code, benefit_screen, plan_title, paywall, pushes
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decodeIfPresent(String.self, forKey: .id)
+        label = try c.decodeIfPresent(String.self, forKey: .label)
+        // The spec writes one code; some storms answer to more than one.
+        if let many = try? c.decodeIfPresent([String].self, forKey: .ob_code) {
+            ob_code = many
+        } else {
+            ob_code = (try? c.decodeIfPresent(String.self, forKey: .ob_code)).flatMap { $0 }.map { [$0] }
+        }
+        benefit_screen = try c.decodeIfPresent(BenefitScreen.self, forKey: .benefit_screen)
+        plan_title = try c.decodeIfPresent(String.self, forKey: .plan_title)
+        paywall = try c.decodeIfPresent(Paywall.self, forKey: .paywall)
+        pushes = try c.decodeIfPresent(Pushes.self, forKey: .pushes)
+    }
+}
+
+/// A storm's config with `default` filled in and `{storm_label}` substituted.
+struct ResolvedStormConfig {
+    let label: String
+    let benefitHeadline: String
+    let benefitVerse: StormConfig.Verse
+    let benefitBody: String
+    let promises: [String]
+    let planTitle: String
+    let paywallHeadline: String
+    let paywallBenefits: [StormConfig.Benefit]
+    let audioPush: StormConfig.Push
+    let chatPush: StormConfig.Push
+}
+
+enum StormConfigStore {
+    private static var remote: StormConfigFile?
+    private static var remoteRaw = ""
+
+    private static let bundled: StormConfigFile? = {
+        guard let url = Bundle.main.url(forResource: "storm_configs", withExtension: "json"),
+              let data = try? Data(contentsOf: url) else { return nil }
+        return try? JSONDecoder().decode(StormConfigFile.self, from: data)
+    }()
+
+    private static var file: StormConfigFile? { remote ?? bundled }
+
+    /// Called from Remote Config apply. Empty or undecodable leaves the
+    /// bundled file in charge, so a bad paste in Firebase cannot blank a screen.
+    static func applyRemote(_ json: String) {
+        guard json != remoteRaw else { return }
+        remoteRaw = json
+        guard !json.isEmpty, let data = json.data(using: .utf8),
+              let decoded = try? JSONDecoder().decode(StormConfigFile.self, from: data) else {
+            if !json.isEmpty {
+                AnalyticsService.shared.track("storm_config_invalid", parameters: ["length": json.count])
+            }
+            remote = nil
+            return
+        }
+        remote = decoded
+    }
+
+    /// Which config is live, for analytics: "remote_v<n>" or "bundled_v<n>".
+    static var source: String {
+        if let remote { return "remote_v\(remote.version ?? 0)" }
+        return "bundled_v\(bundled?.version ?? 0)"
+    }
+
+    /// The storm an ad code names, from the live config.
+    static func storm(forAdCode code: String) -> Storm? {
+        let code = code.lowercased()
+        guard let storms = file?.storms else { return nil }
+        for storm in Storm.allCases where storms[storm.rawValue]?.ob_code?.contains(code) == true {
+            return storm
+        }
+        return nil
+    }
+
+    static func resolved(for storm: Storm?) -> ResolvedStormConfig {
+        let d = file?.default
+        let s = storm.flatMap { file?.storms[$0.rawValue] }
+        let label = s?.label ?? d?.label ?? "life"
+        func fill(_ text: String) -> String { text.replacingOccurrences(of: "{storm_label}", with: label.lowercased()) }
+
+        let promises = s?.benefit_screen?.promises ?? d?.benefit_screen?.promises ?? []
+        return ResolvedStormConfig(
+            label: label,
+            benefitHeadline: fill(s?.benefit_screen?.headline ?? d?.benefit_screen?.headline ?? "Your words carry weight."),
+            benefitVerse: s?.benefit_screen?.verse ?? d?.benefit_screen?.verse
+                ?? .init(text: "Death and life are in the power of the tongue.", reference: "Proverbs 18:21"),
+            benefitBody: fill(s?.benefit_screen?.body ?? d?.benefit_screen?.body ?? ""),
+            promises: promises.map(fill),
+            planTitle: fill(s?.plan_title ?? d?.plan_title ?? "Your 7-day plan"),
+            paywallHeadline: fill(s?.paywall?.headline ?? d?.paywall?.headline ?? "Your plan is ready."),
+            paywallBenefits: (s?.paywall?.benefits ?? d?.paywall?.benefits ?? [])
+                .map { .init(when: fill($0.when), text: fill($0.text)) },
+            audioPush: (s?.pushes?.audio_day1 ?? d?.pushes?.audio_day1)
+                .map { .init(title: fill($0.title), body: fill($0.body)) }
+                ?? .init(title: "For tonight's quiet 🎧", body: "A short audio declaration for before you sleep."),
+            chatPush: (s?.pushes?.chat_day2 ?? d?.pushes?.chat_day2)
+                .map { .init(title: fill($0.title), body: fill($0.body)) }
+                ?? .init(title: "Ask the Bible", body: "Get an answer rooted in verses.")
+        )
     }
 }

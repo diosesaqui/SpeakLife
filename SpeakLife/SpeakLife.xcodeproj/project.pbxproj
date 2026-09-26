@@ -283,6 +283,7 @@
 		D09900000000000000995A01 /* StormOnboarding.swift in Sources */ = {isa = PBXBuildFile; fileRef = C09900000000000000995A01 /* StormOnboarding.swift */; };
 		D09900000000000000995A02 /* StormOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C09900000000000000995A02 /* StormOnboardingView.swift */; };
 		D09900000000000000995A03 /* StormPaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C09900000000000000995A03 /* StormPaywallView.swift */; };
+		D099000000000000009950A4 /* storm_configs.json in Resources */ = {isa = PBXBuildFile; fileRef = C099000000000000009950A4 /* storm_configs.json */; };
 		D0990000000000000099BBBB /* AngleOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0990000000000000099AAAA /* AngleOnboardingView.swift */; };
 		D0990000000000000098BBBB /* OnboardingAngle.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0990000000000000098AAAA /* OnboardingAngle.swift */; };
 		D0990000000000000097BBBB /* OnboardingAngles.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0990000000000000097AAAA /* OnboardingAngles.swift */; };
@@ -704,6 +705,7 @@
 		C09900000000000000995A01 /* StormOnboarding.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Storm/StormOnboarding.swift; sourceTree = "<group>"; };
 		C09900000000000000995A02 /* StormOnboardingView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Storm/StormOnboardingView.swift; sourceTree = "<group>"; };
 		C09900000000000000995A03 /* StormPaywallView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Storm/StormPaywallView.swift; sourceTree = "<group>"; };
+		C099000000000000009950A4 /* storm_configs.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Storm/storm_configs.json; sourceTree = "<group>"; };
 		C0990000000000000099AAAA /* AngleOnboardingView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AngleOnboardingView.swift; sourceTree = "<group>"; };
 		C0990000000000000098AAAA /* OnboardingAngle.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OnboardingAngle.swift; sourceTree = "<group>"; };
 		C0990000000000000097AAAA /* OnboardingAngles.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OnboardingAngles.swift; sourceTree = "<group>"; };
@@ -1693,6 +1695,7 @@
 			children = (
 				E4A11C000000000000000001 /* EmailCaptureScreen.swift */,
 				C0990000000000000099AAAA /* AngleOnboardingView.swift */,
+				C099000000000000009950A4 /* storm_configs.json */,
 				C09900000000000000995A01 /* StormOnboarding.swift */,
 				C09900000000000000995A02 /* StormOnboardingView.swift */,
 				C09900000000000000995A03 /* StormPaywallView.swift */,
@@ -2043,6 +2046,7 @@
 				45A4A3D12D86B86100DFCEB7 /* washed.mp3 in Resources */,
 				4517D1D42F26CCFA00CB1245 /* declarationsv9.json in Resources */,
 				45C15A782F2E9B27006171F5 /* declarationsv10.json in Resources */,
+				D099000000000000009950A4 /* storm_configs.json in Resources */,
 				BCC8A7200000000000000006 /* bible_chat_topics.json in Resources */,
 				457CD3A72E8508F300F435EC /* README.md in Resources */,
 				456885282B395F66007B1EBB /* declarationsv3.json in Resources */,

@@ -418,7 +418,7 @@ private struct StormPaywallMain: View {
 
     private var hero: some View {
         VStack(spacing: 10) {
-            (Text("Your ") + Text(storm.planName).foregroundColor(StormStyle.gold) + Text(" storm plan is ready."))
+            StormGoldHeadline(text: config.paywallHeadline, highlight: storm.planName)
                 .font(.title.weight(.bold))
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
@@ -441,9 +441,10 @@ private struct StormPaywallMain: View {
 
     private var benefits: some View {
         VStack(alignment: .leading, spacing: 14) {
-            benefitRow("7 scriptures for \(storm.domain) every morning")
-            benefitRow("A Daily Burst built around your storm")
-            benefitRow("Spoken out loud, in your own voice")
+            // The benefit screen's promises, same order, each with its "when".
+            ForEach(Array(config.paywallBenefits.enumerated()), id: \.offset) { _, benefit in
+                benefitRow(benefit)
+            }
             if subscriptionStore.stormAlsoIncluded {
                 alsoIncluded.padding(.top, 4)
             }
@@ -479,12 +480,14 @@ private struct StormPaywallMain: View {
         }
     }
 
-    private func benefitRow(_ text: String) -> some View {
+    private var config: ResolvedStormConfig { StormConfigStore.resolved(for: storm) }
+
+    private func benefitRow(_ benefit: StormConfig.Benefit) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 12) {
             Image(systemName: "checkmark.circle.fill")
                 .foregroundColor(StormStyle.gold)
                 .accessibilityHidden(true)
-            Text(text)
+            (Text(benefit.when).bold() + Text(" " + benefit.text))
                 .font(.body)
                 .foregroundColor(.white)
                 .fixedSize(horizontal: false, vertical: true)
@@ -661,7 +664,8 @@ private struct StormPaywallMain: View {
             "trial_eligible": model.isTrialEligible,
             "trial_days": model.trialDays,
             "cta": ctaTitle,
-            "also_included": subscriptionStore.stormAlsoIncluded
+            "also_included": subscriptionStore.stormAlsoIncluded,
+            "storm_config": StormConfigStore.source
         ])
         // The cross-arm event every other paywall fires, so the existing
         // onboarding funnels count this one without a special case.
@@ -716,6 +720,23 @@ private struct StormPaywallMain: View {
                 withAnimation(.easeInOut(duration: 0.35)) { pulse = false }
             }
             try? await Task.sleep(nanoseconds: 3_500_000_000)
+        }
+    }
+}
+
+/// A headline with the storm's name in gold when it appears in the text; the
+/// whole line in white when the config words it another way (grief does).
+private struct StormGoldHeadline: View {
+    let text: String
+    let highlight: String
+
+    var body: some View {
+        if let range = text.range(of: highlight) {
+            (Text(String(text[..<range.lowerBound]))
+             + Text(highlight).foregroundColor(StormStyle.gold)
+             + Text(String(text[range.upperBound...])))
+        } else {
+            Text(text)
         }
     }
 }

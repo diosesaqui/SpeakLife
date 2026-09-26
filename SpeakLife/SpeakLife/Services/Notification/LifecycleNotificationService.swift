@@ -498,7 +498,7 @@ extension LifecycleNotificationService {
     /// It replaces tonight's nightly push rather than adding a second one.
     /// Users who touch audio in the trial convert more, so the first night is
     /// where it is introduced.
-    func scheduleTrialFirstNightAudio(category: String, domain: String) {
+    func scheduleTrialFirstNightAudio(category: String, title: String, body: String) {
         // Turned off on the Reminders screen: no bedtime push of any kind.
         if UserDefaults.standard.object(forKey: Self.bedtimeAudioEnabledKey) as? Bool == false { return }
         let calendar = Calendar.current
@@ -508,8 +508,8 @@ extension LifecycleNotificationService {
         let episode = Self.bedtimeEpisode(isPremium: true, category: category)
 
         let content = UNMutableNotificationContent()
-        content.title = "For tonight's quiet 🎧"
-        content.body = "A short audio declaration over \(domain), for before you sleep. Press play and rest."
+        content.title = title
+        content.body = body
         content.sound = .default
         content.userInfo = [
             "action": Self.trialAudioID,

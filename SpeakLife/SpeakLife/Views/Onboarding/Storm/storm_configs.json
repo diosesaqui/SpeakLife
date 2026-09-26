@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "default": {
+    "id": "default",
+    "label": "life",
+    "benefit_screen": {
+      "headline": "Your words carry weight.",
+      "verse": {
+        "text": "Death and life are in the power of the tongue.",
+        "reference": "Proverbs 18:21"
+      },
+      "body": "When you speak God's promises over your {storm_label}, you're not hoping harder. You're agreeing with what He already said.",
+      "promises": [
+        "Wake up with His word before worry gets the first word",
+        "Know exactly what to say when fear shows up",
+        "Face the day standing, not braced"
+      ]
+    },
+    "plan_title": "Your 7-day storm plan",
+    "paywall": {
+      "headline": "Your storm plan is ready.",
+      "benefits": [
+        { "when": "Every morning:", "text": "His word before worry gets the first word." },
+        { "when": "When fear shows up:", "text": "you know exactly what to say." },
+        { "when": "All day:", "text": "you face it standing, not braced." }
+      ]
+    },
+    "pushes": {
+      "audio_day1": {
+        "title": "For tonight's quiet 🎧",
+        "body": "A short audio declaration over your {storm_label}, for before you sleep. Press play and rest."
+      },
+      "chat_day2": {
+        "title": "Ask what Scripture says about your {storm_label}",
+        "body": "Type any question in Ask the Bible and get an answer rooted in verses."
+      }
+    }
+  },
+  "storms": {
+    "health": {
+      "label": "health",
+      "ob_code": ["healing"],
+      "plan_title": "Your 7-day Health storm plan",
+      "paywall": { "headline": "Your Health storm plan is ready." }
+    },
+    "family": {
+      "label": "family",
+      "ob_code": ["parenting"],
+      "plan_title": "Your 7-day Family storm plan",
+      "paywall": { "headline": "Your Family storm plan is ready." }
+    },
+    "marriage": {
+      "label": "marriage",
+      "ob_code": ["marriage"],
+      "plan_title": "Your 7-day Marriage storm plan",
+      "paywall": { "headline": "Your Marriage storm plan is ready." }
+    },
+    "finances": {
+      "label": "finances",
+      "ob_code": ["provision"],
+      "plan_title": "Your 7-day Finances storm plan",
+      "paywall": { "headline": "Your Finances storm plan is ready." }
+    },
+    "fear": {
+      "label": "mind",
+      "ob_code": ["anxiety", "fear"],
+      "plan_title": "Your 7-day Peace of Mind plan",
+      "paywall": { "headline": "Your Peace of Mind plan is ready." }
+    },
+    "grief": {
+      "label": "heart",
+      "ob_code": ["grief"],
+      "plan_title": "Your 7-day comfort plan",
+      "paywall": { "headline": "Your comfort plan is ready." }
+    },
+    "identity": {
+      "label": "identity",
+      "ob_code": [],
+      "plan_title": "Your 7-day Identity plan",
+      "paywall": { "headline": "Your Identity plan is ready." }
+    }
+  }
+}
