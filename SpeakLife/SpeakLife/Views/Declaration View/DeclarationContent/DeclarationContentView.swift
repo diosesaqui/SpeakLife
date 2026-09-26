@@ -112,6 +112,11 @@ struct DeclarationContentView: View {
     
     @StateObject private var coordinator = SpeechCoordinator()
     @State private var isMenuExpanded = false
+    /// Storm free layer: the swipe that would pass today's one declaration is
+    /// undone and this is shown instead.
+    @State private var showStormFreeLimit = false
+    @State private var isRevertingFreeLimit = false
+    @State private var lastAllowedTab = 0
     @State private var rotationAngle: Double = 0
     @State private var buttonVisibilities: [Bool] = [false, false]
     @State private var numberOfItems: Int = 2
@@ -203,6 +208,28 @@ struct DeclarationContentView: View {
 
             .tabViewStyle(.page(indexDisplayMode: .never))
             .onChange(of: viewModel.selectedTab) { newIndex in
+                if isRevertingFreeLimit {
+                    isRevertingFreeLimit = false
+                    return
+                }
+                // Only a swipe FORWARD to a card not yet seen spends the day's
+                // declaration. Swiping back is free, and a jump to 0 is the
+                // list resetting itself (category change, reload), not a swipe.
+                let isNewCard = newIndex > lastAllowedTab
+                if StormFreeLayer.isActive(subscriptionStore), isNewCard {
+                    guard StormFreeLayer.hasAllowanceLeft else {
+                        isRevertingFreeLimit = true
+                        let safeIndex = min(lastAllowedTab, max(viewModel.declarations.count - 1, 0))
+                        withAnimation { viewModel.selectedTab = safeIndex }
+                        showStormFreeLimit = true
+                        AnalyticsService.shared.track("storm_free_limit_hit", parameters: [
+                            "free_day": StormFreeLayer.freeDay
+                        ])
+                        return
+                    }
+                    StormFreeLayer.recordUse()
+                }
+                lastAllowedTab = newIndex
                 isMenuExpanded = false
                 askForReview()
                 let declaration = viewModel.declarations[newIndex]
@@ -253,7 +280,12 @@ struct DeclarationContentView: View {
            
             }
         }
+        .sheet(isPresented: $showStormFreeLimit) {
+            StormFreeLimitView()
+                .environmentObject(subscriptionStore)
+        }
         .onAppear {
+            lastAllowedTab = viewModel.selectedTab
             // Safety check on app launch
             if appState.showScreenshotLabel {
                 appState.showScreenshotLabel = false

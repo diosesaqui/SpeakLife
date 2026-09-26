@@ -112,11 +112,29 @@ struct DailyDeclarationBurstView: View {
     @State private var shareButtonOpacity: Double = 0.0
     
     // Configuration for burst session
-    private let burstDeclarationCount = 7
+    /// Seven, or one for a storm-arm member on the free layer: that one line
+    /// is their declaration for the day.
+    private var burstDeclarationCount: Int {
+        StormFreeLayer.isActive(subscriptionStore) ? 1 : 7
+    }
     private let favoriteWeight = 2  // Favorites appear 3x more likely
     private let customWeight = 3    // Custom declarations 2x more likely
     
+    /// Storm free layer: today's declaration is already spent.
+    @State private var showStormFreeLimit = false
+
     var body: some View {
+        burstBody
+            .overlay {
+                if showStormFreeLimit {
+                    // Its close and its paywall both dismiss the Burst.
+                    StormFreeLimitView()
+                        .transition(.opacity)
+                }
+            }
+    }
+
+    private var burstBody: some View {
         GeometryReader { geometry in
             ZStack {
                 // Solid base — prevents the underlying view from bleeding through
@@ -264,6 +282,19 @@ struct DailyDeclarationBurstView: View {
             fullPool: viewModel.allAvailableDeclarations
         )
         session = composed
+        if burstDeclarationCount == 1 {
+            // A free storm member's one declaration a day. Already spent
+            // (in the feed, or an earlier Burst today): the limit screen
+            // covers the Burst instead of handing out another line.
+            if StormFreeLayer.hasAllowanceLeft {
+                StormFreeLayer.recordUse()
+            } else {
+                showStormFreeLimit = true
+                AnalyticsService.shared.track("storm_free_limit_hit", parameters: [
+                    "free_day": StormFreeLayer.freeDay, "surface": "burst"
+                ])
+            }
+        }
 
         switch composed.origin {
         case .enforcement:

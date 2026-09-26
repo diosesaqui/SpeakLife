@@ -131,6 +131,9 @@ final class WelcomeOfferPresenter: ObservableObject {
     private func isEligible(_ store: SubscriptionStore) -> Bool {
         guard !hasBeenShown,
               !store.hasFullAccess,
+              // The storm arm replaces this blanket offer with the objection
+              // screen, which shows a discount only to someone who named price.
+              !StormOnboarding.isMember,
               let discount = store.currentOfferedDiscount,
               let regular = store.currentOfferedPremium,
               discount.subscription?.subscriptionPeriod.unit == .year,

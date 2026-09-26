@@ -102,6 +102,7 @@ final class BibleChatConversationViewModel: ObservableObject {
         AnalyticsService.shared.trackUserAction("bible_chat_message_sent", category: "bible_chat")
         GrowthMetrics.shared.trackActivation(action: "bible_chat_message_sent")
         GrowthMetrics.shared.trackFeatureFirstUse("bible_chat")
+        TrialExperienceService.shared.recordTrialFeatureUse("bible_chat")
         dispatchSend(text, isPremium: isPremium)
     }
 
