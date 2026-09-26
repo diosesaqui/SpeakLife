@@ -161,6 +161,9 @@ final class SubscriptionStore: ObservableObject {
         // `parenting` carry the same limit `prodigal` does: no promise about
         // what another free person will do.
         case parenting, addiction, marriage, hardtimes
+        // Speak-first onboarding + reassurance paywall (StormOnboardingView).
+        // Bespoke; reached from Remote Config or from the storm ad coin flip.
+        case storm
         init?(code: String) { self.init(rawValue: code.lowercased()) }
 
         /// The angle this arm renders, or nil for a bespoke flow with its own view.
@@ -175,10 +178,35 @@ final class SubscriptionStore: ObservableObject {
     private var lockedOnboardingVariant: OnboardingVariant?
 
     var resolvedOnboardingVariant: OnboardingVariant {
-        lockedOnboardingVariant ?? computedOnboardingVariant
+        lockedOnboardingVariant ?? computedAssignment.variant
     }
 
-    private var computedOnboardingVariant: OnboardingVariant {
+    /// Where the locked arm came from: "debug", "ad", "ad_storm",
+    /// "remote_config" or "legacy_default". Stamped on
+    /// `onboarding_variant_assigned` so every install reports its arm AND how it
+    /// got it, not only the ad installs.
+    var onboardingVariantSource: String {
+        lockedOnboardingSource ?? computedAssignment.source
+    }
+    private var lockedOnboardingSource: String?
+
+    /// Share of storm-mappable ad installs (`ob=healing`, `provision`, ...) sent
+    /// to the storm arm instead of their angle arm. Remote Config
+    /// `stormAdShare`, 0...1. Unset reads 0, so the flip ships dormant.
+    @Published var stormAdShare: Double = 0
+
+    /// Storm paywall button copy test: "" / "free_week" → "Start my free week",
+    /// "try_free" → "Try it free". Remote Config `stormCtaCopy`.
+    @Published var stormCtaCopy: String = ""
+
+    /// The storm an ad install arrives with, when the coin flip sent it to the
+    /// storm arm. The flow preselects it and skips the picker.
+    var adPreselectedStorm: Storm? {
+        guard onboardingVariantSource == "ad_storm", let ad = adOnboardingVariant else { return nil }
+        return Storm(adCode: ad)
+    }
+
+    private var computedAssignment: (variant: OnboardingVariant, source: String) {
         // 0) debug panel → 1) ad-matched override → 2) Remote Config experiment
         // → 3) legacy fallback.
         //
@@ -187,10 +215,20 @@ final class SubscriptionStore: ObservableObject {
         // would otherwise pin them to one arm forever, which is exactly the case
         // the panel exists to break. Returns nil outside Debug/TestFlight.
         if let forced = DebugOverrides.string("onboardingVariant"),
-           let v = OnboardingVariant(code: forced) { return v }
-        if let ad = adOnboardingVariant, let v = OnboardingVariant(code: ad) { return v }
-        if let v = OnboardingVariant(code: onboardingVariant) { return v }
-        return useQuizOnboarding ? .quiz : .product
+           let v = OnboardingVariant(code: forced) { return (v, "debug") }
+        if let ad = adOnboardingVariant, let v = OnboardingVariant(code: ad) {
+            // A storm-mappable ad is flipped once between the storm arm and its
+            // own angle arm. Only after Remote Config is ready, so the share is
+            // the configured one rather than the in-app 0; the onboarding gate
+            // waits for that (see init) and nothing renders before it.
+            if Storm(adCode: ad) != nil, remoteConfigReady,
+               StormOnboarding.resolveAdBucket(share: stormAdShare) == "storm" {
+                return (.storm, "ad_storm")
+            }
+            return (v, "ad")
+        }
+        if let v = OnboardingVariant(code: onboardingVariant) { return (v, "remote_config") }
+        return (useQuizOnboarding ? .quiz : .product, "legacy_default")
     }
 
     /// Decide what a fresh purchase owes the email list, and do it.
@@ -222,7 +260,11 @@ final class SubscriptionStore: ObservableObject {
     /// deep link that resolves afterward can't restart the user in a different flow
     /// (and can't desync the started/finished analytics variant). Idempotent.
     func lockOnboardingVariant() {
-        if lockedOnboardingVariant == nil { lockedOnboardingVariant = computedOnboardingVariant }
+        guard lockedOnboardingVariant == nil else { return }
+        let assignment = computedAssignment
+        lockedOnboardingVariant = assignment.variant
+        lockedOnboardingSource = assignment.source
+        if assignment.variant == .storm { StormOnboarding.enroll() }
     }
 
     /// Drops the freeze so the next onboarding run re-resolves the arm. Only the
@@ -230,6 +272,7 @@ final class SubscriptionStore: ObservableObject {
     /// already locked a different one when onboarding first rendered.
     func clearOnboardingVariantLock() {
         lockedOnboardingVariant = nil
+        lockedOnboardingSource = nil
     }
 
     /// Forgets the ad-matched arm on this device. Debug-panel only — the
@@ -261,7 +304,11 @@ final class SubscriptionStore: ObservableObject {
               UserDefaults.standard.string(forKey: adOnboardingKey) == nil  // first assignment wins
         else { return }
         UserDefaults.standard.set(code, forKey: adOnboardingKey)
-        AnalyticsService.shared.track("onboarding_variant_assigned",
+        // Only the ad link arriving. The assignment itself is reported for
+        // EVERY install by `onboarding_variant_assigned` when onboarding locks
+        // the arm; this used to be that event, which is why it reached ~2% of
+        // installs and read as "variant missing for 99%".
+        AnalyticsService.shared.track("onboarding_ad_link_received",
                                       parameters: ["variant": code, "source": source])
         NotificationCenter.default.post(name: .adOnboardingVariantAssigned, object: code)
     }
@@ -455,7 +502,8 @@ final class SubscriptionStore: ObservableObject {
         // Onboarding A/B gate: an ad-matched arm needs no RC round-trip, so it's
         // ready immediately; otherwise a hard timeout guarantees onboarding shows
         // within a few seconds even if the RC fetch is slow, fails, or is offline.
-        if adOnboardingVariant != nil {
+        // A storm-mappable ad still waits: its coin flip reads `stormAdShare`.
+        if let ad = adOnboardingVariant, Storm(adCode: ad) == nil {
             remoteConfigReady = true
         } else {
             DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
@@ -592,6 +640,9 @@ final class SubscriptionStore: ObservableObject {
         // Empty until set in Remote Config; resolvedOnboardingVariant then falls
         // back to useQuizOnboarding so nothing changes for live users.
         onboardingVariant = stringValue("onboardingVariant")
+        stormAdShare = DebugOverrides.string("stormAdShare").flatMap(Double.init)
+            ?? remoteConfig["stormAdShare"].numberValue.doubleValue
+        stormCtaCopy = stringValue("stormCtaCopy")
     }
 
     /// Remote Config value for a boolean flag, unless a debug override is set.
@@ -942,10 +993,30 @@ final class SubscriptionStore: ObservableObject {
         return try await purchase(product, paywallName: paywallName)
     }
 
+    /// How a purchase attempt ended. Only `.purchased` unlocks anything; the
+    /// rest exist so a paywall can react to *why* it did not, which the storm
+    /// paywall needs (a cancel on Apple's sheet routes to the objection screen,
+    /// a pending Ask-to-Buy must not).
+    enum PurchaseOutcome: Equatable {
+        case purchased
+        /// The user backed out of Apple's sheet.
+        case cancelled
+        /// Ask-to-Buy or another deferred transaction. Not a cancel.
+        case pending
+        /// The transaction went through but granted no entitlement.
+        case notEntitled
+    }
+
     /// Purchase a StoreKit Product — views call this with the product they fetched.
     /// Internally routes through RC so all entitlements are tracked on the RC dashboard.
     @discardableResult
     func purchase(_ product: Product, paywallName: String = "unknown") async throws -> Bool {
+        try await purchaseOutcome(product, paywallName: paywallName) == .purchased
+    }
+
+    /// `purchase` with the reason it did not complete. Throws only for real
+    /// failures (network, store, misconfiguration), which the caller surfaces.
+    func purchaseOutcome(_ product: Product, paywallName: String = "unknown") async throws -> PurchaseOutcome {
         let priceValue   = NSDecimalNumber(decimal: product.price).doubleValue
         // Product has *some* intro offer configured in App Store Connect — but
         // that does NOT mean THIS user gets one. Returning subscribers who
@@ -969,19 +1040,47 @@ final class SubscriptionStore: ObservableObject {
         let willStartTrial = hasFreeTrialIntroOffer && isEligibleForIntroOffer
         let currency     = product.priceFormatStyle.currencyCode ?? "USD"
 
-        // NOTE: Do NOT fire analytics before RC confirms — RC validates the receipt.
-        let customerInfo = try await RevenueCatManager.shared.purchase(storeProduct: product)
+        let attempt: [String: Any] = [
+            "product_id": product.id,
+            "paywall_name": paywallName,
+            "trial_eligible": willStartTrial,
+            "variant": onboardingVariantName
+        ]
+        // The sheet is about to open. Paired with purchase_cancelled this is
+        // the Apple-sheet completion rate, the biggest leak in the funnel.
+        AnalyticsService.shared.track("purchase_sheet_opened", parameters: attempt)
 
+        // NOTE: Do NOT fire conversion analytics before RC confirms — RC validates the receipt.
+        let result: RevenueCatManager.StorePurchaseResult
+        do {
+            result = try await RevenueCatManager.shared.purchase(storeProduct: product)
+        } catch let error as RevenueCat.ErrorCode where error == .paymentPendingError {
+            AnalyticsService.shared.track("purchase_pending", parameters: attempt)
+            return .pending
+        } catch let error as RevenueCat.ErrorCode where error == .purchaseCancelledError {
+            AnalyticsService.shared.track("purchase_cancelled", parameters: attempt)
+            return .cancelled
+        } catch {
+            var failed = attempt
+            failed["error"] = String(describing: error)
+            AnalyticsService.shared.track("purchase_failed", parameters: failed)
+            throw error
+        }
+
+        if result.userCancelled {
+            AnalyticsService.shared.track("purchase_cancelled", parameters: attempt)
+            return .cancelled
+        }
+
+        let customerInfo = result.customerInfo
         let purchased = RevenueCatManager.shared.isPremiumActive(customerInfo)
             || RevenueCatManager.shared.isDevotionalActive(customerInfo)
 
         guard purchased else {
-            // User cancelled or purchase is pending
-            AnalyticsService.shared.track("purchase_cancelled", parameters: [
-                "product_id": product.id,
-                "paywall_name": paywallName
-            ])
-            return false
+            // Apple completed the transaction but RevenueCat granted nothing.
+            // Used to be booked as a cancel; it is a configuration problem.
+            AnalyticsService.shared.track("purchase_no_entitlement", parameters: attempt)
+            return .notEntitled
         }
 
         // ── Unlock premium immediately ────────────────────────────────────
@@ -1100,7 +1199,7 @@ final class SubscriptionStore: ObservableObject {
             TrialExperienceService.shared.clearPendingTrialPushes()
         }
 
-        return true
+        return .purchased
     }
 
     // MARK: - Helpers

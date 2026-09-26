@@ -112,7 +112,11 @@ struct DailyDeclarationBurstView: View {
     @State private var shareButtonOpacity: Double = 0.0
     
     // Configuration for burst session
-    private let burstDeclarationCount = 7
+    /// Seven, or one for a storm-arm member on the free layer: that one line
+    /// is their declaration for the day.
+    private var burstDeclarationCount: Int {
+        StormFreeLayer.isActive(hasFullAccess: subscriptionStore.hasFullAccess) ? 1 : 7
+    }
     private let favoriteWeight = 2  // Favorites appear 3x more likely
     private let customWeight = 3    // Custom declarations 2x more likely
     
@@ -264,6 +268,9 @@ struct DailyDeclarationBurstView: View {
             fullPool: viewModel.allAvailableDeclarations
         )
         session = composed
+        if burstDeclarationCount == 1, StormFreeLayer.hasAllowanceLeft {
+            StormFreeLayer.recordUse()
+        }
 
         switch composed.origin {
         case .enforcement:

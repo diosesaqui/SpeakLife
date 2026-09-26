@@ -145,16 +145,25 @@ final class RevenueCatManager {
         return result.customerInfo
     }
 
+    /// What the Apple sheet actually did. `userCancelled` is RevenueCat's own
+    /// signal and the only honest one: inferring a cancel from "no entitlement
+    /// afterwards" also counted Ask-to-Buy and entitlement misconfigurations as
+    /// cancels, which inflated the sheet-cancel rate the paywall work is aimed at.
+    struct StorePurchaseResult {
+        let customerInfo: CustomerInfo
+        let userCancelled: Bool
+    }
+
     /// Purchase by StoreKit Product — used when views pass a `StoreKit.Product` directly.
     /// Looks up the matching RC Package from current offerings.
-    func purchase(storeProduct: StoreKit.Product) async throws -> CustomerInfo {
+    func purchase(storeProduct: StoreKit.Product) async throws -> StorePurchaseResult {
         // Fetch current offering to find the matching package
         let offerings = try await Purchases.shared.offerings()
         let allPackages = offerings.current?.availablePackages ?? []
 
         if let match = allPackages.first(where: { $0.storeProduct.productIdentifier == storeProduct.id }) {
             let result = try await Purchases.shared.purchase(package: match)
-            return result.customerInfo
+            return StorePurchaseResult(customerInfo: result.customerInfo, userCancelled: result.userCancelled)
         }
 
         // Fallback: purchase directly via StoreKit Product wrapper
@@ -164,7 +173,7 @@ final class RevenueCatManager {
                           userInfo: [NSLocalizedDescriptionKey: "Product not found in RC: \(storeProduct.id)"])
         }
         let result = try await Purchases.shared.purchase(product: rcProduct)
-        return result.customerInfo
+        return StorePurchaseResult(customerInfo: result.customerInfo, userCancelled: result.userCancelled)
     }
 
     /// Purchase by product ID string — used by `purchaseWithID()`.

@@ -112,6 +112,11 @@ struct DeclarationContentView: View {
     
     @StateObject private var coordinator = SpeechCoordinator()
     @State private var isMenuExpanded = false
+    /// Storm free layer: the swipe that would pass today's one declaration is
+    /// undone and this is shown instead.
+    @State private var showStormFreeLimit = false
+    @State private var isRevertingFreeLimit = false
+    @State private var lastAllowedTab = 0
     @State private var rotationAngle: Double = 0
     @State private var buttonVisibilities: [Bool] = [false, false]
     @State private var numberOfItems: Int = 2
@@ -203,6 +208,23 @@ struct DeclarationContentView: View {
 
             .tabViewStyle(.page(indexDisplayMode: .never))
             .onChange(of: viewModel.selectedTab) { newIndex in
+                if isRevertingFreeLimit {
+                    isRevertingFreeLimit = false
+                    return
+                }
+                if StormFreeLayer.isActive(hasFullAccess: subscriptionStore.hasFullAccess) {
+                    guard StormFreeLayer.hasAllowanceLeft else {
+                        isRevertingFreeLimit = true
+                        withAnimation { viewModel.selectedTab = lastAllowedTab }
+                        showStormFreeLimit = true
+                        AnalyticsService.shared.track("storm_free_limit_hit", parameters: [
+                            "free_day": StormFreeLayer.freeDay
+                        ])
+                        return
+                    }
+                    StormFreeLayer.recordUse()
+                }
+                lastAllowedTab = newIndex
                 isMenuExpanded = false
                 askForReview()
                 let declaration = viewModel.declarations[newIndex]
@@ -253,7 +275,12 @@ struct DeclarationContentView: View {
            
             }
         }
+        .sheet(isPresented: $showStormFreeLimit) {
+            StormFreeLimitView()
+                .environmentObject(subscriptionStore)
+        }
         .onAppear {
+            lastAllowedTab = viewModel.selectedTab
             // Safety check on app launch
             if appState.showScreenshotLabel {
                 appState.showScreenshotLabel = false

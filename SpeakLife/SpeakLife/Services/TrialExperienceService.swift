@@ -118,7 +118,7 @@ final class TrialExperienceService: ObservableObject {
     /// Call when user converts (premium_succeeded)
     func onTrialConverted() {
         UserDefaults.standard.set(false, forKey: kTrialActive)
-        center.removePendingNotificationRequests(withIdentifiers: ["trial_d2", "trial_d3"])
+        center.removePendingNotificationRequests(withIdentifiers: ["trial_d2", "trial_d3", StormTrialReminder.identifier])
         AnalyticsService.shared.track("trial_experience_converted", parameters: [
             "declarations_during_trial": declarationCountDuringTrial,
             "trial_day": trialDay
@@ -129,7 +129,7 @@ final class TrialExperienceService: ObservableObject {
     /// Used as a defensive cleanup after a non-trial purchase by a user who
     /// has stale pushes from the pre-fix isTrialProduct/willStartTrial bug.
     func clearPendingTrialPushes() {
-        center.removePendingNotificationRequests(withIdentifiers: ["trial_d2", "trial_d3"])
+        center.removePendingNotificationRequests(withIdentifiers: ["trial_d2", "trial_d3", StormTrialReminder.identifier])
     }
 
     /// Re-schedule the D2/D3 trial-ending pushes from the persisted trial

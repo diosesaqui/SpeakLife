@@ -84,7 +84,12 @@ class DailyDeclarationReminderService: ObservableObject {
     private func scheduleMorningReminders() {
         let burstTime = Self.burstTimeAvoidingUserReminders()
 
-        for (weekday, copy) in Self.morningCopyByWeekday.enumerated() {
+        for (weekday, rotated) in Self.morningCopyByWeekday.enumerated() {
+            // A storm-arm member's first week carries their plan: the push
+            // for each weekday names the line that day holds, instead of the
+            // generic rotation. Rescheduled on every launch, so the rotation
+            // returns on its own once the seven days are over.
+            let copy = Self.stormPlanCopy(forWeekday: weekday + 1) ?? rotated
             let content = UNMutableNotificationContent()
             content.title = copy.title
             content.body = copy.body
@@ -136,6 +141,8 @@ class DailyDeclarationReminderService: ObservableObject {
     /// anyone on the default settings. If every candidate collides (a very
     /// dense reminder schedule), fall back to 7:30 and accept the overlap.
     private static func burstTimeAvoidingUserReminders() -> (hour: Int, minute: Int) {
+        // A time the user picked themselves wins over every heuristic below.
+        if let chosen = StormOnboarding.morningTime { return chosen }
         let defaults = UserDefaults.standard
         let fallback = burstCandidates[0]
 
@@ -164,6 +171,25 @@ class DailyDeclarationReminderService: ObservableObject {
             if clearOfAll { return candidate }
         }
         return fallback
+    }
+
+    // MARK: - Storm Plan Copy
+
+    /// The storm plan's line for the next date falling on `weekday`, while the
+    /// plan is running. Nil outside the plan window.
+    private static func stormPlanCopy(forWeekday weekday: Int) -> (title: String, body: String)? {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        for offset in 0..<7 {
+            guard let date = calendar.date(byAdding: .day, value: offset, to: today),
+                  calendar.component(.weekday, from: date) == weekday else { continue }
+            guard let plan = StormOnboarding.planLine(on: date) else { return nil }
+            return (
+                title: "Day \(plan.day) of your \(plan.storm.planName) plan",
+                body: plan.line.text
+            )
+        }
+        return nil
     }
 
     // MARK: - Rotated Copy

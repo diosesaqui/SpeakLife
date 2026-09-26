@@ -28,7 +28,11 @@ struct PremiumView: View {
 //                    if subscriptionStore.useEnhancedOnboarding {
 //                        OptimizedSubscriptionViewV2() { }
 //                    } else {
-                    HighConversionPaywallView() { }
+                    if StormOnboarding.isMember {
+                        StormPaywallSheet(placement: "premium_tab", callback: nil)
+                    } else {
+                        HighConversionPaywallView() { }
+                    }
                   //  }
            //     }
             } else {

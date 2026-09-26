@@ -459,6 +459,12 @@ struct HomeView: View {
         case .direct:
             DirectOnboardingView(size: UIScreen.main.bounds.size) { finishOnboarding() }
                 .ignoresSafeArea()
+        case .storm:
+            StormOnboardingView(
+                size: UIScreen.main.bounds.size,
+                preselectedStorm: subscriptionStore.adPreselectedStorm
+            ) { finishOnboarding() }
+                .ignoresSafeArea()
         }
     }
 
@@ -474,6 +480,16 @@ struct HomeView: View {
         // it was never assigned and skew the funnel the panel exists to read.
         guard !appState.debugReplayOnboarding else { return }
         let variant = subscriptionStore.onboardingVariantName
+        let source = subscriptionStore.onboardingVariantSource
+        // Every install, once, with the arm and how it was reached. This used to
+        // fire only when an ad link arrived, so ~98% of installs never sent it.
+        var assigned: [String: Any] = ["variant": variant, "source": source]
+        if let bucket = StormOnboarding.adBucket { assigned["storm_ad_bucket"] = bucket }
+        AnalyticsService.shared.track("onboarding_variant_assigned", parameters: assigned)
+        AnalyticsService.shared.setUserProperty("onboarding_variant_source", value: source)
+        if let bucket = StormOnboarding.adBucket {
+            AnalyticsService.shared.setUserProperty("storm_ad_bucket", value: bucket)
+        }
         // Persist the arm as a user/person property in BOTH PostHog and Firebase so
         // EVERY downstream event (retention, trial_started, subscription_started)
         // segments by variant — not just the onboarding events. This is what makes
