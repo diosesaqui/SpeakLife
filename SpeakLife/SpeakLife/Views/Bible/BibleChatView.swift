@@ -533,6 +533,10 @@ struct BibleChatConversationView: View {
     /// gets nothing extra rather than a wrong guess. Phrased as the user would
     /// type it, not as a topic label.
     private var seededQuestion: String {
+        // A storm-arm member named her storm in onboarding, and the Day 2
+        // trial push promised this exact question. It wins over the category
+        // guesses below.
+        if let storm = stormQuestion { return storm }
         switch UserPreferencesTracker.shared.primaryCategory {
         case .anxiety:    return "My mind won't stop racing. What does God say about that?"
         case .fear:       return "I keep bracing for bad news. What does God say to that fear?"
@@ -622,8 +626,14 @@ struct BibleChatConversationView: View {
     }
 
     /// True when the opener came from something the user actually told us.
+    private var stormQuestion: String? {
+        guard StormOnboarding.isMember, let storm = StormOnboarding.selectedStorm else { return nil }
+        return StormConfigStore.resolved(for: storm).chatQuestion
+    }
+
     private var seedIsPersonal: Bool {
-        Self.extendedOpener(for: onboardingCategory) != nil
+        stormQuestion != nil
+            || Self.extendedOpener(for: onboardingCategory) != nil
             || UserPreferencesTracker.shared.primaryCategory != .general
     }
 

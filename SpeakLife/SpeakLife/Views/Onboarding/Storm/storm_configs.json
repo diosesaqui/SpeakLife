@@ -1,0 +1,226 @@
+{
+  "version": 2,
+  "storms": [
+    {
+      "id": "health",
+      "label": "Health",
+      "ob_code": "healing",
+      "verse": { "text": "He sent his word, and healed them.", "ref": "Psalm 107:20" },
+      "benefit_screen": {
+        "headline": "Your words carry weight.",
+        "promises": [
+          "His word over your body before fear gets the first word",
+          "A healing declaration ready for every appointment and every symptom",
+          "Face each day standing, not braced"
+        ]
+      },
+      "plan_title": "Your 7-day Health storm plan",
+      "paywall": {
+        "headline": "Your Health storm plan is ready.",
+        "benefits": [
+          { "when": "Every morning", "text": "His word over your body before fear gets the first word" },
+          { "when": "Before every appointment", "text": "A healing declaration ready to speak" },
+          { "when": "All week", "text": "7 scriptures a day, led by a new promise each morning" }
+        ]
+      },
+      "pushes": {
+        "audio_day1": { "title": "FOR TONIGHT'S QUIET 🎧", "body": "Hear God's promises spoken over your health before you sleep." },
+        "chat_day2": { "title": "ASK WHAT SCRIPTURE SAYS 💬", "body": "What does God's Word say about your healing? Ask, and get answers rooted in verses." }
+      }
+    },
+    {
+      "id": "family",
+      "label": "Family & children",
+      "body_label": "family",
+      "ob_code": null,
+      "verse": { "text": "All thy children shall be taught of the LORD; and great shall be the peace of thy children.", "ref": "Isaiah 54:13" },
+      "benefit_screen": {
+        "headline": "Your words carry weight.",
+        "promises": [
+          "Cover your children in His promises every morning",
+          "Words to speak when you're worried about them",
+          "Stand in the gap instead of spiraling"
+        ]
+      },
+      "plan_title": "Your 7-day plan for your family",
+      "paywall": {
+        "headline": "Your plan for your family is ready.",
+        "benefits": [
+          { "when": "Every morning", "text": "Cover your children in His promises" },
+          { "when": "When worry hits", "text": "A declaration ready to speak over them" },
+          { "when": "All week", "text": "7 scriptures a day, led by a new promise each morning" }
+        ]
+      },
+      "pushes": {
+        "audio_day1": { "title": "FOR TONIGHT'S QUIET 🎧", "body": "Hear God's promises spoken over your family before you sleep." },
+        "chat_day2": { "title": "ASK WHAT SCRIPTURE SAYS 💬", "body": "What does God's Word say about your children? Ask, and get answers rooted in verses." }
+      }
+    },
+    {
+      "id": "marriage",
+      "label": "Marriage",
+      "ob_code": null,
+      "verse": { "text": "As for me and my house, we will serve the LORD.", "ref": "Joshua 24:15" },
+      "benefit_screen": {
+        "headline": "Your words carry weight.",
+        "promises": [
+          "Speak life over your home instead of rehearsing the hurt",
+          "His words when yours run out",
+          "Peace in you, whatever the day brings"
+        ]
+      },
+      "plan_title": "Your 7-day plan for your marriage",
+      "paywall": {
+        "headline": "Your plan for your marriage is ready.",
+        "benefits": [
+          { "when": "Every morning", "text": "Speak life over your home before the day begins" },
+          { "when": "When words run out", "text": "A declaration ready to speak" },
+          { "when": "All week", "text": "7 scriptures a day, led by a new promise each morning" }
+        ]
+      },
+      "pushes": {
+        "audio_day1": { "title": "FOR TONIGHT'S QUIET 🎧", "body": "Hear God's promises spoken over your home before you sleep." },
+        "chat_day2": { "title": "ASK WHAT SCRIPTURE SAYS 💬", "body": "What does God's Word say about your marriage? Ask, and get answers rooted in verses." }
+      }
+    },
+    {
+      "id": "finances",
+      "label": "Finances",
+      "ob_code": "provision",
+      "verse": { "text": "My God shall supply all your need according to his riches in glory by Christ Jesus.", "ref": "Philippians 4:19" },
+      "benefit_screen": {
+        "headline": "Your words carry weight.",
+        "promises": [
+          "His provision spoken before the bills get the first word",
+          "A promise ready when the balance is low",
+          "Needs met, and the fear of lack loses its grip"
+        ]
+      },
+      "plan_title": "Your 7-day Provision plan",
+      "paywall": {
+        "headline": "Your Provision plan is ready.",
+        "benefits": [
+          { "when": "Every morning", "text": "His provision spoken before the bills get the first word" },
+          { "when": "When money is tight", "text": "A promise ready to speak" },
+          { "when": "All week", "text": "7 scriptures a day, led by a new promise each morning" }
+        ]
+      },
+      "pushes": {
+        "audio_day1": { "title": "FOR TONIGHT'S QUIET 🎧", "body": "Hear God's promises of provision before you sleep." },
+        "chat_day2": { "title": "ASK WHAT SCRIPTURE SAYS 💬", "body": "What does God's Word say about provision? Ask, and get answers rooted in verses." }
+      }
+    },
+    {
+      "id": "anxiety",
+      "label": "Fear & anxiety",
+      "body_label": "mind",
+      "ob_code": "anxiety",
+      "verse": { "text": "Thou wilt keep him in perfect peace, whose mind is stayed on thee.", "ref": "Isaiah 26:3" },
+      "benefit_screen": {
+        "headline": "Your words carry weight.",
+        "promises": [
+          "Wake up without bracing",
+          "Words ready for the 3 a.m. thoughts",
+          "A mind stayed on Him, not on the what-ifs"
+        ]
+      },
+      "plan_title": "Your 7-day Peace plan",
+      "paywall": {
+        "headline": "Your Peace plan is ready.",
+        "benefits": [
+          { "when": "Every morning", "text": "Wake up and speak peace before the what-ifs start" },
+          { "when": "At 3 a.m.", "text": "Words ready when the thoughts won't stop" },
+          { "when": "All week", "text": "7 scriptures a day, led by a new promise each morning" }
+        ]
+      },
+      "pushes": {
+        "audio_day1": { "title": "FOR TONIGHT'S QUIET 🎧", "body": "Hear His peace spoken over your mind before you sleep." },
+        "chat_day2": { "title": "ASK WHAT SCRIPTURE SAYS 💬", "body": "What does God's Word say about fear? Ask, and get answers rooted in verses." }
+      }
+    },
+    {
+      "id": "grief",
+      "label": "Grief",
+      "body_label": "heart",
+      "ob_code": null,
+      "verse": { "text": "The LORD is nigh unto them that are of a broken heart.", "ref": "Psalm 34:18" },
+      "benefit_screen": {
+        "headline": "His words can carry you.",
+        "promises": [
+          "Comfort spoken over you each morning",
+          "Words for the moments that hit without warning",
+          "Held, not alone, through every day of this"
+        ]
+      },
+      "plan_title": "Your 7-day plan for this season",
+      "paywall": {
+        "headline": "Your plan for this season is ready.",
+        "benefits": [
+          { "when": "Every morning", "text": "His comfort spoken over you" },
+          { "when": "When it hits", "text": "Words ready for the hard moments" },
+          { "when": "All week", "text": "7 scriptures a day, led by a new promise each morning" }
+        ]
+      },
+      "pushes": {
+        "audio_day1": { "title": "FOR TONIGHT'S QUIET 🎧", "body": "Hear His comfort spoken over you before you sleep." },
+        "chat_day2": { "title": "ASK WHAT SCRIPTURE SAYS 💬", "body": "What does God's Word say about grief? Ask, and get answers rooted in verses." }
+      }
+    },
+    {
+      "id": "identity",
+      "label": "Who I am",
+      "body_label": "identity",
+      "ob_code": "renewal",
+      "verse": { "text": "There is therefore now no condemnation to them which are in Christ Jesus.", "ref": "Romans 8:1" },
+      "benefit_screen": {
+        "headline": "Your words carry weight.",
+        "promises": [
+          "God's voice about you before the old voice speaks",
+          "Truth ready when shame shows up",
+          "Walk as who He says you are"
+        ]
+      },
+      "plan_title": "Your 7-day Identity plan",
+      "paywall": {
+        "headline": "Your Identity plan is ready.",
+        "benefits": [
+          { "when": "Every morning", "text": "God's voice about you before the old voice speaks" },
+          { "when": "When shame shows up", "text": "Truth ready to speak" },
+          { "when": "All week", "text": "7 scriptures a day, led by a new promise each morning" }
+        ]
+      },
+      "pushes": {
+        "audio_day1": { "title": "FOR TONIGHT'S QUIET 🎧", "body": "Hear who God says you are before you sleep." },
+        "chat_day2": { "title": "ASK WHAT SCRIPTURE SAYS 💬", "body": "What does God's Word say about who you are? Ask, and get answers rooted in verses." }
+      }
+    },
+    {
+      "id": "default",
+      "label": "your storm",
+      "body_label": "life",
+      "ob_code": "command",
+      "verse": { "text": "He arose, and rebuked the wind, and said unto the sea, Peace, be still.", "ref": "Mark 4:39" },
+      "benefit_screen": {
+        "headline": "Your words carry weight.",
+        "promises": [
+          "His word before worry gets the first word",
+          "Know exactly what to say when fear shows up",
+          "Face the day standing, not braced"
+        ]
+      },
+      "plan_title": "Your 7-day storm plan",
+      "paywall": {
+        "headline": "Your storm plan is ready.",
+        "benefits": [
+          { "when": "Every morning", "text": "His word before worry gets the first word" },
+          { "when": "When fear shows up", "text": "A declaration ready to speak" },
+          { "when": "All week", "text": "7 scriptures a day, led by a new promise each morning" }
+        ]
+      },
+      "pushes": {
+        "audio_day1": { "title": "FOR TONIGHT'S QUIET 🎧", "body": "Hear God's promises spoken over you before you sleep." },
+        "chat_day2": { "title": "ASK WHAT SCRIPTURE SAYS 💬", "body": "Whatever you're facing, ask what God's Word says, and get answers rooted in verses." }
+      }
+    }
+  ]
+}

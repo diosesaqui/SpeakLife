@@ -338,7 +338,16 @@ final class AppDelegate: NSObject, MessagingDelegate {
             // SubscriptionStore.updateConfigValues.
             "currentPremiumID": currentPremiumID as NSString,
             "currentPremiumMonthly": currentMonthlyPremiumID as NSString,
-            "currentPremiumWeekly": weeklyID as NSString
+            "currentPremiumWeekly": weeklyID as NSString,
+            // Storm arm. Share of storm-mappable ad installs flipped into it
+            // (0 = dormant), and the paywall button copy test.
+            "stormAdShare": 0 as NSNumber,
+            "stormCtaCopy": "" as NSString,
+            "stormAlsoIncluded": false as NSNumber,
+            "stormConfigs": "" as NSString,
+            "stormBenefitScreen": true as NSNumber,
+            "stormTrialPushes": true as NSNumber,
+            "stormSpeakBackup": "hear" as NSString
         ])
 
         // Wire the domain-facing feature-flag seam to Firebase Remote Config now

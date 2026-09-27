@@ -84,7 +84,12 @@ class DailyDeclarationReminderService: ObservableObject {
     private func scheduleMorningReminders() {
         let burstTime = Self.burstTimeAvoidingUserReminders()
 
-        for (weekday, copy) in Self.morningCopyByWeekday.enumerated() {
+        for (weekday, rotated) in Self.morningCopyByWeekday.enumerated() {
+            // A storm-arm member's first week carries their plan: the push
+            // for each weekday names the line that day holds, instead of the
+            // generic rotation. Rescheduled on every launch, so the rotation
+            // returns on its own once the seven days are over.
+            let copy = Self.stormPlanCopy(forWeekday: weekday + 1) ?? rotated
             let content = UNMutableNotificationContent()
             content.title = copy.title
             content.body = copy.body
@@ -136,6 +141,8 @@ class DailyDeclarationReminderService: ObservableObject {
     /// anyone on the default settings. If every candidate collides (a very
     /// dense reminder schedule), fall back to 7:30 and accept the overlap.
     private static func burstTimeAvoidingUserReminders() -> (hour: Int, minute: Int) {
+        // A time the user picked themselves wins over every heuristic below.
+        if let chosen = StormOnboarding.morningTime { return chosen }
         let defaults = UserDefaults.standard
         let fallback = burstCandidates[0]
 
@@ -164,6 +171,40 @@ class DailyDeclarationReminderService: ObservableObject {
             if clearOfAll { return candidate }
         }
         return fallback
+    }
+
+    // MARK: - Storm Plan Copy
+
+    /// The storm plan's line for the next date falling on `weekday`, while the
+    /// plan is running. Nil outside the plan window.
+    ///
+    /// These triggers repeat weekly and the copy is fixed when scheduled, so
+    /// it names no day number: a user who never reopens the app keeps hearing
+    /// a real line from her plan, never "Day 3" in week four. Today's weekday
+    /// is skipped once its time has passed, because that slot next fires in
+    /// seven days, after the plan.
+    private static func stormPlanCopy(forWeekday weekday: Int) -> (title: String, body: String)? {
+        let calendar = Calendar.current
+        let now = Date()
+        let today = calendar.startOfDay(for: now)
+        let time = burstTimeAvoidingUserReminders()
+        for offset in 0..<7 {
+            guard let date = calendar.date(byAdding: .day, value: offset, to: today),
+                  calendar.component(.weekday, from: date) == weekday else { continue }
+            if offset == 0,
+               let slot = calendar.date(bySettingHour: time.hour, minute: time.minute, second: 0, of: date),
+               slot <= now { return nil }
+            guard let plan = StormOnboarding.planLine(on: date) else { return nil }
+            // The day's line leads the Burst only while its Enforcement week runs.
+            let leads = EnforcementService.shared.activeEnforcement != nil
+            return (
+                title: "Your Daily Burst is ready",
+                body: leads
+                    ? "7 scriptures for \(plan.storm.domain), opening with: \(plan.line.text)"
+                    : "7 scriptures for \(plan.storm.domain) are ready to speak."
+            )
+        }
+        return nil
     }
 
     // MARK: - Rotated Copy

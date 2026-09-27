@@ -54,6 +54,15 @@ variant is winning, with the numbers behind it.
   pitching actually holds. Its per-step events are documented in
   `docs/ANALYTICS_FUNNELS.md` section 3d; build any per-step cut on `step_name`,
   not the raw `step` integer.
+- `storm` is the speak-first onboarding + reassurance paywall arm. Organic
+  traffic reaches it through Remote Config; ad traffic only through the
+  `stormAdShare` coin flip on the ad codes in `storm_configs.json`. Rank its
+  organic slice against the other organic arms, and its ad slice
+  (`onboarding_variant_assigned.source = ad_storm`) only against
+  `storm_ad_bucket = control` — those users came from the same ads. Its paywall
+  events are `paywall_viewed` (with `storm`, `trial_eligible`) and
+  `paywall_shown` (`variant = storm_v1_<placement>`); its first-declaration
+  event is `first_declaration_spoken` / `first_declaration_heard`.
 - Every flow fires a unified, variant-tagged funnel (added in app **v4.27+**):
   1. `onboarding_started`  — entered onboarding `{ variant }`
   2. `onboarding_finished` — completed onboarding `{ variant, converted, conversion_type }`

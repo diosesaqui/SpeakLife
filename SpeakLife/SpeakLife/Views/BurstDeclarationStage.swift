@@ -553,7 +553,7 @@ struct BurstDeclarationStage: View {
 /// reporting: there is no way to tell when the finger actually came up. That is
 /// precisely the signal this screen is built on, so the gesture that reports it
 /// is the one used.
-private struct HoldToDeclareButton: View {
+struct HoldToDeclareButton: View {
 
     let title: String
     let width: CGFloat

@@ -258,7 +258,8 @@ enum OnboardingFunnel {
         stepName: String,
         stepIndex: Int,
         stage: OnboardingStage,
-        flowSchema: Int?
+        flowSchema: Int?,
+        storm: String? = nil
     ) {
         var parameters: [String: Any] = [
             "variant": variant,
@@ -268,6 +269,8 @@ enum OnboardingFunnel {
             "stage_index": stage.index
         ]
         if let flowSchema { parameters["flow_schema"] = flowSchema }
+        // The storm arm's picked storm, once known. Nil on every other arm.
+        if let storm { parameters["storm"] = storm }
         AnalyticsService.shared.track(Event.onboardingStepViewed, parameters: parameters)
     }
 }

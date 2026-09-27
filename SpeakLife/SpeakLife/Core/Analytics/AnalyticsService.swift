@@ -450,6 +450,7 @@ final class AnalyticsService: AnalyticsTracking {
         // pauses and 752 seeks as listens against only 1,938 real starts —
         // inflating `content_listened` roughly 5x.
         guard action == .started else { return }
+        TrialExperienceService.shared.recordTrialFeatureUse("audio")
 
         ListenerMetricsService.shared.trackListen(
             contentId: audioId,

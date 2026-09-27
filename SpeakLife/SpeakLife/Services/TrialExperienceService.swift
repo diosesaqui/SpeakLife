@@ -66,6 +66,13 @@ final class TrialExperienceService: ObservableObject {
         UserDefaults.standard.integer(forKey: kTrialDeclarationCount)
     }
 
+    /// Now is before the trial's end date.
+    private var isWithinTrialWindow: Bool {
+        guard let start = trialStartDate,
+              let end = Calendar.current.date(byAdding: .day, value: trialLengthDays, to: start) else { return false }
+        return Date() < end
+    }
+
     private var trialStartDate: Date? {
         UserDefaults.standard.object(forKey: kTrialStartDate) as? Date
     }
@@ -86,6 +93,13 @@ final class TrialExperienceService: ObservableObject {
         UserDefaults.standard.set(length, forKey: kTrialLengthDays)
 
         scheduleTrialPushes(from: now, trialLengthDays: length)
+        // Start every trial at "not used", so a trial that never touches a
+        // feature reads false rather than missing, and the two groups can be
+        // compared on trial-to-paid.
+        for (_, property) in Self.trackedTrialFeatures {
+            UserDefaults.standard.removeObject(forKey: property)
+            AnalyticsService.shared.setUserProperty(property, value: false)
+        }
         AnalyticsService.shared.track("trial_experience_started", parameters: [
             "trial_length_days": length
         ])
@@ -108,6 +122,35 @@ final class TrialExperienceService: ObservableObject {
         }
     }
 
+    /// Features whose use during the trial is recorded per user, and the
+    /// PostHog person property each one sets.
+    static let trackedTrialFeatures: [String: String] = [
+        "audio": "used_audio_in_trial",
+        "bible_chat": "used_chat_in_trial"
+    ]
+
+    /// Records the first use of a feature inside an active trial: its person
+    /// property (`used_audio_in_trial`, `used_chat_in_trial`) flips to true and
+    /// `trial_feature_used` fires once, with the trial day. The trial-week push
+    /// introducing that feature is cancelled: she found it already. Joined to RevenueCat's conversion, this
+    /// is how the "users who touch audio / Bible chat convert more" claim gets
+    /// confirmed. No-op outside a trial and after the first use.
+    func recordTrialFeatureUse(_ feature: String) {
+        // `isTrialActive` is only cleared by an in-app purchase, so a trial
+        // that lapsed or renewed on its own still reads active. The window
+        // check keeps a first listen three months later out of the numbers.
+        guard isTrialActive, isWithinTrialWindow,
+              let key = Self.trackedTrialFeatures[feature] else { return }
+        guard !UserDefaults.standard.bool(forKey: key) else { return }
+        StormTrialPushes.cancel(forFeature: feature)
+        UserDefaults.standard.set(true, forKey: key)
+        AnalyticsService.shared.setUserProperty(key, value: true)
+        AnalyticsService.shared.track("trial_feature_used", parameters: [
+            "feature": feature,
+            "trial_day": trialDay
+        ])
+    }
+
     /// Call on every swipe_affirmation or declaration spoken during trial
     func onDeclarationSpoken() {
         guard isTrialActive else { return }
@@ -118,7 +161,7 @@ final class TrialExperienceService: ObservableObject {
     /// Call when user converts (premium_succeeded)
     func onTrialConverted() {
         UserDefaults.standard.set(false, forKey: kTrialActive)
-        center.removePendingNotificationRequests(withIdentifiers: ["trial_d2", "trial_d3"])
+        center.removePendingNotificationRequests(withIdentifiers: ["trial_d2", "trial_d3", StormTrialReminder.identifier, StormTrialPushes.bibleChatID])
         AnalyticsService.shared.track("trial_experience_converted", parameters: [
             "declarations_during_trial": declarationCountDuringTrial,
             "trial_day": trialDay
@@ -129,7 +172,7 @@ final class TrialExperienceService: ObservableObject {
     /// Used as a defensive cleanup after a non-trial purchase by a user who
     /// has stale pushes from the pre-fix isTrialProduct/willStartTrial bug.
     func clearPendingTrialPushes() {
-        center.removePendingNotificationRequests(withIdentifiers: ["trial_d2", "trial_d3"])
+        center.removePendingNotificationRequests(withIdentifiers: ["trial_d2", "trial_d3", StormTrialReminder.identifier])
     }
 
     /// Re-schedule the D2/D3 trial-ending pushes from the persisted trial
@@ -158,7 +201,10 @@ final class TrialExperienceService: ObservableObject {
             // and pending requests added pre-authorization deliver normally once
             // the user grants permission. Only a hard denial makes them pointless.
             guard settings.authorizationStatus != .denied else { return }
-            if trialLengthDays >= 2 {
+            // A storm-paywall purchase has its own "ends in 2 days" reminder
+            // (the one the user switched on, or off). Sending this one too put
+            // two different trial warnings on the same morning.
+            if trialLengthDays >= 2 && !StormTrialReminder.ownsTrialWarning {
                 self?.scheduleDay2Push(from: startDate, trialLengthDays: trialLengthDays)
             }
             self?.scheduleDay3Push(from: startDate, trialLengthDays: trialLengthDays)

@@ -267,7 +267,11 @@ struct OptimizedSubscriptionView: View {
             .ignoresSafeArea(.all)
             
             GeometryReader { geometry in
-                if subscriptionStore.useHighConversionPaywall {
+                if StormOnboarding.isMember {
+                    // Storm-arm members see the storm paywall everywhere, so the
+                    // arm is compared as a whole rather than onboarding alone.
+                    StormPaywallSheet(placement: "in_app", callback: callback)
+                } else if subscriptionStore.useHighConversionPaywall {
                     HighConversionPaywallView(callback: callback)
                 } else if subscriptionStore.showSubscriptionFirst {
                     OptimizedSubscriptionViewV1(size: geometry.size, isPresentedModally: true)
