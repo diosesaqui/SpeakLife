@@ -608,7 +608,7 @@ private struct StormPaywallMain: View {
 
     private var belowFold: some View {
         VStack(spacing: 22) {
-            StormReviewCard()
+            StormReviewCard(isTrialEligible: model.isTrialEligible)
             if model.isTrialEligible && model.trialDays >= StormTrialReminder.minimumTrialDays {
                 VStack(alignment: .leading, spacing: 8) {
                     Toggle(isOn: $remindMe) {
@@ -930,10 +930,15 @@ struct StormTrialTimeline: View {
 // MARK: - Review card
 
 private struct StormReviewCard: View {
+    let isTrialEligible: Bool
+
     /// A real, verbatim App Store review (TestimonialWallView keeps the set).
-    /// This one is chosen because it is about the free week itself.
+    /// Trial-eligible accounts see the review about the free week itself.
+    /// Everyone else sees a daily-use review instead, since "I've only used
+    /// the free week trial" points at an offer they cannot get.
     private var review: WallReview {
-        TestimonialWallView.reviews.first { $0.author == "Heather L Compton" } ?? TestimonialWallView.reviews[0]
+        let author = isTrialEligible ? "Heather L Compton" : "Kyla Clark"
+        return TestimonialWallView.reviews.first { $0.author == author } ?? TestimonialWallView.reviews[0]
     }
 
     var body: some View {
