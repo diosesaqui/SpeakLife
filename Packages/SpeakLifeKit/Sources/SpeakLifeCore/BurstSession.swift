@@ -137,7 +137,8 @@ public struct BurstSession: Equatable {
     public enum Origin: Equatable {
         /// An active campaign filled every slot.
         case enforcement(DeclarationCategory)
-        /// Drawn from favorites, the user's own, and the selected category.
+        /// Drawn from the selected category, plus a couple of favorites or the
+        /// user's own lines when they have chosen to mix them in.
         case pool
         /// The pool could not fill the burst, so built-ins topped it up.
         case fallback
@@ -258,31 +259,43 @@ public enum BurstThemeResolver {
 public struct BurstSessionBuilder {
 
     public let declarationCount: Int
-    /// Favorites are added to the pool this many times.
-    public let favoriteWeight: Int
-    /// The user's own declarations are added this many times.
-    public let customWeight: Int
+    /// How many slots "Mix in my own" hands to favorites and the user's own
+    /// declarations. A couple, not a takeover: the burst is still about the
+    /// category or campaign, with a few of their own lines carried alongside.
+    public let personalSlots: Int
     /// Injected so tests can pin the draw. Production shuffles.
     private let shuffle: ([Declaration]) -> [Declaration]
 
     public init(
         declarationCount: Int = 7,
-        favoriteWeight: Int = 2,
-        customWeight: Int = 3,
+        personalSlots: Int = 2,
         shuffle: @escaping ([Declaration]) -> [Declaration] = { $0.shuffled() }
     ) {
         self.declarationCount = declarationCount
-        self.favoriteWeight = favoriteWeight
-        self.customWeight = customWeight
+        self.personalSlots = personalSlots
         self.shuffle = shuffle
+    }
+
+    /// Slots actually available to personal lines. Never the whole burst: with a
+    /// single-line burst there is no room to mix, and the one line stays with the
+    /// category or campaign.
+    private var personalSlotCount: Int {
+        min(personalSlots, max(declarationCount - 1, 0))
     }
 
     /// - Parameters:
     ///   - enforcement: the active campaign, or nil when none is running or the
     ///     feature is off. The caller does that check, so this stays pure.
     ///   - currentDay: the campaign day to lead with.
+    ///   - favorites: the user's favorites. Only drawn on when `mixPersonal`.
+    ///   - custom: the user's own declarations. Only drawn on when `mixPersonal`.
+    ///   - categoryPool: the selected category's declarations. This is what a
+    ///     burst with no campaign is made of.
     ///   - selected: the category selected in the app, used only as a fallback
     ///     theme when the spoken lines cannot name one.
+    ///   - mixPersonal: the user opted into "Mix in my own". A couple of slots go
+    ///     to favorites or their own declarations; everything else stays with the
+    ///     category or campaign. Off, neither is touched.
     ///   - fullPool: every reviewed declaration, used to fill the six slots
     ///     behind a campaign's daily anchor. Defaults to empty, which is not a
     ///     convenience but a real state: the pool loads asynchronously, and a
@@ -296,16 +309,73 @@ public struct BurstSessionBuilder {
         custom: [Declaration],
         categoryPool: [Declaration],
         selected: DeclarationCategory?,
+        mixPersonal: Bool = false,
         fullPool: [Declaration] = []
     ) -> BurstSession {
         if let session = enforcementSession(enforcement, currentDay: currentDay, fullPool: fullPool) {
-            return session
+            guard mixPersonal else { return session }
+            return mixingPersonal(into: session, favorites: favorites, custom: custom)
         }
         return poolSession(
-            favorites: favorites,
-            custom: custom,
+            favorites: mixPersonal ? favorites : [],
+            custom: mixPersonal ? custom : [],
             categoryPool: categoryPool,
             selected: selected
+        )
+    }
+
+    // MARK: Personal mix
+
+    /// Swaps the tail of a campaign burst for a couple of the user's own lines.
+    ///
+    /// Today's anchor always leads and is never displaced, and the origin and
+    /// theme stay the campaign's: most of what they speak is still the campaign,
+    /// and the day still advances it.
+    private func mixingPersonal(
+        into session: BurstSession,
+        favorites: [Declaration],
+        custom: [Declaration]
+    ) -> BurstSession {
+        let personal = personalLines(
+            favorites: favorites,
+            custom: custom,
+            excluding: Set(session.declarations.map(\.text)),
+            limit: personalSlotCount
+        )
+        guard !personal.isEmpty else { return session }
+        let kept = session.declarations.prefix(session.declarations.count - personal.count)
+        return BurstSession(
+            declarations: Array(kept) + personal,
+            origin: session.origin,
+            theme: session.theme
+        )
+    }
+
+    /// Favorites and the user's own declarations drawn together, deduped by
+    /// text. A favorite is a copy of a bundled line, so the same words can reach
+    /// the builder from both the category and the favorites.
+    private func personalLines(
+        favorites: [Declaration],
+        custom: [Declaration],
+        excluding spoken: Set<String>,
+        limit: Int
+    ) -> [BurstDeclaration] {
+        guard limit > 0 else { return [] }
+        var used = spoken
+        var lines: [BurstDeclaration] = []
+        for declaration in shuffle(favorites + custom) where lines.count < limit {
+            guard used.insert(declaration.text).inserted else { continue }
+            lines.append(burstLine(declaration))
+        }
+        return lines
+    }
+
+    private func burstLine(_ declaration: Declaration) -> BurstDeclaration {
+        BurstDeclaration(
+            text: declaration.text,
+            verse: declaration.book ?? "",
+            scripture: declaration.bibleVerseText,
+            category: declaration.category
         )
     }
 
@@ -478,36 +548,41 @@ public struct BurstSessionBuilder {
 
     // MARK: Pool
 
+    /// The selected category fills the burst.
+    ///
+    /// This used to pour favorites (twice) and the user's own lines (three
+    /// times) into one weighted pool with the category and draw from all of it,
+    /// on every burst. Someone who picked Peace got a burst that was mostly
+    /// whatever they had once hearted, and the category they chose barely showed
+    /// up. Now the category owns the burst, and personal lines come in only when
+    /// the caller passes them — which `build` does only for "Mix in my own".
+    ///
+    /// With personal lines, the category keeps all but `personalSlotCount`
+    /// slots. If the category cannot fill its share, personal lines take up the
+    /// slack before the built-in fallback does, since the user's own words beat
+    /// seven generic ones.
     private func poolSession(
         favorites: [Declaration],
         custom: [Declaration],
         categoryPool: [Declaration],
         selected: DeclarationCategory?
     ) -> BurstSession {
-        var pool: [Declaration] = []
-        for _ in 0..<favoriteWeight {
-            pool.append(contentsOf: favorites)
-        }
-        for _ in 0..<customWeight {
-            pool.append(contentsOf: custom)
-        }
-        pool.append(contentsOf: categoryPool)
+        let hasPersonal = !(favorites.isEmpty && custom.isEmpty)
+        let categoryShare = declarationCount - (hasPersonal ? personalSlotCount : 0)
 
         var selectedDeclarations: [BurstDeclaration] = []
-        var usedIds = Set<String>()
-        for declaration in shuffle(pool) {
-            if selectedDeclarations.count >= declarationCount { break }
-            if usedIds.contains(declaration.id) { continue }
-            selectedDeclarations.append(
-                BurstDeclaration(
-                    text: declaration.text,
-                    verse: declaration.book ?? "",
-                    scripture: declaration.bibleVerseText,
-                    category: declaration.category
-                )
-            )
-            usedIds.insert(declaration.id)
+        var spoken = Set<String>()
+        for declaration in shuffle(categoryPool) where selectedDeclarations.count < categoryShare {
+            guard spoken.insert(declaration.text).inserted else { continue }
+            selectedDeclarations.append(burstLine(declaration))
         }
+
+        selectedDeclarations += personalLines(
+            favorites: favorites,
+            custom: custom,
+            excluding: spoken,
+            limit: declarationCount - selectedDeclarations.count
+        )
 
         let neededFallback = declarationCount - selectedDeclarations.count
         if neededFallback > 0 {

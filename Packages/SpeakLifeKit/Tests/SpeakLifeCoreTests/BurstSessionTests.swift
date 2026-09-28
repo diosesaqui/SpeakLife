@@ -331,32 +331,109 @@ final class BurstSessionTests: XCTestCase {
 
     // MARK: - Pool composition
 
-    func testFavoritesAndCustomAreWeightedAheadOfTheCategory() {
-        // With the shuffle pinned, weighting shows up as ordering: favorites are
-        // appended first, then the user's own, then the selected category.
+    func testWithoutMixTheBurstIsOnlyTheSelectedCategory() {
+        // Favorites and the user's own lines are handed in, but the user has not
+        // asked to mix them. The burst is the category they picked, nothing else.
         let session = builder().build(
             enforcement: nil, currentDay: 1,
             favorites: [declaration("favorite", .rest)],
             custom: [declaration("mine", .destiny)],
-            categoryPool: (1...7).map { declaration("pool \($0)", .joy) },
+            categoryPool: (1...10).map { declaration("pool \($0)", .joy) },
             selected: .joy
         )
-        XCTAssertEqual(session.declarations.first?.text, "favorite")
-        XCTAssertEqual(session.declarations.dropFirst().first?.text, "mine")
+        XCTAssertEqual(session.origin, .pool)
+        XCTAssertEqual(session.declarations.count, 7)
+        XCTAssertTrue(session.declarations.allSatisfy { $0.category == .joy })
     }
 
-    func testWeightedDuplicatesAreNotSpokenTwice() {
-        // Favorites go into the pool twice and custom three times. Weighting is
-        // meant to change the odds, never to repeat a line inside one burst.
+    func testMixGivesACoupleOfSlotsToFavoritesAndMyOwn() {
         let session = builder().build(
             enforcement: nil, currentDay: 1,
-            favorites: [declaration("favorite", .rest)],
+            favorites: [declaration("favorite 1", .rest), declaration("favorite 2", .rest)],
+            custom: [declaration("mine 1", .destiny), declaration("mine 2", .destiny)],
+            categoryPool: (1...10).map { declaration("pool \($0)", .joy) },
+            selected: .joy,
+            mixPersonal: true
+        )
+        let texts = session.declarations.map(\.text)
+        XCTAssertEqual(texts.count, 7)
+        XCTAssertEqual(texts.filter { $0.hasPrefix("pool") }.count, 5)
+        XCTAssertEqual(texts.filter { !$0.hasPrefix("pool") }.count, 2)
+        XCTAssertEqual(session.theme, .joy)
+    }
+
+    func testMixWithNothingPersonalIsTheCategory() {
+        let session = builder().build(
+            enforcement: nil, currentDay: 1,
+            favorites: [], custom: [],
+            categoryPool: (1...10).map { declaration("pool \($0)", .joy) },
+            selected: .joy,
+            mixPersonal: true
+        )
+        XCTAssertTrue(session.declarations.allSatisfy { $0.category == .joy })
+        XCTAssertEqual(session.declarations.count, 7)
+    }
+
+    func testMixedLinesAreNotSpokenTwice() {
+        // A favorite is a copy of a bundled line, so the same words can arrive
+        // from both the category and the favorites.
+        let shared = declaration("pool 1", .joy)
+        let session = builder().build(
+            enforcement: nil, currentDay: 1,
+            favorites: [shared, declaration("favorite", .rest)],
             custom: [declaration("mine", .destiny)],
             categoryPool: (1...7).map { declaration("pool \($0)", .joy) },
-            selected: .joy
+            selected: .joy,
+            mixPersonal: true
         )
         let texts = session.declarations.map(\.text)
         XCTAssertEqual(Set(texts).count, texts.count, "a declaration was repeated: \(texts)")
+    }
+
+    func testMixFillsAThinCategoryBeforeTheBuiltIns() {
+        let session = builder().build(
+            enforcement: nil, currentDay: 1,
+            favorites: (1...4).map { declaration("favorite \($0)", .rest) },
+            custom: [],
+            categoryPool: (1...3).map { declaration("pool \($0)", .joy) },
+            selected: .joy,
+            mixPersonal: true
+        )
+        XCTAssertEqual(session.origin, .pool)
+        XCTAssertEqual(session.declarations.count, 7)
+        XCTAssertEqual(session.declarations.filter { $0.text.hasPrefix("favorite") }.count, 4)
+    }
+
+    func testMixNeverTakesTheOnlySlot() {
+        let session = builder(count: 1).build(
+            enforcement: nil, currentDay: 1,
+            favorites: [declaration("favorite", .rest)],
+            custom: [],
+            categoryPool: [declaration("pool", .joy)],
+            selected: .joy,
+            mixPersonal: true
+        )
+        XCTAssertEqual(session.declarations.map(\.text), ["pool"])
+    }
+
+    func testMixKeepsTheCampaignAnchorAndTheme() {
+        let session = builder().build(
+            enforcement: enforcement(theme: .health),
+            currentDay: 1,
+            favorites: [declaration("favorite 1", .rest), declaration("favorite 2", .rest),
+                        declaration("favorite 3", .rest)],
+            custom: [],
+            categoryPool: [],
+            selected: .wealth,
+            mixPersonal: true,
+            fullPool: deepPool(.health)
+        )
+        XCTAssertEqual(session.origin, .enforcement(.health))
+        XCTAssertEqual(session.theme, .health)
+        XCTAssertEqual(session.declarations.count, 7)
+        XCTAssertEqual(session.declarations.first?.text, "Anchor 1")
+        XCTAssertEqual(session.declarations.filter { $0.category == .health }.count, 5)
+        XCTAssertEqual(session.declarations.filter { $0.text.hasPrefix("favorite") }.count, 2)
     }
 
     func testPoolIsToppedUpWhenItCannotFillTheBurst() {
@@ -569,9 +646,11 @@ final class BurstSessionTests: XCTestCase {
         let session = builder(count: 2).build(
             enforcement: nil, currentDay: 1,
             favorites: [],
-            custom: [Declaration(text: "mine one", category: .myOwn),
-                     Declaration(text: "mine two", category: .myOwn)],
-            categoryPool: [], selected: .myOwn
+            custom: [],
+            // With My Own selected, the category pool is the user's own lines.
+            categoryPool: [Declaration(text: "mine one", category: .myOwn),
+                           Declaration(text: "mine two", category: .myOwn)],
+            selected: .myOwn
         )
 
         XCTAssertFalse(session.scriptureAvailable,
