@@ -931,9 +931,10 @@ struct StormTrialTimeline: View {
 
 private struct StormReviewCard: View {
     /// A real, verbatim App Store review (TestimonialWallView keeps the set).
-    /// This one is chosen because it is about the free week itself.
+    /// Chosen because it shows daily habit and names what the app is best at,
+    /// and it works whether or not this account is offered a trial.
     private var review: WallReview {
-        TestimonialWallView.reviews.first { $0.author == "Heather L Compton" } ?? TestimonialWallView.reviews[0]
+        TestimonialWallView.reviews.first { $0.author == "Kyla Clark" } ?? TestimonialWallView.reviews[0]
     }
 
     var body: some View {
