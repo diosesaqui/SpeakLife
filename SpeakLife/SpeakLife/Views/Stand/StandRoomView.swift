@@ -25,6 +25,7 @@ struct StandRoomView: View {
 
     @ObservedObject private var service = StandService.shared
     @ObservedObject private var auth = StandAuthCoordinator.shared
+    @ObservedObject private var enforcement = EnforcementService.shared
 
     @State private var showInvite = false
     @State private var showLeaveConfirm = false
@@ -143,6 +144,20 @@ struct StandRoomView: View {
                 Text(day.anchorBook)
                     .font(DS.Typography.caption)
                     .foregroundColor(DS.Palette.textSecondary)
+
+                // A stand is its own week. Any Burst counts a day in every
+                // stand the speaker is in (`StandService.mirrorDay`), so
+                // somebody running a different campaign of their own sees two
+                // day numbers and two themes. Say so, rather than leave the
+                // home card and this room looking like they disagree.
+                if let own = enforcement.activeEnforcement,
+                   own.id != room.enforcement.id {
+                    Text("You are also running \(own.displayTitle). Every Burst you speak counts here too.")
+                        .font(DS.Typography.caption)
+                        .foregroundColor(DS.Palette.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.top, DS.Spacing.xxs)
+                }
             }
             .padding(DS.Spacing.md)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -292,9 +307,14 @@ struct StandMemberRow: View {
         )
     }
 
+    /// A count of days spoken, never "Day N". Every other "Day N" in the app
+    /// (the campaign card, this room's anchor above) means the day being
+    /// spoken TODAY, so a row reading "Day 3 of 7" under an anchor reading
+    /// "DAY 4 OF 7" looked like the room disagreed with itself when both were
+    /// right: three spoken, the fourth up next.
     private var dayLabel: String {
         member.hasStarted
-            ? "Day \(member.standDay) of \(Enforcement.length)"
+            ? "\(member.standDay) of \(Enforcement.length) days spoken"
             : "Just joined"
     }
 
