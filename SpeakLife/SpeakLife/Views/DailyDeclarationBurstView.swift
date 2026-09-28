@@ -86,6 +86,22 @@ struct DailyDeclarationBurstView: View {
         )
     }
 
+    /// "Mix in my own": a couple of slots go to favorites or the user's own
+    /// declarations. Off by default, so a burst is the selected category or the
+    /// campaign and nothing else. A preference rather than a session choice, for
+    /// the same reason as the speak mode.
+    @AppStorage("burstMixPersonal") private var mixPersonal = false
+
+    private var personalDeclarations: [Declaration] {
+        viewModel.createOwn.filter { $0.contentType == .affirmation }
+    }
+
+    /// Offered only when there is something to mix in and room to mix it. A
+    /// one-line burst has no spare slot.
+    private var canMixPersonal: Bool {
+        burstDeclarationCount > 1 && !(viewModel.favorites.isEmpty && personalDeclarations.isEmpty)
+    }
+
     /// True when at least one slat carries a verse, so the switch is worth
     /// offering. A burst made entirely of the user's own written declarations has
     /// nothing to switch to.
@@ -117,8 +133,6 @@ struct DailyDeclarationBurstView: View {
     private var burstDeclarationCount: Int {
         StormFreeLayer.isActive(subscriptionStore) ? 1 : 7
     }
-    private let favoriteWeight = 2  // Favorites appear 3x more likely
-    private let customWeight = 3    // Custom declarations 2x more likely
     
     /// Storm free layer: today's declaration is already spent.
     @State private var showStormFreeLimit = false
@@ -250,38 +264,10 @@ struct DailyDeclarationBurstView: View {
 
     // MARK: - Composition
 
-    /// Hands the builder everything it needs and keeps the result.
-    ///
-    /// The policy — campaign ownership, weighting, dedup, fallback, and the
-    /// theme — lives in `BurstSessionBuilder`, where it is testable without a
-    /// view. This reads the singletons the builder deliberately does not.
+    /// Composes the burst once on appear, and spends the storm free layer's
+    /// allowance for it.
     private func loadDynamicDeclarations() {
-        let service = EnforcementService.shared
-
-        // The campaign only owns the burst it is actually responsible for. Opened
-        // from Jump Back In this is the user's own burst, so the campaign is left
-        // out of the composition entirely and `selected` — the category they
-        // chose — is what fills it.
-        let campaignOwnsThisBurst = source == .dailyTask && service.isEnabled
-        let activeEnforcement = campaignOwnsThisBurst ? service.activeEnforcement : nil
-
-        let composed = BurstSessionBuilder(
-            declarationCount: burstDeclarationCount,
-            favoriteWeight: favoriteWeight,
-            customWeight: customWeight
-        ).build(
-            enforcement: activeEnforcement,
-            currentDay: service.progressSnapshot.currentDay,
-            favorites: viewModel.favorites,
-            custom: viewModel.createOwn.filter { $0.contentType == .affirmation },
-            categoryPool: viewModel.declarations,
-            selected: viewModel.selectedCategory,
-            // The whole pool, not `viewModel.declarations` — that is the category
-            // the user is browsing, which has nothing to do with the campaign they
-            // are on. A campaign fills its six non-anchor slots from its own theme.
-            fullPool: viewModel.allAvailableDeclarations
-        )
-        session = composed
+        composeSession()
         if burstDeclarationCount == 1 {
             // A free storm member's one declaration a day. Already spent
             // (in the feed, or an earlier Burst today): the limit screen
@@ -295,6 +281,43 @@ struct DailyDeclarationBurstView: View {
                 ])
             }
         }
+    }
+
+    /// Hands the builder everything it needs and keeps the result.
+    ///
+    /// The policy — campaign ownership, the personal mix, dedup, fallback, and
+    /// the theme — lives in `BurstSessionBuilder`, where it is testable without
+    /// a view. This reads the singletons the builder deliberately does not.
+    /// Separate from `loadDynamicDeclarations` so flipping "Mix in my own" on
+    /// the intro can recompose without spending anything twice.
+    private func composeSession() {
+        let service = EnforcementService.shared
+
+        // The campaign only owns the burst it is actually responsible for. Opened
+        // from Jump Back In this is the user's own burst, so the campaign is left
+        // out of the composition entirely and `selected` — the category they
+        // chose — is what fills it.
+        let campaignOwnsThisBurst = source == .dailyTask && service.isEnabled
+        let activeEnforcement = campaignOwnsThisBurst ? service.activeEnforcement : nil
+
+        let composed = BurstSessionBuilder(
+            declarationCount: burstDeclarationCount
+        ).build(
+            enforcement: activeEnforcement,
+            currentDay: service.progressSnapshot.currentDay,
+            favorites: viewModel.favorites,
+            custom: personalDeclarations,
+            // The selected category, and only that. Favorites and the user's own
+            // come in through `mixPersonal`, never by default.
+            categoryPool: viewModel.declarations,
+            selected: viewModel.selectedCategory,
+            mixPersonal: mixPersonal && canMixPersonal,
+            // The whole pool, not `viewModel.declarations` — that is the category
+            // the user is browsing, which has nothing to do with the campaign they
+            // are on. A campaign fills its six non-anchor slots from its own theme.
+            fullPool: viewModel.allAvailableDeclarations
+        )
+        session = composed
 
         switch composed.origin {
         case .enforcement:
@@ -392,6 +415,11 @@ struct DailyDeclarationBurstView: View {
                         }
                         .padding(.top, DS.Spacing.sm)
                     }
+
+                    if canMixPersonal {
+                        mixPersonalToggle
+                            .padding(.top, DS.Spacing.xs)
+                    }
                 }
             }
             .dsAppear(0)
@@ -431,6 +459,40 @@ struct DailyDeclarationBurstView: View {
             .padding(.bottom, 60)
             .dsAppear(0.12)
         }
+    }
+
+    /// Opt-in for a couple of favorites or the user's own lines. Off, the burst
+    /// is only the selected category or the campaign.
+    private var mixPersonalToggle: some View {
+        Button(action: toggleMixPersonal) {
+            HStack(spacing: DS.Spacing.xs) {
+                Image(systemName: mixPersonal ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 15, weight: .semibold))
+                Text("Mix in my own")
+                    .font(.system(size: 14, weight: .semibold))
+            }
+            .foregroundColor(mixPersonal ? .white : .white.opacity(0.7))
+            .padding(.horizontal, DS.Spacing.sm)
+            .padding(.vertical, DS.Spacing.xs)
+            .background(
+                Capsule()
+                    .fill(mixPersonal ? Color.white.opacity(0.2) : Color.white.opacity(0.08))
+                    .overlay(Capsule().stroke(Color.white.opacity(0.14), lineWidth: 1))
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Mix in my favorites and my own declarations")
+        .accessibilityAddTraits(mixPersonal ? [.isButton, .isSelected] : [.isButton])
+    }
+
+    private func toggleMixPersonal() {
+        Juice.play(.tapLight)
+        withAnimation(DS.Motion.quick) { mixPersonal.toggle() }
+        composeSession()
+        AnalyticsService.shared.track("daily_burst_mix_changed", parameters: [
+            "mix_personal": mixPersonal,
+            "source": source.rawValue
+        ])
     }
 
     private func introHint(icon: String, text: String) -> some View {
@@ -951,7 +1013,8 @@ struct DailyDeclarationBurstView: View {
             // How many of the seven can actually honour scripture mode. Without
             // it, a burst that silently fell back to declarations on five slats
             // would be indistinguishable from one that spoke seven verses.
-            "scripture_slats": session?.scriptureCount ?? 0
+            "scripture_slats": session?.scriptureCount ?? 0,
+            "mix_personal": mixPersonal && canMixPersonal
         ])
         withAnimation(.easeIn(duration: 0.4)) {
             burstActive = true
