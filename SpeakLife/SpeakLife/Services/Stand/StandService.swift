@@ -53,9 +53,18 @@ final class StandService: ObservableObject, StandMirroring {
     private var listeners: [String: ListenerRegistration] = [:]
     private let cacheKey = "cachedStandRooms"
 
-    /// A backfill write is out and its echo has not arrived. See
-    /// `reconcileToday`, which sets and clears it.
-    private var isBackfilling = false
+    /// "roomId|stamp" pairs a backfill has already been attempted for since the
+    /// app last came to the foreground. See `reconcileToday`.
+    ///
+    /// A bool that cleared itself whenever a snapshot showed no gap used to
+    /// guard this, and it looped. Firestore applies our own write locally first,
+    /// so the next snapshot showed the stamp, the guard cleared, and then the
+    /// server refused the write, the room rolled back, and the gap reappeared.
+    /// Every refusal re-armed the next attempt: one device logged 1,388
+    /// backfills in one afternoon, about three a second. Remembering the
+    /// attempt itself cannot be cleared by an optimistic snapshot, so a refused
+    /// write is retried once per return to the app and never in a loop.
+    private var backfillAttempts: Set<String> = []
 
     private var uid: String? { StandAuthCoordinator.shared.currentUid }
 
@@ -70,8 +79,8 @@ final class StandService: ObservableObject, StandMirroring {
         ) { [weak self] _ in
             Task { @MainActor in
                 guard let self else { return }
-                // A write that failed earlier latched this; give it one retry.
-                self.isBackfilling = false
+                // A write that was refused earlier gets one more try here.
+                self.backfillAttempts.removeAll()
                 self.reconcileToday()
             }
         }
@@ -191,11 +200,12 @@ final class StandService: ObservableObject, StandMirroring {
     /// input and the room is the thing corrected (spec §2).
     ///
     /// Self-terminating: once the stamp lands, `dayToBackfill` returns nil for
-    /// the echoed snapshot and every one after it.
+    /// the echoed snapshot and every one after it. A write the server refuses
+    /// never lands, so each gap is attempted once per foreground
+    /// (`backfillAttempts`) rather than on every snapshot.
     private func reconcileToday() {
         guard FeatureFlag.standTogetherEnabled, let uid else { return }
-        // Local truth, read once. Also the daily reset: on a new day this goes
-        // false and re-arms below.
+        // Local truth, read once.
         //
         // A Burst spoken today, OR a campaign day banked today. The campaign
         // alone missed everyone speaking without a campaign of their own
@@ -203,29 +213,21 @@ final class StandService: ObservableObject, StandMirroring {
         // already ticked so nothing ever called the mirror at all.
         let spokeToday = BurstCompletionTracker.shared.hasTodaysCompletion()
             || EnforcementService.shared.progressSnapshot.hasAdvancedToday()
-        guard spokeToday else {
-            isBackfilling = false
-            return
-        }
+        guard spokeToday else { return }
 
+        // Keyed by room AND stamp, so a room joined later, a stand that gains
+        // its second member tonight, or tomorrow's day is still repaired, while
+        // the same gap is never written twice in one foreground. That also
+        // covers snapshots arriving in bursts before the first echo returns.
         let stamp = StandDayStamp.stamp()
         let missing = rooms.filter {
             $0.dayToBackfill(for: uid, todayStamp: stamp, spokeTodayLocally: true) != nil
+                && !backfillAttempts.contains("\($0.id)|\(stamp)")
         }
-        guard !missing.isEmpty else {
-            // Either the write landed or there was never a gap. Re-arm, so a
-            // later miss — a room joined after this, a stand that gains its
-            // second member tonight — is still repaired.
-            isBackfilling = false
-            return
-        }
-
-        // Snapshots arrive in bursts; without this each one issues its own
-        // write before the first echo comes back.
-        guard !isBackfilling else { return }
-        isBackfilling = true
+        guard !missing.isEmpty else { return }
 
         for room in missing {
+            backfillAttempts.insert("\(room.id)|\(stamp)")
             write(day: room.dayToRecord(for: uid, todayStamp: stamp),
                   into: room, uid: uid, stamp: stamp)
         }
