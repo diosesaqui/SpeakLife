@@ -59,6 +59,11 @@ final class AudioDeclarationViewModel: ObservableObject {
     let favoritesManager = AudioFavoritesManager()
     private let storage = Storage.storage()
     private let fileManager = FileManager.default
+    /// Callers waiting on a download already under way, by audio id. The Up
+    /// Next queue prefetches the next episode, so a tap or a queue advance
+    /// can ask for a file that is still downloading. They join that download
+    /// instead of starting a second write to the same file.
+    private var inFlightDownloads: [String: [(Result<URL, Error>) -> Void]] = [:]
     @AppStorage("lastCachedAudioVersion") private var lastCachedAudioVersion = 0
     private let service: APIService = LocalAPIClient()
     private var cancellables = Set<AnyCancellable>()
@@ -529,8 +534,19 @@ final class AudioDeclarationViewModel: ObservableObject {
                }
            }
 
-           // If not, download from Firebase
-           downloadAudio(for: item, to: localURL, completion: completion)
+           // If not, download from Firebase, or join the download already
+           // running for this file.
+           if inFlightDownloads[item.id] != nil {
+               inFlightDownloads[item.id]?.append(completion)
+               return
+           }
+           inFlightDownloads[item.id] = [completion]
+           downloadAudio(for: item, to: localURL) { [weak self] result in
+               DispatchQueue.main.async {
+                   let waiting = self?.inFlightDownloads.removeValue(forKey: item.id) ?? [completion]
+                   waiting.forEach { $0(result) }
+               }
+           }
        }
     
     func downloadAudio(for item: AudioDeclaration, to localURL: URL, completion: @escaping (Result<URL, Error>) -> Void) {

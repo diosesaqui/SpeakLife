@@ -23,6 +23,7 @@ struct AudioPlayerView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     @State private var isPlayingPulse = false
+    @State private var isQueuePresented = false
 
     var body: some View {
         GeometryReader { proxy in
@@ -327,8 +328,74 @@ struct AudioPlayerView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.top, DS.Spacing.xxs)
-            .padding(.bottom, DS.Spacing.lg)
+
+            upNextRow
+                .padding(.bottom, DS.Spacing.lg)
         }
+        .sheet(isPresented: $isQueuePresented) {
+            UpNextSheet(viewModel: viewModel)
+                .presentationDetents([.medium, .large])
+        }
+    }
+
+    /// What plays after this episode, and the way into the queue. Shown even
+    /// when the queue is empty so the feature can be found from the player.
+    private var upNextRow: some View {
+        HStack(spacing: DS.Spacing.sm) {
+            Button(action: { isQueuePresented = true }) {
+                HStack(spacing: DS.Spacing.sm) {
+                    Image(systemName: "list.bullet")
+                        .font(.system(size: 16, weight: .semibold))
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Up Next")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.7))
+                        Text(upNextTitle)
+                            .font(.subheadline.weight(.semibold))
+                            .lineLimit(1)
+                    }
+
+                    Spacer(minLength: 0)
+
+                    if viewModel.loadingItemId != nil {
+                        ProgressView()
+                            .tint(.white)
+                    } else if viewModel.queue.count > 1 {
+                        Text("+\(viewModel.queue.count - 1)")
+                            .font(.caption.weight(.semibold))
+                            .foregroundColor(.white.opacity(0.8))
+                    }
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, DS.Spacing.md)
+                .padding(.vertical, DS.Spacing.sm)
+                .background(
+                    RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
+                        .fill(Color.white.opacity(0.12))
+                )
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(PlainButtonStyle())
+            .accessibilityLabel("Up Next: \(upNextTitle)")
+            .accessibilityHint("Opens your queue")
+
+            if !viewModel.queue.isEmpty {
+                Button(action: { viewModel.skipToNext() }) {
+                    Image(systemName: "forward.end.fill")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .disabled(viewModel.loadingItemId != nil)
+                .accessibilityLabel("Play next episode")
+            }
+        }
+    }
+
+    private var upNextTitle: String {
+        viewModel.queue.next?.title ?? "Nothing queued"
     }
 
     /// Flexible gap between transport controls: tightens on narrow screens and opens up
@@ -412,9 +479,23 @@ struct PersistentAudioBar: View {
                 }
             }
 
+            if !viewModel.queue.isEmpty {
+                Button(action: {
+                    viewModel.skipToNext()
+                }) {
+                    Image(systemName: "forward.end.fill")
+                        .font(.title3)
+                        .foregroundColor(.white)
+                }
+                .buttonStyle(PlainButtonStyle())
+                .disabled(viewModel.loadingItemId != nil)
+                .accessibilityLabel("Play next episode")
+            }
+
+            // Closing the bar ends the session, queue included, so nothing
+            // queued starts playing later out of nowhere.
             Button(action: {
-                viewModel.resetPlayer()
-                viewModel.isBarVisible = false
+                viewModel.stop()
             }) {
                 Image(systemName: "xmark")
                     .foregroundColor(.white.opacity(0.6))
@@ -430,5 +511,102 @@ struct PersistentAudioBar: View {
         .padding(.horizontal)
         .padding(.bottom, 8)
         .transition(.move(edge: .bottom).combined(with: .opacity))
+    }
+}
+
+
+// MARK: - Up Next queue sheet
+
+struct UpNextSheet: View {
+    @ObservedObject var viewModel: AudioPlayerViewModel
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            List {
+                if let current = viewModel.selectedItem {
+                    Section("Now Playing") {
+                        QueueRow(item: current, isCurrent: true)
+                    }
+                }
+
+                Section {
+                    if viewModel.queue.isEmpty {
+                        Text("Press and hold any audio, then choose Play Next or Add to Queue to line it up here.")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .padding(.vertical, DS.Spacing.xs)
+                    } else {
+                        ForEach(viewModel.queue.items) { item in
+                            Button {
+                                viewModel.playFromQueue(item)
+                            } label: {
+                                QueueRow(item: item, isCurrent: false,
+                                         isLoading: viewModel.loadingItemId == item.id)
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                        }
+                        .onDelete { viewModel.removeFromQueue(atOffsets: $0) }
+                        .onMove { viewModel.moveInQueue(fromOffsets: $0, toOffset: $1) }
+                    }
+                } header: {
+                    Text("Up Next")
+                }
+            }
+            .navigationTitle("Queue")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    if !viewModel.queue.isEmpty {
+                        Button("Clear", role: .destructive) {
+                            viewModel.clearQueue()
+                        }
+                    }
+                }
+                ToolbarItemGroup(placement: .navigationBarTrailing) {
+                    if viewModel.queue.count > 1 {
+                        EditButton()
+                    }
+                    Button("Done") { dismiss() }
+                        .fontWeight(.semibold)
+                }
+            }
+        }
+        .preferredColorScheme(.dark)
+    }
+}
+
+private struct QueueRow: View {
+    let item: AudioDeclaration
+    let isCurrent: Bool
+    var isLoading: Bool = false
+
+    var body: some View {
+        HStack(spacing: DS.Spacing.sm) {
+            ArtworkThumbnail(name: item.imageUrl, size: CGSize(width: 44, height: 44))
+                .frame(width: 44, height: 44)
+                .clipShape(RoundedRectangle(cornerRadius: DS.Radius.sm, style: .continuous))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(item.title)
+                    .font(.system(size: 15, weight: .semibold))
+                    .lineLimit(1)
+                Text(item.duration)
+                    .font(.system(size: 13))
+                    .foregroundColor(.secondary)
+            }
+
+            Spacer(minLength: 0)
+
+            if isLoading {
+                ProgressView()
+            } else if isCurrent {
+                Image(systemName: "waveform")
+                    .foregroundColor(.accentColor)
+                    .accessibilityHidden(true)
+            }
+        }
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
     }
 }
