@@ -21,7 +21,6 @@
 import SwiftUI
 import UserNotifications
 import UIKit
-import AVFoundation
 
 // MARK: - Steps
 
@@ -164,19 +163,10 @@ struct StormOnboardingView: View {
             StormSpeakScreen(
                 line: resolvedStorm.firstDeclaration,
                 eyebrow: "SPEAK THIS OUT LOUD",
-                title: resolvedStorm == .grief ? "Let this be spoken over you" : "Speak to your storm",
-                backup: StormSpeakBackup(config: subscriptionStore.stormSpeakBackup)
+                title: resolvedStorm == .grief ? "Let this be spoken over you" : "Speak to your storm"
             ) { outcome in
                 let spoke = outcome == .spoken
                 spokeFirstDeclaration = spoke
-                if outcome == .heard {
-                    AnalyticsService.shared.track("first_declaration_heard", parameters: [
-                        "storm": resolvedStorm.rawValue,
-                        "step_index": StormStep.speak.rawValue,
-                        "variant": subscriptionStore.onboardingVariantName,
-                        "seconds_since_start": Int(Date().timeIntervalSince(startedAt))
-                    ])
-                }
                 if spoke {
                     AnalyticsService.shared.track("first_declaration_spoken", parameters: [
                         "storm": resolvedStorm.rawValue,
@@ -758,76 +748,8 @@ private struct StormMechanismScreen: View {
 enum StormSpeakOutcome {
     /// Held the button all the way through while saying it.
     case spoken
-    /// Tapped "Hear it spoken over you" and listened to the end.
-    case heard
     /// Tapped "Read silently instead".
     case readSilently
-}
-
-/// The speak screen's secondary option, Remote Config `stormSpeakBackup`.
-enum StormSpeakBackup {
-    case hear, read
-
-    init(config: String) { self = config.lowercased() == "read" ? .read : .hear }
-}
-
-/// Reads a declaration aloud in the app's warm voice (the best installed
-/// English voice, as the feed's speaker button picks it). Not
-/// `SpeechCoordinator` itself: that restarts the app's background music when
-/// it finishes and resets the audio session in its initializer, neither of
-/// which belongs in the middle of onboarding.
-@MainActor
-final class StormVoice: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
-    @Published private(set) var isSpeaking = false
-    private let synthesizer = AVSpeechSynthesizer()
-    /// Called only when the line was read to the end, never on a stop.
-    var onFinish: (() -> Void)?
-
-    private static let voice: AVSpeechSynthesisVoice? = {
-        let english = AVSpeechSynthesisVoice.speechVoices().filter { $0.language.hasPrefix("en") }
-        return english.first { $0.quality == .premium && $0.gender == .female }
-            ?? english.first { $0.quality == .enhanced && $0.gender == .female }
-            ?? AVSpeechSynthesisVoice(language: "en-US")
-    }()
-
-    override init() {
-        super.init()
-        synthesizer.delegate = self
-    }
-
-    func speak(_ text: String) {
-        let session = AVAudioSession.sharedInstance()
-        try? session.setCategory(.playback, mode: .spokenAudio, options: [.duckOthers])
-        try? session.setActive(true)
-        let utterance = AVSpeechUtterance(string: text)
-        utterance.voice = Self.voice
-        utterance.rate = 0.46
-        isSpeaking = true
-        synthesizer.speak(utterance)
-    }
-
-    func stop() {
-        guard isSpeaking else { return }
-        synthesizer.stopSpeaking(at: .immediate)
-        finish()
-    }
-
-    private func finish() {
-        isSpeaking = false
-        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
-    }
-
-    nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
-        Task { @MainActor in
-            guard self.isSpeaking else { return }
-            self.finish()
-            self.onFinish?()
-        }
-    }
-
-    nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
-        Task { @MainActor in self.finish() }
-    }
 }
 
 /// The declaration card and the hold-to-speak control. No microphone and no
@@ -836,13 +758,10 @@ struct StormSpeakScreen: View {
     let line: StormLine
     let eyebrow: String
     let title: String
-    let backup: StormSpeakBackup
     let onDone: (StormSpeakOutcome) -> Void
 
-    @StateObject private var voice = StormVoice()
     /// Set once, by whichever way the screen ends first. Every exit goes
-    /// through `complete(_:)`, so a hold and a finished voice landing
-    /// together still end the screen exactly once.
+    /// through `complete(_:)`, so the screen ends exactly once.
     @State private var outcome: StormSpeakOutcome?
     @State private var isCharging = false
     @State private var isSealed = false
@@ -860,7 +779,6 @@ struct StormSpeakScreen: View {
     private func complete(_ result: StormSpeakOutcome) {
         guard outcome == nil else { return }
         withAnimation(reduceMotion ? nil : .spring(response: 0.45, dampingFraction: 0.8)) { outcome = result }
-        voice.stop()
         if result != .readSilently {
             UINotificationFeedbackGenerator().notificationOccurred(.success)
         }
@@ -902,11 +820,6 @@ struct StormSpeakScreen: View {
             }
         }
         .onAppear { v = true }
-        .onDisappear { voice.stop() }
-        // Starting to speak silences the voice: her own voice wins.
-        .onChange(of: isCharging) { _, charging in
-            if charging { voice.stop() }
-        }
     }
 
     private var card: some View {
@@ -931,10 +844,10 @@ struct StormSpeakScreen: View {
         .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(Color.white.opacity(isSealed || finished || voice.isSpeaking ? 0.14 : 0.08))
+                .fill(Color.white.opacity(isSealed || finished ? 0.14 : 0.08))
                 .overlay(
                     RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .strokeBorder(StormStyle.gold.opacity(isCharging || isSealed || finished || voice.isSpeaking ? 0.9 : 0.3),
+                        .strokeBorder(StormStyle.gold.opacity(isCharging || isSealed || finished ? 0.9 : 0.3),
                                       lineWidth: isCharging ? 2 : 1)
                 )
                 .shadow(color: StormStyle.gold.opacity(isSealed || finished ? 0.45 : 0), radius: 24)
@@ -947,7 +860,7 @@ struct StormSpeakScreen: View {
     private func controls(width: CGFloat) -> some View {
         VStack(spacing: 12) {
             if let outcome {
-                Label(outcome == .heard ? "Spoken over you." : "Spoken. It's done.",
+                Label("Spoken. It's done.",
                       systemImage: "checkmark.seal.fill")
                     .font(.title3.weight(.semibold))
                     .foregroundColor(StormStyle.gold)
@@ -972,29 +885,7 @@ struct StormSpeakScreen: View {
                         if sealed { complete(.spoken) }
                     }
                 )
-                switch backup {
-                case .read:
-                    StormTextButton(title: "Read silently instead") { complete(.readSilently) }
-                case .hear:
-                    if voice.isSpeaking {
-                        Button { voice.stop() } label: {
-                            Label("Listening… tap to stop", systemImage: "speaker.wave.2.fill")
-                                .font(.body.weight(.medium))
-                                .foregroundColor(StormStyle.gold)
-                                .symbolEffect(.variableColor.iterative, isActive: !reduceMotion)
-                                .frame(minHeight: 44)
-                        }
-                    } else {
-                        StormTextButton(title: "Hear it spoken over you") {
-                            voice.onFinish = {
-                                // A hold in progress wins over the voice.
-                                guard !isCharging else { return }
-                                complete(.heard)
-                            }
-                            voice.speak(line.text)
-                        }
-                    }
-                }
+                StormTextButton(title: "Read silently instead") { complete(.readSilently) }
             }
         }
     }

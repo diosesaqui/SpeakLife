@@ -213,10 +213,6 @@ final class SubscriptionStore: ObservableObject {
     /// Remote Config `stormBenefitScreen`, default on.
     @Published var stormBenefitScreen = true
 
-    /// Speak screen's secondary option: "hear" (the declaration read aloud to
-    /// her, default) or "read" (read silently). Remote Config `stormSpeakBackup`.
-    @Published var stormSpeakBackup = "hear"
-
     /// Trial-week audio and Bible chat pushes on/off, for their with/without
     /// test. Remote Config `stormTrialPushes`, default on.
     @Published var stormTrialPushes = true
@@ -684,7 +680,6 @@ final class SubscriptionStore: ObservableObject {
         stormAlsoIncluded = flagValue("stormAlsoIncluded")
         stormBenefitScreen = flagValue("stormBenefitScreen")
         stormTrialPushes = flagValue("stormTrialPushes")
-        stormSpeakBackup = stringValue("stormSpeakBackup").isEmpty ? "hear" : stringValue("stormSpeakBackup")
         // Whole storm config file (same shape as storm_configs.json). Empty
         // keeps the bundled copy. Copy A/B tests are variants of this key.
         StormConfigStore.applyRemote(stringValue("stormConfigs"))
