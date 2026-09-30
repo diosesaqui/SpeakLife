@@ -78,6 +78,9 @@ struct StormOnboardingView: View {
     /// Screens actually shown, in order, for Back. Skipped steps never enter it.
     @State private var history: [StormStep] = []
     @State private var isGoingBack = false
+    /// How far the sky has gone still under her words. Driven by the hold on
+    /// the speak screen, held at 1 once the declaration is behind her.
+    @State private var skyStillness: Double = 0
 
     private var resolvedStorm: Storm { storm ?? preselectedStorm ?? .fear }
 
@@ -89,7 +92,12 @@ struct StormOnboardingView: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            StormBackground()
+            if subscriptionStore.stormSky {
+                StormSky(clearing: step.skyClearing, stillness: skyStillness)
+                    .animation(.easeInOut(duration: 1.6), value: step)
+            } else {
+                StormBackground()
+            }
 
             screen
                 .transition(.asymmetric(
@@ -134,7 +142,12 @@ struct StormOnboardingView: View {
             startedAt = Date()
             logStepViewed()
         }
-        .onChange(of: step) { _, _ in logStepViewed() }
+        .onChange(of: step) { _, newStep in
+            logStepViewed()
+            withAnimation(.easeInOut(duration: 1.2)) {
+                skyStillness = newStep.rawValue > StormStep.speak.rawValue ? 1 : 0
+            }
+        }
     }
 
     @ViewBuilder
@@ -163,7 +176,15 @@ struct StormOnboardingView: View {
             StormSpeakScreen(
                 line: resolvedStorm.firstDeclaration,
                 eyebrow: "SPEAK THIS OUT LOUD",
-                title: resolvedStorm == .grief ? "Speak comfort over your heart" : "Speak to your storm"
+                title: resolvedStorm == .grief ? "Speak comfort over your heart" : "Speak to your storm",
+                lively: subscriptionStore.stormSky,
+                onChargeChange: { charging, duration in
+                    // The weather dies away across the hold, and comes back
+                    // if she lets go early.
+                    withAnimation(charging ? .linear(duration: duration) : .easeOut(duration: 0.5)) {
+                        skyStillness = charging ? 1 : 0
+                    }
+                }
             ) { outcome in
                 let spoke = outcome == .spoken
                 spokeFirstDeclaration = spoke
@@ -172,7 +193,8 @@ struct StormOnboardingView: View {
                         "storm": resolvedStorm.rawValue,
                         "step_index": StormStep.speak.rawValue,
                         "variant": subscriptionStore.onboardingVariantName,
-                        "seconds_since_start": Int(Date().timeIntervalSince(startedAt))
+                        "seconds_since_start": Int(Date().timeIntervalSince(startedAt)),
+                        "sky": subscriptionStore.stormSky
                     ])
                     GrowthMetrics.shared.trackActivation(action: "declaration_spoken")
                 } else if outcome == .readSilently {
@@ -311,7 +333,8 @@ struct StormOnboardingView: View {
             "posture": posture?.rawValue ?? "unknown",
             "spoke_first_declaration": spokeFirstDeclaration,
             "seconds_to_paywall_close": Int(Date().timeIntervalSince(startedAt)),
-            "preselected": preselectedStorm != nil
+            "preselected": preselectedStorm != nil,
+            "sky": subscriptionStore.stormSky
         ])
         onComplete()
     }
@@ -758,8 +781,15 @@ struct StormSpeakScreen: View {
     let line: StormLine
     let eyebrow: String
     let title: String
+    /// Light the line word by word at speaking pace while she holds.
+    /// Remote Config `stormSky`.
+    var lively = false
+    /// The hold started (`true`, with its length) or ended short of sealing.
+    var onChargeChange: ((Bool, Double) -> Void)? = nil
     let onDone: (StormSpeakOutcome) -> Void
 
+    /// When the current hold began. Paces the word-by-word light.
+    @State private var chargeStart: Date?
     /// Set once, by whichever way the screen ends first. Every exit goes
     /// through `complete(_:)`, so the screen ends exactly once.
     @State private var outcome: StormSpeakOutcome?
@@ -820,13 +850,24 @@ struct StormSpeakScreen: View {
             }
         }
         .onAppear { v = true }
+        .onChange(of: isCharging) { _, charging in
+            chargeStart = charging ? Date() : nil
+            // A sealed lift has already set `outcome`; only a short one reports.
+            if charging || outcome == nil { onChargeChange?(charging, chargeDuration) }
+        }
     }
 
     private var card: some View {
         VStack(spacing: 16) {
-            Text(line.text)
+            Group {
+                if lively {
+                    StormSpokenLine(text: line.text, start: chargeStart,
+                                    duration: chargeDuration, isComplete: isSealed || finished)
+                } else {
+                    Text(line.text).foregroundColor(.white)
+                }
+            }
                 .font(.title2.weight(.semibold))
-                .foregroundColor(.white)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
             VStack(spacing: 6) {
@@ -887,6 +928,53 @@ struct StormSpeakScreen: View {
                 )
                 StormTextButton(title: "Read silently instead") { complete(.readSilently) }
             }
+        }
+    }
+}
+
+/// The declaration, lit word by word at the pace of the hold: said words
+/// white, the current word gold, the rest waiting in dim white. Before a hold
+/// and after a seal the whole line is plain white, so she can read it first.
+/// Each word's share of the hold is weighted by its length, the way speech is.
+private struct StormSpokenLine: View {
+    let text: String
+    let start: Date?
+    let duration: Double
+    let isComplete: Bool
+
+    private var words: [Substring] { text.split(separator: " ") }
+
+    /// Where each word ends, as a fraction of the whole line.
+    private var ends: [Double] {
+        let lengths = words.map { Double($0.count + 1) }
+        let total = max(lengths.reduce(0, +), 1)
+        var running = 0.0
+        return lengths.map { running += $0; return running / total }
+    }
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: start == nil || isComplete)) { context in
+            composed(at: progress(at: context.date))
+        }
+        .accessibilityLabel(text)
+    }
+
+    private func progress(at date: Date) -> Double? {
+        guard !isComplete, let start else { return nil }
+        // A small lead, so each word is lit just before it is due.
+        return min(1, date.timeIntervalSince(start) / max(duration, 0.1) + 0.04)
+    }
+
+    private func composed(at progress: Double?) -> Text {
+        guard let progress else { return Text(text).foregroundColor(.white) }
+        let ends = ends
+        return words.enumerated().reduce(Text("")) { line, item in
+            let (i, word) = item
+            let begins = i == 0 ? 0 : ends[i - 1]
+            let color: Color = progress >= ends[i] ? .white
+                : progress >= begins ? StormStyle.gold
+                : .white.opacity(0.35)
+            return line + Text(i == 0 ? String(word) : " \(word)").foregroundColor(color)
         }
     }
 }
