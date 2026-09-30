@@ -1143,7 +1143,8 @@ final class SubscriptionStore: ObservableObject {
                     AppEvents.ParameterName("product_id"): product.id as NSString,
                     AppEvents.ParameterName("currency"): currency as NSString,
                     AppEvents.ParameterName("paywall_name"): paywallName as NSString,
-                    AppEvents.ParameterName("predicted_value"): priceValue as NSNumber
+                    AppEvents.ParameterName("predicted_value"): priceValue as NSNumber,
+                    .appVersion: AnalyticsContext.shared.appVersion as NSString
                 ]
             )
             // Single source of truth for trial_started (paywalls must NOT fire
@@ -1171,10 +1172,12 @@ final class SubscriptionStore: ObservableObject {
                 parameters: [
                     AppEvents.ParameterName("product_id"): product.id as NSString,
                     AppEvents.ParameterName("currency"): currency as NSString,
-                    AppEvents.ParameterName("paywall_name"): paywallName as NSString
+                    AppEvents.ParameterName("paywall_name"): paywallName as NSString,
+                    .appVersion: AnalyticsContext.shared.appVersion as NSString
                 ]
             )
-            AppEvents.shared.logPurchase(amount: priceValue, currency: currency)
+            AppEvents.shared.logPurchase(amount: priceValue, currency: currency,
+                                         parameters: [.appVersion: AnalyticsContext.shared.appVersion as NSString])
             Event.trackTikTokPremiumPurchase(value: priceValue, currency: currency)
         }
 
