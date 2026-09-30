@@ -163,7 +163,7 @@ struct StormOnboardingView: View {
             StormSpeakScreen(
                 line: resolvedStorm.firstDeclaration,
                 eyebrow: "SPEAK THIS OUT LOUD",
-                title: resolvedStorm == .grief ? "Let this be spoken over you" : "Speak to your storm"
+                title: resolvedStorm == .grief ? "Speak comfort over your heart" : "Speak to your storm"
             ) { outcome in
                 let spoke = outcome == .spoken
                 spokeFirstDeclaration = spoke
