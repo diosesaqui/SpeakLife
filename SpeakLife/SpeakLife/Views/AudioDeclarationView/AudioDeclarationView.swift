@@ -75,15 +75,19 @@ struct UpNextCell: View {
                                     .font(.caption)
                             }
 
+                            // Queued state reads as one more piece of inline
+                            // metadata ("5m · Up Next"), tinted like Music's
+                            // queue labels, rather than a boxed pill that sits
+                            // taller than the line and pulls the eye.
                             if isQueued {
-                                Label("Up Next", systemImage: "text.line.first.and.arrowtriangle.forward")
-                                    .labelStyle(.titleAndIcon)
-                                    .font(.system(size: 11, weight: .semibold))
-                                    .foregroundColor(.white.opacity(0.85))
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(Capsule().fill(Color.white.opacity(0.15)))
+                                Text("·")
+                                    .font(.system(size: 13))
+                                    .foregroundColor(.gray)
+                                Text("Up Next")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundColor(DS.Palette.accent)
                                     .lineLimit(1)
+                                    .fixedSize()
                             }
                         }
                     }
