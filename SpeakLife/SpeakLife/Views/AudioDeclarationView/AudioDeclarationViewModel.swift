@@ -560,6 +560,11 @@ final class AudioDeclarationViewModel: ObservableObject {
                 completion(.failure(error))
             } else if let url = url {
                 completion(.success(url))
+            } else {
+                // Neither a file nor an error. Still has to complete: callers
+                // joined to this download would otherwise wait forever and the
+                // episode could never be fetched again this launch.
+                completion(.failure(URLError(.cannotCreateFile)))
             }
         }
         
