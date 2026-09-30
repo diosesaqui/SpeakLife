@@ -346,8 +346,7 @@ final class AppDelegate: NSObject, MessagingDelegate {
             "stormAlsoIncluded": false as NSNumber,
             "stormConfigs": "" as NSString,
             "stormBenefitScreen": true as NSNumber,
-            "stormTrialPushes": true as NSNumber,
-            "stormSpeakBackup": "hear" as NSString
+            "stormTrialPushes": true as NSNumber
         ])
 
         // Wire the domain-facing feature-flag seam to Firebase Remote Config now

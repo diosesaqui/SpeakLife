@@ -117,8 +117,7 @@ struct StormPaywallView: View {
             StormSpeakScreen(
                 line: storm.planDays[1],
                 eyebrow: "ONE MORE, ON US",
-                title: "Here's Day 2 of your plan",
-                backup: StormSpeakBackup(config: subscriptionStore.stormSpeakBackup)
+                title: "Here's Day 2 of your plan"
             ) { outcome in
                 AnalyticsService.shared.track("objection_extra_declaration", parameters: [
                     "outcome": "\(outcome)", "storm": storm.rawValue
@@ -147,8 +146,7 @@ struct StormPaywallView: View {
             StormSpeakScreen(
                 line: storm.secondDeclaration,
                 eyebrow: "YOUR FIRST WIN AS A MEMBER",
-                title: "Speak it again, stronger",
-                backup: StormSpeakBackup(config: subscriptionStore.stormSpeakBackup)
+                title: "Speak it again, stronger"
             ) { outcome in
                 AnalyticsService.shared.track("second_declaration_spoken", parameters: [
                     "outcome": "\(outcome)", "storm": storm.rawValue, "placement": placement
