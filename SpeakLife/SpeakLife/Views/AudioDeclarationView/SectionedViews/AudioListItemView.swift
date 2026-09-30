@@ -11,8 +11,12 @@ struct AudioListItemView: View {
     let item: AudioDeclaration
     let proxy: GeometryProxy
     let viewModel: AudioDeclarationViewModel
+    var isQueued: Bool = false
     let onItemTap: (AudioDeclaration) -> Void
     let onFavoriteSwipe: (AudioDeclaration) -> Void
+    var onPlayNext: ((AudioDeclaration) -> Void)? = nil
+    var onAddToQueue: ((AudioDeclaration) -> Void)? = nil
+    var onRemoveFromQueue: ((AudioDeclaration) -> Void)? = nil
     
     var body: some View {
         Button(action: {
@@ -21,7 +25,11 @@ struct AudioListItemView: View {
             VStack {
                 UpNextCell(
                     favoritesManager: viewModel.favoritesManager,
-                    item: item
+                    item: item,
+                    isQueued: isQueued,
+                    onPlayNext: onPlayNext,
+                    onAddToQueue: onAddToQueue,
+                    onRemoveFromQueue: onRemoveFromQueue
                 )
                 .frame(
                     width: proxy.size.width * 0.9, 
@@ -38,6 +46,16 @@ struct AudioListItemView: View {
             .background(Color.clear)
             .swipeActions(edge: .leading) {
                 favoriteSwipeButton
+            }
+            .swipeActions(edge: .trailing) {
+                if let onPlayNext = onPlayNext {
+                    Button {
+                        onPlayNext(item)
+                    } label: {
+                        Label("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward")
+                    }
+                    .tint(.indigo)
+                }
             }
         }
         .disabled(viewModel.fetchingAudioIDs.contains(item.id))

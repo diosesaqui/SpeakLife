@@ -45,18 +45,73 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
     @Published var imageUrl: String = ""
     @Published var isBarVisible: Bool = false
     @Published var autoPlayAudio: Bool = false
-    @Published var audioQueue: [AudioDeclaration] = []
+    /// The episode loaded in the player. Stays set while the player sheet is
+    /// closed and the bar is showing; only `stop()` clears it. It used to be
+    /// the sheet's `item:` binding, so dismissing the sheet nil'd it and every
+    /// progress, completion and "played" update was silently dropped for
+    /// anyone listening from the bar.
     @Published var selectedItem: AudioDeclaration? = nil
-    @Published var lastSelectedItem: AudioDeclaration?
+    /// Whether the full player sheet is up. Separate from `selectedItem` so
+    /// the queue can change tracks without SwiftUI tearing the sheet down and
+    /// re-presenting it for the new item.
+    @Published var isPlayerPresented: Bool = false
 
-    private var urlQueue: [URL] = []
-    // Removed audioDeclarationViewModel reference - not needed
+    // MARK: Up Next queue
+
+    enum PlaySource: String {
+        /// The listener tapped an episode.
+        case tap
+        /// The previous episode finished and the queue advanced.
+        case queue
+        /// The listener pressed next, in the app or on the lock screen.
+        case skip
+        /// The listener tapped an episode inside the Up Next list.
+        case picked
+    }
+
+    @Published private(set) var queue = UpNextQueue()
+    /// The episode being downloaded to play next, if any. Drives the loading
+    /// state and blocks the same episode being queued behind itself.
+    @Published private(set) var loadingItemId: String?
+    /// A one-off message for the UI (e.g. the next episode failed to load
+    /// while the app was in the background). The view clears it once shown.
+    @Published var queueNotice: String?
+    /// The current episode reached its end and nothing followed it.
+    @Published private(set) var playbackEnded = false
+
+    /// Resolves an episode to a local file, downloading it when needed. Set
+    /// by the screen that owns the catalog, because the queue has to fetch
+    /// the next episode on its own when the current one ends, often with the
+    /// app in the background and no view around to do it.
+    var trackResolver: ((AudioDeclaration, @escaping (Result<URL, Error>) -> Void) -> Void)?
+    /// Checked when the queue advances, not only when an episode is queued:
+    /// a subscription can lapse while premium episodes wait in line.
+    var canPlay: (AudioDeclaration) -> Bool = { _ in true }
+
+    /// Bumped by every load request. A download that finishes after a newer
+    /// request was made is stale and must not replace what the listener
+    /// picked since.
+    private var loadGeneration = 0
+    private var currentSource: PlaySource = .tap
+    private var latestRequestSource: PlaySource = .tap
+    private var prefetchedId: String?
+    /// Identifies the newest `loadAudio` call. Asset validation finishes
+    /// asynchronously, so an older call's callback must not build a player
+    /// over a newer one's.
+    private var assetLoadID = UUID()
+    /// Keeps the app alive from the moment a queue advance starts until the
+    /// next episode is actually playing, not just until its file is ready.
+    private var advanceBackgroundTask: BackgroundTaskToken?
+    /// Longest episode finished in this listening session. The completion
+    /// paywall fires once, when the session ends, judged on this rather than
+    /// on whichever episode happened to be last.
+    private var longestCompletedDuration: Double = 0
+    private var remoteCommandTargets: [(MPRemoteCommand, Any)] = []
 
     private var player: AVPlayer?
     private var timeObserver: Any?
     private var endObserver: NSObjectProtocol?
     private var timeObserverToken: Any?
-    private var hasPrefetchedNext = false
     private var cancellables = Set<AnyCancellable>()
 
     override init() {
@@ -94,8 +149,9 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
         // But we need to ensure background music is stopped
         AudioPlayerService.shared.stopMusic()
         
-        // Only maintain audio session if content is actively playing
-        if isPlaying && player?.rate ?? 0 > 0 {
+        // Only maintain audio session if content is actively playing, or the
+        // queue is between episodes and about to start the next one.
+        if (isPlaying && player?.rate ?? 0 > 0) || loadingItemId != nil {
             do {
                 let audioSession = AVAudioSession.sharedInstance()
                 // Re-enable the session to ensure background playback continues for content
@@ -144,6 +200,11 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
     }
 
     deinit {
+        // The command center is shared; leave no targets pointing at a
+        // player that no longer exists.
+        for (command, target) in remoteCommandTargets {
+            command.removeTarget(target)
+        }
         // Remove notification observers
         NotificationCenter.default.removeObserver(self)
         // Clean up all observers and stop all audio
@@ -156,8 +217,11 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
     }
 
 
-    func loadAudio(from url: URL, isSameItem: Bool) {
-        hasPrefetchedNext = false
+    /// - Parameter item: the episode `url` belongs to. It becomes
+    ///   `selectedItem` after the previous episode's final stats are reported
+    ///   and before the new episode's `started` event, so neither is
+    ///   attributed to the wrong episode. Pass nil to keep `selectedItem`.
+    func loadAudio(from url: URL, isSameItem: Bool, item: AudioDeclaration? = nil) {
        // startMonitoringPlayback()
         
 
@@ -183,6 +247,17 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
             return 
         }
         resetPlayer()
+
+        if let item = item {
+            selectedItem = item
+            currentTrack = item.title
+            subtitle = item.subtitle
+            imageUrl = item.imageUrl
+            // The old episode's length would otherwise drive the slider and
+            // the progress milestones until the new asset reports its own.
+            duration = 0
+        }
+        playbackEnded = false
         
         // Reset progress tracking for new audio
         totalListenTime = 0
@@ -231,6 +306,7 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
         // Verify file exists at URL (important for simulator)
         if !FileManager.default.fileExists(atPath: url.path) {
             print("❌ Audio file does not exist at path: \(url.path)")
+            handleLoadFailure()
             return
         }
         
@@ -240,6 +316,8 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
             let fileSize = fileAttributes[.size] as? Int ?? 0
             if fileSize == 0 {
                 print("❌ Audio file is empty")
+                try? FileManager.default.removeItem(at: url)
+                handleLoadFailure()
                 return
             }
         } catch {
@@ -262,11 +340,15 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
         #else
         // Physical device: Full validation
         let asset = AVAsset(url: url)
+        let loadID = UUID()
+        assetLoadID = loadID
         
         // Load the asset's tracks asynchronously to check if it's valid
         asset.loadValuesAsynchronously(forKeys: ["playable", "tracks"]) { [weak self] in
             DispatchQueue.main.async {
                 guard let self = self else { return }
+                // A newer episode was loaded while this one validated.
+                guard self.assetLoadID == loadID else { return }
                 
                 var error: NSError?
                 let playableStatus = asset.statusOfValue(forKey: "playable", error: &error)
@@ -371,33 +453,35 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
                 self.player?.seek(to: .zero)
                 // Resume at current playback speed
                 self.player?.rate = self.playbackSpeed
-            }
-//            else if !self.urlQueue.isEmpty {
-//                playNextInQueue()
-//                self.player?.seek(to: .zero)
-//                self.isPlaying = false
-//            }
-            else {
+            } else {
                 self.isPlaying = false
-                
-                // Track audio completion for paywall trigger (4+ minute audio)
+
+                // Up Next: move straight on. The audio session stays active
+                // so iOS keeps the app running in the background between
+                // episodes. The completion paywall waits for the end of the
+                // session rather than cutting into the middle of it. No
+                // rewind first: the finished episode's final stats are
+                // reported when the next one loads, and they should read
+                // "completed", not "bounced at 0%".
                 if let duration = self.player?.currentItem?.duration {
                     let durationInSeconds = CMTimeGetSeconds(duration)
                     if !duration.isIndefinite && durationInSeconds > 0 {
-                        PaywallTriggerManager.shared.trackAudioCompletion(durationInSeconds: durationInSeconds)
+                        self.longestCompletedDuration = max(self.longestCompletedDuration, durationInSeconds)
                     }
                 }
-                
-                self.player?.seek(to: .zero)
-                
-                // If audio finished while app is in background, deactivate audio session
-                // This prevents zombie audio sessions that could allow random playback
-                if UIApplication.shared.applicationState != .active {
-                    do {
-                        try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
-                    } catch {
-                        print("❌ Failed to deactivate audio session after content finished: \(error)")
+
+                if !self.playNextInQueue(source: .queue) {
+                    self.playbackEnded = true
+                    self.player?.seek(to: .zero)
+
+                    // Track audio completion for paywall trigger (4+ minute
+                    // audio), once per session, on its longest episode.
+                    if self.longestCompletedDuration > 0 {
+                        PaywallTriggerManager.shared.trackAudioCompletion(durationInSeconds: self.longestCompletedDuration)
+                        self.longestCompletedDuration = 0
                     }
+
+                    self.deactivateSessionIfBackgrounded()
                 }
             }
             self.updateNowPlayingInfo()
@@ -406,13 +490,20 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
         #if targetEnvironment(simulator)
         // Simulator: Delay play to allow player to initialize
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            self?.player?.play()
-            self?.isPlaying = true
+            guard let self = self else { return }
+            self.player?.play()
+            // Keep the listener's speed when the queue moves to the next
+            // episode; play() alone would drop back to 1x under a 1.5x label.
+            if self.playbackSpeed != 1.0 { self.player?.rate = self.playbackSpeed }
+            self.isPlaying = true
         }
         #else
         // Physical device: Play immediately
         if let player = player {
             player.play()
+            // Keep the listener's speed when the queue moves to the next
+            // episode; play() alone would drop back to 1x under a 1.5x label.
+            if playbackSpeed != 1.0 { player.rate = playbackSpeed }
         }
         isPlaying = true
         #endif
@@ -427,10 +518,17 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
                     "duration": audio.duration,
                     "is_premium": audio.isPremium,
                     "playback_speed": playbackSpeed,
-                    "repeat_enabled": onRepeat
+                    "repeat_enabled": onRepeat,
+                    "source": currentSource.rawValue,
+                    "queue_length": queue.count
                 ]
             )
         }
+        prefetchNextIfNeeded()
+        updateRemoteQueueCommands()
+        // Audio is going again, which is what keeps a background app alive.
+        advanceBackgroundTask?.end()
+        advanceBackgroundTask = nil
 
         
         
@@ -444,7 +542,26 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
     }
 
     func togglePlayPause() {
+        // The last episode ended and something is still queued (the next one
+        // failed to load, most likely offline). Play means "try the queue
+        // again", not "replay what just finished".
+        if !isPlaying, playbackEnded, !queue.isEmpty {
+            _ = playNextInQueue(source: .skip)
+            return
+        }
+        // Between episodes the old one sits at its end while the next
+        // downloads. Resuming it would end it again at once and pop a second
+        // episode off the queue.
+        if !isPlaying, loadingItemId != nil {
+            return
+        }
         guard let player = player else { 
+            // The episode never got a working player (its file failed to
+            // load). Play means fetch it again; a bad file was deleted, so
+            // this re-downloads it.
+            if let item = selectedItem {
+                play(item, source: .tap)
+            }
             return 
         }
 
@@ -482,6 +599,9 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
             AudioPlayerService.shared.stopMusic()
             // Use rate instead of play() so the current playback speed is preserved
             player.rate = playbackSpeed
+            // Replaying a finished episode makes it the current one again, so
+            // new queue picks wait behind it instead of cutting it off.
+            playbackEnded = false
         }
         isPlaying.toggle()
         
@@ -505,9 +625,12 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
         
         // Notify user about the issue (you might want to show an alert)
         DispatchQueue.main.async { [weak self] in
-            self?.isPlaying = false
+            guard let self = self else { return }
+            self.isPlaying = false
             // Warning: 
             print("⚠️ Audio file was corrupted. Please try playing it again to re-download.")
+            // The file was deleted above, so a retry re-downloads it.
+            self.handleLoadFailure()
         }
     }
 
@@ -537,6 +660,8 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
         }
         
         player.seek(to: targetTime)
+        // Seeking back into a finished episode makes it the one to resume.
+        if time < duration { playbackEnded = false }
     }
 
     func repeatTrack() {
@@ -647,7 +772,8 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
     }
     
     private func reportFinalListeningStats() {
-        guard let audio = selectedItem, duration > 0 else { return }
+        // No player means these stats were already reported for this episode.
+        guard player != nil, let audio = selectedItem, duration > 0 else { return }
         
         let finalListenTime = totalListenTime + (playbackStartTime != nil ? Date().timeIntervalSince(playbackStartTime!) : 0)
         let finalProgressPercentage = Int((currentTime / duration) * 100)
@@ -722,26 +848,313 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
         AudioPlayerService.shared.stopMusic()
     }
 
-//    func addToQueue(item: AudioDeclaration) {
-//        audioQueue.append(item)
-//        print("\(item), added to queu RWRW")
-//    }
+    // MARK: - Playback requests
 
-    func clearQueue() {
-        audioQueue.removeAll()
-        urlQueue.removeAll()
+    /// Downloads `item` if needed and plays it. Every play goes through here,
+    /// tap or queue, so the newest request always wins: a slow download that
+    /// lands after the listener picked something else is dropped and its
+    /// completion gets a `CancellationError`.
+    func play(_ item: AudioDeclaration,
+              source: PlaySource,
+              completion: ((Result<Void, Error>) -> Void)? = nil) {
+        guard let resolver = trackResolver else {
+            completion?(.failure(UpNextError.noResolver))
+            return
+        }
+        loadGeneration += 1
+        let generation = loadGeneration
+        loadingItemId = item.id
+        latestRequestSource = source
+
+        resolver(item) { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                guard generation == self.loadGeneration else {
+                    completion?(.failure(CancellationError()))
+                    return
+                }
+                self.loadingItemId = nil
+                switch result {
+                case .success(let url):
+                    // Picking an episode that was waiting in line plays it
+                    // now; leaving it queued would play it a second time.
+                    if self.queue.contains(item.id) {
+                        self.mutateQueue { $0.remove(id: item.id) }
+                    }
+                    if self.prefetchedId == item.id { self.prefetchedId = nil }
+                    self.currentSource = source
+                    // Same episode only counts if it still has a player; after
+                    // a failed load it has to be built again.
+                    let isSameItem = self.selectedItem?.id == item.id && self.player != nil
+                    self.loadAudio(from: url, isSameItem: isSameItem, item: item)
+                    self.isBarVisible = true
+                    completion?(.success(()))
+                case .failure(let error):
+                    completion?(.failure(error))
+                }
+            }
+        }
     }
 
-//    func addToQueue(_ item: URL?) {
-//        guard let item = item else { return }
-//        urlQueue.append(item)
-//        print("\(item), added to queue")
-//    }
-//    func insert(_ item: URL?) {
-//        guard let item = item else { return }
-//        urlQueue.insert(item, at: 0)
-//        print("\(item), inserted to queue")
-//    }
+    /// Ends the listening session: stops playback, drops the queue and any
+    /// download in flight, and clears the lock screen.
+    func stop() {
+        loadGeneration += 1
+        loadingItemId = nil
+        resetPlayer()
+        mutateQueue { $0.removeAll() }
+        prefetchedId = nil
+        playbackEnded = false
+        longestCompletedDuration = 0
+        advanceBackgroundTask?.end()
+        advanceBackgroundTask = nil
+        selectedItem = nil
+        isPlayerPresented = false
+        isBarVisible = false
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+    }
+
+    // MARK: - Up Next queue
+
+    /// True while there is an episode the queue should wait behind: one is
+    /// loaded and not finished, or one is downloading. When false, queueing
+    /// an episode should simply play it.
+    var hasActiveSession: Bool {
+        loadingItemId != nil || (selectedItem != nil && !playbackEnded)
+    }
+
+    @discardableResult
+    func enqueue(_ item: AudioDeclaration, placement: UpNextQueue.Placement) -> UpNextQueue.AddResult {
+        // The episode downloading right now is about to be "now playing".
+        if item.id == loadingItemId { return .isNowPlaying }
+        var result = UpNextQueue.AddResult.full
+        mutateQueue { result = $0.add(item, placement: placement, nowPlayingId: self.selectedItem?.id) }
+
+        AnalyticsService.shared.trackUserAction(
+            "audio_queue_added",
+            category: "audio",
+            metadata: [
+                "audio_id": item.id,
+                "audio_title": item.title,
+                // Not "category": trackUserAction's own category ("audio")
+                // would be overwritten by the merge.
+                "audio_category": item.tag ?? "unknown",
+                "placement": placement.rawValue,
+                "result": Self.analyticsLabel(for: result),
+                "queue_length": queue.count
+            ]
+        )
+        return result
+    }
+
+    func removeFromQueue(atOffsets offsets: IndexSet) {
+        let removed = offsets.compactMap { queue.items.indices.contains($0) ? queue.items[$0] : nil }
+        mutateQueue { $0.remove(atOffsets: offsets) }
+        for item in removed {
+            AnalyticsService.shared.trackUserAction(
+                "audio_queue_removed",
+                category: "audio",
+                metadata: ["audio_id": item.id, "queue_length": queue.count]
+            )
+        }
+    }
+
+    func removeFromQueue(id: String) {
+        guard let index = queue.position(of: id) else { return }
+        removeFromQueue(atOffsets: IndexSet(integer: index))
+    }
+
+    func moveInQueue(fromOffsets source: IndexSet, toOffset destination: Int) {
+        mutateQueue { $0.move(fromOffsets: source, toOffset: destination) }
+    }
+
+    func clearQueue() {
+        guard !queue.isEmpty else { return }
+        let cleared = queue.count
+        mutateQueue { $0.removeAll() }
+        AnalyticsService.shared.trackUserAction(
+            "audio_queue_cleared",
+            category: "audio",
+            metadata: ["cleared_count": cleared]
+        )
+    }
+
+    /// Skips the rest of the current episode. The current one keeps playing
+    /// until the next is ready, so a slow download never leaves silence.
+    func skipToNext() {
+        guard !queue.isEmpty else { return }
+        if let audio = selectedItem {
+            AnalyticsService.shared.trackUserAction(
+                "audio_queue_skipped",
+                category: "audio",
+                metadata: [
+                    "audio_id": audio.id,
+                    "audio_title": audio.title,
+                    "progress_percentage": duration > 0 ? Int((currentTime / duration) * 100) : 0,
+                    "queue_length": queue.count
+                ]
+            )
+        }
+        _ = playNextInQueue(source: .skip)
+    }
+
+    /// Jumps straight to a queued episode. Everything else stays queued.
+    func playFromQueue(_ item: AudioDeclaration) {
+        guard canPlay(item) else {
+            mutateQueue { $0.remove(id: item.id) }
+            return
+        }
+        play(item, source: .picked) { [weak self] result in
+            guard case .failure(let error) = result, !(error is CancellationError) else { return }
+            self?.queueNotice = "Couldn't load \"\(item.title)\". Check your connection and try again."
+        }
+    }
+
+    /// Starts the next playable queued episode. Returns false when there is
+    /// nothing left to play, so the caller can wind the session down.
+    @discardableResult
+    private func playNextInQueue(source: PlaySource) -> Bool {
+        var popped: (next: AudioDeclaration?, skipped: [AudioDeclaration]) = (nil, [])
+        mutateQueue { popped = $0.popNext(where: self.canPlay) }
+
+        for locked in popped.skipped {
+            AnalyticsService.shared.trackUserAction(
+                "audio_queue_item_dropped",
+                category: "audio",
+                metadata: ["audio_id": locked.id, "reason": "locked"]
+            )
+        }
+        guard let next = popped.next else { return false }
+
+        // Between episodes nothing is playing, and iOS may suspend a
+        // background app with no audio going. Ask for time to finish the
+        // download; a prefetched episode needs none of it.
+        // Held until the next episode is actually playing (ended in
+        // createAndConfigurePlayer), not just until its file is on disk.
+        advanceBackgroundTask?.end()
+        let backgroundTask = BackgroundTaskToken(name: "AudioQueueAdvance")
+        advanceBackgroundTask = backgroundTask
+
+        play(next, source: source) { [weak self] result in
+            guard let self = self else {
+                backgroundTask.end()
+                return
+            }
+            if case .failure = result {
+                backgroundTask.end()
+                if self.advanceBackgroundTask === backgroundTask { self.advanceBackgroundTask = nil }
+            }
+
+            switch result {
+            case .success:
+                AnalyticsService.shared.trackUserAction(
+                    "audio_queue_advanced",
+                    category: "audio",
+                    metadata: [
+                        "audio_id": next.id,
+                        "audio_title": next.title,
+                        "source": source.rawValue,
+                        "queue_length": self.queue.count
+                    ]
+                )
+            case .failure(let error) where error is CancellationError:
+                // Overtaken by a newer request. If the listener picked
+                // something else, this episode was never heard, so it goes
+                // back to the front of the line. A second press of next is
+                // different: it means "not this one either".
+                if self.latestRequestSource != .skip, self.hasActiveSession {
+                    self.mutateQueue { _ = $0.add(next, placement: .next, nowPlayingId: self.selectedItem?.id) }
+                }
+            case .failure:
+                // Most likely offline. Put the episode back and stop rather
+                // than burning through the whole queue one failure at a time.
+                // Play (or next) tries again.
+                self.mutateQueue { _ = $0.add(next, placement: .next, nowPlayingId: self.selectedItem?.id) }
+                if !self.isPlaying {
+                    self.playbackEnded = true
+                    self.player?.seek(to: .zero)
+                    self.deactivateSessionIfBackgrounded()
+                }
+                self.queueNotice = "Couldn't load \"\(next.title)\". Check your connection and press play to try again."
+                AnalyticsService.shared.trackUserAction(
+                    "audio_queue_item_dropped",
+                    category: "audio",
+                    metadata: ["audio_id": next.id, "reason": "load_failed"]
+                )
+            }
+        }
+        return true
+    }
+
+    /// Every queue change goes through here so the lock screen's next
+    /// button and the prefetch stay in step with the list.
+    private func mutateQueue(_ change: (inout UpNextQueue) -> Void) {
+        change(&queue)
+        updateRemoteQueueCommands()
+        prefetchNextIfNeeded()
+    }
+
+    /// Downloads the head of the queue while the current episode plays, so
+    /// the switch is instant and does not depend on the network, or on iOS
+    /// letting a silent background app finish a download. Only the next
+    /// episode, never the whole queue, to keep cellular use proportionate.
+    private func prefetchNextIfNeeded() {
+        guard selectedItem != nil,
+              let next = queue.next,
+              next.id != prefetchedId,
+              canPlay(next),
+              let resolver = trackResolver else { return }
+        prefetchedId = next.id
+        resolver(next) { [weak self] result in
+            guard case .failure = result else { return }
+            DispatchQueue.main.async {
+                // Let a later prefetch try again.
+                if self?.prefetchedId == next.id { self?.prefetchedId = nil }
+            }
+        }
+    }
+
+    /// An episode's file turned out missing, empty or unplayable after
+    /// `play()` had already handed it over. Leave no half-loaded session
+    /// behind: a queued session moves on, and otherwise the session counts
+    /// as ended, so Play retries and new queue picks play straight away.
+    private func handleLoadFailure() {
+        isPlaying = false
+        if currentSource != .tap, playNextInQueue(source: .queue) {
+            return
+        }
+        if let item = selectedItem {
+            queueNotice = "Couldn't play \"\(item.title)\". Press play to try again."
+        }
+        playbackEnded = true
+        advanceBackgroundTask?.end()
+        advanceBackgroundTask = nil
+        deactivateSessionIfBackgrounded()
+    }
+
+    /// If audio finished while app is in background, deactivate audio session.
+    /// This prevents zombie audio sessions that could allow random playback.
+    private func deactivateSessionIfBackgrounded() {
+        guard UIApplication.shared.applicationState != .active else { return }
+        do {
+            try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        } catch {
+            print("❌ Failed to deactivate audio session after content finished: \(error)")
+        }
+    }
+
+    private static func analyticsLabel(for result: UpNextQueue.AddResult) -> String {
+        switch result {
+        case .added: return "added"
+        case .moved: return "moved"
+        case .alreadyQueued: return "already_queued"
+        case .isNowPlaying: return "now_playing"
+        case .notPlayable: return "not_playable"
+        case .full: return "full"
+        }
+    }
+
 
     private func updateNowPlayingInfo() {
         guard let player = player,
@@ -755,7 +1168,7 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
             MPMediaItemPropertyArtist: subtitle,
             MPNowPlayingInfoPropertyElapsedPlaybackTime: currentTime,
             MPMediaItemPropertyPlaybackDuration: duration,
-            MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? 1.0 : 0.0
+            MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? Double(playbackSpeed) : 0.0
         ]
 
         if let image = UIImage(named: imageUrl) {
@@ -769,26 +1182,51 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
     private func setupRemoteCommands() {
         let commandCenter = MPRemoteCommandCenter.shared()
 
-        commandCenter.playCommand.addTarget { [weak self] _ in
-            self?.player?.play()
-            self?.isPlaying = true
-            self?.updateNowPlayingInfo()
+        // Play and pause go through togglePlayPause so the lock screen gets
+        // the same rules as the in-app button: retry a stalled queue, ignore
+        // play in the gap between episodes, keep the playback speed.
+        let playTarget = commandCenter.playCommand.addTarget { [weak self] _ in
+            guard let self = self else { return .commandFailed }
+            if !self.isPlaying { self.togglePlayPause() }
             return .success
         }
 
-        commandCenter.pauseCommand.addTarget { [weak self] _ in
-            self?.player?.pause()
-            self?.isPlaying = false
-            self?.updateNowPlayingInfo()
+        let pauseTarget = commandCenter.pauseCommand.addTarget { [weak self] _ in
+            guard let self = self else { return .commandFailed }
+            if self.isPlaying { self.togglePlayPause() }
             return .success
         }
 
-        commandCenter.changePlaybackPositionCommand.addTarget { [weak self] event in
+        let seekTarget = commandCenter.changePlaybackPositionCommand.addTarget { [weak self] event in
             guard let self = self,
                   let seekEvent = event as? MPChangePlaybackPositionCommandEvent else { return .commandFailed }
             self.seek(to: seekEvent.positionTime)
             return .success
         }
+
+        let nextTarget = commandCenter.nextTrackCommand.addTarget { [weak self] _ in
+            guard let self = self, !self.queue.isEmpty, self.loadingItemId == nil else { return .noSuchContent }
+            self.skipToNext()
+            return .success
+        }
+        remoteCommandTargets = [
+            (commandCenter.playCommand, playTarget),
+            (commandCenter.pauseCommand, pauseTarget),
+            (commandCenter.changePlaybackPositionCommand, seekTarget),
+            (commandCenter.nextTrackCommand, nextTarget)
+        ]
+        // There is no history to go back through, so the lock screen should
+        // not offer a previous button that does nothing.
+        commandCenter.previousTrackCommand.isEnabled = false
+        // Next-track availability is set by whichever player is actually
+        // playing (see updateRemoteQueueCommands), not at init, so an idle
+        // second player can't switch it off for the active one.
+    }
+
+    private func updateRemoteQueueCommands() {
+        // Only the player with something loaded owns the lock screen.
+        guard selectedItem != nil || loadingItemId != nil else { return }
+        MPRemoteCommandCenter.shared().nextTrackCommand.isEnabled = !queue.isEmpty
     }
     
     // KVO observer for player status
@@ -831,5 +1269,31 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
                 }
             }
         }
+    }
+}
+
+enum UpNextError: LocalizedError {
+    case noResolver
+
+    var errorDescription: String? {
+        "Audio isn't ready yet. Please try again in a moment."
+    }
+}
+
+/// One `beginBackgroundTask` per queue advance, ended exactly once: when the
+/// load settles or when iOS says time is up, whichever comes first.
+private final class BackgroundTaskToken {
+    private var id: UIBackgroundTaskIdentifier = .invalid
+
+    init(name: String) {
+        id = UIApplication.shared.beginBackgroundTask(withName: name) { [weak self] in
+            self?.end()
+        }
+    }
+
+    func end() {
+        guard id != .invalid else { return }
+        UIApplication.shared.endBackgroundTask(id)
+        id = .invalid
     }
 }

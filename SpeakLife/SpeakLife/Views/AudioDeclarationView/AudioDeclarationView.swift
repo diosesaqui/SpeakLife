@@ -18,6 +18,11 @@ struct UpNextCell: View {
     @ObservedObject private var progressStore = AudioProgressStore.shared
 
     let item: AudioDeclaration
+    /// Set by screens that have a player to queue into.
+    var isQueued: Bool = false
+    var onPlayNext: ((AudioDeclaration) -> Void)? = nil
+    var onAddToQueue: ((AudioDeclaration) -> Void)? = nil
+    var onRemoveFromQueue: ((AudioDeclaration) -> Void)? = nil
 
     @State private var showToast = false
     @State private var toastMessage = ""
@@ -68,6 +73,17 @@ struct UpNextCell: View {
                             if item.isPremium, !subscriptionStore.isPremium {
                                 Image(systemName: "lock")
                                     .font(.caption)
+                            }
+
+                            if isQueued {
+                                Label("Up Next", systemImage: "text.line.first.and.arrowtriangle.forward")
+                                    .labelStyle(.titleAndIcon)
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundColor(.white.opacity(0.85))
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(Capsule().fill(Color.white.opacity(0.15)))
+                                    .lineLimit(1)
                             }
                         }
                     }
@@ -127,6 +143,26 @@ struct UpNextCell: View {
                 .scaleEffect(isTapped ? 0.97 : 1.0)
                 .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isTapped)
                 .contextMenu {
+                    if let onPlayNext = onPlayNext {
+                        Button {
+                            onPlayNext(item)
+                        } label: {
+                            Label("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward")
+                        }
+                    }
+                    if isQueued, let onRemoveFromQueue = onRemoveFromQueue {
+                        Button(role: .destructive) {
+                            onRemoveFromQueue(item)
+                        } label: {
+                            Label("Remove from Queue", systemImage: "minus.circle")
+                        }
+                    } else if let onAddToQueue = onAddToQueue {
+                        Button {
+                            onAddToQueue(item)
+                        } label: {
+                            Label("Add to Queue", systemImage: "text.line.last.and.arrowtriangle.forward")
+                        }
+                    }
                     Button {
                         Juice.play(.tapSolid)
                         progressStore.togglePlayed(item.id)
@@ -191,16 +227,6 @@ struct UpNextCell: View {
             }
         }
     }
-
-//    func addToQueue(_ url: URL?) {
-//        audioViewModel.addToQueue(url)
-//        showToast = true
-//        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-//            withAnimation {
-//                showToast = false
-//            }
-//        }
-//    }
 }
 
 
@@ -223,8 +249,10 @@ struct AudioDeclarationView: View {
     @EnvironmentObject var declarationStore: DeclarationViewModel
     @ObservedObject private var progressStore = AudioProgressStore.shared
 
-    @State private var audioURL: URL? = nil
     @State private var errorMessage: ErrorWrapper? = nil
+    @State private var queueToast: String? = nil
+    @State private var queueToastWork: DispatchWorkItem? = nil
+    @State private var isQueuePresented = false
     @State private var isPresentingPremiumView = false
     @State var presentDevotionalSubscriptionView = false
    
@@ -268,11 +296,23 @@ struct AudioDeclarationView: View {
                 }
 
                 // Audio bar at bottom
-                VStack {
+                VStack(spacing: DS.Spacing.xs) {
                     Spacer()
+                    if let queueToast = queueToast {
+                        Text(queueToast)
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
+                            .background(Capsule().fill(Color.black.opacity(0.8)))
+                            .padding(.horizontal)
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
                     audioBar
                     Spacer().frame(height: proxy.size.height * 0.09)
                 }
+                .animation(.easeOut(duration: 0.25), value: queueToast)
             }
             // Premium Sheet
             .sheet(isPresented: $isPresentingPremiumView) {
@@ -300,17 +340,18 @@ struct AudioDeclarationView: View {
                 )
             }
 
-            // Audio Player Sheet
-            .sheet(item: $audioViewModel.selectedItem, onDismiss: {
+            // Audio Player Sheet. Driven by a flag rather than by
+            // `selectedItem` so the queue can move to the next episode while
+            // the sheet is open without SwiftUI dismissing and re-presenting it.
+            .sheet(isPresented: $audioViewModel.isPlayerPresented, onDismiss: {
                 withAnimation {
-                    audioViewModel.isBarVisible = true
+                    audioViewModel.isBarVisible = audioViewModel.selectedItem != nil
                 }
-            }) { item in
-                if let _ = audioURL {
-                    AudioPlayerView(viewModel: audioViewModel)
-                        .presentationDetents([.large])
-                        .onAppear {
-                            audioViewModel.lastSelectedItem = item
+            }) {
+                AudioPlayerView(viewModel: audioViewModel)
+                    .presentationDetents([.large])
+                    .onAppear {
+                        if let item = audioViewModel.selectedItem {
                             // Was `["id": item.id]` only, so every breakdown of
                             // this event by title or category came back empty.
                             // `audio_id` matches the key the rest of the audio
@@ -325,9 +366,20 @@ struct AudioDeclarationView: View {
                             GrowthMetrics.shared.trackActivation(action: "audio_played")
                             GrowthMetrics.shared.trackFeatureFirstUse("audio")
                         }
-                }
+                    }
+            }
+            // Queue opened from the mini bar.
+            .sheet(isPresented: $isQueuePresented) {
+                UpNextSheet(viewModel: audioViewModel)
+                    .presentationDetents([.medium, .large])
+            }
+            .onReceive(audioViewModel.$queueNotice) { notice in
+                guard let notice = notice else { return }
+                showQueueToast(notice, duration: 4)
+                audioViewModel.queueNotice = nil
             }
             .onAppear() {
+                configurePlayer()
                 // Name kept as-is so the existing history stays one series;
                 // it previously carried no properties at all, so there was no
                 // way to tell which filter or how much content users landed on.
@@ -539,8 +591,16 @@ struct AudioDeclarationView: View {
                     item: item,
                     proxy: proxy,
                     viewModel: viewModel,
+                    isQueued: audioViewModel.queue.contains(item.id),
                     onItemTap: handleItemTap,
-                    onFavoriteSwipe: handleFavoriteSwipeAction
+                    onFavoriteSwipe: handleFavoriteSwipeAction,
+                    onPlayNext: { handleQueue($0, placement: .next) },
+                    onAddToQueue: { handleQueue($0, placement: .last) },
+                    onRemoveFromQueue: { item in
+                        Juice.play(.tapSolid)
+                        audioViewModel.removeFromQueue(id: item.id)
+                        showQueueToast("Removed from queue")
+                    }
                 )
                 .onAppear {
                     viewModel.loadMoreIfNeeded(currentItem: item)
@@ -572,14 +632,15 @@ struct AudioDeclarationView: View {
     @ViewBuilder
     var audioBar: some View {
         if audioViewModel.isBarVisible {
-            PersistentAudioBar(viewModel: audioViewModel)
+            PersistentAudioBar(viewModel: audioViewModel,
+                               onShowQueue: { isQueuePresented = true })
                 .transition(.move(edge: .bottom).combined(with: .opacity))
                 .animation(.easeOut(duration: 0.4), value: audioViewModel.isBarVisible)
                 // REMOVED: onDisappear handler that was trying to resume background music
                 // This could contribute to unexpected audio playback
                 .onTapGesture {
-                    if let lastSelectedItem = audioViewModel.lastSelectedItem {
-                        self.audioViewModel.selectedItem = lastSelectedItem
+                    if audioViewModel.selectedItem != nil {
+                        audioViewModel.isPlayerPresented = true
                     }
                 }
         }
@@ -626,39 +687,87 @@ struct AudioDeclarationView: View {
             return
         }
 
-        // Check if tapping the same item that's already loaded
+        // Tapping the episode that's already loaded opens the player on it
+        // and keeps going from where it is, rather than restarting it.
         if audioViewModel.selectedItem?.id == item.id {
-            // Just open the modal for the same item without reloading
-            // This prevents re-triggering loadAudio for the same item
+            if !audioViewModel.isPlaying {
+                audioViewModel.togglePlayPause()
+            }
+            audioViewModel.isPlayerPresented = true
             return
+        }
+
+        // The checklist deep-link can fire before this screen's onAppear.
+        if audioViewModel.trackResolver == nil {
+            configurePlayer()
         }
 
         viewModel.downloadProgress[item.id] = nil
         viewModel.fetchingAudioIDs.insert(item.id)
 
-        viewModel.fetchAudio(for: item) { result in
-            DispatchQueue.main.async {
-                viewModel.fetchingAudioIDs.remove(item.id)
-                switch result {
-                case .success(let url):
-                    audioURL = url
-                    let isSameItem = audioViewModel.selectedItem?.id == item.id
-                    viewModel.downloadProgress[item.id] = 0.0
-                    audioViewModel.currentTrack = item.title
-                    audioViewModel.subtitle = item.subtitle
-                    audioViewModel.imageUrl = item.imageUrl
-                    // Load audio and set selectedItem together
-                    audioViewModel.loadAudio(from: url, isSameItem: isSameItem)
-                    audioViewModel.selectedItem = item
-                    // Show the audio bar when playing
-                    audioViewModel.isBarVisible = true
-                case .failure(let error):
-                    errorMessage = ErrorWrapper(message: "Failed to download audio: \(error.localizedDescription)")
-                    audioViewModel.selectedItem = nil
-                    viewModel.downloadProgress[item.id] = 0.0
-                }
+        audioViewModel.play(item, source: .tap) { result in
+            viewModel.fetchingAudioIDs.remove(item.id)
+            viewModel.downloadProgress[item.id] = 0.0
+            switch result {
+            case .success:
+                audioViewModel.isPlayerPresented = true
+            case .failure(let error):
+                // Superseded by a newer pick: nothing went wrong.
+                guard !(error is CancellationError) else { return }
+                errorMessage = ErrorWrapper(message: "Failed to download audio: \(error.localizedDescription)")
             }
         }
+    }
+
+    /// Gives the player what it needs to advance the queue on its own, with
+    /// no view in the loop: a way to fetch episodes and the premium gate.
+    private func configurePlayer() {
+        let catalog = viewModel
+        let store = subscriptionStore
+        audioViewModel.trackResolver = { item, completion in
+            catalog.fetchAudio(for: item, completion: completion)
+        }
+        audioViewModel.canPlay = { item in
+            !item.isPremium || store.isPremium
+        }
+    }
+
+    // MARK: - Up Next
+
+    private func handleQueue(_ item: AudioDeclaration, placement: UpNextQueue.Placement) {
+        if item.isPremium, !subscriptionStore.isPremium {
+            isPresentingPremiumView = true
+            return
+        }
+        Juice.play(.tapSolid)
+
+        // Nothing playing, or the last episode already finished: "next" is now.
+        guard audioViewModel.hasActiveSession else {
+            handleItemTap(item)
+            return
+        }
+
+        switch audioViewModel.enqueue(item, placement: placement) {
+        case .added, .moved:
+            showQueueToast(placement == .next ? "Playing next" : "Added to queue")
+        case .alreadyQueued:
+            showQueueToast("Already in your queue")
+        case .isNowPlaying:
+            showQueueToast("Already playing")
+        case .notPlayable:
+            showQueueToast("This audio isn't available")
+        case .full:
+            showQueueToast("Your queue is full")
+        }
+    }
+
+    private func showQueueToast(_ message: String, duration: TimeInterval = 2) {
+        queueToastWork?.cancel()
+        queueToast = message
+        UIAccessibility.post(notification: .announcement, argument: message)
+        let work = DispatchWorkItem { queueToast = nil }
+        queueToastWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + duration, execute: work)
     }
     
     private func handleFavoriteSwipeAction(for item: AudioDeclaration) {
