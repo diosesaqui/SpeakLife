@@ -92,12 +92,8 @@ struct StormOnboardingView: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            if subscriptionStore.stormSky {
-                StormSky(clearing: step.skyClearing, stillness: skyStillness)
-                    .animation(.easeInOut(duration: 1.6), value: step)
-            } else {
-                StormBackground()
-            }
+            StormSky(clearing: step.skyClearing, stillness: skyStillness)
+                .animation(.easeInOut(duration: 1.6), value: step)
 
             screen
                 .transition(.asymmetric(
@@ -177,7 +173,6 @@ struct StormOnboardingView: View {
                 line: resolvedStorm.firstDeclaration,
                 eyebrow: "SPEAK THIS OUT LOUD",
                 title: resolvedStorm == .grief ? "Speak comfort over your heart" : "Speak to your storm",
-                lively: subscriptionStore.stormSky,
                 onChargeChange: { charging, duration in
                     // The weather dies away across the hold, and comes back
                     // if she lets go early.
@@ -193,8 +188,7 @@ struct StormOnboardingView: View {
                         "storm": resolvedStorm.rawValue,
                         "step_index": StormStep.speak.rawValue,
                         "variant": subscriptionStore.onboardingVariantName,
-                        "seconds_since_start": Int(Date().timeIntervalSince(startedAt)),
-                        "sky": subscriptionStore.stormSky
+                        "seconds_since_start": Int(Date().timeIntervalSince(startedAt))
                     ])
                     GrowthMetrics.shared.trackActivation(action: "declaration_spoken")
                 } else if outcome == .readSilently {
@@ -333,8 +327,7 @@ struct StormOnboardingView: View {
             "posture": posture?.rawValue ?? "unknown",
             "spoke_first_declaration": spokeFirstDeclaration,
             "seconds_to_paywall_close": Int(Date().timeIntervalSince(startedAt)),
-            "preselected": preselectedStorm != nil,
-            "sky": subscriptionStore.stormSky
+            "preselected": preselectedStorm != nil
         ])
         onComplete()
     }
@@ -781,9 +774,6 @@ struct StormSpeakScreen: View {
     let line: StormLine
     let eyebrow: String
     let title: String
-    /// Light the line word by word at speaking pace while she holds.
-    /// Remote Config `stormSky`.
-    var lively = false
     /// The hold started (`true`, with its length) or ended short of sealing.
     var onChargeChange: ((Bool, Double) -> Void)? = nil
     let onDone: (StormSpeakOutcome) -> Void
@@ -859,14 +849,8 @@ struct StormSpeakScreen: View {
 
     private var card: some View {
         VStack(spacing: 16) {
-            Group {
-                if lively {
-                    StormSpokenLine(text: line.text, start: chargeStart,
-                                    duration: chargeDuration, isComplete: isSealed || finished)
-                } else {
-                    Text(line.text).foregroundColor(.white)
-                }
-            }
+            StormSpokenLine(text: line.text, start: chargeStart,
+                            duration: chargeDuration, isComplete: isSealed || finished)
                 .font(.title2.weight(.semibold))
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)

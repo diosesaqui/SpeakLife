@@ -213,11 +213,6 @@ final class SubscriptionStore: ObservableObject {
     /// Remote Config `stormBenefitScreen`, default on.
     @Published var stormBenefitScreen = true
 
-    /// Storm onboarding's living sky (clears as she goes, stills while she
-    /// speaks) and word-by-word speak card, for their with/without test.
-    /// Remote Config `stormSky`, default off.
-    @Published var stormSky = false
-
     /// Trial-week audio and Bible chat pushes on/off, for their with/without
     /// test. Remote Config `stormTrialPushes`, default on.
     @Published var stormTrialPushes = true
@@ -684,7 +679,6 @@ final class SubscriptionStore: ObservableObject {
         stormCtaCopy = stringValue("stormCtaCopy")
         stormAlsoIncluded = flagValue("stormAlsoIncluded")
         stormBenefitScreen = flagValue("stormBenefitScreen")
-        stormSky = flagValue("stormSky")
         stormTrialPushes = flagValue("stormTrialPushes")
         // Whole storm config file (same shape as storm_configs.json). Empty
         // keeps the bundled copy. Copy A/B tests are variants of this key.

@@ -2,8 +2,7 @@
 //  StormSky.swift
 //  SpeakLife
 //
-//  The storm arm's living background, behind Remote Config `stormSky`. The
-//  sky is the progress bar: it opens as a storm (clouds, rain, lightning) and
+//  The storm arm's living background. The sky is the progress bar: it opens as a storm (clouds, rain, lightning) and
 //  clears screen by screen toward dawn. The big break comes right after the
 //  first declaration is spoken, and while she holds to speak the rain and
 //  lightning die away under her words, the way the wind died at Mark 4:39.
