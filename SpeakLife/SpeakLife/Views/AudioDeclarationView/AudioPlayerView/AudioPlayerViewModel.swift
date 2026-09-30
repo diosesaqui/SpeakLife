@@ -913,6 +913,11 @@ final class AudioPlayerViewModel: NSObject, ObservableObject {
         }
     }
 
+    func removeFromQueue(id: String) {
+        guard let index = queue.position(of: id) else { return }
+        removeFromQueue(atOffsets: IndexSet(integer: index))
+    }
+
     func moveInQueue(fromOffsets source: IndexSet, toOffset destination: Int) {
         mutateQueue { $0.move(fromOffsets: source, toOffset: destination) }
     }

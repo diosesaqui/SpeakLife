@@ -22,6 +22,7 @@ struct UpNextCell: View {
     var isQueued: Bool = false
     var onPlayNext: ((AudioDeclaration) -> Void)? = nil
     var onAddToQueue: ((AudioDeclaration) -> Void)? = nil
+    var onRemoveFromQueue: ((AudioDeclaration) -> Void)? = nil
 
     @State private var showToast = false
     @State private var toastMessage = ""
@@ -149,7 +150,13 @@ struct UpNextCell: View {
                             Label("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward")
                         }
                     }
-                    if let onAddToQueue = onAddToQueue {
+                    if isQueued, let onRemoveFromQueue = onRemoveFromQueue {
+                        Button(role: .destructive) {
+                            onRemoveFromQueue(item)
+                        } label: {
+                            Label("Remove from Queue", systemImage: "minus.circle")
+                        }
+                    } else if let onAddToQueue = onAddToQueue {
                         Button {
                             onAddToQueue(item)
                         } label: {
@@ -245,6 +252,7 @@ struct AudioDeclarationView: View {
     @State private var errorMessage: ErrorWrapper? = nil
     @State private var queueToast: String? = nil
     @State private var queueToastWork: DispatchWorkItem? = nil
+    @State private var isQueuePresented = false
     @State private var isPresentingPremiumView = false
     @State var presentDevotionalSubscriptionView = false
    
@@ -359,6 +367,11 @@ struct AudioDeclarationView: View {
                             GrowthMetrics.shared.trackFeatureFirstUse("audio")
                         }
                     }
+            }
+            // Queue opened from the mini bar.
+            .sheet(isPresented: $isQueuePresented) {
+                UpNextSheet(viewModel: audioViewModel)
+                    .presentationDetents([.medium, .large])
             }
             .onReceive(audioViewModel.$queueNotice) { notice in
                 guard let notice = notice else { return }
@@ -582,7 +595,12 @@ struct AudioDeclarationView: View {
                     onItemTap: handleItemTap,
                     onFavoriteSwipe: handleFavoriteSwipeAction,
                     onPlayNext: { handleQueue($0, placement: .next) },
-                    onAddToQueue: { handleQueue($0, placement: .last) }
+                    onAddToQueue: { handleQueue($0, placement: .last) },
+                    onRemoveFromQueue: { item in
+                        Juice.play(.tapSolid)
+                        audioViewModel.removeFromQueue(id: item.id)
+                        showQueueToast("Removed from queue")
+                    }
                 )
                 .onAppear {
                     viewModel.loadMoreIfNeeded(currentItem: item)
@@ -614,7 +632,8 @@ struct AudioDeclarationView: View {
     @ViewBuilder
     var audioBar: some View {
         if audioViewModel.isBarVisible {
-            PersistentAudioBar(viewModel: audioViewModel)
+            PersistentAudioBar(viewModel: audioViewModel,
+                               onShowQueue: { isQueuePresented = true })
                 .transition(.move(edge: .bottom).combined(with: .opacity))
                 .animation(.easeOut(duration: 0.4), value: audioViewModel.isBarVisible)
                 // REMOVED: onDisappear handler that was trying to resume background music

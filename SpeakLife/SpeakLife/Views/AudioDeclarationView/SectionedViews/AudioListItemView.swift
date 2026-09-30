@@ -16,6 +16,7 @@ struct AudioListItemView: View {
     let onFavoriteSwipe: (AudioDeclaration) -> Void
     var onPlayNext: ((AudioDeclaration) -> Void)? = nil
     var onAddToQueue: ((AudioDeclaration) -> Void)? = nil
+    var onRemoveFromQueue: ((AudioDeclaration) -> Void)? = nil
     
     var body: some View {
         Button(action: {
@@ -27,7 +28,8 @@ struct AudioListItemView: View {
                     item: item,
                     isQueued: isQueued,
                     onPlayNext: onPlayNext,
-                    onAddToQueue: onAddToQueue
+                    onAddToQueue: onAddToQueue,
+                    onRemoveFromQueue: onRemoveFromQueue
                 )
                 .frame(
                     width: proxy.size.width * 0.9, 

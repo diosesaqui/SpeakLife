@@ -425,6 +425,8 @@ struct AudioPlayerView: View {
 
 struct PersistentAudioBar: View {
     @ObservedObject var viewModel: AudioPlayerViewModel
+    /// Opens the queue straight from the bar, without the full player.
+    var onShowQueue: (() -> Void)? = nil
     @State private var isTapped = false
     @State private var animatePulse = false
 
@@ -479,6 +481,25 @@ struct PersistentAudioBar: View {
                 }
             }
 
+            if !viewModel.queue.isEmpty, let onShowQueue = onShowQueue {
+                Button(action: onShowQueue) {
+                    Image(systemName: "list.bullet")
+                        .font(.title3)
+                        .foregroundColor(.white)
+                        .overlay(alignment: .topTrailing) {
+                            Text("\(viewModel.queue.count)")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundColor(.black)
+                                .padding(.horizontal, 4)
+                                .frame(minWidth: 16, minHeight: 16)
+                                .background(Capsule().fill(Color.white))
+                                .offset(x: 10, y: -8)
+                        }
+                }
+                .buttonStyle(PlainButtonStyle())
+                .accessibilityLabel("Queue, \(viewModel.queue.count) up next")
+            }
+
             if !viewModel.queue.isEmpty {
                 Button(action: {
                     viewModel.skipToNext()
@@ -520,6 +541,8 @@ struct PersistentAudioBar: View {
 struct UpNextSheet: View {
     @ObservedObject var viewModel: AudioPlayerViewModel
     @Environment(\.dismiss) private var dismiss
+    @State private var editMode: EditMode = .inactive
+    @State private var isConfirmingClear = false
 
     var body: some View {
         NavigationStack {
@@ -538,41 +561,87 @@ struct UpNextSheet: View {
                             .padding(.vertical, DS.Spacing.xs)
                     } else {
                         ForEach(viewModel.queue.items) { item in
-                            Button {
-                                viewModel.playFromQueue(item)
-                            } label: {
-                                QueueRow(item: item, isCurrent: false,
-                                         isLoading: viewModel.loadingItemId == item.id)
-                            }
-                            .buttonStyle(PlainButtonStyle())
+                            queuedRow(item)
                         }
+                        // Swipe left to delete, and the minus buttons in Edit.
                         .onDelete { viewModel.removeFromQueue(atOffsets: $0) }
                         .onMove { viewModel.moveInQueue(fromOffsets: $0, toOffset: $1) }
                     }
                 } header: {
-                    Text("Up Next")
+                    Text(viewModel.queue.isEmpty ? "Up Next" : "Up Next · \(viewModel.queue.count)")
                 }
             }
+            .environment(\.editMode, $editMode)
             .navigationTitle("Queue")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     if !viewModel.queue.isEmpty {
                         Button("Clear", role: .destructive) {
-                            viewModel.clearQueue()
+                            isConfirmingClear = true
                         }
                     }
                 }
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
-                    if viewModel.queue.count > 1 {
-                        EditButton()
+                    if !viewModel.queue.isEmpty {
+                        Button(editMode.isEditing ? "Save" : "Edit") {
+                            withAnimation { editMode = editMode.isEditing ? .inactive : .active }
+                        }
                     }
                     Button("Done") { dismiss() }
                         .fontWeight(.semibold)
                 }
             }
+            // One mis-tap on Clear would otherwise wipe a queue built by hand.
+            .confirmationDialog(
+                "Clear Up Next?",
+                isPresented: $isConfirmingClear,
+                titleVisibility: .visible
+            ) {
+                Button("Clear \(viewModel.queue.count) \(viewModel.queue.count == 1 ? "Episode" : "Episodes")", role: .destructive) {
+                    withAnimation { viewModel.clearQueue() }
+                    editMode = .inactive
+                }
+            } message: {
+                Text("The episode playing now keeps playing.")
+            }
+            // Leaving edit mode on an emptied queue would strand the Save button.
+            .onChange(of: viewModel.queue.isEmpty) { _, isEmpty in
+                if isEmpty { editMode = .inactive }
+            }
         }
         .preferredColorScheme(.dark)
+    }
+
+    /// Tap the row to play it now; the × removes it. Two separate
+    /// borderless buttons, because a button nested inside another button's
+    /// label never receives its own taps.
+    private func queuedRow(_ item: AudioDeclaration) -> some View {
+        HStack(spacing: DS.Spacing.sm) {
+            Button {
+                viewModel.playFromQueue(item)
+            } label: {
+                QueueRow(item: item, isCurrent: false,
+                         isLoading: viewModel.loadingItemId == item.id)
+            }
+            .buttonStyle(.borderless)
+            .foregroundColor(.primary)
+            .disabled(editMode.isEditing)
+
+            if !editMode.isEditing {
+                Button {
+                    withAnimation { viewModel.removeFromQueue(id: item.id) }
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(.secondary)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.borderless)
+                .accessibilityLabel("Remove \(item.title) from queue")
+            }
+        }
     }
 }
 
