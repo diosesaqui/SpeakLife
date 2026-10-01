@@ -142,6 +142,16 @@ struct StandRoomView: View {
             }
             .padding(DS.Spacing.md)
         }
+        // Pinned to the bottom, where the room has the most empty space and
+        // the thumb already is. Inset rather than overlaid, so a full roster
+        // scrolls clear of it instead of hiding its last row underneath.
+        .safeAreaInset(edge: .bottom) {
+            if burstEnvironment != nil, room.enforcement.day(myDay(in: room)) != nil {
+                burstButton(room)
+                    .padding(.horizontal, DS.Spacing.md)
+                    .padding(.bottom, DS.Spacing.sm)
+            }
+        }
     }
 
     private func header(_ room: StandRoom) -> some View {
@@ -179,10 +189,6 @@ struct StandRoomView: View {
                 Text(day.anchorBook)
                     .font(DS.Typography.caption)
                     .foregroundColor(DS.Palette.textSecondary)
-
-                if burstEnvironment != nil {
-                    burstButton(room)
-                }
 
                 // A stand is its own week. Any Burst counts a day in every
                 // stand the speaker is in (`StandService.mirrorDay`), so
@@ -227,8 +233,8 @@ struct StandRoomView: View {
     /// words the rest of the room is speaking, without moving their home
     /// screen off what they chose.
     ///
-    /// Once spoken it stays, quieter: more than one Burst a day is allowed,
-    /// and it is never phrased as something owed.
+    /// Once spoken it stays and reads "Speak it again": more than one Burst a
+    /// day is allowed, and it is never phrased as something owed.
     private func burstButton(_ room: StandRoom) -> some View {
         let spokeToday = room.hasSpokenToday(auth.currentUid ?? "", stamp: todayStamp)
         return Button {
@@ -240,18 +246,19 @@ struct StandRoomView: View {
             ])
             showBurst = true
         } label: {
-            Label(spokeToday ? "Speak it again" : "Speak today's Burst",
-                  systemImage: "bolt.fill")
-                .font(.system(size: 15, weight: .semibold, design: .rounded))
-                .foregroundColor(spokeToday ? DS.Palette.textPrimary : .black)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, DS.Spacing.sm)
-                .background(
-                    Capsule().fill(spokeToday ? DS.Palette.surface : DS.Palette.gold)
-                )
+            HStack(spacing: DS.Spacing.xs) {
+                Image(systemName: "bolt.fill")
+                Text(spokeToday ? "Speak it again" : "Speak today's Burst")
+            }
+            .font(.system(size: 18, weight: .bold, design: .rounded))
+            .foregroundColor(.black)
+            .frame(maxWidth: .infinity)
+            .frame(height: 58)
+            .background(Capsule().fill(DS.Palette.gold))
+            .shadow(color: DS.Palette.gold.opacity(0.35), radius: 16, y: 6)
+            .contentShape(Capsule())
         }
         .buttonStyle(.plain)
-        .padding(.top, DS.Spacing.xs)
     }
 
     private func roster(_ room: StandRoom) -> some View {
