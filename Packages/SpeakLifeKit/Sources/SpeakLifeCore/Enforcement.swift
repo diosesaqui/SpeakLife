@@ -205,19 +205,53 @@ public struct EnforcementProgress: Codable, Equatable {
     /// Never used to compute which day the user is on.
     public var lastAdvancedOn: Date?
     public var completedEnforcementIds: [String] = []
+    /// Every individual week that reached day seven, as `runKey(id:startedOn:)`.
+    ///
+    /// `completedEnforcementIds` says a campaign was finished at some point, not
+    /// WHICH run of it. Ids repeat: "peace" is the same id every time it is
+    /// started, a stand hands everyone the inviter's id, and curated ids are
+    /// only "curated_" + theme. So once a user had finished a campaign once, the
+    /// iCloud merge could no longer tell a stale copy of the run they just
+    /// finished from a deliberate restart, and it handed the stale copy back:
+    /// day seven spoken, the week reopened on day seven, every day, forever.
+    /// The start date is what tells two runs of one id apart.
+    public var finishedRuns: [String] = []
+
+    /// Spelled out because the lenient `init(from:)` below reads them by hand,
+    /// and the synthesized encoder must keep writing exactly the same keys.
+    enum CodingKeys: String, CodingKey {
+        case activeEnforcementId, assembledEnforcement, startedOn,
+             completedDayNumbers, lastAdvancedOn, completedEnforcementIds,
+             finishedRuns
+    }
 
     public init(activeEnforcementId: String? = nil,
                 assembledEnforcement: Enforcement? = nil,
                 startedOn: Date? = nil,
                 completedDayNumbers: Set<Int> = [],
                 lastAdvancedOn: Date? = nil,
-                completedEnforcementIds: [String] = []) {
+                completedEnforcementIds: [String] = [],
+                finishedRuns: [String] = []) {
         self.activeEnforcementId = activeEnforcementId
         self.assembledEnforcement = assembledEnforcement
         self.startedOn = startedOn
         self.completedDayNumbers = completedDayNumbers
         self.lastAdvancedOn = lastAdvancedOn
         self.completedEnforcementIds = completedEnforcementIds
+        self.finishedRuns = finishedRuns
+    }
+
+    /// Identifies one run of a campaign. Whole seconds, so a date that has been
+    /// through JSON on another device still produces the same key.
+    public static func runKey(id: String, startedOn: Date) -> String {
+        "\(id)|\(Int64(startedOn.timeIntervalSince1970.rounded()))"
+    }
+
+    /// The key of the run in progress, or nil when nothing is running or the
+    /// start date was never recorded.
+    public var activeRunKey: String? {
+        guard let activeEnforcementId, let startedOn else { return nil }
+        return Self.runKey(id: activeEnforcementId, startedOn: startedOn)
     }
 
     /// The day the user is working on now, 1...7.
@@ -244,10 +278,33 @@ public struct EnforcementProgress: Codable, Equatable {
         if let activeEnforcementId, !completedEnforcementIds.contains(activeEnforcementId) {
             completedEnforcementIds.append(activeEnforcementId)
         }
+        if let activeRunKey, !finishedRuns.contains(activeRunKey) {
+            finishedRuns.append(activeRunKey)
+        }
         activeEnforcementId = nil
         assembledEnforcement = nil
         startedOn = nil
         completedDayNumbers = []
         lastAdvancedOn = nil
+    }
+}
+
+// MARK: - Lenient progress decoding
+
+/// Spelled out because `finishedRuns` arrived after progress was already
+/// persisted and synced. The synthesized decoder requires every key, so a blob
+/// written by an older build would fail to decode and `loadProgress` would
+/// fall back to an empty progress: the user's running week, gone on upgrade.
+extension EnforcementProgress {
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        activeEnforcementId = try c.decodeIfPresent(String.self, forKey: .activeEnforcementId)
+        assembledEnforcement = try c.decodeIfPresent(Enforcement.self, forKey: .assembledEnforcement)
+        startedOn = try c.decodeIfPresent(Date.self, forKey: .startedOn)
+        completedDayNumbers = try c.decodeIfPresent(Set<Int>.self, forKey: .completedDayNumbers) ?? []
+        lastAdvancedOn = try c.decodeIfPresent(Date.self, forKey: .lastAdvancedOn)
+        completedEnforcementIds = try c.decodeIfPresent([String].self, forKey: .completedEnforcementIds) ?? []
+        finishedRuns = try c.decodeIfPresent([String].self, forKey: .finishedRuns) ?? []
     }
 }
