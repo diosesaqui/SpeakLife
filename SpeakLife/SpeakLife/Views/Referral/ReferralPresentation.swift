@@ -28,6 +28,14 @@ final class ReferralPresentation: ObservableObject {
 
     private var openPages = 0
 
+    /// Set synchronously when the post-onboarding page is owed, BEFORE Home
+    /// mounts. Home's onAppear reads it to hold back its own paywall sheet:
+    /// that sheet would otherwise go up in the 0.8s before the cover and
+    /// swallow it, and a fullScreenCover dismissal re-runs Home's onAppear,
+    /// which would put the paywall straight back over someone who just said
+    /// "Not now".
+    private(set) var offeredThisSession = false
+
     private init() {}
 
     func pageAppeared() {
@@ -75,6 +83,7 @@ final class ReferralPresentation: ObservableObject {
                                       store: ReferralKeyValueStore = UserDefaultsReferralStore.shared) {
         guard case .referral = step else { return }
         store.set(true, forKey: ReferralKeys.autoShown)
+        offeredThisSession = true
         // After `isOnboarded` flips and Home has mounted. A cover raised in the
         // same pass as the branch swap is dropped by SwiftUI.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in

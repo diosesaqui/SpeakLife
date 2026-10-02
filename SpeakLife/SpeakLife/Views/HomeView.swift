@@ -134,6 +134,7 @@ struct HomeView: View {
                 homeView
                     .onAppear() {
                                 showSubscription = subscriptionStore.showSubscription && !subscriptionStore.isPremium && !appState.firstOpen
+                                    && !ReferralPresentation.shared.offeredThisSession
                                 audioDeclarationViewModel.fetchAudio(version: subscriptionStore.audioRemoteVersion)
                                 declarationStore.setRemoteDeclarationVersion(version: subscriptionStore.remoteVersion)
                                 // Re-select the correct category seeded during onboarding.
