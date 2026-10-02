@@ -69,7 +69,13 @@ public enum ReferralClaimPolicy {
     /// Rejection reasons the server does not record as final (spec §7 rows 1
     /// and 11). `disabled` is the kill switch; `retry_later` is listed as a
     /// belt-and-braces guard in case a server ever reports it as a rejection.
-    public static let nonFinalRejectionReasons: Set<String> = ["disabled", "retry_later"]
+    public static let nonFinalRejectionReasons: Set<String> = ["disabled", "retry_later", "invalid_code", "unknown_code"]
+
+    /// A code that resolves to no referrer. The server does not record it, so
+    /// a typo in "Have an invite code?" is not a lifetime lockout. Retrying the
+    /// same bad code can never succeed, so the pending value is dropped (not
+    /// marked final) and a corrected code can still be captured.
+    public static let discardRejectionReasons: Set<String> = ["invalid_code", "unknown_code"]
 
     /// - Parameters:
     ///   - isOnboarded: `finishOnboarding()` has run, this launch or an earlier one.
@@ -112,6 +118,8 @@ public enum ReferralClaimPolicy {
     public static func apply(_ outcome: ReferralClaimOutcome, to store: PendingReferralStore) {
         if shouldMarkFinal(after: outcome) {
             store.markFinal()
+        } else if case .rejected(let reason) = outcome, discardRejectionReasons.contains(reason) {
+            store.clear()
         } else {
             store.recordAttempt()
         }

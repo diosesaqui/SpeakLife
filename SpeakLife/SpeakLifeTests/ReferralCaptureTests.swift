@@ -152,6 +152,27 @@ final class ReferralCaptureTests: XCTestCase {
         XCTAssertEqual(good, .submitted(.credited))
     }
 
+    // MARK: - FE-CAP-07b
+
+    /// A typo that is well formed but matches no referrer: inline "not found",
+    /// nothing made final, and the corrected code still goes through.
+    func test_FE_CAP_07b_typedUnknownCodeIsNotALockout() async {
+        let service = FakeReferralService()
+        service.claimResult = .success(.rejected(reason: "unknown_code"))
+        let coordinator = makeCoordinator(service: service)
+
+        let typo = await coordinator.submitTypedCode("ZZZZZZZZ")
+
+        XCTAssertEqual(typo, .notFound)
+        XCTAssertFalse(pending.isFinal)
+        XCTAssertNil(pending.pending)
+
+        service.claimResult = .success(.credited)
+        let good = await coordinator.submitTypedCode("K7MQ2XPA")
+        XCTAssertEqual(good, .submitted(.credited))
+        XCTAssertTrue(pending.isFinal)
+    }
+
     // MARK: - FE-LNK-07
 
     func test_FE_LNK_07_standLinkNeverReadsAReferralLink() {

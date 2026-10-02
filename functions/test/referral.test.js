@@ -818,20 +818,22 @@ test('BE-CLM-10 referrer already at target: target_reached, final', async () => 
   await expectRejected(await claim('late', code), 'target_reached', { friend: 'late', count: 5 });
 });
 
-test('BE-CLM-12 malformed code: invalid_code, final', async () => {
-  await enroll('R');
-  await expectRejected(await claim('f1', 'nope'), 'invalid_code', { friend: 'f1' });
+test('BE-CLM-12 malformed code: invalid_code, NOT final, a corrected code still credits', async () => {
+  const { code } = await enroll('R');
+  await expectRejected(await claim('f1', 'nope'), 'invalid_code', { friend: 'f1', final: false });
+  assert.deepStrictEqual(await claim('f1', code), { outcome: 'credited' });
 });
 
-test('BE-CLM-13 unknown code: unknown_code, final', async () => {
-  await enroll('R');
-  await expectRejected(await claim('f1', 'ZZZZZZZZ'), 'unknown_code', { friend: 'f1' });
+test('BE-CLM-13 unknown code (a typo): unknown_code, NOT final, the right code still credits', async () => {
+  const { code } = await enroll('R');
+  await expectRejected(await claim('f1', 'ZZZZZZZZ'), 'unknown_code', { friend: 'f1', final: false });
+  assert.deepStrictEqual(await claim('f1', code), { outcome: 'credited' });
 });
 
-test('BE-CLM-14 revoked code: unknown_code, final', async () => {
+test('BE-CLM-14 revoked code: unknown_code, NOT final', async () => {
   const { code } = await enroll('R');
   await db.collection('referralCodes').doc(code).update({ revoked: true });
-  await expectRejected(await claim('f1', code), 'unknown_code', { friend: 'f1' });
+  await expectRejected(await claim('f1', code), 'unknown_code', { friend: 'f1', final: false });
 });
 
 test('BE-CLM-15 device bit 0 already set: device_already_counted, final', async () => {
@@ -871,7 +873,9 @@ test('BE-CLM-20 the 11th claim call in an hour is throttled before any code look
   for (let i = 0; i < 10; i++) await claim('f1', 'ZZZZZZZZ');
   await expectCode(() => claim('f1', code), 'resource-exhausted');
   await expectCode(() => claim('f1', 'YYYYYYYY'), 'resource-exhausted');
-  assert.strictEqual((await claimDoc('f1')).data().code, 'ZZZZZZZZ');
+  // Unknown codes are not final, so this throttle is the only cap on guessing.
+  assert.strictEqual((await claimDoc('f1')).exists, false);
+  assert.strictEqual((await referral('R')).count, 0);
 });
 
 test('BE-CLM-11 referrer already credited the daily cap: retry_later, then credited after 24h', async () => {

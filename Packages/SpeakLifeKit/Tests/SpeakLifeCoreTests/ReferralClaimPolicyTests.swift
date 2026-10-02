@@ -94,7 +94,7 @@ final class ReferralClaimPolicyTests: XCTestCase {
 
     func test_FE_CLM_08_everyFinalRejectionMarksFinal() {
         let reasons = [
-            "invalid_code", "unknown_code", "self_referral", "expired",
+            "self_referral", "expired",
             "device_already_counted", "device_is_referrer", "device_unverifiable",
             "target_reached",
         ]
@@ -108,6 +108,20 @@ final class ReferralClaimPolicyTests: XCTestCase {
         }
         XCTAssertEqual(ReferralClaimOutcome.parse(outcome: "rejected", reason: "self_referral"),
                        .rejected(reason: "self_referral"))
+    }
+
+    /// A typo'd or unknown code is dropped, NOT made final: a corrected code
+    /// can still be captured and claimed.
+    func test_FE_CLM_08b_unknownOrInvalidCodeDiscardsButStaysOpen() {
+        for reason in ["invalid_code", "unknown_code"] {
+            XCTAssertFalse(ReferralClaimPolicy.shouldMarkFinal(after: .rejected(reason: reason)), reason)
+            let store = makeStore(clockAt: now)
+            store.capture(code: "ZZZZZZZZ", source: .manual)
+            ReferralClaimPolicy.apply(.rejected(reason: reason), to: store)
+            XCTAssertFalse(store.isFinal, reason)
+            XCTAssertNil(store.pending, reason)
+            XCTAssertEqual(store.capture(code: "K7MQ2XPA", source: .manual), .captured, reason)
+        }
     }
 
     func test_FE_CLM_09_retryLaterAndDisabledKeepPending() {

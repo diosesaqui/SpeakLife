@@ -108,7 +108,8 @@ time, now, server outcome).
 | FE-CLM-05 | Last attempt less than 1 hour ago | `false` (no hammering on every foreground) |
 | FE-CLM-06 | Pending expired | `false`, pending cleared |
 | FE-CLM-07 | Outcome `credited` | `markFinal` |
-| FE-CLM-08 | Outcome `rejected` (each reason in §7 except `disabled`) | `markFinal`. **No user-facing error** (the friend never asked for this). |
+| FE-CLM-08 | Outcome `rejected` (each reason in §7 except `disabled`, `invalid_code`, `unknown_code`) | `markFinal`. **No user-facing error** (the friend never asked for this). |
+| FE-CLM-08b | Outcome `rejected` with `invalid_code` or `unknown_code` | Pending dropped, **not** final; a new code can be captured |
 | FE-CLM-09 | Outcome `retry_later`, or `rejected` with reason `disabled` | Keep pending, record the attempt |
 | FE-CLM-10 | Network error, timeout, `unavailable`, `unauthenticated`, `resource-exhausted` | Keep pending, record the attempt |
 | FE-CLM-11 | Unknown outcome string from a newer server | Keep pending (fail safe, never drop a real friend) |
@@ -246,6 +247,7 @@ that takes its dependencies, the same way `attribution(from:)` already works.
 | FE-CAP-05 | Referral link carrying `ob=warfare` | Both the arm and the referral handled (they're independent) |
 | FE-CAP-06 | Manual code entry with a valid code | Captured with `source: manual`, and the claim fires immediately (they're already onboarded) |
 | FE-CAP-07 | Manual entry with an invalid code | Inline error, nothing captured, the button stays usable |
+| FE-CAP-07b | Manual entry with a well-formed code the server doesn't know (a typo) | Inline "We couldn't find that code", nothing made final, the corrected code is credited |
 | FE-CAP-08 | `BranchAttribution.attribution(from:)` with a `/r/` referring link | `channel == .referral` (add to `AcquisitionAttributionTests`) |
 | FE-CAP-09 | Same, with `~channel` set to an ad network | The ad network wins (existing priority unchanged) |
 

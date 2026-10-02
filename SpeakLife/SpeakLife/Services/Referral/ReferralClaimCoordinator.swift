@@ -129,6 +129,9 @@ enum InviteCodeEntryResult: Equatable {
     case submitted(ReferralClaimOutcome?)
     /// This install already has a pending or completed claim.
     case alreadyUsed
+    /// Well formed, but no referrer has it (a typo). The server records
+    /// nothing, the pending value is dropped, and the field stays usable.
+    case notFound
 }
 
 @MainActor
@@ -266,6 +269,10 @@ final class ReferralClaimCoordinator {
         switch captured {
         case .captured:
             let outcome = await claimIfNeeded(isOnboarded: true, isDebugReplay: false)
+            if case .rejected(let reason)? = outcome,
+               ReferralClaimPolicy.discardRejectionReasons.contains(reason) {
+                return .notFound
+            }
             return .submitted(outcome)
         case .invalid:
             return .invalid

@@ -88,7 +88,7 @@ struct InviteCodeEntryView: View {
     private var isFinished: Bool {
         switch result {
         case .submitted, .alreadyUsed: return true
-        case .invalid, .none: return false
+        case .invalid, .notFound, .none: return false
         }
     }
 
@@ -119,6 +119,8 @@ struct InviteCodeEntryView: View {
             }
         case .alreadyUsed:
             line("This phone has already joined through an invite.", color: DS.Palette.textSecondary)
+        case .notFound:
+            line("We couldn't find that code. Check it with your friend and try again.", color: DS.Palette.gold)
         }
     }
 

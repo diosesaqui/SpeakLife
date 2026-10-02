@@ -118,9 +118,9 @@ otherwise. "Final" means a `referralClaims/{friendUid}` document is written.
 | BE-CLM-08 | Captured 15 days ago | `expired` | yes |
 | BE-CLM-09 | Friend uid == R | `self_referral` | yes |
 | BE-CLM-10 | R already at target | `target_reached` | yes |
-| BE-CLM-12 | Malformed code | `invalid_code` | yes |
-| BE-CLM-13 | Unknown code | `unknown_code` | yes |
-| BE-CLM-14 | Revoked code (R deleted their account) | `unknown_code` | yes |
+| BE-CLM-12 | Malformed code; a corrected code then credits | `invalid_code` | **no** |
+| BE-CLM-13 | Unknown code (a typo); the right code then credits | `unknown_code` | **no** |
+| BE-CLM-14 | Revoked code (R deleted their account) | `unknown_code` | **no** |
 | BE-CLM-15 | Device bit 0 already set | `device_already_counted` | yes |
 | BE-CLM-16 | Device bit 1 set (this device enrolled as a referrer) | `device_is_referrer` | yes |
 | BE-CLM-17 | No `deviceToken` | `device_unverifiable` | yes |

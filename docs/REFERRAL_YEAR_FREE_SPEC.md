@@ -63,7 +63,7 @@ one means changing the tests listed next to it.
 | D4 | Hard paywall | **(default)** The automatic page only appears when the paywall could be closed. Remote Config flag `referralOnHardPaywall` (default `false`) adds a small "Or invite 5 friends for a free year" (number from config) link to the hard paywall. That link opens the same page, and the paywall stays behind it. | FE-ENT-* |
 | D5 | Welcome discount offer | **(default)** Unchanged. The welcome offer still appears after the first Daily Burst. The two don't conflict: one is a discount, the other is free. | FE-ENT-09 |
 | D6 | Reward for the friend | **(default)** None in v1. | — |
-| D7 | Referrer subscribes before reaching 10 | **(default)** Keep counting, and still issue the code at 10. The App Store Connect offer is eligible for new, existing and expired subscribers, so the code always redeems. To confirm in sandbox: an existing subscriber's free year applies from their next renewal. | BE-RWD-06, FE-QA-07 |
+| D7 | Referrer subscribes before reaching the target | **(default)** Keep counting, and still issue the code at the target. The App Store Connect offer is eligible for new, existing and expired subscribers, so the code always redeems. To confirm in sandbox: an existing subscriber's free year applies from their next renewal. | BE-RWD-06, FE-QA-07 |
 | D8 | Attribution window | **(default)** The friend must finish onboarding within 14 days of the link being captured. | BE-CLM-08, FE-CLM-06 |
 | D9 | Velocity cap | **(default)** At most 5 qualified referrals per referrer per rolling 24 hours. Anything over the cap gets `retry_later`, and the friend's app retries on later launches. | BE-CLM-11 |
 | D10 | Kill switch | Client: Remote Config `referralYearFreeEnabled` (default `false`) hides all referral UI. Server: `referralConfig/current.enabled` rejects new enrollments and claims. Rewards already unlocked are always readable. | BE-CFG-*, FE-FLG-* |
@@ -82,11 +82,11 @@ one means changing the tests listed next to it.
 - A push arrives whenever a friend counts ("A friend joined. 2 of 5.") and when the reward unlocks. Friends' names are never shown, only counts.
 
 ### J3. Referrer: unlocking
-1. The 10th qualified referral arrives. In the same transaction, the server assigns one reward code from the pool.
+1. The final qualified referral arrives (the 5th at launch). In the same transaction, the server assigns one reward code from the pool.
 2. A push goes out: "You did it. Your free year is ready."
 3. The page shows the reward state, the code, and a **Redeem my free year** button that opens `https://apps.apple.com/redeem?ctx=offercodes&id=1617492998&code=<CODE>`.
 4. The person redeems with Apple. RevenueCat's customer info listener turns on `isPremium`, and the page shows "Premium active".
-5. If the pool is empty when they hit 10, the page shows "Your free year is being prepared", a sweep assigns a code once the pool is refilled, and they get a push (§8.5).
+5. If the pool is empty when they reach the target, the page shows "Your free year is being prepared", a sweep assigns a code once the pool is refilled, and they get a push (§8.5).
 
 ### J4. Friend: doesn't have the app
 1. They tap the link. Safari opens, Branch redirects to the App Store, and they install.
@@ -191,9 +191,9 @@ first failure decides the `reason`.
 | 1 | Server kill switch is on | `disabled`, **not** recorded as final | Keep the pending claim, retry |
 | 2 | Caller is authenticated | Error `unauthenticated` | Retry later |
 | 3 | Per-friend throttle: 10 claims an hour | Error `resource-exhausted` | Retry later |
-| 4 | Code is well formed | `invalid_code` | Drop |
+| 4 | Code is well formed | `invalid_code`, **not** recorded as final (a typo is not a lifetime lockout) | Drop this code; a corrected code can still be entered |
 | 5 | Friend has no earlier claim (`referralClaims/{friendUid}`) | Return the first outcome, unchanged | Drop |
-| 6 | Code exists and isn't revoked | `unknown_code` | Drop |
+| 6 | Code exists and isn't revoked | `unknown_code`, **not** recorded as final. Guessing is capped by the per-friend throttle (#3), and a guessed code only credits from a fresh, DeviceCheck-verified device. | Drop this code; manual entry shows "We couldn't find that code" |
 | 7 | Friend isn't the referrer (uid) | `self_referral` | Drop |
 | 8 | Captured within the window (D8), per the client-reported capture time. The server also rejects capture times in the future or older than the friend's account. | `expired` | Drop |
 | 9 | DeviceCheck: the device has never been counted (bit 0 clear) and has never enrolled as a referrer (bit 1 clear) | `device_already_counted` / `device_is_referrer` | Drop |

@@ -494,6 +494,17 @@ async function rejectFinal(claimRef, base, reason) {
   }
 }
 
+/**
+ * A rejection that is NOT recorded: the friend may claim again with another
+ * code. Used for a code that does not resolve to a referrer, so a typo in
+ * "Have an invite code?" is not a lifetime lockout. Guessing stays bounded by
+ * the per-friend throttle (#3), and a guessed code only credits a referrer
+ * from a fresh, DeviceCheck-verified device.
+ */
+function rejectRetryable(reason) {
+  return { outcome: 'rejected', reason };
+}
+
 exports.claimReferral = onCall({ secrets: SECRETS }, async (request) => {
   // §7 #1. Not final: the same claim can still count if the switch comes back
   // on within the window, so nothing is written.
@@ -516,14 +527,14 @@ exports.claimReferral = onCall({ secrets: SECRETS }, async (request) => {
   const claimRef = db.collection('referralClaims').doc(friendUid);
   const base = { friendUid, code: code || null, referrerUid: null, source };
 
-  if (!code) return rejectFinal(claimRef, base, 'invalid_code');           // #4
+  if (!code) return rejectRetryable('invalid_code');                       // #4, not final
 
   const prior = await claimRef.get();                                     // #5
   if (prior.exists) return outcomeOf(prior.data());
 
   const codeSnap = await db.collection('referralCodes').doc(code).get();  // #6
   if (!codeSnap.exists || codeSnap.data().revoked) {
-    return rejectFinal(claimRef, base, 'unknown_code');
+    return rejectRetryable('unknown_code');                               // not final
   }
   const referrerUid = codeSnap.data().uid;
   base.referrerUid = referrerUid;
@@ -568,7 +579,7 @@ exports.claimReferral = onCall({ secrets: SECRETS }, async (request) => {
       tx.set(claimRef, { ...base, outcome: 'rejected', reason, createdAt: ts(t) });
       return { response: { outcome: 'rejected', reason } };
     };
-    if (!refSnap.exists) return finalReject('unknown_code');
+    if (!refSnap.exists) return { response: rejectRetryable('unknown_code') }; // not final
 
     const r = refSnap.data();
     const count = r.count || 0;
