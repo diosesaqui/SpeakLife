@@ -19,6 +19,35 @@
 import SwiftUI
 import SpeakLifeCore
 
+// MARK: - Burst environment
+
+/// What a Daily Burst needs from the app root, carried as one environment
+/// VALUE rather than five environment objects.
+///
+/// The room is reached through `standRedemption` and `standPresentation`, which
+/// sit above the root `.environmentObject` calls (see SpeakLifeApp), so reading
+/// `@EnvironmentObject` from the room crashes on exactly the path an invitee
+/// takes. A value with a nil default cannot crash: where it is missing, the
+/// room simply does not offer the Burst.
+struct StandBurstEnvironment {
+    let declarationStore: DeclarationViewModel
+    let themeViewModel: ThemeViewModel
+    let timerViewModel: TimerViewModel
+    let streakViewModel: EnhancedStreakViewModel
+    let subscriptionStore: SubscriptionStore
+}
+
+private struct StandBurstEnvironmentKey: EnvironmentKey {
+    static let defaultValue: StandBurstEnvironment? = nil
+}
+
+extension EnvironmentValues {
+    var standBurst: StandBurstEnvironment? {
+        get { self[StandBurstEnvironmentKey.self] }
+        set { self[StandBurstEnvironmentKey.self] = newValue }
+    }
+}
+
 struct StandRoomView: View {
 
     let roomId: String
@@ -30,7 +59,9 @@ struct StandRoomView: View {
     @State private var showInvite = false
     @State private var showLeaveConfirm = false
     @State private var showUpgradePrompt = false
+    @State private var showBurst = false
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.standBurst) private var burstEnvironment
 
     private var room: StandRoom? { service.rooms.first { $0.id == roomId } }
     private var todayStamp: String { StandDayStamp.stamp() }
@@ -67,6 +98,22 @@ struct StandRoomView: View {
         .sheet(isPresented: $showUpgradePrompt) {
             StandUpgradePromptSheet()
         }
+        // The room's campaign, on this member's day in it. The home screen's
+        // category and their own campaign are left exactly where they were.
+        .fullScreenCover(isPresented: $showBurst) {
+            if let room, let env = burstEnvironment {
+                DailyDeclarationBurstView(
+                    source: .stand,
+                    standEnforcement: room.enforcement,
+                    standDay: myDay(in: room)
+                )
+                .environmentObject(env.declarationStore)
+                .environmentObject(env.themeViewModel)
+                .environmentObject(env.timerViewModel)
+                .environmentObject(env.streakViewModel)
+                .environmentObject(env.subscriptionStore)
+            }
+        }
         .confirmationDialog("Leave this stand?",
                             isPresented: $showLeaveConfirm, titleVisibility: .visible) {
             Button("Leave", role: .destructive) { leave() }
@@ -95,6 +142,16 @@ struct StandRoomView: View {
             }
             .padding(DS.Spacing.md)
         }
+        // Pinned to the bottom, where the room has the most empty space and
+        // the thumb already is. Inset rather than overlaid, so a full roster
+        // scrolls clear of it instead of hiding its last row underneath.
+        .safeAreaInset(edge: .bottom) {
+            if burstEnvironment != nil, room.enforcement.day(myDay(in: room)) != nil {
+                burstButton(room)
+                    .padding(.horizontal, DS.Spacing.md)
+                    .padding(.bottom, DS.Spacing.sm)
+            }
+        }
     }
 
     private func header(_ room: StandRoom) -> some View {
@@ -116,22 +173,10 @@ struct StandRoomView: View {
     /// member speaks the same words on their own day N.
     @ViewBuilder
     private func todayAnchor(_ room: StandRoom) -> some View {
-        // From days spoken here, not the stored `dayNumber` — see
-        // `StandMember.standDay`. The two disagree in any room written by a
-        // build older than `dayToRecord`, and this header is one of the places
-        // that showed it.
-        //
-        // Once today is spoken the header shows TODAY's day, the one just
-        // spoken — not tomorrow's. It used to always read one ahead, so a
-        // member who had spoken read "DAY 3 OF 7" directly above their own row
-        // saying "Day 2 of 7".
-        let me = room.member(auth.currentUid ?? "")
-        let spoken = me?.standDay ?? 0
-        let spokeToday = me?.spoke(on: todayStamp) ?? false
-        let myDay = max(spokeToday ? spoken : spoken + 1, 1)
-        if let day = room.enforcement.day(min(myDay, Enforcement.length)) {
+        let dayNumber = myDay(in: room)
+        if let day = room.enforcement.day(dayNumber) {
             VStack(alignment: .leading, spacing: DS.Spacing.sm) {
-                Text("DAY \(min(myDay, Enforcement.length)) OF \(Enforcement.length)")
+                Text("DAY \(dayNumber) OF \(Enforcement.length)")
                     .font(.system(size: 11, weight: .bold))
                     .tracking(1.2)
                     .foregroundColor(DS.Palette.textSecondary)
@@ -165,6 +210,55 @@ struct StandRoomView: View {
                      strokeOpacity: 0.16,
                      elevation: DS.Elevation.medium)
         }
+    }
+
+    /// The day this member is on in this room, 1...7. Once today is spoken it
+    /// is TODAY's day, the one just spoken, not tomorrow's. It used to always
+    /// read one ahead, so a member who had spoken read "DAY 3 OF 7" directly
+    /// above their own row saying "Day 2 of 7".
+    ///
+    /// From days spoken here, not the stored `dayNumber` — see
+    /// `StandMember.standDay`. The two disagree in any room written by a build
+    /// older than `dayToRecord`.
+    private func myDay(in room: StandRoom) -> Int {
+        let me = room.member(auth.currentUid ?? "")
+        let spoken = me?.standDay ?? 0
+        let spokeToday = me?.spoke(on: todayStamp) ?? false
+        return min(max(spokeToday ? spoken : spoken + 1, 1), Enforcement.length)
+    }
+
+    /// Speak this room's campaign right here. Any Burst already counts a day
+    /// in every stand, but an invitee whose home screen is on another category
+    /// would otherwise speak that category to count it. This speaks the same
+    /// words the rest of the room is speaking, without moving their home
+    /// screen off what they chose.
+    ///
+    /// Once spoken it stays and reads "Speak it again": more than one Burst a
+    /// day is allowed, and it is never phrased as something owed.
+    private func burstButton(_ room: StandRoom) -> some View {
+        let spokeToday = room.hasSpokenToday(auth.currentUid ?? "", stamp: todayStamp)
+        return Button {
+            AnalyticsService.shared.track("stand_burst_started", parameters: [
+                "room_id": room.id,
+                "enforcement_id": room.enforcement.id,
+                "day": myDay(in: room),
+                "spoke_today": spokeToday,
+            ])
+            showBurst = true
+        } label: {
+            HStack(spacing: DS.Spacing.xs) {
+                Image(systemName: "bolt.fill")
+                Text(spokeToday ? "Speak it again" : "Speak today's Burst")
+            }
+            .font(.system(size: 18, weight: .bold, design: .rounded))
+            .foregroundColor(.black)
+            .frame(maxWidth: .infinity)
+            .frame(height: 58)
+            .background(Capsule().fill(DS.Palette.gold))
+            .shadow(color: DS.Palette.gold.opacity(0.35), radius: 16, y: 6)
+            .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
     }
 
     private func roster(_ room: StandRoom) -> some View {

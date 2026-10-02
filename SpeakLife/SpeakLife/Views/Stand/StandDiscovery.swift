@@ -99,6 +99,8 @@ struct StandInviteRow: View {
 
     @State private var showInvite = false
     @State private var showRoom = false
+    /// Re-applied to the room's sheet, so the room can open a Burst.
+    @Environment(\.standBurst) private var standBurst
 
     /// The best of every stand this person is in — see `StandRoom.rowStand`,
     /// which carries the ranking and why it is that way.
@@ -188,6 +190,7 @@ struct StandInviteRow: View {
             .sheet(isPresented: $showRoom) {
                 if let existingRoom {
                     NavigationStack { StandRoomView(roomId: existingRoom.id) }
+                        .environment(\.standBurst, standBurst)
                 }
             }
         }
@@ -426,6 +429,10 @@ struct StandRedemptionModifier: ViewModifier {
     /// it carries a comment saying exactly this; it is the same trap.
     @ObservedObject var appState: AppState
     @State private var showJoin = false
+    /// A value, not an object, so reading it here is safe. Set outside this
+    /// modifier in SpeakLifeApp and carried onto the sheet, where the joined
+    /// room uses it to open a Burst.
+    @Environment(\.standBurst) private var standBurst
 
     func body(content: Content) -> some View {
         content
@@ -440,6 +447,7 @@ struct StandRedemptionModifier: ViewModifier {
                 NavigationStack {
                     StandJoinView(prefilledCode: appState.pendingStandCode)
                 }
+                .environment(\.standBurst, standBurst)
             }
     }
 
@@ -499,6 +507,7 @@ struct StandPresentationModifier: ViewModifier {
 
     @ObservedObject var appState: AppState
     @ObservedObject private var service = StandService.shared
+    @Environment(\.standBurst) private var standBurst
 
     func body(content: Content) -> some View {
         content
@@ -515,6 +524,7 @@ struct StandPresentationModifier: ViewModifier {
                 NavigationStack {
                     StandRoomView(roomId: roomId.value)
                 }
+                .environment(\.standBurst, standBurst)
             }
     }
 }

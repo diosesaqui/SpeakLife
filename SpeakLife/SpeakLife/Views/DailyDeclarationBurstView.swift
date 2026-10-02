@@ -19,6 +19,11 @@ enum BurstSource: String {
     case dailyTask = "daily_task"
     /// The "Burst" tile in Jump Back In, or any other user-initiated opening.
     case quickAction = "quick_action"
+    /// Opened from a stand room. Speaks the ROOM's campaign, on the speaker's
+    /// own day in that room, so an invitee can speak with the person who asked
+    /// them without switching the category their home screen is on or the
+    /// campaign they are running for themselves.
+    case stand = "stand"
 }
 
 struct DailyDeclarationBurstView: View {
@@ -26,6 +31,10 @@ struct DailyDeclarationBurstView: View {
     /// Defaults to the campaign's task, so any entry point that does not say
     /// otherwise keeps the behaviour it had before this existed.
     var source: BurstSource = .dailyTask
+    /// The room's campaign and the day to speak in it. Read only when `source`
+    /// is `.stand`.
+    var standEnforcement: Enforcement? = nil
+    var standDay: Int = 1
     @EnvironmentObject var viewModel: DeclarationViewModel
     @EnvironmentObject var themeViewModel: ThemeViewModel
     @EnvironmentObject var timerViewModel: TimerViewModel
@@ -297,14 +306,26 @@ struct DailyDeclarationBurstView: View {
         // from Jump Back In this is the user's own burst, so the campaign is left
         // out of the composition entirely and `selected` — the category they
         // chose — is what fills it.
+        //
+        // A stand burst is owned by the room's campaign instead, on the day the
+        // speaker is on in that room. Nothing is selected or started locally:
+        // the burst completes like any other, and `StandMirror` counts it.
         let campaignOwnsThisBurst = source == .dailyTask && service.isEnabled
-        let activeEnforcement = campaignOwnsThisBurst ? service.activeEnforcement : nil
+        let activeEnforcement: Enforcement?
+        let currentDay: Int
+        if source == .stand, let standEnforcement {
+            activeEnforcement = standEnforcement
+            currentDay = standDay
+        } else {
+            activeEnforcement = campaignOwnsThisBurst ? service.activeEnforcement : nil
+            currentDay = service.progressSnapshot.currentDay
+        }
 
         let composed = BurstSessionBuilder(
             declarationCount: burstDeclarationCount
         ).build(
             enforcement: activeEnforcement,
-            currentDay: service.progressSnapshot.currentDay,
+            currentDay: currentDay,
             favorites: viewModel.favorites,
             custom: personalDeclarations,
             // The selected category, and only that. Favorites and the user's own
@@ -321,7 +342,7 @@ struct DailyDeclarationBurstView: View {
 
         switch composed.origin {
         case .enforcement:
-            print("📱 Daily Burst: speaking \(activeEnforcement?.title ?? ""), day \(service.progressSnapshot.currentDay)")
+            print("📱 Daily Burst: speaking \(activeEnforcement?.title ?? ""), day \(currentDay)")
         case .pool, .fallback:
             print("📱 Daily Burst: \(composed.declarations.count) declarations, theme \(composed.theme.rawValue)")
         }
@@ -1169,6 +1190,12 @@ struct DailyDeclarationBurstView: View {
         // to it, so a user owed the declaration gets that on day one and the
         // offer on their next Burst, while a user who already has one gets the
         // offer straight away. Never both on one tap.
+        //
+        // Not from a stand. That Burst sits on a sheet over the root, so a root
+        // cover raised now would be dropped behind it, and both presenters
+        // write their once-ever flag before presenting. They stay armed and
+        // land after the next Burst opened from home instead.
+        guard source != .stand else { return }
         let store = subscriptionStore
         let days = burstDayCount
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {

@@ -152,6 +152,17 @@ struct SpeakLifeApp: App {
                     // stand push points at. Both were previously set by code that
                     // nothing read.
                     .standPresentation(appState: appState)
+                    // What a stand room needs to open a Burst. Outermost of the
+                    // stand modifiers so both of them, and every room reached
+                    // through them, can read it: they sit above the
+                    // .environmentObject calls and cannot see those.
+                    .environment(\.standBurst, StandBurstEnvironment(
+                        declarationStore: declarationStore,
+                        themeViewModel: themeStore,
+                        timerViewModel: timerViewModel,
+                        streakViewModel: enhancedStreakViewModel,
+                        subscriptionStore: subscriptionStore
+                    ))
                     // The two post-Burst covers: the one-time welcome offer and
                     // the personal-declaration ask that used to live in
                     // onboarding.
