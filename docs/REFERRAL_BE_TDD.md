@@ -25,7 +25,8 @@ pattern.
 | DeviceCheck | Injected verifier: `H.setDeviceCheck(fake)`. The fake keeps a `Map<token, {bit0, bit1}>` and can be told to throw (Apple down). Production uses the real Apple client, constructed lazily so tests never need the key. |
 | Clock | `H.setNow(fn)`, which every function in `referral.js` reads instead of `Date.now()` directly. Windows and caps are tested by moving the clock, never by sleeping. |
 | Config | `beforeEach` writes `referralConfig/current = { enabled: true, target: 5, windowDays: 14, dailyCap: 5, minCodeValidityDays: 30 }`. Tests that need something else overwrite it. |
-| Wipe | `beforeEach` clears `referrals` (including `credits`), `referralCodes`, `referralClaims`, `referralRewardCodes`, `referralConfig`, `referralRateLimits`, `users`, and resets `sent` and the fake DeviceCheck. |
+| Wipe | `beforeEach` clears `referrals` (including `credits`), `referralCodes`, `referralClaims`, `referralRewardCodes`, `referralConfig`, `referralRateLimits`, `referralBitRetries`, `users`, and resets `sent` and the fake DeviceCheck. |
+| Import script | Pure parsing and output in `functions/test/importOfferCodes.test.js` (`npm run test:import`, no emulator, fake Firestore). Write-path BE-IMP rows also run in `referral.test.js` against the emulator. |
 | Helpers | `req(uid, data)`, `expectCode(fn, code)`, already in the Stand tests and copied over. Plus new ones: `enroll(uid)`, `claim(friendUid, code, overrides)`, `seedPool(n, {expiresInDays})`, `creditN(referrerCode, n)`, which generates `n` distinct friends and devices. |
 
 **Determinism rule:** no test depends on wall-clock time, test order or random
@@ -158,7 +159,7 @@ otherwise. "Final" means a `referralClaims/{friendUid}` document is written.
 
 | ID | Case | Expect |
 |---|---|---|
-| BE-RWD-01 | Final credit (count reaches target) with the pool seeded | In the **same transaction**: `status:'unlocked'`, `unlockedAt` set, `reward.code` assigned, the pool document has `assignedTo: R`. One "credit" push and one "unlocked" push (or one combined; pick one and assert it). |
+| BE-RWD-01 | Final credit (count reaches target) with the pool seeded | In the **same transaction**: `status:'unlocked'`, `unlockedAt` set, `reward.code` assigned, the pool document has `assignedTo: R`. One "credit" push and one "unlocked" push (or one combined; pick one and assert it). **Chosen: one combined push**, the unlock copy only. With the pool empty, the final credit sends the normal "5 of 5" credit push and the sweep sends the unlock push later. |
 | BE-RWD-02 | Credit that leaves count at target − 1 | No reward, status `active` |
 | BE-RWD-03 | Final credit with the pool empty | `status:'unlocked_pending_code'`, `reward: null`, the claim still `credited` |
 | BE-RWD-04 | Final credit when only codes expiring within 30 days remain | Same as BE-RWD-03 |
@@ -235,7 +236,7 @@ both an **anonymous** and an **Apple** signed-in user.
 | BE-RUL-06 | Anyone reads or writes `referralCodes/*` | denied |
 | BE-RUL-07 | Anyone reads or writes `referralClaims/*` | denied |
 | BE-RUL-08 | Anyone reads or writes `referralRewardCodes/*` | denied (**the most important rule in this feature**: a readable pool hands out free years) |
-| BE-RUL-09 | Anyone reads or writes `referralConfig/*`, `referralRateLimits/*` | denied |
+| BE-RUL-09 | Anyone reads or writes `referralConfig/*`, `referralRateLimits/*`, `referralBitRetries/*` | denied |
 | BE-RUL-10 | A `list` query on `referralRewardCodes` | denied |
 | BE-RUL-11 | Existing `users/{uid}` rules | unchanged, still pass |
 
@@ -271,7 +272,7 @@ unit-level rows miss.
 | BE-E2E-01 | With config `target: 10`: R enrolls, 10 distinct friends claim over 3 simulated days (velocity cap respected: 5, 5), R unlocks, reads the record and sees the code, an 11th friend gets `target_reached`. |
 | BE-E2E-02 | A farm: one device token used for 10 different friend uids. Exactly one is credited, nine get `device_already_counted`. |
 | BE-E2E-03 | Self-farm: R's own device token (bit 1) used by 10 new uids. Zero credited. |
-| BE-E2E-04 | R enrolls anonymously, gets 6 credits, signs in with Apple (merge), gets 4 more. Unlocks under P. |
+| BE-E2E-04 | With config `target: 10`: R enrolls anonymously, gets 6 credits, signs in with Apple (merge), gets 4 more. Unlocks under P. (Target set explicitly: at the launch target of 5 the 6th credit is `target_reached`.) |
 | BE-E2E-05 | Pool empty at unlock, import adds codes, sweep runs, R gets the code and a push. |
 | BE-E2E-06 | Kill switch off mid-campaign: claims rejected `disabled` (not final). Switch back on within the window, the same claims are credited. |
 
@@ -279,10 +280,10 @@ unit-level rows miss.
 
 ## 13. Done checklist (backend)
 
-- [ ] Every row above has a test that failed before its code existed.
-- [ ] `npm test` runs rules, Stand, referral and email suites, all green.
-- [ ] `referral.js` has no direct `Date.now()` or `Math.random()` (grep for them in CI).
-- [ ] `referralRewardCodes` is unreadable from a client (BE-RUL-08 green).
-- [ ] The new DeviceCheck secret is declared with `defineSecret` and never logged.
-- [ ] `index.js` exports the new functions.
+- [x] Every row above has a test, written before its code. Rows that were green on their first run, and why: BE-RWD-02/03/04/07 and BE-DEL-03 (the "nothing happens" half of behaviour already built for an earlier group, each red before that group existed); BE-RUL-02 to 11 (already held by the default deny, now also explicit; BE-RUL-01 was red); BE-E2E-* and the emulator BE-IMP write-path rows (integration of tested parts, checked instead by mutation: disabling the bit 0 check or the merge's code repoint turns BE-E2E-02 and BE-E2E-04 red).
+- [x] `npm test` runs rules, Stand, referral, import and email suites, all green.
+- [x] `referral.js` has no direct `Date.now()` or `Math.random()` (asserted by a test in `referral.test.js`).
+- [x] `referralRewardCodes` is unreadable from a client (BE-RUL-08 green).
+- [x] The new DeviceCheck secrets are declared with `defineSecret` and never logged (asserted by a test).
+- [x] `index.js` exports the new functions.
 - [ ] Deployed with `referralConfig/current.enabled = false` first.

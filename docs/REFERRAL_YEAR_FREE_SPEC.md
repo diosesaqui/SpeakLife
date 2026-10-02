@@ -164,6 +164,18 @@ defaults equal to the values above, with `enabled: false` and `target: 5`.
 ### `referralRateLimits/{uid|bucket}`
 Same sliding-window shape as `standRateLimits`.
 
+### `referralBitRetries/{autoId}`
+```js
+{ deviceToken, bit: 0 | 1, isDevelopment, attempts, createdAt, lastError? }
+```
+DeviceCheck bit updates that failed after a credit (bit 0) or an enrollment
+(bit 1). `referralSweep` retries them daily and drops one after 14 failed
+attempts or when Apple calls the token invalid. No client access.
+
+Retired reward codes keep `assignedTo` and gain `retired: true`, so the pool
+query (`assignedTo == null`) can never hand one out again. That query needs the
+`(assignedTo, expiresAt)` composite index in `firestore.indexes.json`.
+
 ### Changes to `firestore.rules`
 Explicit deny blocks for each collection above, so they don't rely on the
 default deny. Owner-only read on `referrals/{uid}` (not its `credits`
@@ -219,14 +231,22 @@ All functions are callable (`onCall`) unless stated otherwise. Errors use
 - Otherwise, with the server switch on: generates a unique code (retrying on a collision), writes `referralCodes/{code}` and `referrals/{uid}` in one transaction with `target` from config, then sets DeviceCheck bit 1 (needs a `deviceToken` argument; if it's missing, enroll anyway and log).
 - With the switch off: if a record exists, returns it (so existing progress stays visible). If not, `failed-precondition`.
 
-### 8.2 `claimReferral({ code, capturedAt, source, deviceToken })` → `{ outcome, reason? }`
+`getOrCreateReferral` takes `{ deviceToken?, isDevelopment? }`. `reward` in the
+response is `null` or `{ code, assignedAt, expiresAt, reissueCount }` with both
+times in epoch milliseconds. The response never carries credits or friend uids.
+
+### 8.2 `claimReferral({ code, capturedAt, source, deviceToken, isDevelopment? })` → `{ outcome, reason? }`
 - `outcome` is one of `credited`, `rejected` or `retry_later`. Order of checks as in §7.
+- `capturedAt` is epoch **milliseconds**. A value below 1e11 is read as seconds, so `Date().timeIntervalSince1970` also works.
+- `isDevelopment: true` sends DeviceCheck calls to Apple's development host. Debug builds installed from Xcode set it; TestFlight and App Store builds omit it (they use Apple's production environment).
+- A malformed `source` or a non-numeric `capturedAt` is an `invalid-argument` error, not a final claim.
 
 ### 8.3 `reissueReferralReward()` → `{ reward }`
 - For a reward code that Apple refuses or that has expired. Allowed once per referrer (`reissueCount < 1`). Takes a fresh code from the pool, and the old one is never handed out again.
 
 ### 8.4 Push on credit and unlock
 - Sent from inside `claimReferral` after the transaction commits, using `users/{uid}.fcmToken`. A push failure never fails the claim.
+- Copy, body only: "A friend joined. {count} of {target}." on a credit, and "You did it. Your free year is ready." on the credit that unlocks a reward (one push, not two). Data: `{ notificationType: 'referral', deepLink: 'referral' }`. No friend data.
 
 ### 8.5 `referralSweep` (scheduled, daily)
 - Assigns codes to `unlocked_pending_code` referrers, oldest first, while the pool has codes, and pushes to each.
