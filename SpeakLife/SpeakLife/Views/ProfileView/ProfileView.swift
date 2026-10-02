@@ -121,6 +121,10 @@ struct ProfileView: View {
                     Section(header: Text("Premium".uppercased()).font(.caption)) {
                         subscriptionRow
                         redeemCodeRow
+                        // "Get a year free" / "Have an invite code?". Each
+                        // decides for itself whether it shows (spec §9.2).
+                        ReferralProfileRows(subscriptionStore: subscriptionStore,
+                                            appState: appState)
                         //bookLink
                     }
                     
