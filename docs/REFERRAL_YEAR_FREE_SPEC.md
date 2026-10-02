@@ -1,4 +1,4 @@
-# Invite 10 Friends, Get a Year Free — Spec
+# Invite Friends, Get a Year Free — Spec
 
 Status: **Draft, pre-build.** Tests come first. Write the cases in
 `REFERRAL_BE_TDD.md` and `REFERRAL_FE_TDD.md` as failing tests before any
@@ -14,7 +14,7 @@ Companion docs:
 ## 1. What it is
 
 A person finishes onboarding and closes the paywall without subscribing. The
-app then offers them another way in: **invite 10 friends, and when 10 of them
+app then offers them another way in: **invite friends, and when 5 of them
 install SpeakLife and finish onboarding, you get a year of Premium free.**
 
 The reward is an **App Store offer code** for one free year on the annual
@@ -46,7 +46,7 @@ the person cancels.
 | **Referral code** | The referrer's personal 8-character code, e.g. `K7MQ2XPA`, using the same alphabet as Stand codes. |
 | **Referral link** | `https://speaklife.app.link/r/<CODE>`, a Branch link. |
 | **Qualified referral** | A friend who passes every check in §7 and so counts toward the 10. |
-| **Target** | How many qualified referrals unlock the reward. Default 10. Locked per referrer when they enroll. |
+| **Target** | How many qualified referrals unlock the reward. Default 5 (launch decision; 3 is a one-value config change). Locked per referrer when they enroll. |
 | **Reward code** | A one-time App Store offer code for a free year, taken from the server-side pool. |
 | **Pool** | The offer codes uploaded from App Store Connect, stored server-side. |
 
@@ -59,8 +59,8 @@ one means changing the tests listed next to it.
 |---|---|---|---|
 | D1 | What counts | New install that arrived through the link or code, finished onboarding, on a device never counted before. | BE-CLM-*, FE-CLM-* |
 | D2 | Reward mechanism | App Store offer code, one free year on the annual subscription. Fallback (not built in v1): a RevenueCat promotional entitlement. | BE-RWD-* |
-| D3 | Target | 10 **(default)**. A server config value, locked onto the referrer's record when they enroll, so later config changes never move anyone's goalposts. | BE-ENR-04, BE-CLM-10 |
-| D4 | Hard paywall | **(default)** The automatic page only appears when the paywall could be closed. Remote Config flag `referralOnHardPaywall` (default `false`) adds a small "Or invite 10 friends for a free year" link to the hard paywall. That link opens the same page, and the paywall stays behind it. | FE-ENT-* |
+| D3 | Target | 5 **(default, decided 2026-10-02)**; 3 is the alternative. Every UI string reads the number from the record, never hardcodes it. A server config value, locked onto the referrer's record when they enroll, so later config changes never move anyone's goalposts. | BE-ENR-04, BE-CLM-10 |
+| D4 | Hard paywall | **(default)** The automatic page only appears when the paywall could be closed. Remote Config flag `referralOnHardPaywall` (default `false`) adds a small "Or invite 5 friends for a free year" (number from config) link to the hard paywall. That link opens the same page, and the paywall stays behind it. | FE-ENT-* |
 | D5 | Welcome discount offer | **(default)** Unchanged. The welcome offer still appears after the first Daily Burst. The two don't conflict: one is a discount, the other is free. | FE-ENT-09 |
 | D6 | Reward for the friend | **(default)** None in v1. | — |
 | D7 | Referrer subscribes before reaching 10 | **(default)** Keep counting, and still issue the code at 10. The App Store Connect offer is eligible for new, existing and expired subscribers, so the code always redeems. To confirm in sandbox: an existing subscriber's free year applies from their next renewal. | BE-RWD-06, FE-QA-07 |
@@ -73,13 +73,13 @@ one means changing the tests listed next to it.
 ### J1. Referrer: offer after onboarding
 1. They finish any onboarding arm. `finishOnboarding()` runs with `converted == false`.
 2. If eligible (§9.1), the **Referral page** is shown over Home as a full-screen cover.
-3. The page shows a headline, how it works in three steps, a progress bar at 0/10, a primary **Invite friends** button and a secondary **Not now**.
+3. The page shows a headline, how it works in three steps, a progress bar at 0/5, a primary **Invite friends** button and a secondary **Not now**.
 4. **Invite friends**: the app creates an anonymous account if there isn't one, the server returns the person's code (§8.1), and the share sheet opens with an image card plus text and link.
 5. **Not now** dismisses the page, which never comes back automatically. It stays reachable from Profile.
 
 ### J2. Referrer: watching progress
-- A **Get a year free** row in Profile opens the same page in progress mode: "4 of 10 friends joined", a share button, and the code written out for reading aloud (`K7MQ-2XPA`).
-- A push arrives whenever a friend counts ("Sarah's friend joined. 4 of 10.") and when the reward unlocks. Friends' names are never shown, only counts.
+- A **Get a year free** row in Profile opens the same page in progress mode: "2 of 5 friends joined", a share button, and the code written out for reading aloud (`K7MQ-2XPA`).
+- A push arrives whenever a friend counts ("A friend joined. 2 of 5.") and when the reward unlocks. Friends' names are never shown, only counts.
 
 ### J3. Referrer: unlocking
 1. The 10th qualified referral arrives. In the same transaction, the server assigns one reward code from the pool.
@@ -112,7 +112,7 @@ All collections are **server-write only**. A client can read only its own record
 {
   uid,                        // the referrer's Firebase uid (anonymous or Apple)
   code: 'K7MQ2XPA',
-  target: 10,                 // locked when they enroll (D3)
+  target: 5,                  // locked when they enroll (D3)
   count: 4,                   // qualified referrals; ALWAYS == creditedCount below
   status: 'active' | 'unlocked' | 'unlocked_pending_code',
   createdAt, updatedAt,
@@ -156,10 +156,10 @@ No client access. Filled by the admin import script (§10).
 
 ### `referralConfig/current`
 ```js
-{ enabled: true, target: 10, windowDays: 14, dailyCap: 5, minCodeValidityDays: 30 }
+{ enabled: true, target: 5, windowDays: 14, dailyCap: 5, minCodeValidityDays: 30 }
 ```
 Read by functions only. If the document is missing, functions use built-in
-defaults equal to the values above, with `enabled: false`.
+defaults equal to the values above, with `enabled: false` and `target: 5`.
 
 ### `referralRateLimits/{uid|bucket}`
 Same sliding-window shape as `standRateLimits`.

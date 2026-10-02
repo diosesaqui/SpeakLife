@@ -24,7 +24,7 @@ pattern.
 | FCM | Stub `getMessaging()` before the module loads (same code as the Stand tests). Assert on the `sent[]` array. |
 | DeviceCheck | Injected verifier: `H.setDeviceCheck(fake)`. The fake keeps a `Map<token, {bit0, bit1}>` and can be told to throw (Apple down). Production uses the real Apple client, constructed lazily so tests never need the key. |
 | Clock | `H.setNow(fn)`, which every function in `referral.js` reads instead of `Date.now()` directly. Windows and caps are tested by moving the clock, never by sleeping. |
-| Config | `beforeEach` writes `referralConfig/current = { enabled: true, target: 10, windowDays: 14, dailyCap: 5, minCodeValidityDays: 30 }`. Tests that need something else overwrite it. |
+| Config | `beforeEach` writes `referralConfig/current = { enabled: true, target: 5, windowDays: 14, dailyCap: 5, minCodeValidityDays: 30 }`. Tests that need something else overwrite it. |
 | Wipe | `beforeEach` clears `referrals` (including `credits`), `referralCodes`, `referralClaims`, `referralRewardCodes`, `referralConfig`, `referralRateLimits`, `users`, and resets `sent` and the fake DeviceCheck. |
 | Helpers | `req(uid, data)`, `expectCode(fn, code)`, already in the Stand tests and copied over. Plus new ones: `enroll(uid)`, `claim(friendUid, code, overrides)`, `seedPool(n, {expiresInDays})`, `creditN(referrerCode, n)`, which generates `n` distinct friends and devices. |
 
@@ -52,7 +52,7 @@ needs a collision stubs it through `H.setCodeGenerator`.
 | BE-HLP-12 | `pickRewardCode` when every code expires within `minValidityDays` | `null` |
 | BE-HLP-13 | `pickRewardCode` skips codes that are already assigned | ✓ |
 | BE-HLP-14 | `readConfig` when the document is missing | Defaults with `enabled: false` |
-| BE-HLP-15 | `readConfig` with a partial document | Missing fields get defaults. A non-integer `target` or a target below 1 falls back to 10. |
+| BE-HLP-15 | `readConfig` with a partial document | Missing fields get defaults. A non-integer `target` or a target below 1 falls back to 5. |
 | BE-HLP-16 | `mergeReferrals(a, b)` as a pure function | See the BE-MRG table, run on plain objects first |
 
 ---
@@ -65,7 +65,7 @@ needs a collision stubs it through `H.setCodeGenerator`.
 | BE-CFG-02 | `enabled: false`, existing record | Record returned unchanged |
 | BE-CFG-03 | `enabled: false`, `claimReferral` | `{outcome:'rejected', reason:'disabled'}`, **no** `referralClaims` document written (the claim isn't final, so it could still count if the switch comes back on within the window) |
 | BE-CFG-04 | `enabled: false`, unlocked referrer reads their record | Reward visible |
-| BE-CFG-05 | Config target changed from 10 to 5 after enrollment | Existing referrer stays at 10. A new enrollment gets 5. |
+| BE-CFG-05 | Config target changed from 5 to 3 after enrollment | Existing referrer stays at 5. A new enrollment gets 3. |
 
 ---
 
@@ -74,7 +74,7 @@ needs a collision stubs it through `H.setCodeGenerator`.
 | ID | Case | Expect |
 |---|---|---|
 | BE-ENR-01 | No auth | `unauthenticated` |
-| BE-ENR-02 | First call | Returns `{code, count:0, target:10, status:'active', reward:null}`. `referrals/{uid}` and `referralCodes/{code}` both exist and point at each other. |
+| BE-ENR-02 | First call | Returns `{code, count:0, target:5, status:'active', reward:null}`. `referrals/{uid}` and `referralCodes/{code}` both exist and point at each other. |
 | BE-ENR-03 | Second call | Same code, no new `referralCodes` document (count the collection) |
 | BE-ENR-04 | Two calls at once for the same uid (`Promise.all`) | Exactly one code exists, and both responses return it |
 | BE-ENR-05 | Code collision: the generator stubbed to return an existing code once, then a fresh one | Second code used, the first referrer's mapping untouched |
@@ -150,7 +150,7 @@ otherwise. "Final" means a `referralClaims/{friendUid}` document is written.
 | BE-CLM-26 | Setting bit 0 fails after the credit is written | Claim still returns `credited`. Retry queued. The sweep sets the bit later (BE-SWP-03). |
 | BE-CLM-27 | R has no `fcmToken` | Credited, no push, no error |
 | BE-CLM-28 | FCM send throws | Credited, error logged, not passed back to the friend |
-| BE-CLM-29 | Push body | Contains the count and target ("4 of 10"), no friend data |
+| BE-CLM-29 | Push body | Contains the count and target ("2 of 5"), no friend data |
 
 ---
 
@@ -158,13 +158,13 @@ otherwise. "Final" means a `referralClaims/{friendUid}` document is written.
 
 | ID | Case | Expect |
 |---|---|---|
-| BE-RWD-01 | 10th credit with the pool seeded | In the **same transaction**: `status:'unlocked'`, `unlockedAt` set, `reward.code` assigned, the pool document has `assignedTo: R`. One "credit" push and one "unlocked" push (or one combined; pick one and assert it). |
-| BE-RWD-02 | 9th credit | No reward, status `active` |
-| BE-RWD-03 | 10th credit with the pool empty | `status:'unlocked_pending_code'`, `reward: null`, the claim still `credited` |
-| BE-RWD-04 | 10th credit when only codes expiring within 30 days remain | Same as BE-RWD-03 |
-| BE-RWD-05 | Two referrers hit their 10th credit at once, pool holds **one** code | One gets the code, the other gets `unlocked_pending_code`. The code is never assigned twice. |
+| BE-RWD-01 | Final credit (count reaches target) with the pool seeded | In the **same transaction**: `status:'unlocked'`, `unlockedAt` set, `reward.code` assigned, the pool document has `assignedTo: R`. One "credit" push and one "unlocked" push (or one combined; pick one and assert it). |
+| BE-RWD-02 | Credit that leaves count at target − 1 | No reward, status `active` |
+| BE-RWD-03 | Final credit with the pool empty | `status:'unlocked_pending_code'`, `reward: null`, the claim still `credited` |
+| BE-RWD-04 | Final credit when only codes expiring within 30 days remain | Same as BE-RWD-03 |
+| BE-RWD-05 | Two referrers hit their final credit at once, pool holds **one** code | One gets the code, the other gets `unlocked_pending_code`. The code is never assigned twice. |
 | BE-RWD-06 | R's `users` document shows a premium subscriber (D7) | Still unlocked and assigned |
-| BE-RWD-07 | 11th claim after unlocking | `target_reached` (BE-CLM-10). The reward isn't changed. |
+| BE-RWD-07 | Claim after unlocking after unlocking | `target_reached` (BE-CLM-10). The reward isn't changed. |
 | BE-RWD-08 | `reissueReferralReward` while unlocked | New code. The old code marked `retired: true` and never assigned again. `reissueCount: 1`. |
 | BE-RWD-09 | Second `reissueReferralReward` | `resource-exhausted`, reward unchanged |
 | BE-RWD-10 | `reissueReferralReward` while not unlocked | `failed-precondition` |
@@ -201,7 +201,7 @@ prove the merge is idempotent.
 | BE-MRG-04 | Both have one, and the union reaches the target | Unlocked and a code assigned during the merge |
 | BE-MRG-05 | A unlocked with a reward, P active | P is unlocked with A's reward |
 | BE-MRG-06 | Both have rewards | Earlier one kept. The other goes back to the pool only if assigned less than 24h ago, otherwise it's retired. |
-| BE-MRG-07 | Different targets (10 and 5) | Lower one kept |
+| BE-MRG-07 | Different targets (5 and 3) | Lower one kept |
 | BE-MRG-08 | A friend claim using A's old code after the merge | Credited to P |
 | BE-MRG-09 | Merge with neither having a referral | No referral documents created |
 | BE-MRG-10 | Existing Stand merge tests | Still pass, unchanged |
@@ -268,7 +268,7 @@ unit-level rows miss.
 
 | ID | Scenario |
 |---|---|
-| BE-E2E-01 | R enrolls, 10 distinct friends claim over 3 simulated days (velocity cap respected: 5, 5), R unlocks, reads the record and sees the code, an 11th friend gets `target_reached`. |
+| BE-E2E-01 | With config `target: 10`: R enrolls, 10 distinct friends claim over 3 simulated days (velocity cap respected: 5, 5), R unlocks, reads the record and sees the code, an 11th friend gets `target_reached`. |
 | BE-E2E-02 | A farm: one device token used for 10 different friend uids. Exactly one is credited, nine get `device_already_counted`. |
 | BE-E2E-03 | Self-farm: R's own device token (bit 1) used by 10 new uids. Zero credited. |
 | BE-E2E-04 | R enrolls anonymously, gets 6 credits, signs in with Apple (merge), gets 4 more. Unlocks under P. |

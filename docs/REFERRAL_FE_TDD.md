@@ -188,7 +188,7 @@ States: `loading`, `notEnrolled`, `enrolling`, `active(count,target,code)`,
 | FE-PAG-15 | `unlocked` | tap "My code didn't work", reissue succeeds | `unlocked(newCode)` |
 | FE-PAG-16 | `unlocked` | reissue returns `resource-exhausted` | `unlocked(oldCode)` plus the message "Contact support". Support email prefilled with the last 4 of the code. |
 | FE-PAG-17 | any | snapshot with `count > target` (should be impossible) | Shown as `target/target`, no crash |
-| FE-PAG-18 | any | snapshot with `target == 0` or missing | Treated as 10 (matches the server default) |
+| FE-PAG-18 | any | snapshot with `target == 0` or missing | Treated as 5 (matches the server default) |
 | FE-PAG-19 | `error(retryable)` | tap Retry | `enrolling` |
 
 ---
@@ -276,18 +276,18 @@ Remote Config debug override.
 |---|---|---|
 | FE-QA-01 | Phone A finishes onboarding and closes the paywall | Referral page appears once. Doesn't reappear on relaunch. |
 | FE-QA-02 | A shares to Messages; phone B (no app) taps the link | Safari, then the App Store, install, onboarding normal, no referral UI on B |
-| FE-QA-03 | B finishes onboarding | A gets a push "1 of 10" within a minute. A's page shows 1/10. |
+| FE-QA-03 | B finishes onboarding | A gets a push "1 of 5" within a minute. A's page shows 1/5. |
 | FE-QA-04 | B deletes and reinstalls, taps the link again, finishes onboarding | A stays at 1 |
 | FE-QA-05 | Phone C already has SpeakLife and taps A's link | App opens, nothing counted |
 | FE-QA-06 | B's link capture fails (install without the link), then B uses "Have an invite code?" | Counted |
-| FE-QA-07 | Sandbox: A reaches 10 (target set to 2 in the server config for QA), redeems | Apple sheet prefilled. After confirming, Premium on within a minute, RevenueCat shows the `premium` entitlement with a year's expiry. Repeat on a sandbox account that's **already subscribed** (D7) and record what Apple does. |
+| FE-QA-07 | Sandbox: A reaches 10 (target set to 2 in the server config for QA; production default is 5), redeems | Apple sheet prefilled. After confirming, Premium on within a minute, RevenueCat shows the `premium` entitlement with a year's expiry. Repeat on a sandbox account that's **already subscribed** (D7) and record what Apple does. |
 | FE-QA-08 | Redeem the same code on a second Apple ID | Apple refuses. "My code didn't work" gives a new code once. |
 | FE-QA-09 | Airplane mode on A, open the page | Cached progress shown, Invite shows a retryable error |
 | FE-QA-10 | A signs in with Apple on the Prayer Wall after 1 credit | Progress kept (merge) |
 | FE-QA-11 | Server switch off | Invite gives "Not available right now". An existing unlocked reward is still redeemable. |
 | FE-QA-12 | Hard paywall with `referralOnHardPaywall` on | Link visible. Page opens over the paywall. Closing returns to the paywall. |
 | FE-QA-13 | Each onboarding arm (product, identity, quiz, closer, direct, storm, and one angle arm) | Page appears after a decline in each. Storm's objection flow finishes first. |
-| FE-QA-14 | VoiceOver and Dynamic Type at the largest size | All text readable, buttons reachable, progress announced as "4 of 10 friends joined" |
+| FE-QA-14 | VoiceOver and Dynamic Type at the largest size | All text readable, buttons reachable, progress announced as "2 of 5 friends joined" |
 | FE-QA-15 | Stand invite link and referral page at once | Stand join first. Referral page still in Profile. |
 
 ---
