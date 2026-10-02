@@ -111,7 +111,7 @@ public struct ReferralEligibilityInput: Equatable {
 public enum ReferralEligibility {
   public static let inviteCodeEntryWindowDays: Int   // 14   ADDED
   public static func shouldAutoShow(_ input: ReferralEligibilityInput) -> Bool
-  public static func showsProfileRow(flagEnabled: Bool, snapshot: ReferralSnapshot?, isPremium: Bool) -> Bool
+  public static func showsProfileRow(flagEnabled: Bool, snapshot: ReferralSnapshot?, isPremium: Bool, rewardRedeemed: Bool = false) -> Bool
   public static func showsInviteCodeEntry(isOnboarded: Bool, firstLaunchAt: Date?, now: Date, hasPending: Bool, isFinal: Bool) -> Bool
   public static func showsHardPaywallLink(flagEnabled: Bool, hardPaywallFlag: Bool, isHardPaywall: Bool) -> Bool
 }
@@ -245,7 +245,7 @@ the agreed contract compiles unchanged.
   other than `.active` (FE-ENT-08).
 - It is pure. Set `referralAutoShown` only when the page is actually
   presented, so a Stand code taking the turn does not burn it (FE-ENT-05).
-- `showsProfileRow`: hidden when `isPremium && snapshot.reward != nil`
+- `showsProfileRow`: hidden only when `isPremium && rewardRedeemed && snapshot.reward != nil`. The app persists `rewardRedeemed` when the page reaches `.redeemed`.
   (FE-ENT-12, "redeemed"); otherwise shown when the status is `.unlocked` or
   `.unlockedPendingCode` even with the flag off (FE-FLG-02); otherwise follows
   the flag. **Spec ambiguity worth a product call:** a D7 user (subscribed

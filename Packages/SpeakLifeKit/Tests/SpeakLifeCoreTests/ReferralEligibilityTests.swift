@@ -120,8 +120,17 @@ final class ReferralEligibilityTests: XCTestCase {
     }
 
     func test_FE_ENT_12_profileRowHiddenOnceRedeemed() {
-        XCTAssertFalse(ReferralEligibility.showsProfileRow(flagEnabled: true, snapshot: snapshot(.unlocked, reward: true), isPremium: true))
-        XCTAssertFalse(ReferralEligibility.showsProfileRow(flagEnabled: false, snapshot: snapshot(.unlocked, reward: true), isPremium: true))
+        XCTAssertFalse(ReferralEligibility.showsProfileRow(flagEnabled: true, snapshot: snapshot(.unlocked, reward: true),
+                                                           isPremium: true, rewardRedeemed: true))
+        XCTAssertFalse(ReferralEligibility.showsProfileRow(flagEnabled: false, snapshot: snapshot(.unlocked, reward: true),
+                                                           isPremium: true, rewardRedeemed: true))
+    }
+
+    /// D7: subscribed before unlocking, code not yet redeemed. Premium plus a
+    /// reward must NOT hide an earned reward.
+    func test_FE_ENT_12b_premiumWithUnredeemedRewardKeepsRow() {
+        XCTAssertTrue(ReferralEligibility.showsProfileRow(flagEnabled: true, snapshot: snapshot(.unlocked, reward: true), isPremium: true))
+        XCTAssertTrue(ReferralEligibility.showsProfileRow(flagEnabled: false, snapshot: snapshot(.unlocked, reward: true), isPremium: true))
     }
 
     func test_FE_ENT_13_inviteCodeEntryWithinFourteenDays() {

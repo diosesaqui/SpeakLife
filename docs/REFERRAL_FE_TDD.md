@@ -142,7 +142,8 @@ Inputs: `flagEnabled`, `hardPaywallFlag`, `isDebugReplay`, `converted`,
 |---|---|---|
 | FE-ENT-10 | Flag on, no record | "Get a year free" shown |
 | FE-ENT-11 | Flag on, active or unlocked | Shown |
-| FE-ENT-12 | Redeemed (premium active and a reward exists) | Hidden |
+| FE-ENT-12 | Redeemed (this device saw the page reach `redeemed`) | Hidden |
+| FE-ENT-12b | Premium with an unredeemed reward (subscribed before unlocking, D7) | Shown (an earned reward is never hidden) |
 | FE-ENT-13 | "Have an invite code?" within 14 days of first launch, no pending code, never claimed, onboarded | Shown |
 | FE-ENT-14 | ...day 15, or pending present, or claimed, or not onboarded | Hidden |
 

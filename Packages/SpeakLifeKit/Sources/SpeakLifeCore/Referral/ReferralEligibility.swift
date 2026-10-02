@@ -68,9 +68,15 @@ public enum ReferralEligibility {
     /// - Reward earned (unlocked, with or without a code yet): shown even with
     ///   the flag off (FE-FLG-02).
     /// - Otherwise: follows the flag (FE-ENT-10, FE-ENT-11).
-    public static func showsProfileRow(flagEnabled: Bool, snapshot: ReferralSnapshot?, isPremium: Bool) -> Bool {
+    ///
+    /// Hidden only once this device has SEEN the reward redeemed
+    /// (`rewardRedeemed`, set when the page reaches `.redeemed`). Premium plus a
+    /// reward is not enough: someone who subscribed before unlocking (D7) is
+    /// premium with an unredeemed code, and an earned reward is never hidden.
+    public static func showsProfileRow(flagEnabled: Bool, snapshot: ReferralSnapshot?, isPremium: Bool,
+                                       rewardRedeemed: Bool = false) -> Bool {
         if let snapshot = snapshot {
-            if isPremium && snapshot.reward != nil { return false }
+            if isPremium && rewardRedeemed && snapshot.reward != nil { return false }
             if snapshot.status == .unlocked || snapshot.status == .unlockedPendingCode { return true }
         }
         return flagEnabled
