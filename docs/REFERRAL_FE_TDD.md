@@ -281,6 +281,8 @@ The app half of BE-JRN / BE-CON. See the backend plan §12b for why these exist.
 | FE-JRN-01 | Friend: deferred link before onboarding → no claim during onboarding → first claim with no token gets retry_later and stays pending → foreground 10 min later is throttled → an hour later credited and final. Asserts `capturedAt` is the first-launch time, not the claim time. |
 | FE-CON-01 | The server's push payload (`referral_push_fixture.json`, asserted server-side by BE-CON-01) is recognised by `ReferralPush.isReferral`, which the notification handler routes on |
 | FE-CON-02 | Other pushes are not referral pushes |
+| FE-PND-11..14 | Window is capture→onboarding; 30-day claim grace after; `markOnboarded` stamps once |
+| FE-PAG-14e/f | Redemption inferred on reload (not premium at the tap, premium now), event fires once; never inferred for someone premium at the tap |
 
 ## 11. Device QA matrix (manual, before release)
 

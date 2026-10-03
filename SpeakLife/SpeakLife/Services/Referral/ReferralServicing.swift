@@ -55,6 +55,9 @@ struct ReferralClaimRequest: Equatable {
     let source: ReferralSource
     let deviceToken: String?
     let isDevelopment: Bool
+    /// When onboarding finished. The server's window (D8) is capture to
+    /// onboarding, so a claim retried days later still counts.
+    var onboardedAt: Date? = nil
 
     var payload: [String: Any] {
         var body: [String: Any] = [
@@ -64,6 +67,9 @@ struct ReferralClaimRequest: Equatable {
             "isDevelopment": isDevelopment,
         ]
         if let deviceToken { body["deviceToken"] = deviceToken }
+        if let onboardedAt {
+            body["onboardedAt"] = Int64((onboardedAt.timeIntervalSince1970 * 1000).rounded())
+        }
         return body
     }
 }

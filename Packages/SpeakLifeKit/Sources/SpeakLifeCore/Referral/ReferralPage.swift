@@ -68,13 +68,27 @@ public struct ReferralPageMemory: Equatable {
     /// enough (a D7 subscriber who backs out of Apple's sheet still holds an
     /// unredeemed code).
     public var rewardRedeemed: Bool
+    /// Premium as it stood at the redeem tap. `false` then premium later is
+    /// the redemption, however long after and whether or not the page was on
+    /// screen (the App Store round trip often kills the app). `nil` when no
+    /// tap was recorded by a build that stored this.
+    public var premiumAtRedeemTap: Bool?
 
     public init(lastSeenCount: Int = 0, rewardUnlockedSeen: Bool = false, lastRedeemTapAt: Date? = nil,
-                rewardRedeemed: Bool = false) {
+                rewardRedeemed: Bool = false, premiumAtRedeemTap: Bool? = nil) {
         self.lastSeenCount = lastSeenCount
         self.rewardUnlockedSeen = rewardUnlockedSeen
         self.lastRedeemTapAt = lastRedeemTapAt
         self.rewardRedeemed = rewardRedeemed
+        self.premiumAtRedeemTap = premiumAtRedeemTap
+    }
+
+    /// Redeemed, as best the device can tell: seen happen, or premium now
+    /// where it was not at the redeem tap. A D7 subscriber (premium at the
+    /// tap) is never inferred redeemed, so their code is never hidden.
+    public func isRedeemed(isPremium: Bool) -> Bool {
+        if rewardRedeemed { return true }
+        return isPremium && lastRedeemTapAt != nil && premiumAtRedeemTap == false
     }
 }
 
@@ -134,6 +148,7 @@ public enum ReferralPageReducer {
         case .redeemTapped(let at):
             guard case .unlocked(_, let reward, _) = state else { return (state, []) }
             memory.lastRedeemTapAt = at
+            memory.premiumAtRedeemTap = isPremium
             return (state, [
                 .track(event: AnalyticsEvent.redeemTapped, properties: [:]),
                 .openRedeem(code: reward.code),
@@ -214,7 +229,12 @@ public enum ReferralPageReducer {
             next = .active(count: shown, target: target, code: snapshot.code)
         case .unlocked:
             if let reward = snapshot.reward {
-                if memory.rewardRedeemed {
+                if memory.isRedeemed(isPremium: isPremium) {
+                    if !memory.rewardRedeemed {
+                        // Redeemed while the page was closed: record it now.
+                        memory.rewardRedeemed = true
+                        effects.append(.track(event: AnalyticsEvent.rewardRedeemed, properties: [:]))
+                    }
                     next = .redeemed
                 } else {
                     next = .unlocked(code: snapshot.code, reward: reward, alreadyPremium: isPremium)

@@ -448,6 +448,10 @@ final class AppDelegate: NSObject, MessagingDelegate {
         // get a real value instead of an empty string.
         UserDefaults.standard.set(token, forKey: "fcmToken")
 
+        // Server pushes (stand nudges, referral progress) read the token off
+        // users/{uid}. Rotation used to update only the local cache above.
+        Task { @MainActor in await StandAuthCoordinator.shared.syncPushToken(token) }
+
         // Subscribe every device to the broadcast topic so server-sent
         // announcements / personalized messages can reach the whole user base
         // without needing a per-user token store. Safe to call repeatedly.

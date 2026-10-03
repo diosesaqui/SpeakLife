@@ -70,8 +70,14 @@ function buildJwt({ keyP8, keyId, teamId, nowSec }) {
   return `${signingInput}.${b64url(sig)}`;
 }
 
+/**
+ * Only Apple's bad-device-token 400 is a verdict on the device. Every other
+ * 400 (malformed timestamp or payload, a development token sent to the
+ * production host) is a problem on OUR side, and treating it as final would
+ * permanently burn real friends, so it is `unavailable` and retried.
+ */
 function failure(status, text) {
-  if (status === 400) {
+  if (status === 400 && /device token/i.test(String(text))) {
     return new DeviceCheckError('invalid_token', `DeviceCheck 400: ${String(text).slice(0, 120)}`);
   }
   return new DeviceCheckError('unavailable', `DeviceCheck ${status}: ${String(text).slice(0, 120)}`);

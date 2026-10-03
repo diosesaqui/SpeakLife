@@ -334,13 +334,18 @@ test('BE-HLP-13 pickRewardCode skips assigned and retired codes', () => {
 
 test('BE-HLP-14 readConfig with no document is the defaults, switched off', () => {
   assert.deepStrictEqual(H.readConfig(undefined), {
-    enabled: false, target: 5, windowDays: 14, dailyCap: 5, minCodeValidityDays: 30,
+    enabled: false, target: 5, windowDays: 14, dailyCap: 3, minCodeValidityDays: 30, claimGraceDays: 30,
   });
+});
+
+test('BE-HLP-14b the default daily cap is below the default target, so it can actually fire', () => {
+  const c = H.readConfig(undefined);
+  assert.ok(c.dailyCap < c.target, `dailyCap ${c.dailyCap} must be < target ${c.target}`);
 });
 
 test('BE-HLP-15 readConfig fills missing fields and rejects a bad target', () => {
   assert.deepStrictEqual(H.readConfig({ enabled: true, target: 3 }), {
-    enabled: true, target: 3, windowDays: 14, dailyCap: 5, minCodeValidityDays: 30,
+    enabled: true, target: 3, windowDays: 14, dailyCap: 3, minCodeValidityDays: 30, claimGraceDays: 30,
   });
   for (const bad of [0, -1, 2.5, '3', null, NaN]) {
     assert.strictEqual(H.readConfig({ enabled: true, target: bad }).target, 5, `target ${bad}`);
@@ -370,7 +375,7 @@ test('BE-HLP-16 mergeReferrals: only the source, record re-keyed to the target',
   assert.strictEqual(plan.record.count, 2);
   assert.deepStrictEqual(Object.keys(plan.credits).sort(), ['f1', 'f2']);
   assert.strictEqual(plan.keepCode, 'AAAAAAAA');
-  assert.strictEqual(plan.revokeCode, null);
+  assert.strictEqual(plan.aliasCode, null);
 });
 
 test('BE-HLP-16 mergeReferrals: only the target, nothing to do', () => {
@@ -383,7 +388,7 @@ test('BE-HLP-16 mergeReferrals: both, credits unioned, the code with more credit
   assert.strictEqual(plan.record.count, 4);
   assert.deepStrictEqual(Object.keys(plan.credits).sort(), ['f1', 'f2', 'f3', 'f4']);
   assert.strictEqual(plan.keepCode, 'AAAAAAAA');
-  assert.strictEqual(plan.revokeCode, 'PPPPPPPP');
+  assert.strictEqual(plan.aliasCode, 'PPPPPPPP', 'the other code stays live as an alias');
   assert.strictEqual(plan.record.code, 'AAAAAAAA');
   assert.strictEqual(plan.record.uid, 'P');
   assert.strictEqual(plan.needsRewardCode, false);
@@ -505,7 +510,12 @@ test('DeviceCheck query parsing: 400 is an invalid token, anything else is Apple
   assert.strictEqual(kind(500, ''), 'unavailable');
   assert.strictEqual(kind(200, 'something unexpected'), 'unavailable');
   assert.strictEqual(DC.parseUpdateResponse(200, ''), true);
-  assert.throws(() => DC.parseUpdateResponse(400, 'bad'), (e) => e.kind === 'invalid_token');
+  assert.throws(() => DC.parseUpdateResponse(400, 'Missing or incorrectly formatted device token payload'),
+    (e) => e.kind === 'invalid_token');
+  // Any other 400 is a request or environment problem on OUR side (bad
+  // timestamp, dev token sent to production) and must never burn a friend.
+  assert.strictEqual(kind(400, 'Missing or incorrectly formatted payload'), 'unavailable');
+  assert.throws(() => DC.parseUpdateResponse(400, 'bad'), (e) => e.kind === 'unavailable');
   assert.throws(() => DC.parseUpdateResponse(503, ''), (e) => e.kind === 'unavailable');
 });
 
@@ -810,11 +820,20 @@ test('BE-CLM-09 friend uid is the referrer: self_referral, final', async () => {
   await expectRejected(await claim('R', code), 'self_referral', { friend: 'R' });
 });
 
-test('BE-CLM-10 referrer already at target: target_reached, final', async () => {
+test('BE-CLM-10 referrer already at target: target_reached, NOT final, another referrer can still get them', async () => {
   const { code } = await enroll('R');
   await creditN(code, 5);
   sent.length = 0;
-  await expectRejected(await claim('late', code), 'target_reached', { friend: 'late', count: 5 });
+  await expectRejected(await claim('late', code), 'target_reached', { friend: 'late', count: 5, final: false });
+  const other = await enroll('R2');
+  assert.deepStrictEqual(await claim('late', other.code), { outcome: 'credited' });
+});
+
+test('BE-CLM-10b referrer record vanished between code lookup and transaction (a merge): retry_later, not final', async () => {
+  const { code } = await enroll('R');
+  await db.collection('referrals').doc('R').delete();
+  assert.deepStrictEqual(await claim('f1', code), { outcome: 'retry_later' });
+  assert.strictEqual((await claimDoc('f1')).exists, false);
 });
 
 test('BE-CLM-12 malformed code: invalid_code, NOT final, a corrected code still credits', async () => {
@@ -1327,7 +1346,7 @@ test('BE-MRG-02 only P has one: unchanged', async () => {
   assert.deepStrictEqual(await referralState(), before);
 });
 
-test('BE-MRG-03 both, {f1,f2} and {f2,f3}: count 3, one code kept, the other revoked', async () => {
+test('BE-MRG-03 both, {f1,f2} and {f2,f3}: count 3, one code shown, the other kept live as an alias', async () => {
   await seedReferral(A, 'AAAAAAAA', ['f1', 'f2']);
   await seedReferral(P, 'PPPPPPPP', ['f2', 'f3']);
   await mergeTwice();
@@ -1336,12 +1355,17 @@ test('BE-MRG-03 both, {f1,f2} and {f2,f3}: count 3, one code kept, the other rev
   assert.deepStrictEqual(await credits(P), ['f1', 'f2', 'f3']);
   // A tie keeps the signed-in account's own code.
   assert.strictEqual(rec.code, 'PPPPPPPP');
-  assert.strictEqual((await db.collection('referralCodes').doc('AAAAAAAA').get()).data().revoked, true);
+  const alias = (await db.collection('referralCodes').doc('AAAAAAAA').get()).data();
+  assert.strictEqual(alias.revoked, false, 'friends already sent this code must still count');
+  assert.strictEqual(alias.uid, P);
   assert.strictEqual((await db.collection('referralCodes').doc('PPPPPPPP').get()).data().revoked, false);
   assert.strictEqual((await db.collection('referrals').doc(A).get()).exists, false);
+  // A friend holding the alias is credited to the merged record.
+  assert.deepStrictEqual(await claim('f9', 'AAAAAAAA'), { outcome: 'credited' });
+  assert.strictEqual((await referral(P)).count, 4);
 });
 
-test('BE-MRG-03 both, A has more credits: A\'s code kept and repointed, P\'s revoked', async () => {
+test('BE-MRG-03 both, A has more credits: A\'s code shown and repointed, P\'s kept as an alias', async () => {
   await seedReferral(A, 'AAAAAAAA', ['f1', 'f2', 'f4']);
   await seedReferral(P, 'PPPPPPPP', ['f2', 'f3']);
   await mergeTwice();
@@ -1349,7 +1373,9 @@ test('BE-MRG-03 both, A has more credits: A\'s code kept and repointed, P\'s rev
   assert.strictEqual(rec.count, 4);
   assert.strictEqual(rec.code, 'AAAAAAAA');
   assert.strictEqual((await db.collection('referralCodes').doc('AAAAAAAA').get()).data().uid, P);
-  assert.strictEqual((await db.collection('referralCodes').doc('PPPPPPPP').get()).data().revoked, true);
+  const alias = (await db.collection('referralCodes').doc('PPPPPPPP').get()).data();
+  assert.strictEqual(alias.revoked, false);
+  assert.strictEqual(alias.uid, P);
 });
 
 test('BE-MRG-04 the union reaches the target: unlocked and a code assigned in the merge', async () => {
@@ -1772,4 +1798,30 @@ test('BE-CON-01 referral push data equals the shared fixture the app routes on',
   await claim('f1', code);
   assert.strictEqual(sent.length, 1);
   assert.deepStrictEqual(sent[0].data, PUSH_FIXTURE);
+});
+
+
+test('BE-JRN-07 friend finishes onboarding on day 12, first claim fails, app reopened day 15: credited', async () => {
+  const { code } = await enroll('R');
+  const capturedAt = now;
+  advance(12 * DAY);
+  const onboardedAt = now;
+  dc.down = true;
+  assert.deepStrictEqual(await claim('f1', code, { capturedAt, onboardedAt }), { outcome: 'retry_later' });
+  dc.down = false;
+  advance(3 * DAY);
+  assert.deepStrictEqual(await claim('f1', code, { capturedAt, onboardedAt }), { outcome: 'credited' });
+});
+
+test('BE-HLP-17 validateWindow: onboarding must finish within windowDays of capture; claim within the grace', () => {
+  const cfg = { windowDays: 14, claimGraceDays: 30 };
+  const W = (cap, onb, nowMs) => H.validateWindow(cap, onb, nowMs, cfg);
+  assert.strictEqual(W(T0 - 20 * DAY, T0 - 10 * DAY, T0), 'ok');               // onboarded day 10, claimed day 20
+  assert.strictEqual(W(T0 - 20 * DAY, T0 - 5 * DAY, T0), 'expired');           // onboarded day 15: too late
+  assert.strictEqual(W(T0 - 40 * DAY, T0 - 31 * DAY, T0), 'expired');          // past the claim grace
+  assert.strictEqual(W(T0 - DAY, T0 + 10 * 60000, T0), 'expired');             // onboarded in the future
+  assert.strictEqual(W(T0 - DAY, T0 - 2 * DAY, T0), 'expired');                // onboarded before capture
+  assert.strictEqual(W(T0 - DAY, undefined, T0), 'ok');                        // no onboardedAt: measured to now
+  assert.strictEqual(W(T0 - 15 * DAY, undefined, T0), 'expired');
+  assert.strictEqual(W(T0 - DAY, 'x', T0), 'invalid_argument');
 });

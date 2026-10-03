@@ -212,6 +212,9 @@ final class ReferralClaimCoordinator {
         case .claim:
             break
         }
+        // `.claim` is only ever decided once onboarding has finished, so this
+        // is the moment to stamp it (once; a later retry keeps the first).
+        pending.markOnboarded()
         guard let current = pending.pending else { return nil }
 
         inFlight = true
@@ -232,7 +235,8 @@ final class ReferralClaimCoordinator {
                 capturedAt: current.capturedAt,
                 source: current.source,
                 deviceToken: token,
-                isDevelopment: deviceToken.isDevelopment))
+                isDevelopment: deviceToken.isDevelopment,
+                onboardedAt: current.onboardedAt))
         } catch {
             // Kept for the next foreground (FE-VM-12). Never shown to the
             // friend: they did not ask for any of this.

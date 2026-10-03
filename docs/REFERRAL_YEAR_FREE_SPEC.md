@@ -64,8 +64,8 @@ one means changing the tests listed next to it.
 | D5 | Welcome discount offer | **(default)** Unchanged. The welcome offer still appears after the first Daily Burst. The two don't conflict: one is a discount, the other is free. | FE-ENT-09 |
 | D6 | Reward for the friend | **(default)** None in v1. | — |
 | D7 | Referrer subscribes before reaching the target | **(default)** Keep counting, and still issue the code at the target. The App Store Connect offer is eligible for new, existing and expired subscribers, so the code always redeems. To confirm in sandbox: an existing subscriber's free year applies from their next renewal. | BE-RWD-06, FE-QA-07 |
-| D8 | Attribution window | **(default)** The friend must finish onboarding within 14 days of the link being captured. | BE-CLM-08, FE-CLM-06 |
-| D9 | Velocity cap | **(default)** At most 5 qualified referrals per referrer per rolling 24 hours. Anything over the cap gets `retry_later`, and the friend's app retries on later launches. | BE-CLM-11 |
+| D8 | Attribution window | **(default)** The friend must finish onboarding within 14 days of the link being captured, and the claim then has 30 days (`claimGraceDays`) to reach the server. The app sends `onboardedAt` with the claim. Measuring capture-to-claim instead lost friends who onboarded late in the window and hit a transient failure. | BE-CLM-08, FE-CLM-06 |
+| D9 | Velocity cap | **(default)** At most 3 qualified referrals per referrer per rolling 24 hours. **Must stay below the target**: the target check runs first, so a cap at or above it can never fire (BE-HLP-14b). Anything over the cap gets `retry_later`, and the friend's app retries on later launches. | BE-CLM-11 |
 | D10 | Kill switch | Client: Remote Config `referralYearFreeEnabled` (default `false`) hides all referral UI. Server: `referralConfig/current.enabled` rejects new enrollments and claims. Rewards already unlocked are always readable. | BE-CFG-*, FE-FLG-* |
 
 ## 5. User journeys
@@ -156,7 +156,7 @@ No client access. Filled by the admin import script (§10).
 
 ### `referralConfig/current`
 ```js
-{ enabled: true, target: 5, windowDays: 14, dailyCap: 5, minCodeValidityDays: 30 }
+{ enabled: true, target: 5, windowDays: 14, dailyCap: 3, minCodeValidityDays: 30, claimGraceDays: 30 }
 ```
 Read by functions only. If the document is missing, functions use built-in
 defaults equal to the values above, with `enabled: false` and `target: 5`.
@@ -197,7 +197,7 @@ first failure decides the `reason`.
 | 7 | Friend isn't the referrer (uid) | `self_referral` | Drop |
 | 8 | Captured within the window (D8), per the client-reported capture time. The server also rejects capture times in the future. It does **not** compare against the friend's account creation time: the app creates that account after onboarding, so a first-launch capture always predates it. | `expired` | Drop |
 | 9 | DeviceCheck: the device has never been counted (bit 0 clear) and has never enrolled as a referrer (bit 1 clear), unless that enrollment was this same friend's own (they opened the referral page before their claim was sent). No token at all is a client failure and returns `retry_later`, not final. | `device_already_counted` / `device_is_referrer` | Drop |
-| 10 | Referrer hasn't reached the target yet | `target_reached`, still recorded so the claim is final | Drop |
+| 10 | Referrer hasn't reached the target yet | `target_reached`, **not** final: the friend can still count for someone else who invited them | Drop this code |
 | 11 | Referrer is under the velocity cap (D9) | `retry_later`, **not** recorded as final | Keep the pending claim, retry |
 | 12 | DeviceCheck service reachable | `retry_later` | Keep, retry |
 
@@ -235,7 +235,7 @@ All functions are callable (`onCall`) unless stated otherwise. Errors use
 response is `null` or `{ code, assignedAt, expiresAt, reissueCount }` with both
 times in epoch milliseconds. The response never carries credits or friend uids.
 
-### 8.2 `claimReferral({ code, capturedAt, source, deviceToken, isDevelopment? })` → `{ outcome, reason? }`
+### 8.2 `claimReferral({ code, capturedAt, onboardedAt?, source, deviceToken, isDevelopment? })` → `{ outcome, reason? }`
 - `outcome` is one of `credited`, `rejected` or `retry_later`. Order of checks as in §7.
 - `capturedAt` is epoch **milliseconds**. A value below 1e11 is read as seconds, so `Date().timeIntervalSince1970` also works.
 - `isDevelopment: true` sends DeviceCheck calls to Apple's development host. Debug builds installed from Xcode set it; TestFlight and App Store builds omit it (they use Apple's production environment).
@@ -256,7 +256,7 @@ times in epoch milliseconds. The response never carries credits or friend uids.
 ### 8.6 Changes to existing functions in `standTogether.js`
 - **`completeAccountMerge`**: when an anonymous user signs in with Apple, move their referral record.
   - Only the source has one: re-key it to the target uid, and repoint `referralCodes/{code}.uid`.
-  - Both have one: union the credits, set `count` to the size of the union, keep the code with more credits (revoke the other), keep any reward already assigned (if both have one, keep the earlier one and retire the other: a code is redeemable the moment it is assigned, so it never goes back to the pool), and set `target` to the lower of the two.
+  - Both have one: union the credits, set `count` to the size of the union, show the code with more credits on the record and keep the other live as an alias for the same record (friends were already sent it; revoking it dropped them), keep any reward already assigned (if both have one, keep the earlier one and retire the other: a code is redeemable the moment it is assigned, so it never goes back to the pool), and set `target` to the lower of the two.
   - Must be idempotent, like the existing merge.
 - **`deleteAccount`**: delete `referrals/{uid}` and its credits, and revoke its `referralCodes`. Keep `referralClaims` documents where this uid was the friend (no personal data beyond uids; they stop reinstall farming).
 
@@ -362,3 +362,19 @@ exclude simulator traffic and don't count `paywall_shown` and
 - More than one reward per person.
 - Android.
 - RevenueCat promotional entitlement fallback (D2).
+
+
+## 15. Changes from the second review (spec rules that were wrong)
+
+| Rule | Was | Now | Why |
+|---|---|---|---|
+| D8 window | capture → claim ≤ 14 days | capture → onboarding ≤ 14 days, then 30-day claim grace | A late onboarder with one transient failure was lost |
+| D9 cap | 5/day with target 5 | 3/day, must be < target | The cap could never fire |
+| Merge | revoke the code with fewer credits | keep it live as an alias | Friends holding it were dropped |
+| `target_reached` | final | not final | A racing friend could never count for anyone else |
+| DeviceCheck 400 | every 400 is a bad device | only Apple's bad-device-token body | Our own request or environment bugs burned real friends |
+| Push token | written once at account creation | re-synced on every FCM token change | Reinstalls silently lost every referral push |
+| Redeemed | only seen while the page was open | also inferred: not premium at the redeem tap, premium now | The App Store round trip often kills the app |
+| Progress cache | refreshed only while the page was open | refreshed on every foreground | An earned reward could have no entry point |
+
+**Open (needs a product decision):** with the hard paywall on (`showPayWhatYouCanLink = false`), a friend who declines never finishes onboarding, so they never count. See the PR discussion.

@@ -67,24 +67,38 @@ public struct PendingReferral: Codable, Equatable, Sendable {
     /// Claim attempts so far. Sent as `attempt` in `referral_claim_result`.
     public var attempts: Int
     public var lastAttemptAt: Date?
+    /// When onboarding finished, stamped once by `markOnboarded()`. Sent with
+    /// the claim: the window (D8) is capture-to-onboarding, and the claim then
+    /// has `graceDays` to reach the server. Optional so values saved by an
+    /// earlier build still decode.
+    public var onboardedAt: Date?
 
     public init(code: String,
                 capturedAt: Date,
                 source: ReferralSource,
                 attempts: Int = 0,
-                lastAttemptAt: Date? = nil) {
+                lastAttemptAt: Date? = nil,
+                onboardedAt: Date? = nil) {
         self.code = code
         self.capturedAt = capturedAt
         self.source = source
         self.attempts = attempts
         self.lastAttemptAt = lastAttemptAt
+        self.onboardedAt = onboardedAt
     }
 
-    /// True once `now` is past `capturedAt` plus the window. Exactly at the
-    /// boundary is still inside (FE-PND-05).
-    public func isExpired(now: Date, windowDays: Int) -> Bool {
+    /// Before onboarding: past `capturedAt` plus the window. After: onboarding
+    /// finished outside the window, or the claim grace has run out. Exactly at
+    /// a boundary is still inside (FE-PND-05). Mirrors `validateWindow` in
+    /// functions/referral.js, so the app never drops a claim the server would
+    /// still credit.
+    public func isExpired(now: Date, windowDays: Int, graceDays: Int = PendingReferralStore.defaultGraceDays) -> Bool {
         let window = TimeInterval(windowDays) * 86_400
-        return now.timeIntervalSince(capturedAt) > window
+        guard let onboardedAt = onboardedAt else {
+            return now.timeIntervalSince(capturedAt) > window
+        }
+        if onboardedAt.timeIntervalSince(capturedAt) > window { return true }
+        return now.timeIntervalSince(onboardedAt) > TimeInterval(graceDays) * 86_400
     }
 }
 
@@ -104,15 +118,21 @@ public final class PendingReferralStore {
     /// Set once a claim is final. Stops every future capture on this install.
     public static let finalKey = "referralClaimFinal"
 
+    /// Matches `claimGraceDays` in functions/referral.js.
+    public static let defaultGraceDays = 30
+
     public let windowDays: Int
+    public let graceDays: Int
     private let store: ReferralKeyValueStore
     private let now: () -> Date
 
     public init(store: ReferralKeyValueStore,
                 windowDays: Int = 14,
+                graceDays: Int = PendingReferralStore.defaultGraceDays,
                 now: @escaping () -> Date = { Date() }) {
         self.store = store
         self.windowDays = windowDays
+        self.graceDays = graceDays
         self.now = now
     }
 
@@ -130,7 +150,7 @@ public final class PendingReferralStore {
             clear()
             return nil
         }
-        if decoded.isExpired(now: now(), windowDays: windowDays) {
+        if decoded.isExpired(now: now(), windowDays: windowDays, graceDays: graceDays) {
             clear()
             return nil
         }
@@ -157,6 +177,14 @@ public final class PendingReferralStore {
         guard var current = pending else { return }
         current.attempts += 1
         current.lastAttemptAt = now()
+        save(current)
+    }
+
+    /// Stamps when onboarding finished. Once only: a later foreground retry
+    /// must not move it.
+    public func markOnboarded() {
+        guard var current = pending, current.onboardedAt == nil else { return }
+        current.onboardedAt = now()
         save(current)
     }
 

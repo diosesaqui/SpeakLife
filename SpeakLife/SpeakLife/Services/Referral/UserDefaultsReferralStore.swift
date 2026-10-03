@@ -100,6 +100,7 @@ enum ReferralPageMemoryStore {
         var rewardUnlockedSeen: Bool
         var lastRedeemTapAt: Date?
         var rewardRedeemed: Bool?
+        var premiumAtRedeemTap: Bool?
     }
 
     static func load(from store: ReferralKeyValueStore) -> ReferralPageMemory {
@@ -109,7 +110,8 @@ enum ReferralPageMemoryStore {
             lastSeenCount: stored?.lastSeenCount ?? 0,
             rewardUnlockedSeen: stored?.rewardUnlockedSeen ?? false,
             lastRedeemTapAt: stored?.lastRedeemTapAt,
-            rewardRedeemed: stored?.rewardRedeemed ?? false
+            rewardRedeemed: stored?.rewardRedeemed ?? false,
+            premiumAtRedeemTap: stored?.premiumAtRedeemTap
         )
     }
 
@@ -117,7 +119,8 @@ enum ReferralPageMemoryStore {
         let stored = Stored(lastSeenCount: memory.lastSeenCount,
                             rewardUnlockedSeen: memory.rewardUnlockedSeen,
                             lastRedeemTapAt: memory.lastRedeemTapAt,
-                            rewardRedeemed: memory.rewardRedeemed)
+                            rewardRedeemed: memory.rewardRedeemed,
+                            premiumAtRedeemTap: memory.premiumAtRedeemTap)
         store.set(try? JSONEncoder().encode(stored), forKey: ReferralKeys.pageMemory)
     }
 }

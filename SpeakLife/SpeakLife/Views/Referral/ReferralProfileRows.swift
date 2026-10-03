@@ -34,7 +34,10 @@ struct ReferralProfileRows: View {
             flagEnabled: FeatureFlag.referralYearFreeEnabled,
             snapshot: snapshot,
             isPremium: subscriptionStore.isPremium,
-            rewardRedeemed: store.bool(forKey: ReferralKeys.rewardRedeemed))
+            // The page's own record, or a redemption it can infer without
+            // having been open (the App Store round trip often kills the app).
+            rewardRedeemed: store.bool(forKey: ReferralKeys.rewardRedeemed)
+                || ReferralPageMemoryStore.load(from: store).isRedeemed(isPremium: subscriptionStore.isPremium))
     }
 
     private var yearFreeTitle: String {

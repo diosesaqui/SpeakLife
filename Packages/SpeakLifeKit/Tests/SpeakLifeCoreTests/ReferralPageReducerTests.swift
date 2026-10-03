@@ -223,6 +223,35 @@ final class ReferralPageReducerTests: XCTestCase {
         XCTAssertEqual(reloaded, .redeemed)
     }
 
+    /// Review fix: tap Redeem, the App Store round trip kills the app, Apple
+    /// redeems, the page opens later. Not premium at the tap, premium now:
+    /// redeemed, and the success event fires once.
+    func test_FE_PAG_14e_redeemedWhilePageClosedIsDetectedOnReload() {
+        var memory = ReferralPageMemory(lastSeenCount: 5, rewardUnlockedSeen: true)
+        let unlocked = ReferralPageState.unlocked(code: code, reward: reward, alreadyPremium: false)
+        _ = reduce(unlocked, .redeemTapped(at: t0), &memory, isPremium: false)
+        XCTAssertEqual(memory.premiumAtRedeemTap, false)
+
+        let (state, effects) = reduce(.loading, .snapshotLoaded(snap(5, of: 5, .unlocked, reward: reward), fromCache: false),
+                                      &memory, isPremium: true)
+        XCTAssertEqual(state, .redeemed)
+        XCTAssertTrue(memory.rewardRedeemed)
+        XCTAssertEqual(effects.filter { $0 == .track(event: "referral_reward_redeemed", properties: [:]) }.count, 1)
+
+        let (_, again) = reduce(.loading, .snapshotLoaded(snap(5, of: 5, .unlocked, reward: reward), fromCache: false),
+                                &memory, isPremium: true)
+        XCTAssertFalse(again.contains(.track(event: "referral_reward_redeemed", properties: [:])), "once only")
+    }
+
+    func test_FE_PAG_14f_isRedeemedNeverInfersForSomeonePremiumAtTheTap() {
+        let d7 = ReferralPageMemory(lastRedeemTapAt: t0, premiumAtRedeemTap: true)
+        XCTAssertFalse(d7.isRedeemed(isPremium: true))
+        let fresh = ReferralPageMemory(lastRedeemTapAt: t0, premiumAtRedeemTap: false)
+        XCTAssertTrue(fresh.isRedeemed(isPremium: true))
+        XCTAssertFalse(fresh.isRedeemed(isPremium: false))
+        XCTAssertFalse(ReferralPageMemory().isRedeemed(isPremium: true))
+    }
+
     func test_FE_PAG_14_alreadyPremiumWhenPageOpensStaysUnlocked() {
         var memory = ReferralPageMemory()
         let (state, _) = reduce(.loading, .snapshotLoaded(snap(10, of: 10, .unlocked, reward: reward), fromCache: false),

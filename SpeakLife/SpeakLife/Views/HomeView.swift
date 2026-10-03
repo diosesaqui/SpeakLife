@@ -8,6 +8,7 @@
 import SwiftUI
 import FacebookCore
 import UserNotifications
+import SpeakLifeCore
 let resources: [MusicResources] = [.sethpiano, .washed, .rainstorm, .everpresent]
 
 struct MusicResources {
@@ -394,6 +395,9 @@ struct HomeView: View {
                     await ReferralClaimCoordinator.shared.claimIfNeeded(
                         isOnboarded: true, isDebugReplay: appState.debugReplayOnboarding)
                 }
+                // Keeps an earned reward reachable from Profile even if the
+                // referral page was never reopened (spec principle 3).
+                Task { await FirebaseReferralService.refreshCachedSnapshot() }
                 UNUserNotificationCenter.current().getNotificationSettings { settings in
                     guard settings.authorizationStatus == .notDetermined else { return }
                     DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
@@ -938,6 +942,13 @@ struct HomeView: View {
             // isProcessingNotification clears ~1s after setDeclaration completes (often
             // before this asyncAfter fires at t≈2.5s), so use the session-scoped flag.
             guard !declarationStore.didOpenFromNotificationThisSession else { return }
+            // Never a second cover over the referral page (FE-ORD-04/05). It
+            // is owed this session or already up; this prompt waits for the
+            // next launch rather than being dropped by SwiftUI, which would
+            // burn its once-ever flag for nothing.
+            guard !ReferralPresentation.shared.offeredThisSession,
+                  PostOnboardingPresenter.canPresentPersonalDeclarationPrompt(
+                    referralPageOpen: ReferralPresentation.shared.isOpen) else { return }
             pdMigrationPromptShown = true
             showPDMigrationSheet = true
         }

@@ -61,8 +61,11 @@ const POOL_LOW_WARNING       = 100;
 const BIT_RETRY_MAX_ATTEMPTS = 14;
 const SOURCES = ['deferred', 'universal_link', 'manual'];
 
+// dailyCap MUST stay below target: the target_reached check runs first, so a
+// cap at or above the target can never fire (BE-HLP-14b).
 const DEFAULT_CONFIG = Object.freeze({
-  enabled: false, target: 5, windowDays: 14, dailyCap: 5, minCodeValidityDays: 30,
+  enabled: false, target: 5, windowDays: 14, dailyCap: 3, minCodeValidityDays: 30,
+  claimGraceDays: 30,
 });
 
 // ─── Injection seams (tests only) ───────────────────────────────────────────
@@ -120,6 +123,7 @@ function readConfig(data) {
     windowDays: positiveInt(d.windowDays, DEFAULT_CONFIG.windowDays),
     dailyCap: positiveInt(d.dailyCap, DEFAULT_CONFIG.dailyCap),
     minCodeValidityDays: positiveInt(d.minCodeValidityDays, DEFAULT_CONFIG.minCodeValidityDays),
+    claimGraceDays: positiveInt(d.claimGraceDays, DEFAULT_CONFIG.claimGraceDays),
   };
 }
 
@@ -137,6 +141,28 @@ function readConfig(data) {
  * friend. A previous install's link cannot carry over anyway: the pending
  * value lives in UserDefaults, which deleting the app wipes.
  */
+/**
+ * D8, measured where it means something: the friend must FINISH ONBOARDING
+ * within `windowDays` of capturing the link, and the claim must then arrive
+ * within `claimGraceDays` of that. Measuring capture-to-claim instead lost
+ * friends who onboarded on day 12, hit a transient failure and did not
+ * reopen the app for three days. `onboardedAt` is optional: without it the
+ * window runs to now, the old rule.
+ */
+function validateWindow(capturedAt, onboardedAt, nowMs, { windowDays, claimGraceDays }) {
+  if (typeof capturedAt !== 'number' || !Number.isFinite(capturedAt)) return 'invalid_argument';
+  if (onboardedAt === undefined || onboardedAt === null) {
+    return validateCapturedAt(capturedAt, null, nowMs, windowDays);
+  }
+  if (typeof onboardedAt !== 'number' || !Number.isFinite(onboardedAt)) return 'invalid_argument';
+  if (capturedAt > nowMs + CLOCK_SKEW_MS) return 'expired';
+  if (onboardedAt > nowMs + CLOCK_SKEW_MS) return 'expired';
+  if (onboardedAt < capturedAt - CLOCK_SKEW_MS) return 'expired';
+  if (onboardedAt - capturedAt > windowDays * DAY_MS) return 'expired';
+  if (nowMs - onboardedAt > claimGraceDays * DAY_MS) return 'expired';
+  return 'ok';
+}
+
 function validateCapturedAt(capturedAt, _accountCreatedAt, nowMs, windowDays) {
   if (typeof capturedAt !== 'number' || !Number.isFinite(capturedAt)) return 'invalid_argument';
   if (capturedAt > nowMs + CLOCK_SKEW_MS) return 'expired';
@@ -166,7 +192,7 @@ function pickRewardCode(pool, nowMs, minValidityDays) {
  * signed-in target; each is { record, credits: {friendUid: credit} } or null.
  * Returns null when there is nothing to do, otherwise:
  *
- *   { record, credits, keepCode, revokeCode,
+ *   { record, credits, keepCode, aliasCode,
  *     retireRewardCodes, needsRewardCode }
  *
  * `record` is the target's new referral record. If `needsRewardCode` is set,
@@ -179,7 +205,7 @@ function mergeReferrals(a, b, toUid, nowMs) {
       record: { ...a.record, uid: toUid },
       credits: { ...a.credits },
       keepCode: a.record.code,
-      revokeCode: null,
+      aliasCode: null,
       retireRewardCodes: [],
       needsRewardCode: false,
     };
@@ -195,8 +221,10 @@ function mergeReferrals(a, b, toUid, nowMs) {
   }
   const count = Object.keys(credits).length;
 
-  // The code with more credits is the one friends have actually been sent.
-  // A tie keeps the signed-in account's own code.
+  // The code with more credits is the one the record shows. The other stays
+  // live as an alias for the same record: friends were already sent it, and
+  // revoking it dropped every one of them who had not finished onboarding.
+  // A tie shows the signed-in account's own code.
   const aCredits = Object.keys(a.credits).length;
   const bCredits = Object.keys(b.credits).length;
   const keep   = aCredits > bCredits ? a.record : b.record;
@@ -245,7 +273,7 @@ function mergeReferrals(a, b, toUid, nowMs) {
     },
     credits,
     keepCode: keep.code,
-    revokeCode: revoke.code === keep.code ? null : revoke.code,
+    aliasCode: revoke.code === keep.code ? null : revoke.code,
     retireRewardCodes,
     needsRewardCode,
   };
@@ -502,11 +530,13 @@ exports.claimReferral = onCall({ secrets: SECRETS }, async (request) => {
 
   const { code: rawCode, source, deviceToken, isDevelopment } = request.data || {};
   const capturedAt = captureMs(request.data?.capturedAt);
+  const rawOnboarded = request.data?.onboardedAt;
+  const onboardedAt = rawOnboarded === undefined || rawOnboarded === null ? undefined : captureMs(rawOnboarded);
   if (!SOURCES.includes(source)) {
     throw new HttpsError('invalid-argument', 'Unknown source.');
   }
-  if (validateCapturedAt(capturedAt, null, now(), config.windowDays) === 'invalid_argument') {
-    throw new HttpsError('invalid-argument', 'capturedAt must be epoch milliseconds.');
+  if (validateWindow(capturedAt, onboardedAt, now(), config) === 'invalid_argument') {
+    throw new HttpsError('invalid-argument', 'capturedAt and onboardedAt must be epoch milliseconds.');
   }
 
   const code = normalizeCode(rawCode);
@@ -527,7 +557,7 @@ exports.claimReferral = onCall({ secrets: SECRETS }, async (request) => {
 
   if (referrerUid === friendUid) return rejectFinal(claimRef, base, 'self_referral'); // #7
 
-  if (validateCapturedAt(capturedAt, null, now(), config.windowDays) !== 'ok') { // #8
+  if (validateWindow(capturedAt, onboardedAt, now(), config) !== 'ok') {      // #8
     return rejectFinal(claimRef, base, 'expired');
   }
 
@@ -568,15 +598,15 @@ exports.claimReferral = onCall({ secrets: SECRETS }, async (request) => {
     ]);
     if (claimSnap.exists) return { response: outcomeOf(claimSnap.data()) };
 
-    const finalReject = (reason) => {
-      tx.set(claimRef, { ...base, outcome: 'rejected', reason, createdAt: ts(t) });
-      return { response: { outcome: 'rejected', reason } };
-    };
-    if (!refSnap.exists) return { response: rejectRetryable('unknown_code') }; // not final
+    // The code resolved but the record is gone: a merge re-keyed it between
+    // the lookup and here. Retrying resolves the code to its new owner.
+    if (!refSnap.exists) return { response: { outcome: 'retry_later' } };
 
     const r = refSnap.data();
     const count = r.count || 0;
-    if (r.status !== 'active' || count >= r.target) return finalReject('target_reached'); // #10
+    // #10. Not final: two friends racing for the last slot must not leave the
+    // loser unable to count for anyone else who invited them.
+    if (r.status !== 'active' || count >= r.target) return { response: rejectRetryable('target_reached') };
     if (recent.size >= config.dailyCap) return { response: { outcome: 'retry_later' } };  // #11
     if (appleDown) return { response: { outcome: 'retry_later' } };                       // #12
 
@@ -804,9 +834,9 @@ async function mergeReferralAccounts(fromUid, toUid) {
 
     tx.set(db.collection('referralCodes').doc(plan.keepCode),
       { uid: toUid, revoked: false }, { merge: true });
-    if (plan.revokeCode) {
-      tx.set(db.collection('referralCodes').doc(plan.revokeCode),
-        { revoked: true, revokedAt: ts(t) }, { merge: true });
+    if (plan.aliasCode) {
+      tx.set(db.collection('referralCodes').doc(plan.aliasCode),
+        { uid: toUid, revoked: false, aliasOf: plan.keepCode }, { merge: true });
     }
     if (keptRewardCode && poolExists.has(keptRewardCode)) {
       tx.update(pool(keptRewardCode), { assignedTo: toUid });
@@ -852,7 +882,7 @@ exports.__accountHooks = { mergeReferralAccounts, deleteReferralData };
 
 exports.__test = {
   generateCode, normalizeCode, CODE_ALPHABET, CODE_LENGTH,
-  validateCapturedAt, pickRewardCode, readConfig, mergeReferrals, toMs,
+  validateCapturedAt, validateWindow, pickRewardCode, readConfig, mergeReferrals, toMs,
   DEFAULT_CONFIG,
   setNow(fn) { clock = fn || Date.now; },
   setDeviceCheck(fake) { deviceCheckOverride = fake || null; },

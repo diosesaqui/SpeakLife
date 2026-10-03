@@ -96,7 +96,6 @@ final class ReferralClaimPolicyTests: XCTestCase {
         let reasons = [
             "self_referral", "expired",
             "device_already_counted", "device_is_referrer", "device_unverifiable",
-            "target_reached",
         ]
         for reason in reasons {
             XCTAssertTrue(ReferralClaimPolicy.shouldMarkFinal(after: .rejected(reason: reason)), reason)
@@ -113,7 +112,7 @@ final class ReferralClaimPolicyTests: XCTestCase {
     /// A typo'd or unknown code is dropped, NOT made final: a corrected code
     /// can still be captured and claimed.
     func test_FE_CLM_08b_unknownOrInvalidCodeDiscardsButStaysOpen() {
-        for reason in ["invalid_code", "unknown_code"] {
+        for reason in ["invalid_code", "unknown_code", "target_reached"] {
             XCTAssertFalse(ReferralClaimPolicy.shouldMarkFinal(after: .rejected(reason: reason)), reason)
             let store = makeStore(clockAt: now)
             store.capture(code: "ZZZZZZZZ", source: .manual)

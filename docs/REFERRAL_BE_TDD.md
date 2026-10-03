@@ -298,6 +298,11 @@ and BE-PRN-01 fail.
 | BE-JRN-06 | Reinstall farm: same phone, new uid each time → only the first counts |
 | BE-PRN-01 | **Principle:** every transient failure (no token, Apple down, kill switch, daily cap, typo) is non-final, and the same claim credits once it clears. A new transient failure mode is added here. |
 | BE-PRN-02 | Thrown auth and throttle errors are never final |
+| BE-JRN-07 | Friend onboards day 12, first claim fails, app reopened day 15 (sends `onboardedAt`) → credited |
+| BE-HLP-14b | Default daily cap is below the default target, so it can fire |
+| BE-HLP-17 | `validateWindow`: capture→onboarding ≤ windowDays, onboarding→claim ≤ claimGraceDays, no future or pre-capture onboarding |
+| BE-CLM-10 / 10b | `target_reached` and a record vanished mid-claim (merge race) are non-final |
+| BE-MRG-03 | Merge keeps the second code live as an alias; a friend holding it is credited |
 | BE-CON-01 | **Contract:** the push data the server sends equals `referral_push_fixture.json`, the file the app's FE-CON-01 routes on |
 
 ## 13. Done checklist (backend)

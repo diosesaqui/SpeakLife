@@ -218,6 +218,8 @@ final class ReferralCaptureTests: XCTestCase {
         XCTAssertNil(service.claimRequests.last?.deviceToken)
         XCTAssertEqual(service.claimRequests.last?.capturedAt, ReferralFixtures.fixedNow,
                        "capture time is first launch, not the claim")
+        let onboardedAt = ReferralFixtures.fixedNow.addingTimeInterval(8 * 60)
+        XCTAssertEqual(service.claimRequests.last?.onboardedAt, onboardedAt)
         XCTAssertFalse(journeyPending.isFinal)
         XCTAssertNotNil(journeyPending.pending)
 
@@ -234,6 +236,7 @@ final class ReferralCaptureTests: XCTestCase {
         let second = await coordinator.claimIfNeeded(isOnboarded: true, isDebugReplay: false)
         XCTAssertEqual(second, .credited)
         XCTAssertEqual(service.claimRequests.count, 2)
+        XCTAssertEqual(service.claimRequests.last?.onboardedAt, onboardedAt, "stamped once, not moved by the retry")
         XCTAssertTrue(journeyPending.isFinal)
         XCTAssertNil(journeyPending.pending)
     }

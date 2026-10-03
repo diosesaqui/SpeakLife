@@ -76,6 +76,44 @@ final class PendingReferralStoreTests: XCTestCase {
         XCTAssertEqual(store.pending?.code, "K7MQ2XPA")
     }
 
+    /// Review fix: the window is capture-to-onboarding. Onboarded on day 12,
+    /// a transient failure, app reopened day 15: still pending.
+    func test_FE_PND_11_onboardedInsideWindowSurvivesPastDay14() {
+        store.capture(code: "K7MQ2XPA", source: .deferred)
+        clock.advance(12 * day)
+        store.markOnboarded()
+        clock.advance(3 * day)
+        XCTAssertNotNil(store.pending)
+        XCTAssertEqual(store.pending?.onboardedAt, clock.now.addingTimeInterval(-3 * day))
+    }
+
+    func test_FE_PND_12_onboardedOutsideWindowExpires() {
+        store.capture(code: "K7MQ2XPA", source: .deferred)
+        clock.advance(14 * day + 60)
+        // Already expired before onboarding finished: nothing to stamp.
+        store.markOnboarded()
+        XCTAssertNil(store.pending)
+    }
+
+    func test_FE_PND_13_claimGraceRunsOutThirtyDaysAfterOnboarding() {
+        store.capture(code: "K7MQ2XPA", source: .deferred)
+        clock.advance(day)
+        store.markOnboarded()
+        clock.advance(30 * day)
+        XCTAssertNotNil(store.pending, "exactly at the grace boundary is inside")
+        clock.advance(1)
+        XCTAssertNil(store.pending)
+    }
+
+    func test_FE_PND_14_markOnboardedStampsOnce() {
+        store.capture(code: "K7MQ2XPA", source: .deferred)
+        store.markOnboarded()
+        let first = store.pending?.onboardedAt
+        clock.advance(2 * 3600)
+        store.markOnboarded()
+        XCTAssertEqual(store.pending?.onboardedAt, first)
+    }
+
     func test_FE_PND_06_expiredOneSecondPastWindowAndCleared() {
         store.capture(code: "K7MQ2XPA", source: .deferred)
         clock.advance(14 * day + 1)

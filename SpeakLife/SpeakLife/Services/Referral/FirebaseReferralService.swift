@@ -12,6 +12,7 @@
 //
 
 import Foundation
+import FirebaseAuth
 import FirebaseFirestore
 import FirebaseFunctions
 import SpeakLifeCore
@@ -113,6 +114,23 @@ final class FirebaseReferralService: ReferralServicing {
         case .unavailable, .deadlineExceeded, .internal: return .unavailable
         default:                  return .other("functions_\(code.rawValue)")
         }
+    }
+
+    /// One read of `referrals/{uid}` into the local cache, outside the page.
+    ///
+    /// The Profile row and the post-onboarding check read only the cache, and
+    /// the page's listener updates it only while the page is open. Without
+    /// this, a referrer who closed the page at 4 of 5 and missed the unlock
+    /// push kept a cache that said "active", and with the flag off the earned
+    /// reward had no entry point at all. Runs on every foreground; reads the
+    /// CURRENT uid, so after an Apple sign-in merge it follows the new owner.
+    /// Never mints an account.
+    static func refreshCachedSnapshot(store: ReferralKeyValueStore = UserDefaultsReferralStore.shared) async {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        guard let doc = try? await Firestore.firestore().collection("referrals").document(uid).getDocument(),
+              let data = doc.data(),
+              let snapshot = ReferralSnapshot(dictionary: ReferralDateBridge.normalize(data)) else { return }
+        await MainActor.run { ReferralSnapshotCache.save(snapshot, to: store) }
     }
 }
 
