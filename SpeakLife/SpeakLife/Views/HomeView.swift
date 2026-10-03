@@ -134,6 +134,7 @@ struct HomeView: View {
                 homeView
                     .onAppear() {
                                 showSubscription = subscriptionStore.showSubscription && !subscriptionStore.isPremium && !appState.firstOpen
+                                    && !ReferralPresentation.shared.offeredThisSession
                                 audioDeclarationViewModel.fetchAudio(version: subscriptionStore.audioRemoteVersion)
                                 declarationStore.setRemoteDeclarationVersion(version: subscriptionStore.remoteVersion)
                                 // Re-select the correct category seeded during onboarding.
@@ -308,6 +309,10 @@ struct HomeView: View {
                                 )
                                 .environmentObject(subscriptionStore)
                             }
+                            // "Invite friends, get a year free", raised once by
+                            // finishOnboarding() after a decline. On Home, so it
+                            // can never sit on top of onboarding.
+                            .referralAutoPresentation(subscriptionStore: subscriptionStore)
 
                 } else {
                     // Onboarding A/B: quiz | product | identity | outcomes | warfare
@@ -346,6 +351,10 @@ struct HomeView: View {
                 withAnimation {
                     appState.isOnboarded = true
                 }
+                // A restore is a returning person, not a new install, so a
+                // pending referral on this device must never be claimed
+                // (FE-CLM-12). The claim policy discards it.
+                ReferralClaimCoordinator.shared.markOnboardingSkipped()
                 // Onboarding is the ONLY place the app requests notification
                 // permission (AppDelegate deliberately never prompts at
                 // launch), so a bypassed restore must ask here — otherwise
@@ -378,6 +387,13 @@ struct HomeView: View {
             // simultaneous system alerts).
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
                 guard appState.isOnboarded else { return }
+                // A referral claim the server answered `retry_later` (or that
+                // never reached it) is retried on foreground. The policy holds
+                // it to one attempt an hour.
+                Task { @MainActor in
+                    await ReferralClaimCoordinator.shared.claimIfNeeded(
+                        isOnboarded: true, isDebugReplay: appState.debugReplayOnboarding)
+                }
                 UNUserNotificationCenter.current().getNotificationSettings { settings in
                     guard settings.authorizationStatus == .notDetermined else { return }
                     DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
@@ -528,12 +544,14 @@ struct HomeView: View {
         // during onboarding. conversion_type: "trial" | "purchase" | "none".
         let converted = subscriptionStore.isPremium
         let conversionType = converted ? (subscriptionStore.isInTrial ? "trial" : "purchase") : "none"
-        AnalyticsService.shared.track("onboarding_finished", parameters: [
+        // `referral_pending`: whether this install arrived through a friend's
+        // referral link, so the friend side shows in the A/B read (FE-VM-14).
+        AnalyticsService.shared.track("onboarding_finished", parameters: ReferralCapture.onboardingFinishedParameters([
             "variant": subscriptionStore.onboardingVariantName,
             "converted": converted,
             "conversion_type": conversionType,
             "flow": "home_view"
-        ])
+        ]))
         withAnimation {
             appState.isOnboarded = true
             LifecycleNotificationService.shared.scheduleLifecycleNotifications()
@@ -542,6 +560,26 @@ struct HomeView: View {
             // properties. Events.swift has documented it as renamed since the
             // constant was added; the call sites just never followed.
         }
+
+        // Friend side: a pending referral is claimed now, whether or not they
+        // subscribed (spec J4.4). Never shown to them, success or failure.
+        Task { @MainActor in
+            await ReferralClaimCoordinator.shared.claimIfNeeded(isOnboarded: true, isDebugReplay: false)
+        }
+
+        // Referrer side: the "invite friends, get a year free" page, after
+        // onboarding and never over it (spec §9.1). The debug-replay return at
+        // the top of this function is what keeps it off a replay. A pending
+        // Stand invite takes this turn and the page stays owed from Profile;
+        // `PostOnboardingPresenter` (Core) owns that order, not this function.
+        let step = ReferralPresentation.postOnboardingStep(
+            config: ReferralConfig.current,
+            isDebugReplay: false,
+            converted: converted,
+            hasFullAccess: subscriptionStore.hasFullAccess,
+            hasPendingStandCode: FeatureFlag.standTogetherEnabled && !appState.pendingStandCode.isEmpty,
+            store: UserDefaultsReferralStore.shared)
+        ReferralPresentation.shared.presentAfterOnboardingIfOwed(step)
     }
 
     /// iCloud-restored users skip onboarding, which is the only flow that
