@@ -7,6 +7,5 @@ module.exports = {
   ...require('./bibleChat'),
   ...require('./personalMessage'),
   ...require('./standTogether'),
-  ...require('./referral'),
   ...require('./emailCapture'),
 };

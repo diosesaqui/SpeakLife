@@ -28,9 +28,6 @@ const { getFirestore, FieldValue, Timestamp } = require('firebase-admin/firestor
 const { getMessaging }           = require('firebase-admin/messaging');
 const { getAuth }                = require('firebase-admin/auth');
 const crypto                     = require('node:crypto');
-// Referral records follow the account through merge and deletion (spec §8.6).
-// One-way dependency: referral.js never requires this file.
-const { __accountHooks: referralHooks } = require('./referral');
 
 // prayerWallNotifications.js already calls initializeApp() at module load and
 // index.js requires both modules. Calling it twice throws.
@@ -55,9 +52,42 @@ const ORPHAN_ROOM_DAYS       = 14;   // one member, invite never used
 const DORMANT_AFTER_DAYS     = 14;   // nobody has spoken
 const ARCHIVE_AFTER_DAYS     = 60;
 
-// The code alphabet, generator and normaliser are shared with referral codes.
-// See inviteCode.js for why the alphabet excludes 0/O/1/I/L.
-const { CODE_ALPHABET, CODE_LENGTH, generateCode, normalizeCode } = require('./inviteCode');
+// No 0/O/1/I/L. Both halves of each confusable pair are excluded, so a typed
+// `0` or `I` cannot be valid under any reading and is rejected outright rather
+// than guessed at — guessing is how someone lands in the wrong family's stand.
+const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+const CODE_LENGTH   = 8;
+
+// ═══ Helpers ════════════════════════════════════════════════════════════════
+
+/**
+ * A cryptographically random invite code, uniformly distributed.
+ *
+ * Rejection sampling, not `% alphabet.length`: 256 is not a multiple of 31, so
+ * modulo would make the first few characters of the alphabet measurably more
+ * likely and shrink the real keyspace.
+ */
+function generateCode() {
+  const max = 256 - (256 % CODE_ALPHABET.length);
+  let out = '';
+  while (out.length < CODE_LENGTH) {
+    for (const byte of crypto.randomBytes(CODE_LENGTH * 2)) {
+      if (byte >= max) continue;                    // reject, keep it uniform
+      out += CODE_ALPHABET[byte % CODE_ALPHABET.length];
+      if (out.length === CODE_LENGTH) break;
+    }
+  }
+  return out;
+}
+
+/** Uppercase, strip separators, reject anything outside the alphabet. */
+function normalizeCode(raw) {
+  if (typeof raw !== 'string') return null;
+  const cleaned = raw.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (cleaned.length !== CODE_LENGTH) return null;
+  for (const ch of cleaned) if (!CODE_ALPHABET.includes(ch)) return null;
+  return cleaned;
+}
 
 // ─── Timezone math ──────────────────────────────────────────────────────────
 //
@@ -920,10 +950,6 @@ exports.completeAccountMerge = onCall(async (request) => {
     }
   }
 
-  // Before the ticket is spent, so a failure here leaves the client a ticket
-  // to retry with. Idempotent: a retry after success finds nothing to move.
-  await referralHooks.mergeReferralAccounts(fromUid, toUid);
-
   await Promise.all([
     ticketRef.delete(),
     db.collection('users').doc(fromUid).delete().catch(() => {}),
@@ -960,8 +986,6 @@ exports.deleteAccount = onCall(async (request) => {
   const invites = await db.collection('standInvites')
     .where('createdBy', '==', uid).get();
   await Promise.all(invites.docs.map((d) => d.ref.update({ revoked: true })));
-
-  await referralHooks.deleteReferralData(uid);
 
   await Promise.all([
     db.collection('users').doc(uid).delete().catch(() => {}),

@@ -195,13 +195,6 @@ struct SpeakLifeApp: App {
                                 "source": "universal_link"
                             ])
                         }
-                        // Referral link (`/r/<CODE>`), also before attribution.
-                        // Captured only for somebody not yet onboarded; an
-                        // existing user is recorded as `existing_user` and never
-                        // claims (spec J6). Nothing is presented from here. It
-                        // does not return early: an `ob=` on the same link still
-                        // routes the onboarding arm below (FE-CAP-05).
-                        ReferralCapture.handleOpenURL(url, isOnboarded: appState.isOnboarded)
                         SubscriptionStore.handleIncomingURL(url, source: "deeplink")
                         // Same link, read for channel rather than for the arm:
                         // utm_source/campaign/term land on the person so paid

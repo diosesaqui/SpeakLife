@@ -15,12 +15,6 @@ rules_version = '2';
 //   - standNudges/{uid}                         (server-only)
 //   - accountMerges/{ticket}                    (server-only)
 //
-// ...and Invite Friends, Get a Year Free (docs/REFERRAL_YEAR_FREE_SPEC.md):
-//   - referrals/{uid}                           (owner read only, never written)
-//   - referrals/{uid}/credits/{friendUid}       (server-only)
-//   - referralCodes, referralClaims, referralRewardCodes, referralConfig,
-//     referralRateLimits, referralBitRetries    (server-only)
-//
 // Email collection lives in a DIFFERENT database (`speaklife`, collection
 // `email_list`) and is governed by firestore.speaklife.rules, not this file.
 //
@@ -404,38 +398,5 @@ service cloud.firestore {
     match /standInvites/{code}    { allow read, write: if false; }
     match /standNudges/{uid}      { allow read, write: if false; }
     match /accountMerges/{ticket} { allow read, write: if false; }
-
-    // ─── Referrals: invite friends, get a year free ──────────────────
-    //
-    // docs/REFERRAL_YEAR_FREE_SPEC.md §6. Every collection is written only by
-    // Cloud Functions (functions/referral.js) through the admin SDK, which
-    // bypasses these rules. A client may READ its own referral record to
-    // show progress, and nothing else.
-    //
-    // Each block is explicit rather than left to the default deny, so a
-    // future wildcard rule cannot quietly open one of them.
-
-    match /referrals/{uid} {
-      // Owner only, signed in by any provider: referrers are usually
-      // anonymous. Never writable: a client that could write `count` would
-      // award itself the free year.
-      allow read: if signedIn() && request.auth.uid == uid;
-      allow write: if false;
-
-      // Who was credited. Friend uids are private, including from the
-      // referrer they were credited to.
-      match /credits/{friendUid} { allow read, write: if false; }
-    }
-
-    // A code a client could look up is a code someone can enumerate.
-    match /referralCodes/{code}       { allow read, write: if false; }
-    // A friend's final outcome. Closed even to that friend.
-    match /referralClaims/{friendUid} { allow read, write: if false; }
-    // THE MOST IMPORTANT RULE IN THE FEATURE: every document here is a
-    // working free year. Readable, or listable, means given away.
-    match /referralRewardCodes/{offerCode} { allow read, write: if false; }
-    match /referralConfig/{doc}            { allow read, write: if false; }
-    match /referralRateLimits/{key}        { allow read, write: if false; }
-    match /referralBitRetries/{id}         { allow read, write: if false; }
   }
 }

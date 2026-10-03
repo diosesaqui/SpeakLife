@@ -400,20 +400,6 @@
 		STANDB000000000000000010 /* StandLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = STAND0000000000000000010 /* StandLink.swift */; };
 		STANDB000000000000000011 /* StandPassStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = STAND0000000000000000011 /* StandPassStore.swift */; };
 		STANDB000000000000000012 /* StandService.swift in Sources */ = {isa = PBXBuildFile; fileRef = STAND0000000000000000012 /* StandService.swift */; };
-		REFRLB000000000000000001 /* ReferralServicing.swift in Sources */ = {isa = PBXBuildFile; fileRef = REFRL0000000000000000001 /* ReferralServicing.swift */; };
-		REFRLB000000000000000002 /* FirebaseReferralService.swift in Sources */ = {isa = PBXBuildFile; fileRef = REFRL0000000000000000002 /* FirebaseReferralService.swift */; };
-		REFRLB000000000000000003 /* DeviceCheckTokenProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = REFRL0000000000000000003 /* DeviceCheckTokenProvider.swift */; };
-		REFRLB000000000000000004 /* UserDefaultsReferralStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = REFRL0000000000000000004 /* UserDefaultsReferralStore.swift */; };
-		REFRLB000000000000000005 /* ReferralViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = REFRL0000000000000000005 /* ReferralViewModel.swift */; };
-		REFRLB000000000000000006 /* ReferralClaimCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = REFRL0000000000000000006 /* ReferralClaimCoordinator.swift */; };
-		REFRLB000000000000000007 /* ReferralPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = REFRL0000000000000000007 /* ReferralPageView.swift */; };
-		REFRLB000000000000000008 /* ReferralShareCardRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = REFRL0000000000000000008 /* ReferralShareCardRenderer.swift */; };
-		REFRLB000000000000000009 /* ReferralPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = REFRL0000000000000000009 /* ReferralPresentation.swift */; };
-		REFRLB000000000000000010 /* InviteCodeEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = REFRL0000000000000000010 /* InviteCodeEntryView.swift */; };
-		REFRLB000000000000000011 /* ReferralProfileRows.swift in Sources */ = {isa = PBXBuildFile; fileRef = REFRL0000000000000000011 /* ReferralProfileRows.swift */; };
-		REFRLB000000000000000012 /* ReferralTestDoubles.swift in Sources */ = {isa = PBXBuildFile; fileRef = REFRL0000000000000000012 /* ReferralTestDoubles.swift */; };
-		REFRLB000000000000000013 /* ReferralViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = REFRL0000000000000000013 /* ReferralViewModelTests.swift */; };
-		REFRLB000000000000000014 /* ReferralCaptureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = REFRL0000000000000000014 /* ReferralCaptureTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -827,20 +813,6 @@
 		STAND0000000000000000010 /* StandLink.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StandLink.swift; sourceTree = "<group>"; };
 		STAND0000000000000000011 /* StandPassStore.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StandPassStore.swift; sourceTree = "<group>"; };
 		STAND0000000000000000012 /* StandService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StandService.swift; sourceTree = "<group>"; };
-		REFRL0000000000000000001 /* ReferralServicing.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReferralServicing.swift; sourceTree = "<group>"; };
-		REFRL0000000000000000002 /* FirebaseReferralService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FirebaseReferralService.swift; sourceTree = "<group>"; };
-		REFRL0000000000000000003 /* DeviceCheckTokenProvider.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeviceCheckTokenProvider.swift; sourceTree = "<group>"; };
-		REFRL0000000000000000004 /* UserDefaultsReferralStore.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserDefaultsReferralStore.swift; sourceTree = "<group>"; };
-		REFRL0000000000000000005 /* ReferralViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReferralViewModel.swift; sourceTree = "<group>"; };
-		REFRL0000000000000000006 /* ReferralClaimCoordinator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReferralClaimCoordinator.swift; sourceTree = "<group>"; };
-		REFRL0000000000000000007 /* ReferralPageView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReferralPageView.swift; sourceTree = "<group>"; };
-		REFRL0000000000000000008 /* ReferralShareCardRenderer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReferralShareCardRenderer.swift; sourceTree = "<group>"; };
-		REFRL0000000000000000009 /* ReferralPresentation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReferralPresentation.swift; sourceTree = "<group>"; };
-		REFRL0000000000000000010 /* InviteCodeEntryView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InviteCodeEntryView.swift; sourceTree = "<group>"; };
-		REFRL0000000000000000011 /* ReferralProfileRows.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReferralProfileRows.swift; sourceTree = "<group>"; };
-		REFRL0000000000000000012 /* ReferralTestDoubles.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReferralTestDoubles.swift; sourceTree = "<group>"; };
-		REFRL0000000000000000013 /* ReferralViewModelTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReferralViewModelTests.swift; sourceTree = "<group>"; };
-		REFRL0000000000000000014 /* ReferralCaptureTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReferralCaptureTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -947,9 +919,6 @@
 				4501F3A62F840A01008704F9 /* WarriorRoomTypesTests.swift */,
 				C0960000000000000096AAAA /* OnboardingAngleTests.swift */,
 				AC0A11B7E5700000000000A1 /* AcquisitionAttributionTests.swift */,
-				REFRL0000000000000000012 /* ReferralTestDoubles.swift */,
-				REFRL0000000000000000013 /* ReferralViewModelTests.swift */,
-				REFRL0000000000000000014 /* ReferralCaptureTests.swift */,
 				4501F3A82F840A01008704F9 /* PrayerWallPostTests.swift */,
 				4501F3AA2F840A01008704F9 /* PrayerWallViewModelTests.swift */,
 				2F740F6829D4017400E89E7F /* APIClientTests.swift */,
@@ -1404,7 +1373,6 @@
 			isa = PBXGroup;
 			children = (
 				STANDG000000000000000001 /* Stand */,
-				REFRLG000000000000000001 /* Referral */,
 				OFFERG000000000000000001 /* Offer */,
 				TIC00GRP000000000000002A /* Guard */,
 				458510D82B159B0D00230EE5 /* LandingView.swift */,
@@ -1456,7 +1424,6 @@
 			isa = PBXGroup;
 			children = (
 				STANDG000000000000000002 /* Stand */,
-				REFRLG000000000000000002 /* Referral */,
 				TIC00GRP000000000000001A /* Guard */,
 				45567D712F29F6FA00382072 /* Auth */,
 				45BC74622EDA4CB5003AC964 /* PaywallTriggerManager.swift */,
@@ -1932,33 +1899,6 @@
 			path = Stand;
 			sourceTree = "<group>";
 		};
-		REFRLG000000000000000001 /* Referral */ = {
-			isa = PBXGroup;
-			children = (
-				REFRL0000000000000000007 /* ReferralPageView.swift */,
-				REFRL0000000000000000008 /* ReferralShareCardRenderer.swift */,
-				REFRL0000000000000000009 /* ReferralPresentation.swift */,
-				REFRL0000000000000000010 /* InviteCodeEntryView.swift */,
-				REFRL0000000000000000011 /* ReferralProfileRows.swift */,
-			);
-			name = Referral;
-			path = Referral;
-			sourceTree = "<group>";
-		};
-		REFRLG000000000000000002 /* Referral */ = {
-			isa = PBXGroup;
-			children = (
-				REFRL0000000000000000001 /* ReferralServicing.swift */,
-				REFRL0000000000000000002 /* FirebaseReferralService.swift */,
-				REFRL0000000000000000003 /* DeviceCheckTokenProvider.swift */,
-				REFRL0000000000000000004 /* UserDefaultsReferralStore.swift */,
-				REFRL0000000000000000005 /* ReferralViewModel.swift */,
-				REFRL0000000000000000006 /* ReferralClaimCoordinator.swift */,
-			);
-			name = Referral;
-			path = Referral;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -2152,9 +2092,6 @@
 				4501F3A52F840A01008704F9 /* WarriorRoomTypesTests.swift in Sources */,
 				D0960000000000000096BBBB /* OnboardingAngleTests.swift in Sources */,
 				AC0A11B7E5700000000000B1 /* AcquisitionAttributionTests.swift in Sources */,
-				REFRLB000000000000000012 /* ReferralTestDoubles.swift in Sources */,
-				REFRLB000000000000000013 /* ReferralViewModelTests.swift in Sources */,
-				REFRLB000000000000000014 /* ReferralCaptureTests.swift in Sources */,
 				4501F3A72F840A01008704F9 /* PrayerWallPostTests.swift in Sources */,
 				4501F3A92F840A01008704F9 /* PrayerWallViewModelTests.swift in Sources */,
 				2F740F6929D4017400E89E7F /* APIClientTests.swift in Sources */,
@@ -2179,17 +2116,6 @@
 				STANDB000000000000000010 /* StandLink.swift in Sources */,
 				STANDB000000000000000011 /* StandPassStore.swift in Sources */,
 				STANDB000000000000000012 /* StandService.swift in Sources */,
-				REFRLB000000000000000001 /* ReferralServicing.swift in Sources */,
-				REFRLB000000000000000002 /* FirebaseReferralService.swift in Sources */,
-				REFRLB000000000000000003 /* DeviceCheckTokenProvider.swift in Sources */,
-				REFRLB000000000000000004 /* UserDefaultsReferralStore.swift in Sources */,
-				REFRLB000000000000000005 /* ReferralViewModel.swift in Sources */,
-				REFRLB000000000000000006 /* ReferralClaimCoordinator.swift in Sources */,
-				REFRLB000000000000000007 /* ReferralPageView.swift in Sources */,
-				REFRLB000000000000000008 /* ReferralShareCardRenderer.swift in Sources */,
-				REFRLB000000000000000009 /* ReferralPresentation.swift in Sources */,
-				REFRLB000000000000000010 /* InviteCodeEntryView.swift in Sources */,
-				REFRLB000000000000000011 /* ReferralProfileRows.swift in Sources */,
 				TIC00SVC000000000000004B /* TakeThoughtCaptiveIntent.swift in Sources */,
 				TIC00VW0000000000000001B /* TakeItCaptiveFlowView.swift in Sources */,
 				TIC00VW0000000000000003B /* ReplaceDeclarationView.swift in Sources */,

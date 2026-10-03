@@ -507,8 +507,6 @@ struct HighConversionPaywallView: View {
     @State private var errorMessage = ""
     @State private var showPrivacyPolicy = false
     @State private var showPayWhatYouCan = false
-    /// The referral page, opened from the hard-paywall link.
-    @State private var showReferralPage = false
     @State private var showCloseButton = false
     @State private var timeOnPaywall: Date = Date()
     /// Per-product intro-offer eligibility (product id → eligible), checked
@@ -913,15 +911,6 @@ struct HighConversionPaywallView: View {
                 .environmentObject(subscriptionStore)
                 .environmentObject(declarationStore)
         }
-        // The referral page over the hard paywall. Dismissing it returns here,
-        // with the paywall exactly as it was (FE-ENT-17).
-        //
-        // A sheet, not a full-screen cover: a cover takes the paywall out of
-        // the hierarchy, so its `onAppear` would run again on the way back and
-        // book a second `paywall_shown` for one impression.
-        .sheet(isPresented: $showReferralPage) {
-            ReferralPageView(entry: .hardPaywall, subscriptionStore: subscriptionStore)
-        }
     }
 
     // MARK: - Background
@@ -1312,7 +1301,6 @@ struct HighConversionPaywallView: View {
                 trialReassuranceLine
                 closingAssuranceLine
                 payWhatYouCanCTA
-                referralLinkCTA
                 bottomLinks
             }
             .padding(.horizontal, 20).padding(.vertical, DS.Spacing.md).padding(.bottom, DS.Spacing.xs)
@@ -1607,41 +1595,6 @@ struct HighConversionPaywallView: View {
         }
     }
 
-    // MARK: - Referral link (hard paywall only)
-
-    /// "Or invite 5 friends for a free year", on the HARD paywall only (spec
-    /// D4). A soft paywall can be closed, and the automatic page after
-    /// onboarding covers that case. `ReferralEligibility` (Core) decides.
-    private var showsReferralLink: Bool {
-        ReferralEligibility.showsHardPaywallLink(
-            flagEnabled: FeatureFlag.referralYearFreeEnabled,
-            hardPaywallFlag: FeatureFlag.referralOnHardPaywall,
-            isHardPaywall: effectiveIsHardPaywall)
-    }
-
-    /// Opens the page ON TOP of the paywall (FE-ENT-17). Closing it lands back
-    /// here: the page only dismisses itself, so onboarding is never finished
-    /// from it and the paywall's own callback never runs.
-    @ViewBuilder
-    private var referralLinkCTA: some View {
-        if showsReferralLink {
-            Button(action: {
-                AnalyticsService.shared.track("paywall_referral_link_tapped", parameters: [
-                    "variant": paywallVariant,
-                    "segment": segmentParam
-                ])
-                showReferralPage = true
-            }) {
-                Text("Or invite \(ReferralConfig.current.displayTarget) friends for a free year")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(isCleanVariant ? cleanSubInk : .white.opacity(0.7))
-                    .underline()
-                    .padding(.vertical, 4)
-            }
-            .buttonStyle(PlainButtonStyle())
-        }
-    }
-
     // MARK: - Bottom Links
     private var bottomLinks: some View {
         HStack(spacing: DS.Spacing.lg) {
@@ -1823,7 +1776,6 @@ struct HighConversionPaywallView: View {
             // Same Remote Config-gated link as the dark layout, so enabling
             // showPayWhatYouCanCTA reaches both A/B arms.
             payWhatYouCanCTA
-            referralLinkCTA
             cleanBottomLinks
         }
         .padding(.horizontal, 20)

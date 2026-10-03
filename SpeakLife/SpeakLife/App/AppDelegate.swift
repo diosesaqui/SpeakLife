@@ -346,20 +346,7 @@ final class AppDelegate: NSObject, MessagingDelegate {
             "stormAlsoIncluded": false as NSNumber,
             "stormConfigs": "" as NSString,
             "stormBenefitScreen": true as NSNumber,
-            "stormTrialPushes": true as NSNumber,
-            // Invite friends, get a year free (docs/REFERRAL_YEAR_FREE_SPEC.md
-            // §12). Ships dark: `referralYearFreeEnabled` hides every entry
-            // point, though links are still captured and claims still sent
-            // (the server has its own switch). Keep these in step with the
-            // fallbacks in `ReferralConfig`.
-            ReferralConfigKey.enabled: false as NSNumber,
-            ReferralConfigKey.onHardPaywall: false as NSNumber,
-            ReferralConfigKey.shareText: ReferralConfigKey.defaultShareText as NSString,
-            // Read StandLink.shareHost's warning before changing this.
-            ReferralConfigKey.linkDomain: ReferralConfigKey.defaultLinkDomain as NSString,
-            // Display only, before a person has a record. Their own target is
-            // locked server-side at enrollment and wins from then on.
-            ReferralConfigKey.displayTarget: ReferralConfigKey.defaultDisplayTarget as NSString
+            "stormTrialPushes": true as NSNumber
         ])
 
         // Wire the domain-facing feature-flag seam to Firebase Remote Config now
@@ -771,14 +758,6 @@ enum BranchAttribution {
                 "source": "deferred"
             ])
         }
-        // Referral link (invite friends, get a year free), resolved from a
-        // deferred link. Same rule as the Stand code above: stash, never
-        // present. The claim waits for onboarding to finish. A Stand link is
-        // never read as a referral and vice versa; `ReferralLink` and
-        // `StandLink` decide on the path segment. See ReferralCapture.
-        ReferralCapture.handleBranchParams(
-            params,
-            isOnboarded: UserDefaults.standard.bool(forKey: "onboarded"))
         // Prefer an explicit `ob` key set on the Branch link's deep-link data;
         // otherwise recover it from the referring link URL.
         if let ob = params["ob"] as? String {
@@ -852,12 +831,6 @@ enum BranchAttribution {
         // channel field was left as.
         if channel == .unknown, string("stand") != nil
             || string("~referring_link").flatMap({ URL(string: $0) }).flatMap(StandLink.code(from:)) != nil {
-            channel = .referral
-        }
-
-        // So is a referral link (`/r/<CODE>` or a `ref` key). Same priority as
-        // the Stand case: an ad network named above still wins (FE-CAP-09).
-        if channel == .unknown, ReferralLink.code(fromBranchParams: params) != nil {
             channel = .referral
         }
 

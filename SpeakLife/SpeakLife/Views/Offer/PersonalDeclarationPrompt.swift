@@ -77,10 +77,6 @@ final class PersonalDeclarationPrompt: ObservableObject {
     func presentIfOwed(burstDayCount: Int) {
         defer { isPendingThisBurst = false }
         guard burstDayCount == 1, !hasAsked, !hasDeclaration else { return }
-        // Never two covers at once (FE-ORD-05). Checked before the once-ever
-        // flag is written, so a blocked ask is not burned.
-        guard PostOnboardingPresenter.canPresentPersonalDeclarationPrompt(
-            referralPageOpen: ReferralPresentation.shared.isOpen) else { return }
         UserDefaults.standard.set(true, forKey: askedKey)
         isPresented = true
     }
