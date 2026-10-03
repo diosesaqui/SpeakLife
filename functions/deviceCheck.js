@@ -158,7 +158,18 @@ function createAppleDeviceCheck({ keyP8, keyId, teamId, fetch: doFetch = globalT
     return parseUpdateResponse(r.status, r.text);
   }
 
-  return { queryBits, setBit };
+  /**
+   * Writes both bits exactly. Only the QA reset script uses this: production
+   * code never clears a bit, because a cleared bit is a phone that can be
+   * counted again.
+   */
+  async function setBits(token, { bit0, bit1 }, { isDevelopment = false } = {}) {
+    const r = await call('update_two_bits',
+      { device_token: token, bit0: bit0 === true, bit1: bit1 === true }, isDevelopment);
+    return parseUpdateResponse(r.status, r.text);
+  }
+
+  return { queryBits, setBit, setBits };
 }
 
 module.exports = {

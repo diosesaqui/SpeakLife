@@ -241,6 +241,48 @@ final class ReferralCaptureTests: XCTestCase {
         XCTAssertNil(journeyPending.pending)
     }
 
+    // MARK: - FE-CLM-14 / 15 (count at the paywall, spec D1)
+
+    /// A referred friend counts on REACHING the onboarding paywall, so one who
+    /// declines a hard paywall (and so never finishes onboarding) still counts.
+    func test_FE_CLM_14_reachingTheOnboardingPaywallClaims() async {
+        let service = FakeReferralService()
+        let coordinator = makeCoordinator(service: service)
+        pending.capture(code: "K7MQ2XPA", source: .deferred)
+
+        let outcome = await coordinator.onboardingPaywallReached(isDebugReplay: false).value
+
+        XCTAssertEqual(outcome, .credited)
+        XCTAssertEqual(service.claimRequests.count, 1)
+        XCTAssertNotNil(service.claimRequests.first?.onboardedAt, "the paywall moment is the onboarding stamp")
+        XCTAssertTrue(pending.isFinal)
+
+        // finishOnboarding() claiming afterwards is a no-op, not a second call.
+        _ = await coordinator.claimIfNeeded(isOnboarded: true, isDebugReplay: false)
+        XCTAssertEqual(service.claimRequests.count, 1)
+    }
+
+    func test_FE_CLM_15_paywallDuringDebugReplayNeverClaims() async {
+        let service = FakeReferralService()
+        let coordinator = makeCoordinator(service: service)
+        pending.capture(code: "K7MQ2XPA", source: .deferred)
+
+        let outcome = await coordinator.onboardingPaywallReached(isDebugReplay: true).value
+
+        XCTAssertNil(outcome)
+        XCTAssertTrue(service.claimRequests.isEmpty)
+    }
+
+    func test_FE_CLM_16_paywallWithNoReferralDoesNothing() async {
+        let service = FakeReferralService()
+        let coordinator = makeCoordinator(service: service)
+
+        let outcome = await coordinator.onboardingPaywallReached(isDebugReplay: false).value
+
+        XCTAssertNil(outcome)
+        XCTAssertTrue(service.claimRequests.isEmpty, "no account is minted for a non-referred install")
+    }
+
     // MARK: - FE-LNK-07
 
     func test_FE_LNK_07_standLinkNeverReadsAReferralLink() {

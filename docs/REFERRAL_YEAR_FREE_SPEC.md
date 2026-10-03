@@ -57,7 +57,7 @@ one means changing the tests listed next to it.
 
 | # | Decision | Choice | Tests affected |
 |---|---|---|---|
-| D1 | What counts | New install that arrived through the link or code, finished onboarding, on a device never counted before. | BE-CLM-*, FE-CLM-* |
+| D1 | What counts | New install that arrived through the link or code, **reached the onboarding paywall** (decided 2026-10-03; pays or not), on a device never counted before. With the hard paywall on, finishing onboarding means paying, so counting at onboarding's end only ever counted paying friends. | BE-CLM-*, FE-CLM-* |
 | D2 | Reward mechanism | App Store offer code, one free year on the annual subscription. Fallback (not built in v1): a RevenueCat promotional entitlement. | BE-RWD-* |
 | D3 | Target | 5 **(default, decided 2026-10-02)**; 3 is the alternative. Every UI string reads the number from the record, never hardcodes it. A server config value, locked onto the referrer's record when they enroll, so later config changes never move anyone's goalposts. | BE-ENR-04, BE-CLM-10 |
 | D4 | Hard paywall | **(default)** The automatic page only appears when the paywall could be closed. Remote Config flag `referralOnHardPaywall` (default `false`) adds a small "Or invite 5 friends for a free year" (number from config) link to the hard paywall. That link opens the same page, and the paywall stays behind it. | FE-ENT-* |
@@ -377,4 +377,4 @@ exclude simulator traffic and don't count `paywall_shown` and
 | Redeemed | only seen while the page was open | also inferred: not premium at the redeem tap, premium now | The App Store round trip often kills the app |
 | Progress cache | refreshed only while the page was open | refreshed on every foreground | An earned reward could have no entry point |
 
-**Open (needs a product decision):** with the hard paywall on (`showPayWhatYouCanLink = false`), a friend who declines never finishes onboarding, so they never count. See the PR discussion.
+**Decided 2026-10-03:** a friend counts on reaching the onboarding paywall (D1), so a friend who declines a hard paywall still counts. The claim fires from the paywall's appearance (`HighConversionPaywallView` with source `onboarding`, and the storm arm's `StormPaywallView`); `finishOnboarding()` still claims too, as a no-op backstop.

@@ -147,6 +147,17 @@ final class ReferralClaimCoordinator {
         now: { Date() }
     )
 
+    /// Spec D1: a friend counts once they REACH the onboarding paywall, not
+    /// only once they finish onboarding. With the hard paywall on, finishing
+    /// onboarding means paying, so a friend who declined never counted.
+    /// `finishOnboarding()` still claims too: the claim is single-flight and
+    /// final outcomes are remembered, so the second call is a no-op.
+    /// Returns the task so tests can await the claim; call sites ignore it.
+    @discardableResult
+    func onboardingPaywallReached(isDebugReplay: Bool) -> Task<ReferralClaimOutcome?, Never> {
+        Task { await claimIfNeeded(isOnboarded: true, isDebugReplay: isDebugReplay) }
+    }
+
     let pending: PendingReferralStore
     private let keyValueStore: ReferralKeyValueStore
     private let service: ReferralServicing

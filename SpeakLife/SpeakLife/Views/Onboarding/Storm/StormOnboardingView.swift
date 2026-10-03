@@ -240,6 +240,11 @@ struct StormOnboardingView: View {
             StormPaywallView(storm: resolvedStorm, placement: "onboarding") { _ in
                 complete()
             }
+            .onAppear {
+                // A referred friend counts on reaching the paywall (spec D1).
+                ReferralClaimCoordinator.shared.onboardingPaywallReached(
+                    isDebugReplay: appState.debugReplayOnboarding)
+            }
         }
     }
 

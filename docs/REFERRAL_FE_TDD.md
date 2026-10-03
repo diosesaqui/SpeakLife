@@ -281,10 +281,21 @@ The app half of BE-JRN / BE-CON. See the backend plan §12b for why these exist.
 | FE-JRN-01 | Friend: deferred link before onboarding → no claim during onboarding → first claim with no token gets retry_later and stays pending → foreground 10 min later is throttled → an hour later credited and final. Asserts `capturedAt` is the first-launch time, not the claim time. |
 | FE-CON-01 | The server's push payload (`referral_push_fixture.json`, asserted server-side by BE-CON-01) is recognised by `ReferralPush.isReferral`, which the notification handler routes on |
 | FE-CON-02 | Other pushes are not referral pushes |
+| FE-CLM-14 | Reaching the onboarding paywall claims (D1), stamps `onboardedAt`, and a later `finishOnboarding()` claim is a no-op |
+| FE-CLM-15 | The paywall during a debug replay never claims |
+| FE-CLM-16 | The paywall with no pending referral does nothing (no account minted) |
 | FE-PND-11..14 | Window is capture→onboarding; 30-day claim grace after; `markOnboarded` stamps once |
 | FE-PAG-14e/f | Redemption inferred on reload (not premium at the tap, premium now), event fires once; never inferred for someone premium at the tap |
 
 ## 11. Device QA matrix (manual, before release)
+
+**Resetting a test phone.** DeviceCheck bits survive deleting the app and erasing
+the phone, so each phone can be counted once until it is reset. Debug panel →
+Referral QA shows the phone's Firebase uid and DeviceCheck token (copy buttons).
+Then: `node functions/scripts/resetReferralTestDevice.js --confirm-qa --token <token> --uid <uid>`
+(add `--development` for an Xcode debug build, `--referrer <uid>` to restart a
+referrer at 0, `--dry-run` to look first). Reset a phone after FE-QA-04 and
+before reusing it as a friend.
 
 Things only a real device or sandbox can prove. Each row is run and initialled
 on the release ticket. Use a TestFlight build with the flag on through the
@@ -304,6 +315,7 @@ Remote Config debug override.
 | FE-QA-10 | A signs in with Apple on the Prayer Wall after 1 credit | Progress kept (merge) |
 | FE-QA-11 | Server switch off | Invite gives "Not available right now". An existing unlocked reward is still redeemable. |
 | FE-QA-12 | Hard paywall with `referralOnHardPaywall` on | Link visible. Page opens over the paywall. Closing returns to the paywall. |
+| FE-QA-12b | Referred friend reaches a HARD paywall and does not pay | Referrer's count goes up (D1: counted at the paywall) |
 | FE-QA-13 | Each onboarding arm (product, identity, quiz, closer, direct, storm, and one angle arm) | Page appears after a decline in each. Storm's objection flow finishes first. |
 | FE-QA-14 | VoiceOver and Dynamic Type at the largest size | All text readable, buttons reachable, progress announced as "2 of 5 friends joined" |
 | FE-QA-15 | Stand invite link and referral page at once | Stand join first. Referral page still in Profile. |

@@ -1988,6 +1988,10 @@ struct HighConversionPaywallView: View {
         }
         timeOnPaywall = Date()
         selectedPlan = .annual
+        if source == "onboarding" {
+            ReferralClaimCoordinator.shared.onboardingPaywallReached(
+                isDebugReplay: appState.debugReplayOnboarding)
+        }
         // Check actual trial eligibility from Apple (re-run via onChange when
         // products finish loading after the paywall is already on screen).
         Task { await refreshTrialEligibility() }
