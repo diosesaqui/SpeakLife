@@ -293,10 +293,12 @@ test('BE-HLP-08 validateCapturedAt in the future beyond 5 minutes of skew is exp
   assert.strictEqual(H.validateCapturedAt(T0 + 5 * 60000 + 1000, null, T0, 14), 'expired');
 });
 
-test('BE-HLP-09 validateCapturedAt more than 5 minutes before the account existed is expired', () => {
-  const created = T0 - DAY;
-  assert.strictEqual(H.validateCapturedAt(created - 5 * 60000, created, T0, 14), 'ok');
-  assert.strictEqual(H.validateCapturedAt(created - 5 * 60000 - 1000, created, T0, 14), 'expired');
+test('BE-HLP-09 validateCapturedAt ignores when the account was created', () => {
+  // The app creates the friend's account at claim time, AFTER onboarding, so a
+  // link captured at first launch always predates it. That must not expire it.
+  // (A previous install's link cannot carry over: the pending value lives in
+  // UserDefaults, which a delete wipes.)
+  assert.strictEqual(H.validateCapturedAt(T0 - 2 * DAY, T0 - 60000, T0, 14), 'ok');
 });
 
 test('BE-HLP-10 validateCapturedAt missing, non-number or NaN is invalid_argument', () => {
@@ -404,11 +406,10 @@ test('BE-HLP-16 mergeReferrals: one reward is kept, the lower target is kept', (
   assert.strictEqual(plan.record.status, 'unlocked');
   assert.strictEqual(plan.record.reward.code, 'OFFER1');
   assert.strictEqual(plan.needsRewardCode, false);
-  assert.deepStrictEqual(plan.releaseRewardCodes, []);
   assert.deepStrictEqual(plan.retireRewardCodes, []);
 });
 
-test('BE-HLP-16 mergeReferrals: two rewards, earlier kept, the other released or retired by age', () => {
+test('BE-HLP-16 mergeReferrals: two rewards, earlier kept, the other always retired', () => {
   const r = (code, ageMs) => ({ code, assignedAt: T0 - ageMs, expiresAt: T0 + 100 * DAY, reissueCount: 0 });
   const unlocked = (reward) => ({ status: 'unlocked', unlockedAt: reward.assignedAt, reward, target: 3 });
   const fr = ['f1', 'f2', 'f3'];
@@ -416,13 +417,11 @@ test('BE-HLP-16 mergeReferrals: two rewards, earlier kept, the other released or
   const fresh = H.mergeReferrals(side('A', 'AAAAAAAA', fr, unlocked(r('OLD', 5 * DAY))),
                                  side('P', 'PPPPPPPP', fr, unlocked(r('NEW', 2 * HOUR))), 'P', T0);
   assert.strictEqual(fresh.record.reward.code, 'OLD');
-  assert.deepStrictEqual(fresh.releaseRewardCodes, ['NEW']);
-  assert.deepStrictEqual(fresh.retireRewardCodes, []);
+  assert.deepStrictEqual(fresh.retireRewardCodes, ['NEW']);
 
   const stale = H.mergeReferrals(side('A', 'AAAAAAAA', fr, unlocked(r('OLD', 5 * DAY))),
                                  side('P', 'PPPPPPPP', fr, unlocked(r('NEW', 2 * DAY))), 'P', T0);
   assert.strictEqual(stale.record.reward.code, 'OLD');
-  assert.deepStrictEqual(stale.releaseRewardCodes, []);
   assert.deepStrictEqual(stale.retireRewardCodes, ['NEW']);
 });
 
@@ -800,10 +799,10 @@ test('BE-CLM-08 captured 15 days ago: expired, final', async () => {
   await expectRejected(await claim('f1', code, { capturedAt: now - 15 * DAY }), 'expired', { friend: 'f1' });
 });
 
-test('BE-CLM-08 a link captured before the friend\'s account existed: expired', async () => {
+test('BE-CLM-08b link captured at first launch, account created after onboarding: credited', async () => {
   const { code } = await enroll('R');
-  accounts.set('f1', now - DAY);
-  await expectRejected(await claim('f1', code, { capturedAt: now - 2 * DAY }), 'expired', { friend: 'f1' });
+  accounts.set('f1', now - 60000);
+  assert.deepStrictEqual(await claim('f1', code, { capturedAt: now - 8 * 60000 }), { outcome: 'credited' });
 });
 
 test('BE-CLM-09 friend uid is the referrer: self_referral, final', async () => {
@@ -848,10 +847,19 @@ test('BE-CLM-16 device bit 1 set (a referrer\'s device): device_is_referrer, fin
   await expectRejected(await claim('f1', code), 'device_is_referrer', { friend: 'f1' });
 });
 
-test('BE-CLM-17 no device token: device_unverifiable, final', async () => {
+test('BE-CLM-16b bit 1 set by the friend\'s OWN enrollment (hard-paywall link before the claim): credited', async () => {
   const { code } = await enroll('R');
-  await expectRejected(await claim('f1', code, { deviceToken: undefined }),
-    'device_unverifiable', { friend: 'f1' });
+  await enroll('f1', { deviceToken: 'dev_f1' }); // sets bit 1 on dev_f1, gives f1 a record
+  assert.strictEqual(dc.bits.get('dev_f1').bit1, true);
+  assert.deepStrictEqual(await claim('f1', code), { outcome: 'credited' });
+  assert.strictEqual(dc.bits.get('dev_f1').bit0, true, 'still counted once per device');
+});
+
+test('BE-CLM-17 no device token (a transient client failure): retry_later, NOT final', async () => {
+  const { code } = await enroll('R');
+  assert.deepStrictEqual(await claim('f1', code, { deviceToken: undefined }), { outcome: 'retry_later' });
+  assert.strictEqual((await claimDoc('f1')).exists, false);
+  assert.deepStrictEqual(await claim('f1', code), { outcome: 'credited' });
 });
 
 test('BE-CLM-18 Apple rejects the token as invalid: device_unverifiable, final', async () => {
@@ -1376,15 +1384,17 @@ test('BE-MRG-05 A unlocked with a reward, P active: P is unlocked with A\'s rewa
   assert.strictEqual((await pool('OFFERA')).assignedTo, P);
 });
 
-test('BE-MRG-06 both rewarded: earlier kept, the other back to the pool if under 24h old', async () => {
+test('BE-MRG-06 both rewarded: earlier kept, the other retired even if assigned minutes ago', async () => {
+  // A code is redeemable the moment it is assigned (push, Redeem button), so
+  // no age makes it safe to hand to someone else.
   const fr = ['f1', 'f2', 'f3', 'f4', 'f5'];
   await seedReferral(A, 'AAAAAAAA', fr, await seedReward('EARLY', A, 5 * DAY));
   await seedReferral(P, 'PPPPPPPP', fr, await seedReward('FRESH', P, 2 * HOUR));
   await mergeTwice();
   assert.strictEqual((await referral(P)).reward.code, 'EARLY');
   const fresh = await pool('FRESH');
-  assert.strictEqual(fresh.assignedTo, null, 'released');
-  assert.notStrictEqual(fresh.retired, true);
+  assert.strictEqual(fresh.retired, true);
+  assert.notStrictEqual(fresh.assignedTo, null, 'never back in the pool');
 });
 
 test('BE-MRG-06 both rewarded: the other is retired if assigned over 24h ago', async () => {

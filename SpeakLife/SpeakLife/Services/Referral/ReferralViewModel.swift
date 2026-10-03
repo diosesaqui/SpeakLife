@@ -273,9 +273,7 @@ final class ReferralViewModel: ObservableObject {
         case .markRewardUnlockedSeen:
             // Usually already set by the reducer through `inout memory`; this
             // makes the once-ever guarantee independent of that detail.
-            memory = ReferralPageMemory(lastSeenCount: memory.lastSeenCount,
-                                        rewardUnlockedSeen: true,
-                                        lastRedeemTapAt: memory.lastRedeemTapAt)
+            memory.rewardUnlockedSeen = true
             ReferralPageMemoryStore.save(memory, to: deps.store)
         }
     }
@@ -371,7 +369,6 @@ final class ReferralViewModel: ObservableObject {
             let reward = try await deps.service.reissue()
             dispatch(.reissueSucceeded(reward))
             notice = .reissued
-            track("referral_reissue_requested", ["result": "reissued"])
         } catch {
             let exhausted = ReferralServiceError.wrap(error) == .exhausted
             dispatch(.reissueFailed(exhausted: exhausted))
@@ -380,7 +377,8 @@ final class ReferralViewModel: ObservableObject {
             } else {
                 notice = .reissueFailed
             }
-            track("referral_reissue_requested", ["result": exhausted ? "exhausted" : "error"])
+            // `referral_reissue_requested` comes from the reducer's .track
+            // effect. Tracking it here too double-counted every reissue.
         }
     }
 

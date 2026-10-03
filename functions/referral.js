@@ -32,7 +32,6 @@ const { defineSecret }           = require('firebase-functions/params');
 const { getApps, initializeApp } = require('firebase-admin/app');
 const { getFirestore, FieldValue, Timestamp } = require('firebase-admin/firestore');
 const { getMessaging }           = require('firebase-admin/messaging');
-const { getAuth }                = require('firebase-admin/auth');
 const { CODE_ALPHABET, CODE_LENGTH, generateCode, normalizeCode } = require('./inviteCode');
 const DeviceCheck                = require('./deviceCheck');
 
@@ -40,7 +39,6 @@ if (getApps().length === 0) initializeApp();
 
 const db        = getFirestore();
 const messaging = getMessaging();
-const auth      = getAuth();
 
 // Apple DeviceCheck credentials (App Store Connect → Keys → DeviceCheck).
 // Declared here, bound to the functions that use them below, never logged.
@@ -59,7 +57,6 @@ const ENROLL_CALLS_PER_HOUR  = 20;
 const CLAIM_CALLS_PER_HOUR   = 10;
 const REISSUE_CALLS_PER_HOUR = 5;
 const MAX_REISSUES           = 1;
-const RELEASE_IF_YOUNGER_MS  = DAY_MS;   // merge: a reward this fresh goes back to the pool
 const POOL_LOW_WARNING       = 100;
 const BIT_RETRY_MAX_ATTEMPTS = 14;
 const SOURCES = ['deferred', 'universal_link', 'manual'];
@@ -132,13 +129,17 @@ function readConfig(data) {
  * 'invalid_argument'.
  *
  * A capture time in the future (beyond clock skew) is a forged or broken
- * clock. One from before the friend's account existed is a link captured on
- * a previous install, which must not carry over to a fresh account.
+ * clock.
+ *
+ * Deliberately NOT compared with the friend's account creation time. The app
+ * creates that account at claim time, after onboarding, so a link captured at
+ * first launch always predates it; comparing them expired nearly every real
+ * friend. A previous install's link cannot carry over anyway: the pending
+ * value lives in UserDefaults, which deleting the app wipes.
  */
-function validateCapturedAt(capturedAt, accountCreatedAt, nowMs, windowDays) {
+function validateCapturedAt(capturedAt, _accountCreatedAt, nowMs, windowDays) {
   if (typeof capturedAt !== 'number' || !Number.isFinite(capturedAt)) return 'invalid_argument';
   if (capturedAt > nowMs + CLOCK_SKEW_MS) return 'expired';
-  if (accountCreatedAt != null && capturedAt < accountCreatedAt - CLOCK_SKEW_MS) return 'expired';
   if (nowMs - capturedAt > windowDays * DAY_MS) return 'expired';
   return 'ok';
 }
@@ -166,7 +167,7 @@ function pickRewardCode(pool, nowMs, minValidityDays) {
  * Returns null when there is nothing to do, otherwise:
  *
  *   { record, credits, keepCode, revokeCode,
- *     releaseRewardCodes, retireRewardCodes, needsRewardCode }
+ *     retireRewardCodes, needsRewardCode }
  *
  * `record` is the target's new referral record. If `needsRewardCode` is set,
  * the caller assigns one from the pool in the same transaction.
@@ -179,7 +180,6 @@ function mergeReferrals(a, b, toUid, nowMs) {
       credits: { ...a.credits },
       keepCode: a.record.code,
       revokeCode: null,
-      releaseRewardCodes: [],
       retireRewardCodes: [],
       needsRewardCode: false,
     };
@@ -205,20 +205,18 @@ function mergeReferrals(a, b, toUid, nowMs) {
   const target = Math.min(positiveInt(a.record.target, DEFAULT_CONFIG.target),
                           positiveInt(b.record.target, DEFAULT_CONFIG.target));
 
-  // Rewards: keep the earlier. The other goes back to the pool only if it was
-  // assigned less than a day ago (it cannot have been redeemed yet in any
-  // realistic flow); otherwise it is retired, since it may already be in use.
+  // Rewards: keep the earlier and retire the other. Never back to the pool:
+  // a code is redeemable the moment it is assigned (push, Redeem button), so
+  // no age makes it safe to hand to someone else.
   const ra = a.record.reward || null;
   const rb = b.record.reward || null;
   let reward = ra || rb;
-  const releaseRewardCodes = [];
   const retireRewardCodes = [];
   if (ra && rb) {
     const [kept, other] = (toMs(ra.assignedAt) ?? Infinity) <= (toMs(rb.assignedAt) ?? Infinity)
       ? [ra, rb] : [rb, ra];
     reward = kept;
-    const age = nowMs - (toMs(other.assignedAt) ?? 0);
-    (age < RELEASE_IF_YOUNGER_MS ? releaseRewardCodes : retireRewardCodes).push(other.code);
+    retireRewardCodes.push(other.code);
   }
 
   const unlockedTimes = [a.record.unlockedAt, b.record.unlockedAt]
@@ -248,7 +246,6 @@ function mergeReferrals(a, b, toUid, nowMs) {
     credits,
     keepCode: keep.code,
     revokeCode: revoke.code === keep.code ? null : revoke.code,
-    releaseRewardCodes,
     retireRewardCodes,
     needsRewardCode,
   };
@@ -394,17 +391,6 @@ function assignInTx(tx, picked, uid, t, reissueCount) {
   };
 }
 
-/** Friend's account creation time in millis, or null if Auth cannot say. */
-async function accountCreatedAt(uid) {
-  try {
-    const user = await auth.getUser(uid);
-    const t = Date.parse(user?.metadata?.creationTime || '');
-    return Number.isFinite(t) ? t : null;
-  } catch {
-    return null;
-  }
-}
-
 /**
  * The client reports capture time in epoch millis. A value small enough to be
  * seconds (before 1973 in millis) is read as seconds, so a client that sends
@@ -541,22 +527,29 @@ exports.claimReferral = onCall({ secrets: SECRETS }, async (request) => {
 
   if (referrerUid === friendUid) return rejectFinal(claimRef, base, 'self_referral'); // #7
 
-  const created = await accountCreatedAt(friendUid);                      // #8
-  if (validateCapturedAt(capturedAt, created, now(), config.windowDays) !== 'ok') {
+  if (validateCapturedAt(capturedAt, null, now(), config.windowDays) !== 'ok') { // #8
     return rejectFinal(claimRef, base, 'expired');
   }
 
   // #9. Apple is only ever asked about a claim that got this far, so junk
   // codes generate no DeviceCheck traffic. If Apple is unreachable, the
   // decision is deferred to #12 so the cheaper final checks still apply.
+  // No token is a client-side failure (DCDevice can fail transiently), not a
+  // verdict on the device, so it is never final: the app keeps the claim and
+  // retries. A token Apple rejects outright is final (below).
   if (typeof deviceToken !== 'string' || !deviceToken) {
-    return rejectFinal(claimRef, base, 'device_unverifiable');
+    return { outcome: 'retry_later' };
   }
   let appleDown = false;
   try {
     const bits = await deviceCheck().queryBits(deviceToken, { isDevelopment: !!isDevelopment });
     if (bits.bit0) return rejectFinal(claimRef, base, 'device_already_counted');
-    if (bits.bit1) return rejectFinal(claimRef, base, 'device_is_referrer');
+    // Bit 1 set by this same friend enrolling (e.g. the hard-paywall link
+    // during onboarding, before their own claim) is not a referrer farming
+    // their own phone. Bit 0 still limits the device to one credit ever.
+    if (bits.bit1 && !(await db.collection('referrals').doc(friendUid).get()).exists) {
+      return rejectFinal(claimRef, base, 'device_is_referrer');
+    }
   } catch (err) {
     if (err.kind === 'invalid_token') return rejectFinal(claimRef, base, 'device_unverifiable');
     console.error(`claimReferral: DeviceCheck unavailable (${err.message}); retry_later`);
@@ -786,7 +779,7 @@ async function mergeReferralAccounts(fromUid, toUid) {
     const picked = plan.needsRewardCode
       ? await pickInTx(tx, t, config.minCodeValidityDays) : null;
     const keptRewardCode = plan.record.reward?.code || null;
-    const touched = [keptRewardCode, ...plan.releaseRewardCodes, ...plan.retireRewardCodes]
+    const touched = [keptRewardCode, ...plan.retireRewardCodes]
       .filter(Boolean);
     const poolSnaps = touched.length ? await tx.getAll(...touched.map(pool)) : [];
     const poolExists = new Set(poolSnaps.filter((s) => s.exists).map((s) => s.id));
@@ -817,9 +810,6 @@ async function mergeReferralAccounts(fromUid, toUid) {
     }
     if (keptRewardCode && poolExists.has(keptRewardCode)) {
       tx.update(pool(keptRewardCode), { assignedTo: toUid });
-    }
-    for (const c of plan.releaseRewardCodes) {
-      if (poolExists.has(c)) tx.update(pool(c), { assignedTo: null, assignedAt: null });
     }
     for (const c of plan.retireRewardCodes) {
       if (poolExists.has(c)) tx.update(pool(c), { retired: true, retiredAt: ts(t) });

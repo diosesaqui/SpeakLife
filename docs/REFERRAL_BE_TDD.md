@@ -47,7 +47,7 @@ needs a collision stubs it through `H.setCodeGenerator`.
 | BE-HLP-06 | ...exactly at the window edge (14d 0s) | ok (inclusive) |
 | BE-HLP-07 | ...14 days plus 1 second | `expired` |
 | BE-HLP-08 | ...`capturedAt` in the future, beyond 5 minutes of clock skew | `expired` |
-| BE-HLP-09 | ...`capturedAt` more than 5 minutes before the friend's account was created | `expired` (a link captured on a previous install doesn't carry over) |
+| BE-HLP-09 | ...`capturedAt` before the friend's account was created | ok (the account is created after onboarding; a previous install's pending value is wiped with the app) |
 | BE-HLP-10 | ...`capturedAt` missing, not a number, or NaN | `invalid_argument` |
 | BE-HLP-11 | `pickRewardCode(pool, now, minValidityDays)` | Soonest-expiring code that's still valid for at least `minValidityDays` |
 | BE-HLP-12 | `pickRewardCode` when every code expires within `minValidityDays` | `null` |
@@ -123,7 +123,8 @@ otherwise. "Final" means a `referralClaims/{friendUid}` document is written.
 | BE-CLM-14 | Revoked code (R deleted their account) | `unknown_code` | **no** |
 | BE-CLM-15 | Device bit 0 already set | `device_already_counted` | yes |
 | BE-CLM-16 | Device bit 1 set (this device enrolled as a referrer) | `device_is_referrer` | yes |
-| BE-CLM-17 | No `deviceToken` | `device_unverifiable` | yes |
+| BE-CLM-16b | Bit 1 set by the friend's own enrollment before their claim | credited (bit 0 still caps the device at one) | — |
+| BE-CLM-17 | No `deviceToken` (transient client failure) | `retry_later` | **no** |
 | BE-CLM-18 | DeviceCheck rejects the token as invalid | `device_unverifiable` | yes |
 | BE-CLM-19 | No auth | Error `unauthenticated` | no |
 | BE-CLM-20 | 11th claim call in an hour from one friend | Error `resource-exhausted`, checked **before** the code lookup (no free enumeration) | no |
@@ -201,7 +202,7 @@ prove the merge is idempotent.
 | BE-MRG-03 | Both have one, with credit sets {f1,f2} and {f2,f3} | P's count is 3 (union, not 4). The code with more credits kept, the other revoked. |
 | BE-MRG-04 | Both have one, and the union reaches the target | Unlocked and a code assigned during the merge |
 | BE-MRG-05 | A unlocked with a reward, P active | P is unlocked with A's reward |
-| BE-MRG-06 | Both have rewards | Earlier one kept. The other goes back to the pool only if assigned less than 24h ago, otherwise it's retired. |
+| BE-MRG-06 | Both have rewards | Earlier one kept. The other is always retired, never back in the pool (it is redeemable from the moment it is assigned). |
 | BE-MRG-07 | Different targets (5 and 3) | Lower one kept |
 | BE-MRG-08 | A friend claim using A's old code after the merge | Credited to P |
 | BE-MRG-09 | Merge with neither having a referral | No referral documents created |

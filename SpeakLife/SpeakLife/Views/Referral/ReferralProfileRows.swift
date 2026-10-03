@@ -54,7 +54,7 @@ struct ReferralProfileRows: View {
         let pending = ReferralCapture.sharedStore
         return ReferralEligibility.showsInviteCodeEntry(
             isOnboarded: appState.isOnboarded,
-            firstLaunchAt: UserDefaults.standard.object(forKey: ReferralKeys.installDate) as? Date,
+            firstLaunchAt: AnalyticsContext.shared.userInstallDate,
             now: Date(),
             hasPending: pending.pending != nil,
             isFinal: pending.isFinal)

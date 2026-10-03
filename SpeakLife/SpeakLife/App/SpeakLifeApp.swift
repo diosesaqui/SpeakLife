@@ -531,6 +531,19 @@ struct SpeakLifeApp: App {
                     appState.remoteMessage = message
                 }
                 return
+            case "referral":
+                // "A friend joined" / "Your free year is ready" (functions/
+                // referral.js). Opens the referral page over Home, where the
+                // reward lives. Deferred a beat for the same reason as the
+                // post-onboarding cover: one raised while Home is still
+                // mounting is dropped by SwiftUI.
+                tabViewModel.resetToHome()
+                if appState.isOnboarded {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                        ReferralPresentation.shared.autoEntry = .push
+                    }
+                }
+                return
             case "bibleChat":
                 // Trial push introducing Bible chat: open the Ask the Bible tab.
                 // With AI features off that tab is the prayer wall; go home.

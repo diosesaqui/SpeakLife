@@ -63,11 +63,18 @@ public struct ReferralPageMemory: Equatable {
     /// `referral_reward_unlocked` has fired on this install.
     public var rewardUnlockedSeen: Bool
     public var lastRedeemTapAt: Date?
+    /// Set only by an observed redemption: premium turning ON within the
+    /// attribution window of a redeem tap. Being premium after a tap is not
+    /// enough (a D7 subscriber who backs out of Apple's sheet still holds an
+    /// unredeemed code).
+    public var rewardRedeemed: Bool
 
-    public init(lastSeenCount: Int = 0, rewardUnlockedSeen: Bool = false, lastRedeemTapAt: Date? = nil) {
+    public init(lastSeenCount: Int = 0, rewardUnlockedSeen: Bool = false, lastRedeemTapAt: Date? = nil,
+                rewardRedeemed: Bool = false) {
         self.lastSeenCount = lastSeenCount
         self.rewardUnlockedSeen = rewardUnlockedSeen
         self.lastRedeemTapAt = lastRedeemTapAt
+        self.rewardRedeemed = rewardRedeemed
     }
 }
 
@@ -133,10 +140,12 @@ public enum ReferralPageReducer {
             ])
 
         case .premiumChanged(let nowPremium, let at):
-            guard case .unlocked(let code, let reward, _) = state else { return (state, []) }
-            if nowPremium, let tap = memory.lastRedeemTapAt {
+            guard case .unlocked(let code, let reward, let wasPremium) = state else { return (state, []) }
+            // Only a change from not-premium to premium can be the redemption.
+            if nowPremium, !wasPremium, let tap = memory.lastRedeemTapAt {
                 let elapsed = at.timeIntervalSince(tap)
                 if elapsed >= 0 && elapsed <= redeemAttributionWindow {
+                    memory.rewardRedeemed = true
                     return (.redeemed, [.track(event: AnalyticsEvent.rewardRedeemed, properties: [:])])
                 }
             }
@@ -205,7 +214,7 @@ public enum ReferralPageReducer {
             next = .active(count: shown, target: target, code: snapshot.code)
         case .unlocked:
             if let reward = snapshot.reward {
-                if isPremium && memory.lastRedeemTapAt != nil {
+                if memory.rewardRedeemed {
                     next = .redeemed
                 } else {
                     next = .unlocked(code: snapshot.code, reward: reward, alreadyPremium: isPremium)

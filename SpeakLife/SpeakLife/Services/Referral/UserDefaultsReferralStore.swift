@@ -66,9 +66,6 @@ enum ReferralKeys {
     /// `rewardRedeemed`), so a D7 subscriber still holding an unredeemed
     /// code keeps a way back to it.
     static let rewardRedeemed = "referralRewardRedeemed"
-    /// Written by `AnalyticsContext` with a backfill from older keys. The
-    /// "Have an invite code?" window runs from here.
-    static let installDate = "analytics_install_date"
 }
 
 // MARK: - Snapshot cache
@@ -102,6 +99,7 @@ enum ReferralPageMemoryStore {
         var lastSeenCount: Int
         var rewardUnlockedSeen: Bool
         var lastRedeemTapAt: Date?
+        var rewardRedeemed: Bool?
     }
 
     static func load(from store: ReferralKeyValueStore) -> ReferralPageMemory {
@@ -110,14 +108,16 @@ enum ReferralPageMemoryStore {
         return ReferralPageMemory(
             lastSeenCount: stored?.lastSeenCount ?? 0,
             rewardUnlockedSeen: stored?.rewardUnlockedSeen ?? false,
-            lastRedeemTapAt: stored?.lastRedeemTapAt
+            lastRedeemTapAt: stored?.lastRedeemTapAt,
+            rewardRedeemed: stored?.rewardRedeemed ?? false
         )
     }
 
     static func save(_ memory: ReferralPageMemory, to store: ReferralKeyValueStore) {
         let stored = Stored(lastSeenCount: memory.lastSeenCount,
                             rewardUnlockedSeen: memory.rewardUnlockedSeen,
-                            lastRedeemTapAt: memory.lastRedeemTapAt)
+                            lastRedeemTapAt: memory.lastRedeemTapAt,
+                            rewardRedeemed: memory.rewardRedeemed)
         store.set(try? JSONEncoder().encode(stored), forKey: ReferralKeys.pageMemory)
     }
 }

@@ -187,6 +187,9 @@ States: `loading`, `notEnrolled`, `enrolling`, `active(count,target,code)`,
 | FE-PAG-12 | `unlockedPendingCode` | snapshot `unlocked(code)` | `unlocked(code)` |
 | FE-PAG-13 | `unlocked` | `isPremium` turns true within 30 minutes of a redeem tap | `redeemed`, `referral_reward_redeemed` emitted |
 | FE-PAG-14 | `unlocked` | `isPremium` already true when the page opens (they subscribed earlier, D7) | `unlocked`. Copy explains the free year applies at renewal. |
+| FE-PAG-14b | `loading` | already premium, a past redeem tap, snapshot reload | Still `unlocked` (a tap is not a redemption) |
+| FE-PAG-14c | `unlocked(alreadyPremium)` | `premiumChanged(true)` right after a tap | No change. Only not-premium → premium counts. |
+| FE-PAG-14d | `unlocked` | redemption observed, then reload | `redeemed` is remembered across reloads |
 | FE-PAG-15 | `unlocked` | tap "My code didn't work", reissue succeeds | `unlocked(newCode)` |
 | FE-PAG-16 | `unlocked` | reissue returns `resource-exhausted` | `unlocked(oldCode)` plus the message "Contact support". Support email prefilled with the last 4 of the code. |
 | FE-PAG-17 | any | snapshot with `count > target` (should be impossible) | Shown as `target/target`, no crash |

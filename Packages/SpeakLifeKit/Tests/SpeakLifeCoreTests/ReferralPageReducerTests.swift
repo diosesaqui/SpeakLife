@@ -191,6 +191,38 @@ final class ReferralPageReducerTests: XCTestCase {
         XCTAssertEqual(effects, [])
     }
 
+    /// Review fix: a D7 subscriber who taps Redeem and backs out must keep the
+    /// code. Premium plus a past tap is not a redemption.
+    func test_FE_PAG_14b_alreadyPremiumTapThenReloadStaysUnlocked() {
+        var memory = ReferralPageMemory(lastSeenCount: 10, rewardUnlockedSeen: true, lastRedeemTapAt: t0)
+        let (state, _) = reduce(.loading, .snapshotLoaded(snap(10, of: 10, .unlocked, reward: reward), fromCache: false),
+                                &memory, isPremium: true)
+        XCTAssertEqual(state, .unlocked(code: code, reward: reward, alreadyPremium: true))
+        XCTAssertFalse(memory.rewardRedeemed)
+    }
+
+    /// Premium that was already on is not a redemption, even right after a tap.
+    func test_FE_PAG_14c_premiumAlreadyOnIsNotARedemption() {
+        var memory = ReferralPageMemory(lastSeenCount: 10, rewardUnlockedSeen: true, lastRedeemTapAt: t0)
+        let unlocked = ReferralPageState.unlocked(code: code, reward: reward, alreadyPremium: true)
+        let (state, effects) = reduce(unlocked, .premiumChanged(isPremium: true, at: t0.addingTimeInterval(60)), &memory)
+        XCTAssertEqual(state, unlocked)
+        XCTAssertEqual(effects, [])
+        XCTAssertFalse(memory.rewardRedeemed)
+    }
+
+    /// Once seen redeemed, a reload stays redeemed.
+    func test_FE_PAG_14d_redeemedIsRememberedAcrossReloads() {
+        var memory = ReferralPageMemory(lastSeenCount: 10, rewardUnlockedSeen: true, lastRedeemTapAt: t0)
+        let unlocked = ReferralPageState.unlocked(code: code, reward: reward, alreadyPremium: false)
+        let (redeemed, _) = reduce(unlocked, .premiumChanged(isPremium: true, at: t0.addingTimeInterval(60)), &memory)
+        XCTAssertEqual(redeemed, .redeemed)
+        XCTAssertTrue(memory.rewardRedeemed)
+        let (reloaded, _) = reduce(.loading, .snapshotLoaded(snap(10, of: 10, .unlocked, reward: reward), fromCache: false),
+                                   &memory, isPremium: true)
+        XCTAssertEqual(reloaded, .redeemed)
+    }
+
     func test_FE_PAG_14_alreadyPremiumWhenPageOpensStaysUnlocked() {
         var memory = ReferralPageMemory()
         let (state, _) = reduce(.loading, .snapshotLoaded(snap(10, of: 10, .unlocked, reward: reward), fromCache: false),

@@ -45,8 +45,8 @@ public enum ReferralLink {
     static let standMarker = "stand"
 
     /// Uppercase, strip separators, then require exactly eight characters from
-    /// the alphabet. Copied from `StandLink.normalize` so both features accept
-    /// exactly the same typed codes.
+    /// the alphabet. The single client definition: `StandLink` delegates here,
+    /// so both features accept exactly the same typed codes.
     public static func normalize(_ raw: String) -> String? {
         let cleaned = raw.uppercased().filter { $0.isLetter || $0.isNumber }
         guard cleaned.count == codeLength,

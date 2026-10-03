@@ -195,8 +195,8 @@ first failure decides the `reason`.
 | 5 | Friend has no earlier claim (`referralClaims/{friendUid}`) | Return the first outcome, unchanged | Drop |
 | 6 | Code exists and isn't revoked | `unknown_code`, **not** recorded as final. Guessing is capped by the per-friend throttle (#3), and a guessed code only credits from a fresh, DeviceCheck-verified device. | Drop this code; manual entry shows "We couldn't find that code" |
 | 7 | Friend isn't the referrer (uid) | `self_referral` | Drop |
-| 8 | Captured within the window (D8), per the client-reported capture time. The server also rejects capture times in the future or older than the friend's account. | `expired` | Drop |
-| 9 | DeviceCheck: the device has never been counted (bit 0 clear) and has never enrolled as a referrer (bit 1 clear) | `device_already_counted` / `device_is_referrer` | Drop |
+| 8 | Captured within the window (D8), per the client-reported capture time. The server also rejects capture times in the future. It does **not** compare against the friend's account creation time: the app creates that account after onboarding, so a first-launch capture always predates it. | `expired` | Drop |
+| 9 | DeviceCheck: the device has never been counted (bit 0 clear) and has never enrolled as a referrer (bit 1 clear), unless that enrollment was this same friend's own (they opened the referral page before their claim was sent). No token at all is a client failure and returns `retry_later`, not final. | `device_already_counted` / `device_is_referrer` | Drop |
 | 10 | Referrer hasn't reached the target yet | `target_reached`, still recorded so the claim is final | Drop |
 | 11 | Referrer is under the velocity cap (D9) | `retry_later`, **not** recorded as final | Keep the pending claim, retry |
 | 12 | DeviceCheck service reachable | `retry_later` | Keep, retry |
@@ -256,7 +256,7 @@ times in epoch milliseconds. The response never carries credits or friend uids.
 ### 8.6 Changes to existing functions in `standTogether.js`
 - **`completeAccountMerge`**: when an anonymous user signs in with Apple, move their referral record.
   - Only the source has one: re-key it to the target uid, and repoint `referralCodes/{code}.uid`.
-  - Both have one: union the credits, set `count` to the size of the union, keep the code with more credits (revoke the other), keep any reward already assigned (if both have one, keep the earlier one; the other code goes back to the pool unless it was assigned more than a day ago), and set `target` to the lower of the two.
+  - Both have one: union the credits, set `count` to the size of the union, keep the code with more credits (revoke the other), keep any reward already assigned (if both have one, keep the earlier one and retire the other: a code is redeemable the moment it is assigned, so it never goes back to the pool), and set `target` to the lower of the two.
   - Must be idempotent, like the existing merge.
 - **`deleteAccount`**: delete `referrals/{uid}` and its credits, and revoke its `referralCodes`. Keep `referralClaims` documents where this uid was the friend (no personal data beyond uids; they stop reinstall farming).
 
