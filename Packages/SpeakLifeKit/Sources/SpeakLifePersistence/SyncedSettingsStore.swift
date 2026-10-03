@@ -913,19 +913,9 @@ public final class SyncedSettingsStore {
     /// shipping call site is `mergeEnforcementProgress` above.
     public static func mergedEnforcementProgress(_ a: EnforcementProgress,
                                                  _ b: EnforcementProgress) -> EnforcementProgress {
-        // A run either side already finished is over everywhere. Dropped before
-        // anything else so no branch below can hand it back: a stale copy of
-        // the finished week reopened it on day seven, and the same-id branch
-        // would have unioned its six old days into a fresh restart.
-        let finishedRuns = Set(a.finishedRuns).union(b.finishedRuns)
-        let a = withoutFinishedRun(a, finishedRuns)
-        let b = withoutFinishedRun(b, finishedRuns)
-
         var merged = EnforcementProgress()
         merged.completedEnforcementIds = mergedEnforcementHistory(a.completedEnforcementIds,
                                                                   b.completedEnforcementIds)
-        // Sorted so both devices hold the identical list.
-        merged.finishedRuns = finishedRuns.sorted()
 
         if let idA = a.activeEnforcementId, let idB = b.activeEnforcementId {
             if idA == idB {
@@ -968,32 +958,11 @@ public final class SyncedSettingsStore {
         return merged
     }
 
-    /// `progress` with its running campaign cleared when that exact run is
-    /// already finished. History and finished runs are left alone.
-    private static func withoutFinishedRun(_ progress: EnforcementProgress,
-                                           _ finishedRuns: Set<String>) -> EnforcementProgress {
-        guard let runKey = progress.activeRunKey, finishedRuns.contains(runKey) else { return progress }
-        var cleared = progress
-        cleared.activeEnforcementId = nil
-        cleared.assembledEnforcement = nil
-        cleared.startedOn = nil
-        cleared.completedDayNumbers = []
-        cleared.lastAdvancedOn = nil
-        return cleared
-    }
-
     /// Takes the campaign from the only side that has one.
     private static func adoptSoleCampaign(holder: EnforcementProgress,
                                           other: EnforcementProgress,
                                           into merged: inout EnforcementProgress) {
         guard let id = holder.activeEnforcementId else { return }
-        // Only for blobs written before `finishedRuns` existed. A run finished
-        // since then never reaches here (`withoutFinishedRun`), which matters:
-        // once an id has been finished before, this check cannot tell a stale
-        // copy of the week from a restart, and a stale one was handed back
-        // every time the finishing device reconciled with its own last push.
-        // Reported as a stand campaign stuck on DAY 7 OF 7 for days.
-        //
         // The other side already banked this campaign as complete and this side
         // never did — it finished the week while this device was away. Handing
         // the campaign back would re-open a week the user already celebrated,

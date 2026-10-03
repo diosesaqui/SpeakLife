@@ -455,15 +455,11 @@ public final class EnforcementService: ObservableObject {
     private func begin(id: String, assembled: Enforcement?) {
         mutateProgress { p in
             let history = p.completedEnforcementIds
-            let runs = p.finishedRuns
             p = EnforcementProgress()
             p.activeEnforcementId = id
             p.assembledEnforcement = assembled
             p.startedOn = Date()
             p.completedEnforcementIds = history
-            // Kept for the same reason as history: the sync merge reads it to
-            // refuse a stale copy of a week already finished.
-            p.finishedRuns = runs
         }
         // A celebration still pending for the LAST week is stale the moment a
         // new one starts. Left armed, it surfaced whenever the Today tab next
