@@ -115,7 +115,7 @@ final class ReferralCaptureTests: XCTestCase {
         let ob = URLComponents(url: url, resolvingAgainstBaseURL: false)?
             .queryItems?.first { $0.name == "ob" }?.value
         XCTAssertEqual(ob, "warfare")
-        XCTAssertNotNil(OnboardingVariant(code: "warfare"))
+        XCTAssertNotNil(SubscriptionStore.OnboardingVariant(code: "warfare"))
     }
 
     // MARK: - FE-CAP-06
