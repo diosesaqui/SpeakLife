@@ -9,6 +9,7 @@ import SwiftUI
 import Combine
 import TipKit
 import AVFoundation
+import SpeakLifeCore
 
 /// Whether this process is running the test suite rather than serving a user.
 ///
@@ -531,7 +532,7 @@ struct SpeakLifeApp: App {
                     appState.remoteMessage = message
                 }
                 return
-            case "referral":
+            case ReferralPush.deepLink:
                 // "A friend joined" / "Your free year is ready" (functions/
                 // referral.js). Opens the referral page over Home, where the
                 // reward lives. Deferred a beat for the same reason as the

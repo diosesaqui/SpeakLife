@@ -272,6 +272,16 @@ modifier happens to fire first.
 
 ---
 
+## 10b. Journeys and contracts (`FE-JRN`, `FE-CON`)
+
+The app half of BE-JRN / BE-CON. See the backend plan §12b for why these exist.
+
+| ID | Journey / contract |
+|---|---|
+| FE-JRN-01 | Friend: deferred link before onboarding → no claim during onboarding → first claim with no token gets retry_later and stays pending → foreground 10 min later is throttled → an hour later credited and final. Asserts `capturedAt` is the first-launch time, not the claim time. |
+| FE-CON-01 | The server's push payload (`referral_push_fixture.json`, asserted server-side by BE-CON-01) is recognised by `ReferralPush.isReferral`, which the notification handler routes on |
+| FE-CON-02 | Other pushes are not referral pushes |
+
 ## 11. Device QA matrix (manual, before release)
 
 Things only a real device or sandbox can prove. Each row is run and initialled

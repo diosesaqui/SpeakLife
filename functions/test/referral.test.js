@@ -44,9 +44,9 @@ admin.getMessaging = () => ({
   },
 });
 
-// Auth: deleteUser is a no-op; getUser answers from `accounts` so a test can
-// give a friend an account creation time (the "link captured on a previous
-// install" check). An unknown uid behaves like Firebase: user-not-found.
+// Auth: deleteUser is a no-op; getUser answers from `accounts`, so a test can
+// give a friend a realistic account creation time (after onboarding, see
+// BE-JRN-01). An unknown uid behaves like Firebase: user-not-found.
 const accounts = new Map();
 const adminAuth = require('firebase-admin/auth');
 adminAuth.getAuth = () => ({
@@ -1639,4 +1639,137 @@ test('BE-DEL-04 an unredeemed reward is retired on deletion, not returned to the
   const p = await pool(reward.code);
   assert.strictEqual(p.retired, true);
   assert.strictEqual(p.assignedTo, 'R');
+});
+
+
+// ═══ Journeys: one real user, app + server, realistic order and timing ═══════
+//
+// The rows above test the server against the spec. These test the spec against
+// what the APP actually does, step by step, with the timestamps the app really
+// produces. Every bug the first code review found lived in this gap.
+
+const PUSH_FIXTURE = JSON.parse(require('node:fs').readFileSync(require('node:path').join(
+  __dirname, '..', '..', 'Packages', 'SpeakLifeKit', 'Tests', 'SpeakLifeCoreTests',
+  'Resources', 'referral_push_fixture.json'), 'utf8'));
+
+test('BE-JRN-01 friend: link at first launch, 8 min onboarding, account created at claim time: credited', async () => {
+  const { code } = await enroll('R');
+  const capturedAt = now;                  // Branch deferred link, first launch
+  advance(8 * 60000);                      // onboarding
+  accounts.set('f1', now);                 // ensureAccount() runs inside the claim
+  assert.deepStrictEqual(await claim('f1', code, { capturedAt }), { outcome: 'credited' });
+});
+
+test('BE-JRN-02 friend: offline for 13 days after onboarding, then online: credited; a day later it would not be', async () => {
+  const { code } = await enroll('R');
+  const capturedAt = now;
+  advance(13 * DAY + 23 * HOUR);
+  assert.deepStrictEqual(await claim('f1', code, { capturedAt }), { outcome: 'credited' });
+  const late = now - (14 * DAY + 1000);
+  assert.deepStrictEqual(await claim('f2', code, { capturedAt: late }),
+    { outcome: 'rejected', reason: 'expired' });
+});
+
+test('BE-JRN-03 friend: DeviceCheck token fails on the first try, works an hour later: credited once', async () => {
+  const { code } = await enroll('R');
+  const capturedAt = now;
+  assert.deepStrictEqual(await claim('f1', code, { capturedAt, deviceToken: undefined }),
+    { outcome: 'retry_later' });
+  advance(HOUR);
+  assert.deepStrictEqual(await claim('f1', code, { capturedAt }), { outcome: 'credited' });
+  assert.strictEqual((await referral('R')).count, 1);
+});
+
+test('BE-JRN-04 friend taps the hard-paywall link during onboarding, enrolls, then claims: credited, and can refer others', async () => {
+  const { code } = await enroll('R');
+  const capturedAt = now;
+  advance(3 * 60000);
+  const own = await enroll('f1', { deviceToken: 'dev_f1' });   // their own page, mid-onboarding
+  advance(5 * 60000);
+  assert.deepStrictEqual(await claim('f1', code, { capturedAt }), { outcome: 'credited' });
+  // And f1's own link works for a third person.
+  assert.deepStrictEqual(await claim('g1', own.code), { outcome: 'credited' });
+});
+
+test('BE-JRN-05 referrer signs in with Apple halfway; old links keep counting; the reward lands on the Apple account', async () => {
+  await seedPool(1);
+  const { code } = await enroll(A, { deviceToken: 'devA' });
+  await creditN(code, 2, { prefix: 'pre' });
+  const { ticket } = await stand.beginAccountMerge.run(req(A));
+  await stand.completeAccountMerge.run(req(P, { ticket }));
+  const after = await creditN(code, 3, { prefix: 'post' });
+  assert.ok(after.every((r) => r.outcome === 'credited'), JSON.stringify(after));
+  const rec = await referral(P);
+  assert.strictEqual(rec.count, 5);
+  assert.strictEqual(rec.status, 'unlocked');
+  assert.ok(rec.reward?.code, 'reward assigned to the Apple account');
+});
+
+test('BE-JRN-06 reinstall farm: same phone, new uid each time, only the first install counts', async () => {
+  const { code } = await enroll('R');
+  assert.deepStrictEqual(await claim('u1', code, { deviceToken: 'phoneX' }), { outcome: 'credited' });
+  for (const uid of ['u2', 'u3', 'u4']) {
+    assert.deepStrictEqual(await claim(uid, code, { deviceToken: 'phoneX' }),
+      { outcome: 'rejected', reason: 'device_already_counted' });
+  }
+  assert.strictEqual((await referral('R')).count, 1);
+});
+
+// ═══ Principle: a friend is never lost to a TRANSIENT failure ═══════════════
+//
+// One test over every failure the app can hit that is not a verdict on the
+// friend. Each must leave no final claim, and the same claim must be credited
+// once the condition clears. A new transient failure mode belongs in this list.
+
+test('BE-PRN-01 every transient failure is non-final and the same claim later credits', async () => {
+  const cases = [
+    ['no device token', {
+      before: () => {}, after: () => {}, overrides: { deviceToken: undefined } }],
+    ['Apple DeviceCheck down', {
+      before: () => { dc.down = true; }, after: () => { dc.down = false; } }],
+    ['server kill switch off', {
+      before: () => setConfig({ enabled: false }), after: () => setConfig({ enabled: true }) }],
+    ['referrer over the daily cap', {
+      config: { target: 20 },   // before enrolling: the target locks at enrollment
+      before: () => creditN(capCode, 5, { prefix: 'cap' }),
+      after: () => advance(DAY + 1000) }],
+    ['typo in the code', {
+      before: () => {}, after: () => {}, overrides: { code: 'ZZZZZZZZ' } }],
+  ];
+  let capCode;
+  for (const [name, c] of cases) {
+    await wipe();
+    if (c.config) await setConfig(c.config);
+    const { code } = await enroll('R');
+    capCode = code;
+    const capturedAt = now;
+    await c.before();
+    const first = await claim('f1', code, { capturedAt, ...(c.overrides || {}) })
+      .catch((e) => ({ thrown: e.code }));
+    assert.notStrictEqual(first.outcome, 'credited', `${name}: should not credit yet`);
+    assert.strictEqual((await claimDoc('f1')).exists, false, `${name}: must not be final`);
+    await c.after();
+    assert.deepStrictEqual(await claim('f1', code, { capturedAt }), { outcome: 'credited' }, name);
+  }
+});
+
+test('BE-PRN-02 a thrown throttle or auth error is never final', async () => {
+  const { code } = await enroll('R');
+  await expectCode(() => fns.claimReferral.run(req(null, { code, capturedAt: now, source: 'deferred', deviceToken: 'd' })),
+    'unauthenticated');
+  for (let i = 0; i < 10; i++) await claim('f1', 'ZZZZZZZZ');
+  await expectCode(() => claim('f1', code), 'resource-exhausted');
+  assert.strictEqual((await claimDoc('f1')).exists, false);
+  advance(HOUR + 1000);
+  assert.deepStrictEqual(await claim('f1', code), { outcome: 'credited' });
+});
+
+// ═══ Contract: the push the server sends is the push the app routes ═════════
+
+test('BE-CON-01 referral push data equals the shared fixture the app routes on', async () => {
+  const { code } = await enroll('R');
+  await withToken('R');
+  await claim('f1', code);
+  assert.strictEqual(sent.length, 1);
+  assert.deepStrictEqual(sent[0].data, PUSH_FIXTURE);
 });

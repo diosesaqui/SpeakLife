@@ -173,6 +173,71 @@ final class ReferralCaptureTests: XCTestCase {
         XCTAssertTrue(pending.isFinal)
     }
 
+    // MARK: - FE-JRN-01 (journey)
+
+    /// One friend, in the order the app really runs: the deferred link lands
+    /// before onboarding, nothing is claimed until onboarding finishes, the
+    /// first claim goes out with no DeviceCheck token and the server says
+    /// retry_later, a foreground ten minutes later is throttled, and one an
+    /// hour later is credited and closes the claim for good.
+    func test_FE_JRN_01_friendJourneyWithTransientTokenFailure() async {
+        var clock = ReferralFixtures.fixedNow
+        let journeyStore = InMemoryReferralKeyValueStore()
+        let journeyPending = PendingReferralStore(store: journeyStore, now: { clock })
+        let service = FakeReferralService()
+        let tokens = FakeDeviceTokenProvider()
+        let coordinator = ReferralClaimCoordinator(
+            pending: journeyPending,
+            keyValueStore: journeyStore,
+            service: service,
+            account: FakeReferralAccount(uid: "uid-friend"),
+            deviceToken: tokens,
+            analytics: analytics,
+            now: { clock })
+
+        // First launch: Branch resolves the deferred link before onboarding.
+        let params: [String: Any] = [
+            "+clicked_branch_link": true,
+            "+is_first_session": true,
+            "~referring_link": "https://speaklife.app.link/r/K7MQ2XPA",
+        ]
+        XCTAssertEqual(ReferralCapture.handleBranchParams(params, isOnboarded: false,
+                                                          store: journeyPending, analytics: analytics), .captured)
+
+        // A foreground during onboarding never claims.
+        let early = await coordinator.claimIfNeeded(isOnboarded: false, isDebugReplay: false)
+        XCTAssertNil(early)
+        XCTAssertTrue(service.claimRequests.isEmpty)
+
+        // Onboarding finishes 8 minutes later. DeviceCheck fails this once.
+        clock = clock.addingTimeInterval(8 * 60)
+        tokens.tokenValue = nil
+        service.claimResult = .success(.retryLater)
+        let first = await coordinator.claimIfNeeded(isOnboarded: true, isDebugReplay: false)
+        XCTAssertEqual(first, .retryLater)
+        XCTAssertNil(service.claimRequests.last?.deviceToken)
+        XCTAssertEqual(service.claimRequests.last?.capturedAt, ReferralFixtures.fixedNow,
+                       "capture time is first launch, not the claim")
+        XCTAssertFalse(journeyPending.isFinal)
+        XCTAssertNotNil(journeyPending.pending)
+
+        // Foreground 10 minutes later: inside the retry interval, no call.
+        clock = clock.addingTimeInterval(10 * 60)
+        let throttled = await coordinator.claimIfNeeded(isOnboarded: true, isDebugReplay: false)
+        XCTAssertNil(throttled)
+        XCTAssertEqual(service.claimRequests.count, 1)
+
+        // An hour after the first attempt: token works, credited, final.
+        clock = clock.addingTimeInterval(55 * 60)
+        tokens.tokenValue = "device-token"
+        service.claimResult = .success(.credited)
+        let second = await coordinator.claimIfNeeded(isOnboarded: true, isDebugReplay: false)
+        XCTAssertEqual(second, .credited)
+        XCTAssertEqual(service.claimRequests.count, 2)
+        XCTAssertTrue(journeyPending.isFinal)
+        XCTAssertNil(journeyPending.pending)
+    }
+
     // MARK: - FE-LNK-07
 
     func test_FE_LNK_07_standLinkNeverReadsAReferralLink() {

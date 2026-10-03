@@ -279,6 +279,27 @@ unit-level rows miss.
 
 ---
 
+## 12b. Journeys, principles and contracts (`BE-JRN`, `BE-PRN`, `BE-CON`)
+
+Added after the first code review. Every serious bug it found was a wrong rule
+in the spec or a gap between app and server, and every row above passed
+anyway, because each tested the server against the spec. These rows test the
+spec against what the app actually does, in the order and with the timestamps
+the app really produces. Run against the pre-review code, BE-JRN-01, 03, 04
+and BE-PRN-01 fail.
+
+| ID | Journey / property |
+|---|---|
+| BE-JRN-01 | Friend: link at first launch, 8 min onboarding, account created at claim time → credited |
+| BE-JRN-02 | Friend offline 13d 23h after onboarding → credited; past 14 days → expired |
+| BE-JRN-03 | DeviceCheck token missing on the first try, present an hour later → credited once |
+| BE-JRN-04 | Friend enrolls from the hard-paywall link mid-onboarding, then claims → credited, and their own link works |
+| BE-JRN-05 | Referrer signs in with Apple halfway; old links keep counting; reward lands on the Apple account |
+| BE-JRN-06 | Reinstall farm: same phone, new uid each time → only the first counts |
+| BE-PRN-01 | **Principle:** every transient failure (no token, Apple down, kill switch, daily cap, typo) is non-final, and the same claim credits once it clears. A new transient failure mode is added here. |
+| BE-PRN-02 | Thrown auth and throttle errors are never final |
+| BE-CON-01 | **Contract:** the push data the server sends equals `referral_push_fixture.json`, the file the app's FE-CON-01 routes on |
+
 ## 13. Done checklist (backend)
 
 - [x] Every row above has a test, written before its code. Rows that were green on their first run, and why: BE-RWD-02/03/04/07 and BE-DEL-03 (the "nothing happens" half of behaviour already built for an earlier group, each red before that group existed); BE-RUL-02 to 11 (already held by the default deny, now also explicit; BE-RUL-01 was red); BE-E2E-* and the emulator BE-IMP write-path rows (integration of tested parts, checked instead by mutation: disabling the bit 0 check or the merge's code repoint turns BE-E2E-02 and BE-E2E-04 red).
