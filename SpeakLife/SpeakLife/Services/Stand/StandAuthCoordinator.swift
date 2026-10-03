@@ -91,7 +91,9 @@ final class StandAuthCoordinator: ObservableObject {
         // listener end up on different uids.
         if let inFlight = signInTask { return try await inFlight.value }
         let task = Task { () throws -> String in
-            let result = try await Auth.auth().signInAnonymously()
+            // Typed explicitly: inside a closure Swift otherwise resolves the
+            // completion-handler overload, which returns Void.
+            let result: AuthDataResult = try await Auth.auth().signInAnonymously()
             self.currentUid = result.user.uid
             self.isAnonymous = true
 
