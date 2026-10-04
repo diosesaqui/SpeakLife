@@ -578,6 +578,61 @@ final class EnforcementServiceTests: XCTestCase {
         XCTAssertEqual(merge(restarted, idle), merge(idle, restarted))
     }
 
+    /// The reported bug: a stand on Enforcing Peace sat on DAY 7 OF 7 for days.
+    /// The user had finished "peace" once before, so their history already held
+    /// the id. Speaking day seven finished the week, the store then merged that
+    /// against its own last push (day six, same run), and the history check
+    /// could not tell that stale copy from a restart, so it reopened the week.
+    func testMerge_StaleCopyOfAFinishedRunIsNotResurrectedWhenTheIdWasFinishedBefore() {
+        let start = daysAgo(8)
+        let lastPush = makeProgress(id: "peace", startedOn: start, days: [1, 2, 3, 4, 5, 6],
+                                    lastAdvancedOn: daysAgo(1), history: ["peace"])
+        var finisher = lastPush
+        finisher.completedDayNumbers.insert(7)
+        finisher.finish()
+
+        let merged = merge(finisher, lastPush)
+        XCTAssertNil(merged.activeEnforcementId, "the finished week was reopened")
+        XCTAssertEqual(merged, merge(lastPush, finisher))
+        XCTAssertEqual(merged, finisher, "the finisher's state should win untouched")
+    }
+
+    /// Same id, both sides active, one of them a run the other already
+    /// finished. Unioning would pour the old run's six days into the new week.
+    func testMerge_FinishedRunNeverBlendsIntoARestartOfTheSameId() {
+        let oldStart = daysAgo(20)
+        var restarted = makeProgress(id: "peace", startedOn: oldStart,
+                                     days: Set(1...6), history: ["peace"])
+        restarted.completedDayNumbers.insert(7)
+        restarted.finish()
+        restarted.activeEnforcementId = "peace"
+        restarted.startedOn = daysAgo(1)
+
+        let stale = makeProgress(id: "peace", startedOn: oldStart, days: Set(1...6),
+                                 history: ["peace"])
+
+        let merged = merge(restarted, stale)
+        XCTAssertEqual(merged.activeEnforcementId, "peace")
+        XCTAssertEqual(merged.startedOn, restarted.startedOn)
+        XCTAssertTrue(merged.completedDayNumbers.isEmpty,
+                      "the finished week's days leaked into the restart")
+        XCTAssertEqual(merged, merge(stale, restarted))
+    }
+
+    /// Blobs persisted before `finishedRuns` existed must still decode, or the
+    /// upgrade silently wipes the week the user is in the middle of.
+    func testProgressWrittenBeforeFinishedRunsStillDecodes() throws {
+        let legacy = """
+        {"activeEnforcementId":"peace","startedOn":700000000,
+         "completedDayNumbers":[1,2,3],"completedEnforcementIds":["warfare"]}
+        """.data(using: .utf8)!
+        let decoded = try JSONDecoder().decode(EnforcementProgress.self, from: legacy)
+        XCTAssertEqual(decoded.activeEnforcementId, "peace")
+        XCTAssertEqual(decoded.completedDayNumbers, [1, 2, 3])
+        XCTAssertEqual(decoded.completedEnforcementIds, ["warfare"])
+        XCTAssertTrue(decoded.finishedRuns.isEmpty)
+    }
+
     /// Every pair, both ways round, plus a second pass over the result: two
     /// devices reconciling independently have to land on the same value and
     /// then stay there.
