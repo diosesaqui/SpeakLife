@@ -23,8 +23,12 @@ enum StandLink {
     /// confusable pair are excluded (0/O, 1/I/L), so a typed `0` or `I` cannot
     /// be valid under any reading — it is rejected rather than guessed at.
     /// Guessing is how somebody lands in the wrong family's stand.
-    static let alphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
-    static let codeLength = 8
+    ///
+    /// Defined once, in SpeakLifeCore's `ReferralLink`, which referral codes
+    /// share (as functions/inviteCode.js does server-side), so the two
+    /// features can never drift apart on what a typed code is.
+    static let alphabet = ReferralLink.alphabet
+    static let codeLength = ReferralLink.codeLength
 
     /// The invite code in a URL, or nil when this is not a stand link.
     ///
@@ -61,17 +65,12 @@ enum StandLink {
     /// the alphabet. Identical to `normalizeCode` server-side, so the client
     /// never sends a call the server is going to reject.
     static func normalize(_ raw: String) -> String? {
-        let cleaned = raw.uppercased().filter { $0.isLetter || $0.isNumber }
-        guard cleaned.count == codeLength,
-              cleaned.allSatisfy({ alphabet.contains($0) }) else { return nil }
-        return cleaned
+        ReferralLink.normalize(raw)
     }
 
     /// `ABCD-2345` — how a code is shown and read aloud.
     static func formatted(_ code: String) -> String {
-        guard code.count == codeLength else { return code }
-        let mid = code.index(code.startIndex, offsetBy: 4)
-        return "\(code[code.startIndex..<mid])-\(code[mid...])"
+        ReferralLink.formatted(code)
     }
 
     /// Remote Config key for the host invites are minted on.

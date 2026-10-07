@@ -27,6 +27,8 @@
 import SwiftUI
 import UIKit
 import FirebaseRemoteConfig
+import FirebaseAuth
+import SpeakLifeCore
 
 // MARK: - Presentation
 
@@ -204,6 +206,10 @@ struct DebugFlagPanelView: View {
 
     private let remoteConfig = RemoteConfig.remoteConfig()
 
+    /// Filled on demand by "Get DeviceCheck token". Never logged.
+    @State private var deviceCheckToken: String?
+    @State private var deviceCheckUnavailable = false
+
     var body: some View {
         NavigationStack {
             List {
@@ -212,6 +218,7 @@ struct DebugFlagPanelView: View {
                 flagsSection
                 standLinkSection
                 updateGateSection
+                referralQASection
                 buildSection
             }
             .navigationTitle("Debug Panel")
@@ -384,6 +391,56 @@ struct DebugFlagPanelView: View {
             .replacingOccurrences(of: "http://", with: "")
         DebugOverrides.setString(StandLink.domainKey, trimmed.isEmpty ? nil : trimmed)
         revision += 1
+    }
+
+    /// Referral device QA (docs/REFERRAL_FE_TDD.md §11). DeviceCheck bits
+    /// survive deleting the app and erasing the phone, so a test phone can be
+    /// counted once, ever, until functions/scripts/resetReferralTestDevice.js
+    /// clears it. That script needs this phone's token and Firebase uid,
+    /// which this section shows and copies.
+    @ViewBuilder
+    private var referralQASection: some View {
+        Section {
+            let uid = Auth.auth().currentUser?.uid
+            LabeledContent("Firebase uid", value: uid ?? "none yet")
+            if let uid {
+                Button("Copy uid") { UIPasteboard.general.string = uid }
+            }
+            LabeledContent("DeviceCheck env",
+                           value: DeviceCheckTokenProvider.shared.isDevelopment ? "development" : "production")
+            if let token = deviceCheckToken {
+                LabeledContent("DeviceCheck token", value: "…\(token.suffix(6))")
+                Button("Copy DeviceCheck token") { UIPasteboard.general.string = token }
+            } else {
+                Button(deviceCheckUnavailable ? "DeviceCheck unavailable (simulator?)" : "Get DeviceCheck token") {
+                    Task { @MainActor in
+                        deviceCheckToken = await DeviceCheckTokenProvider.shared.token()
+                        deviceCheckUnavailable = deviceCheckToken == nil
+                    }
+                }
+            }
+            LabeledContent("Pending referral", value: pendingReferralLabel)
+            Button("Clear local referral state", role: .destructive) {
+                for key in [ReferralKeys.autoShown, ReferralKeys.snapshotCache, ReferralKeys.pageMemory,
+                            ReferralKeys.onboardingSkipped, ReferralKeys.rewardRedeemed,
+                            PendingReferralStore.pendingKey, PendingReferralStore.finalKey] {
+                    UserDefaults.standard.removeObject(forKey: key)
+                }
+                revision += 1
+            }
+        } header: {
+            Text("Referral QA")
+        } footer: {
+            Text("To count this phone again: node functions/scripts/resetReferralTestDevice.js --confirm-qa --token <token> --uid <uid>\(DeviceCheckTokenProvider.shared.isDevelopment ? " --development" : ""). Clearing local state does not reset the phone's DeviceCheck bits.")
+        }
+    }
+
+    private var pendingReferralLabel: String {
+        _ = revision
+        let store = ReferralCapture.sharedStore
+        if store.isFinal { return "claim final" }
+        guard let p = store.pending else { return "none" }
+        return "\(p.code) · \(p.source.rawValue) · \(p.onboardedAt == nil ? "not onboarded" : "onboarded") · \(p.attempts) tries"
     }
 
     @ViewBuilder

@@ -161,11 +161,6 @@ Every declaration must be understood instantly, the first time, by anyone. This 
 project's Resources build phase. Edit THIS file. Do not recreate the old
 single-nested `SpeakLife/Preview Content/...` copy, which the build never used.)
 
-## Development Branch
-Always develop on `claude/review-destiny-declarations-gVBrT` and push there.
-
----
-
 ## Analytics
 
 **Read `docs/ANALYTICS_DATA_QUALITY.md` before answering any question with

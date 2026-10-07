@@ -9,6 +9,7 @@ import SwiftUI
 import Combine
 import TipKit
 import AVFoundation
+import SpeakLifeCore
 
 /// Whether this process is running the test suite rather than serving a user.
 ///
@@ -195,6 +196,13 @@ struct SpeakLifeApp: App {
                                 "source": "universal_link"
                             ])
                         }
+                        // Referral link (`/r/<CODE>`), also before attribution.
+                        // Captured only for somebody not yet onboarded; an
+                        // existing user is recorded as `existing_user` and never
+                        // claims (spec J6). Nothing is presented from here. It
+                        // does not return early: an `ob=` on the same link still
+                        // routes the onboarding arm below (FE-CAP-05).
+                        ReferralCapture.handleOpenURL(url, isOnboarded: appState.isOnboarded)
                         SubscriptionStore.handleIncomingURL(url, source: "deeplink")
                         // Same link, read for channel rather than for the arm:
                         // utm_source/campaign/term land on the person so paid
@@ -522,6 +530,19 @@ struct SpeakLifeApp: App {
                                                fallbackTitle: content.title,
                                                fallbackBody: content.body) {
                     appState.remoteMessage = message
+                }
+                return
+            case ReferralPush.deepLink:
+                // "A friend joined" / "Your free year is ready" (functions/
+                // referral.js). Opens the referral page over Home, where the
+                // reward lives. Deferred a beat for the same reason as the
+                // post-onboarding cover: one raised while Home is still
+                // mounting is dropped by SwiftUI.
+                tabViewModel.resetToHome()
+                if appState.isOnboarded {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                        ReferralPresentation.shared.autoEntry = .push
+                    }
                 }
                 return
             case "bibleChat":

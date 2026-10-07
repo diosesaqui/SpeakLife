@@ -79,25 +79,43 @@ final class StandAuthCoordinator: ObservableObject {
         if let existing = Auth.auth().currentUser {
             currentUid = existing.uid
             isAnonymous = existing.isAnonymous
+            // A reinstall keeps the uid (Keychain) but gets a NEW FCM token.
+            // Without this, the server's push hits the dead token, deletes
+            // it, and "Your free year is ready" never arrives.
+            Task { await registerPushToken(uid: existing.uid) }
             return existing.uid
         }
-        let result = try await Auth.auth().signInAnonymously()
-        currentUid = result.user.uid
-        isAnonymous = true
+        // Single flight. The referral claim in finishOnboarding and an Invite
+        // tap on the cover 0.8s later can both arrive here with no user; two
+        // signInAnonymously calls mint two accounts, and the callable and the
+        // listener end up on different uids.
+        if let inFlight = signInTask { return try await inFlight.value }
+        let task = Task { () throws -> String in
+            // Typed explicitly: inside a closure Swift otherwise resolves the
+            // completion-handler overload, which returns Void.
+            let result: AuthDataResult = try await Auth.auth().signInAnonymously()
+            self.currentUid = result.user.uid
+            self.isAnonymous = true
 
-        // Deliberately NOT AnalyticsService.setUserId. Identifying on an
-        // anonymous uid mints a distinct id per device that later has to be
-        // aliased, which fragments every funnel in the meantime. Identity is
-        // claimed on the Apple link, below.
-        AnalyticsService.shared.track("account_anonymous_created", parameters: [
-            "trigger": "stand",
-        ])
-        await registerPushToken(uid: result.user.uid)
-        // The pass is server-written on join, so start watching for it as soon
-        // as there is an account to watch it for.
-        StandPassStore.shared.startObserving()
-        return result.user.uid
+            // Deliberately NOT AnalyticsService.setUserId. Identifying on an
+            // anonymous uid mints a distinct id per device that later has to be
+            // aliased, which fragments every funnel in the meantime. Identity is
+            // claimed on the Apple link, below.
+            AnalyticsService.shared.track("account_anonymous_created", parameters: [
+                "trigger": "stand",
+            ])
+            await self.registerPushToken(uid: result.user.uid)
+            // The pass is server-written on join, so start watching for it as soon
+            // as there is an account to watch it for.
+            StandPassStore.shared.startObserving()
+            return result.user.uid
+        }
+        signInTask = task
+        defer { signInTask = nil }
+        return try await task.value
     }
+
+    private var signInTask: Task<String, Error>?
 
     // MARK: - Upgrade prompting
 
@@ -231,8 +249,18 @@ final class StandAuthCoordinator: ObservableObject {
 
     /// Stand nudges resolve `users/{uid}.fcmToken`, and the token has to move
     /// when the uid does or the push lands on nobody.
-    private func registerPushToken(uid: String) async {
-        guard let token = try? await Messaging.messaging().token() else { return }
+    /// Keeps `users/{uid}.fcmToken` current when Firebase hands the app a new
+    /// token (rotation, reinstall). Only for an existing account: never mints
+    /// one, which stays reserved for Invite and invite links.
+    func syncPushToken(_ token: String) async {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        await registerPushToken(uid: uid, token: token)
+    }
+
+    private func registerPushToken(uid: String, token knownToken: String? = nil) async {
+        var fetched: String? = knownToken
+        if fetched == nil { fetched = try? await Messaging.messaging().token() }
+        guard let token = fetched else { return }
         try? await db.collection("users").document(uid).setData([
             "uid": uid,
             "fcmToken": token,
