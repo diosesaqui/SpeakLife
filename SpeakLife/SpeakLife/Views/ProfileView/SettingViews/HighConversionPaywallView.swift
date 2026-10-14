@@ -551,19 +551,18 @@ struct HighConversionPaywallView: View {
     var source: String = "settings"
 
     /// When true at the callsite, the paywall *may* render hard (no close button).
-    /// Actual hardness is gated by Remote Config `showPayWhatYouCanLink` (the
-    /// soft-onboarding-paywall switch): hard only takes effect when that soft
-    /// switch is OFF. When it's ON, the paywall keeps its close button and the
-    /// one-time welcome-offer discount on dismiss. The visible "pay what you
-    /// can" link is now a separate switch (`showPayWhatYouCanCTA`) and no longer
-    /// affects hardness or the welcome offer.
+    /// Actual hardness is gated by Remote Config `hardOnboardingPaywall`: hard
+    /// only takes effect when that switch is ON. When it's OFF, the paywall keeps
+    /// its close button and the one-time welcome-offer discount on dismiss. The
+    /// visible "pay what you can" link is a separate switch
+    /// (`showPayWhatYouCanCTA`) and does not affect hardness or the welcome offer.
     var isHardPaywall: Bool = false
 
     /// Effective hard-paywall state. Caller opts in via `isHardPaywall`, but the
-    /// soft-onboarding-paywall Remote Config flag must also be OFF for the wall
+    /// `hardOnboardingPaywall` Remote Config flag must also be ON for the wall
     /// to actually render hard.
     private var effectiveIsHardPaywall: Bool {
-        isHardPaywall && !subscriptionStore.showPayWhatYouCanLink
+        isHardPaywall && subscriptionStore.hardOnboardingPaywall
     }
 
     /// Variant string sent to Firebase Analytics on every paywall event. The

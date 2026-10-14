@@ -128,6 +128,13 @@ struct HomeView: View {
         Group {
             if isShowingLanding {
                 LandingView()
+            // Lapsed-user wall: replaces the whole app (and every sheet hung
+            // off it) until the user resubscribes or restores. Dormant unless
+            // Remote Config `hardLapsedPaywall` is on. When a purchase lands,
+            // isPremium flips and this branch falls through to the app.
+            } else if appState.isOnboarded && !appState.debugReplayOnboarding && !StormDebugReview.isActive && subscriptionStore.showsLapsedWall {
+                LapsedPaywallView()
+                    .environmentObject(subscriptionStore)
             // `debugReplayOnboarding` forces the onboarding branch for a tester
             // who is already onboarded. It is never true on an App Store build.
             } else if appState.isOnboarded && !appState.debugReplayOnboarding && !StormDebugReview.isActive {
