@@ -764,6 +764,25 @@ struct HighConversionPaywallView: View {
               let s = localizedPrice(p.price / 52, in: p) else { return pricePlaceholder }
         return s
     }
+    /// Per-day equivalent of the annual price ("$0.16/day"), the smallest
+    /// honest unit of the same billed amount. StoreKit price ÷ 365, formatted
+    /// in the product's own locale and currency, so it is never a hardcoded "$".
+    private var annualPerDay: String? {
+        guard let p = subscriptionStore.currentOfferedPremium else { return nil }
+        return localizedPrice(p.price / 365, in: p)
+    }
+    /// Per-day equivalent of the non-annual plan: weekly ÷ 7, or monthly × 12
+    /// ÷ 365 (a month is not 30 days, so this is the true daily cost across a
+    /// year of billing). Same storefront formatting as annualPerDay.
+    private var nonAnnualPerDay: String? {
+        if showWeeklyPlan, let w = subscriptionStore.currentOfferedWeekly {
+            return localizedPrice(w.price / 7, in: w)
+        }
+        if let m = subscriptionStore.currentOfferedPremiumMonthly {
+            return localizedPrice(m.price * 12 / 365, in: m)
+        }
+        return nil
+    }
     /// What a full year actually costs on the non-annual plan (weekly×52 or
     /// monthly×12). This is the clean variant's strikethrough anchor on the
     /// Annual card and the honesty subline on the non-annual card — a real
@@ -1330,7 +1349,8 @@ struct HighConversionPaywallView: View {
                         price: nonAnnualPrice,
                         unit: cadenceUnit,
                         struck: nil,
-                        sub: "Billed \(showWeeklyPlan ? "weekly" : "monthly")."
+                        sub: "Billed \(showWeeklyPlan ? "weekly" : "monthly").",
+                        perDay: nonAnnualPerDay
                     )
                     .frame(width: cardWidth)
                     planCard(
@@ -1344,12 +1364,13 @@ struct HighConversionPaywallView: View {
                         // other plan, and it is that real derived figure, never
                         // an invented "was" price.
                         struck: annualSavingsPercent != nil ? nonAnnualYearlyEquivalent : nil,
-                        sub: "\(annualPrice) per year"
+                        sub: "\(annualPrice) per year",
+                        perDay: annualPerDay
                     )
                     .frame(width: cardWidth)
                 }
             }
-            .frame(height: 104)
+            .frame(height: 120)
         }
     }
 
@@ -1362,7 +1383,7 @@ struct HighConversionPaywallView: View {
                 Text("Annual")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white)
-                Text("\(annualPrice) per year · \(annualPerMonth)/mo")
+                Text(annualPerDay.map { "\(annualPrice) per year · just \($0)/day" } ?? "\(annualPrice) per year · \(annualPerMonth)/mo")
                     .font(.system(size: 12))
                     .foregroundColor(.white.opacity(0.65))
             }
@@ -1398,7 +1419,7 @@ struct HighConversionPaywallView: View {
     /// The billed amount does not disappear: it is the `sub` line on the annual
     /// card ("$59.99 per year"), directly under the per-month figure, which is
     /// also what keeps the price disclosure honest.
-    private func planCard(plan: PlanType, topLabel: String?, title: String, price: String, unit: String, struck: String?, sub: String) -> some View {
+    private func planCard(plan: PlanType, topLabel: String?, title: String, price: String, unit: String, struck: String?, sub: String, perDay: String? = nil) -> some View {
         let isSelected = selectedPlan == plan
         return Button(action: {
             withAnimation(.easeInOut(duration: 0.15)) { selectedPlan = plan }
@@ -1423,6 +1444,19 @@ struct HighConversionPaywallView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
                     .multilineTextAlignment(.center)
+                    // The annual card (the one carrying the SAVE badge) sells
+                    // its per-day price in green; the other card states it flat
+                    // so the cheaper daily number is the one that pops.
+                    if let perDay {
+                        let isDeal = topLabel != nil
+                        Text(isDeal ? "Just \(perDay)/day" : "\(perDay)/day")
+                            .font(.system(size: 11, weight: isDeal ? .bold : .medium))
+                            .foregroundColor(isDeal
+                                ? (isSelected ? .green : .green.opacity(0.5))
+                                : (isSelected ? .white.opacity(0.7) : .white.opacity(0.3)))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.75)
+                    }
                 }
                 .padding(.vertical, 14).padding(.horizontal, DS.Spacing.xs)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -1755,7 +1789,7 @@ struct HighConversionPaywallView: View {
                 // Anchor only shown when annual is genuinely cheaper than a
                 // year of the non-annual plan (same guard as the SAVE badge).
                 struck: annualSavingsPercent != nil ? nonAnnualYearlyEquivalent : nil,
-                subline: "\(annualPrice) per year",
+                subline: annualPerDay.map { "\(annualPrice) per year · just \($0)/day" } ?? "\(annualPrice) per year",
                 badge: "MOST POPULAR"
             )
             .padding(.top, 10) // room for the badge overhang
@@ -1786,8 +1820,9 @@ struct HighConversionPaywallView: View {
 
     private var cleanNonAnnualSubline: String {
         let cadence = showWeeklyPlan ? "weekly" : "monthly"
-        guard let yearly = nonAnnualYearlyEquivalent else { return "Billed \(cadence)." }
-        return "\(yearly) /year if billed \(cadence)."
+        let perDay = nonAnnualPerDay.map { " · \($0)/day" } ?? ""
+        guard let yearly = nonAnnualYearlyEquivalent else { return "Billed \(cadence)\(perDay)" }
+        return "\(yearly) /year if billed \(cadence)\(perDay)"
     }
 
     private func cleanPlanCard(plan: PlanType, title: String, rightPrice: String, rightUnit: String, struck: String?, subline: String, badge: String?) -> some View {

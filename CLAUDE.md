@@ -162,7 +162,10 @@ project's Resources build phase. Edit THIS file. Do not recreate the old
 single-nested `SpeakLife/Preview Content/...` copy, which the build never used.)
 
 ## Development Branch
-Always develop on `claude/review-destiny-declarations-gVBrT` and push there.
+Start a new branch for each session, named `claude/<short-topic>` (for example
+`claude/paywall-price-per-day`), cut from the latest `main`. Push there and open
+the PR from it. Never reuse an earlier session's branch, and never commit
+straight to `main`.
 
 ---
 
