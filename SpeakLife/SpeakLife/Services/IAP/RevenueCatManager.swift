@@ -131,6 +131,39 @@ final class RevenueCatManager {
         return entitlement.productIdentifier
     }
 
+    /// True when this user has held premium before (trial or paid) and it is no
+    /// longer active. `entitlements[id]` reads from `all`, which keeps expired
+    /// entitlements, so a user who never subscribed returns nil and is not lapsed.
+    func isPremiumLapsed(_ info: CustomerInfo) -> Bool {
+        guard let entitlement = info.entitlements[Self.premiumEntitlement] else { return false }
+        return !entitlement.isActive
+    }
+
+    /// True when the lapsed premium entitlement's last period was the free
+    /// trial, i.e. the user ended a trial without ever paying.
+    func lapsedFromTrial(_ info: CustomerInfo) -> Bool {
+        guard let entitlement = info.entitlements[Self.premiumEntitlement],
+              !entitlement.isActive else { return false }
+        return entitlement.periodType == .trial
+    }
+
+    // MARK: - Win-Back Offers
+
+    /// The first Apple win-back offer this user is eligible for on `product`,
+    /// or nil. Win-back offers are iOS 18+ and StoreKit 2 only; eligibility
+    /// rules (minimum paid duration, time since lapse) are set per offer in
+    /// App Store Connect, so a trialist who never paid is usually not eligible.
+    func eligibleWinBackOffer(for product: StoreKit.Product) async -> WinBackOffer? {
+        guard Purchases.isConfigured, #available(iOS 18.0, *) else { return nil }
+        do {
+            guard let rcProduct = try await Purchases.shared.products([product.id]).first else { return nil }
+            return try await Purchases.shared.eligibleWinBackOffers(forProduct: rcProduct).first
+        } catch {
+            print("RC win-back eligibility failed: \(error)")
+            return nil
+        }
+    }
+
     /// First time the user ever purchased premium, surviving cancel/resubscribe.
     /// Used to compute subscription anniversaries.
     func premiumOriginalPurchaseDate(_ info: CustomerInfo) -> Date? {
@@ -159,8 +192,25 @@ final class RevenueCatManager {
     /// - Parameter willPresentSheet: called immediately before Apple's sheet is
     ///   requested, after the offerings lookup, so a lookup failure is never
     ///   counted as a sheet that opened.
+    /// - Parameter winBackOffer: an Apple win-back offer from
+    ///   `eligibleWinBackOffers(for:)`, applied to the purchase on iOS 18+.
+    ///   Ignored below iOS 18, where the user pays the regular price.
     func purchase(storeProduct: StoreKit.Product,
+                  winBackOffer: WinBackOffer? = nil,
                   willPresentSheet: () -> Void = {}) async throws -> StorePurchaseResult {
+        if let winBackOffer, #available(iOS 18.0, *) {
+            guard let rcProduct = try await Purchases.shared.products([storeProduct.id]).first else {
+                throw NSError(domain: "RevenueCat", code: -1,
+                              userInfo: [NSLocalizedDescriptionKey: "Product not found in RC: \(storeProduct.id)"])
+            }
+            let params = PurchaseParams.Builder(product: rcProduct)
+                .with(winBackOffer: winBackOffer)
+                .build()
+            willPresentSheet()
+            let result = try await Purchases.shared.purchase(params)
+            return StorePurchaseResult(customerInfo: result.customerInfo, userCancelled: result.userCancelled)
+        }
+
         // Fetch current offering to find the matching package
         let offerings = try await Purchases.shared.offerings()
         let allPackages = offerings.current?.availablePackages ?? []

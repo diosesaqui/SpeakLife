@@ -201,6 +201,23 @@ final class SubscriptionStore: ObservableObject {
     /// the app from a push is briefly treated as free.
     @Published private(set) var entitlementsResolved = false
 
+    /// Held premium before (trial or paid) and it has ended. From RevenueCat.
+    @Published private(set) var isPremiumLapsed = false
+    /// The lapsed entitlement's last period was the free trial: they never paid.
+    @Published private(set) var lapsedFromTrial = false
+
+    /// Whether the lapsed-user wall replaces the app. Waits for RevenueCat so a
+    /// subscriber is never walled on the launch-time `isPremium = false`, and
+    /// exempts anyone with access from another source (Stand Pass, devotional).
+    @MainActor
+    var showsLapsedWall: Bool {
+        hardLapsedPaywall
+            && entitlementsResolved
+            && isPremiumLapsed
+            && !isInDevotionalPremium
+            && !hasFullAccess
+    }
+
     /// Storm paywall button copy test: "" / "free_week" → "Start my free week",
     /// "try_free" → "Try it free". Remote Config `stormCtaCopy`.
     @Published var stormCtaCopy: String = ""
@@ -427,6 +444,11 @@ final class SubscriptionStore: ObservableObject {
     // the inverted legacy key "showPayWhatYouCanLink" (false = hard), so keep
     // both keys in the console in agreement until those builds age out.
     @Published var hardOnboardingPaywall = false
+    // Lapsed-user wall (RC key "hardLapsedPaywall"). When true, an onboarded
+    // user whose premium trial or subscription has ended sees LapsedPaywallView
+    // in place of the app until they resubscribe. Unset reads false, so it
+    // ships dormant.
+    @Published var hardLapsedPaywall = false
     // Gates ONLY the "Can't afford full price? Pay what you can →" CTA link,
     // independent of the soft/hard wall and the welcome offer. Default OFF: the
     // link stays hidden everywhere until Remote Config sets showPayWhatYouCanCTA.
@@ -772,6 +794,7 @@ final class SubscriptionStore: ObservableObject {
             ? !remoteConfig["showPayWhatYouCanLink"].boolValue
             : hardWall.boolValue
         showPayWhatYouCanCTA = remoteConfig["showPayWhatYouCanCTA"].boolValue
+        hardLapsedPaywall = remoteConfig["hardLapsedPaywall"].boolValue
 
         // Clean Paywall Layout A/B Test (unset key resolves false — ships dormant)
         useCleanPaywallVariant = remoteConfig["useCleanPaywallVariant"].boolValue
@@ -910,6 +933,8 @@ final class SubscriptionStore: ObservableObject {
         isPremium          = premiumActive
         isInTrial          = premiumActive && RevenueCatManager.shared.isPremiumInTrial(info)
         isInDevotionalPremium = devotionalActive
+        isPremiumLapsed    = RevenueCatManager.shared.isPremiumLapsed(info)
+        lapsedFromTrial    = RevenueCatManager.shared.lapsedFromTrial(info)
         premiumOriginalPurchaseDate = premiumActive
             ? RevenueCatManager.shared.premiumOriginalPurchaseDate(info)
             : nil
@@ -1062,8 +1087,12 @@ final class SubscriptionStore: ObservableObject {
 
     /// `purchase` with the reason it did not complete. Throws only for real
     /// failures (network, store, misconfiguration), which the caller surfaces.
-    func purchaseOutcome(_ product: Product, paywallName: String = "unknown") async throws -> PurchaseOutcome {
-        let priceValue   = NSDecimalNumber(decimal: product.price).doubleValue
+    /// - Parameter winBackOffer: an Apple win-back offer to apply (iOS 18+).
+    ///   Changes what the buyer is charged, so it is also the price reported.
+    func purchaseOutcome(_ product: Product,
+                         paywallName: String = "unknown",
+                         winBackOffer: WinBackOffer? = nil) async throws -> PurchaseOutcome {
+        let priceValue   = NSDecimalNumber(decimal: winBackOffer?.discount.price ?? product.price).doubleValue
         // Product has *some* intro offer configured in App Store Connect — but
         // that does NOT mean THIS user gets one. Returning subscribers who
         // already consumed the trial slot on this subscription group pay full
@@ -1090,12 +1119,13 @@ final class SubscriptionStore: ObservableObject {
             "product_id": product.id,
             "paywall_name": paywallName,
             "trial_eligible": willStartTrial,
-            "variant": onboardingVariantName
+            "variant": onboardingVariantName,
+            "win_back": winBackOffer != nil
         ]
         // NOTE: Do NOT fire conversion analytics before RC confirms — RC validates the receipt.
         let result: RevenueCatManager.StorePurchaseResult
         do {
-            result = try await RevenueCatManager.shared.purchase(storeProduct: product) {
+            result = try await RevenueCatManager.shared.purchase(storeProduct: product, winBackOffer: winBackOffer) {
                 // The sheet is about to open. Paired with purchase_cancelled
                 // this is the Apple-sheet completion rate, the funnel's
                 // biggest leak.
@@ -1199,7 +1229,8 @@ final class SubscriptionStore: ObservableObject {
             "currency": currency,
             "paywall_name": paywallName,
             "is_trial": willStartTrial,
-            "variant": onboardingVariantName
+            "variant": onboardingVariantName,
+            "win_back": winBackOffer != nil
         ])
 
         // Plan dimensions only. Revenue is RevenueCat's: it reports amounts in
