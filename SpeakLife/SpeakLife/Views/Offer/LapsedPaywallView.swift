@@ -30,6 +30,9 @@ struct LapsedPaywallView: View {
     @State private var errorMessage: String?
     @State private var showPrivacyPolicy = false
     @State private var hasTrackedImpression = false
+    /// The yearly product could not be loaded after retrying. The wall then
+    /// offers Try again instead of a spinner that never ends.
+    @State private var productLoadFailed = false
     @State private var shownAt = Date()
 
     private static let paywallName = "lapsed_wall_v1"
@@ -52,9 +55,7 @@ struct LapsedPaywallView: View {
             .safeAreaInset(edge: .bottom) { footer }
         }
         .task(id: product?.id) { await resolveOffer() }
-        .task {
-            if product == nil { await subscriptionStore.requestProducts() }
-        }
+        .task { await loadProduct() }
         .alert("Something went wrong", isPresented: Binding(
             get: { errorMessage != nil },
             set: { if !$0 { errorMessage = nil } }
@@ -128,6 +129,15 @@ struct LapsedPaywallView: View {
         VStack(spacing: 12) {
             if let product, offerResolved {
                 priceBlock(for: product)
+            } else if productLoadFailed {
+                VStack(spacing: 6) {
+                    Text("We couldn't reach the App Store.")
+                        .font(.system(size: 15, weight: .semibold)).foregroundColor(.white)
+                    Button("Try again") { Task { await loadProduct() } }
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(Constants.DAMidBlue)
+                }
+                .frame(minHeight: 44)
             } else {
                 ProgressView().tint(.white).frame(height: 44)
             }
@@ -217,6 +227,23 @@ struct LapsedPaywallView: View {
     }
 
     // MARK: - Actions
+
+    /// Loads the yearly product, retrying a few times so a slow or briefly
+    /// offline launch does not leave the wall without a price. The products
+    /// request swallows its own errors, so a still-nil product is the signal.
+    private func loadProduct() async {
+        productLoadFailed = false
+        for attempt in 0..<3 {
+            if product != nil { return }
+            if attempt > 0 { try? await Task.sleep(nanoseconds: 3_000_000_000) }
+            await subscriptionStore.requestProducts()
+        }
+        if product == nil {
+            productLoadFailed = true
+            trackImpressionOnce()
+            AnalyticsService.shared.track("lapsed_paywall_product_unavailable", parameters: analyticsParams)
+        }
+    }
 
     private func resolveOffer() async {
         guard let product else { return }

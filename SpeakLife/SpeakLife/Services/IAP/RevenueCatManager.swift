@@ -131,20 +131,26 @@ final class RevenueCatManager {
         return entitlement.productIdentifier
     }
 
-    /// True when this user has held premium before (trial or paid) and it is no
-    /// longer active. `entitlements[id]` reads from `all`, which keeps expired
-    /// entitlements, so a user who never subscribed returns nil and is not lapsed.
-    func isPremiumLapsed(_ info: CustomerInfo) -> Bool {
-        guard let entitlement = info.entitlements[Self.premiumEntitlement] else { return false }
-        return !entitlement.isActive
-    }
+    /// Apple keeps retrying a failed renewal for up to 60 days, and fixing the
+    /// card restores the original subscription.
+    private static let billingRetryWindow: TimeInterval = 60 * 24 * 60 * 60
 
-    /// True when the lapsed premium entitlement's last period was the free
-    /// trial, i.e. the user ended a trial without ever paying.
-    func lapsedFromTrial(_ info: CustomerInfo) -> Bool {
+    /// The premium entitlement when this user held it before (trial or paid)
+    /// and it has ended, else nil. `entitlements[id]` reads from `all`, which
+    /// keeps expired entitlements, so a user who never subscribed returns nil.
+    ///
+    /// An entitlement with a billing issue inside Apple's retry window is not
+    /// lapsed: the subscription is still theirs and Apple is asking them to
+    /// update payment, so buying again is the wrong ask.
+    func lapsedPremiumEntitlement(_ info: CustomerInfo) -> EntitlementInfo? {
         guard let entitlement = info.entitlements[Self.premiumEntitlement],
-              !entitlement.isActive else { return false }
-        return entitlement.periodType == .trial
+              !entitlement.isActive else { return nil }
+        if entitlement.billingIssueDetectedAt != nil,
+           let expiration = entitlement.expirationDate,
+           Date().timeIntervalSince(expiration) < Self.billingRetryWindow {
+            return nil
+        }
+        return entitlement
     }
 
     // MARK: - Win-Back Offers
