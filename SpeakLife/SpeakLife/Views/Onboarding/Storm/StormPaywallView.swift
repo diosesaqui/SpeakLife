@@ -60,6 +60,14 @@ struct StormPaywallView: View {
 
     private var paywallName: String { "storm_v1_\(placement)" }
 
+    /// Hard wall, same switch as HighConversionPaywallView: only the onboarding
+    /// paywall, and only while Remote Config `hardOnboardingPaywall` is ON. No X,
+    /// and a cancelled Apple sheet stays on the paywall, so the objection flow
+    /// (every branch of which can close) never opens.
+    private var isHardPaywall: Bool {
+        placement == "onboarding" && subscriptionStore.hardOnboardingPaywall
+    }
+
     var body: some View {
         ZStack {
             StormBackground()
@@ -95,10 +103,13 @@ struct StormPaywallView: View {
                 storm: storm,
                 placement: placement,
                 paywallName: paywallName,
+                isHardPaywall: isHardPaywall,
                 remindMe: $remindMe,
                 viewedLogged: $viewedLogged,
                 onPurchased: handlePurchased,
-                onCancelledOnSheet: { routeToObjection(trigger: "sheet_cancel") },
+                onCancelledOnSheet: {
+                    if !isHardPaywall { routeToObjection(trigger: "sheet_cancel") }
+                },
                 onClose: { routeToObjection(trigger: "close") }
             )
         case .objection(let trigger):
@@ -422,14 +433,16 @@ private struct StormPaywallMain: View {
     let storm: Storm
     let placement: String
     let paywallName: String
+    let isHardPaywall: Bool
     @Binding var remindMe: Bool
     @Binding var viewedLogged: Bool
     let onPurchased: (Bool) -> Void
     let onCancelledOnSheet: () -> Void
     let onClose: () -> Void
 
-    /// A paywall living in a tab has nothing to close back to.
-    private var showsClose: Bool { placement != "premium_tab" }
+    /// A paywall living in a tab has nothing to close back to, and a hard
+    /// wall has no way out but a purchase or a restore.
+    private var showsClose: Bool { placement != "premium_tab" && !isHardPaywall }
 
     @StateObject private var model = StormPurchaseModel()
     @State private var notificationsDenied = false
@@ -767,6 +780,7 @@ private struct StormPaywallMain: View {
             "trial_eligible": model.isTrialEligible,
             "trial_days": model.trialDays,
             "cta": ctaTitle,
+            "hard_paywall": isHardPaywall,
             "also_included": subscriptionStore.stormAlsoIncluded,
             "storm_config": StormConfigStore.source
         ])

@@ -835,9 +835,9 @@ struct QuizOnboardingView: View {
 
     private func advanceFromPaywall() {
         // We pass isHardPaywall: true here, but actual hardness is gated by
-        // Remote Config `showPayWhatYouCanLink`. When that flag is false the
+        // Remote Config `hardOnboardingPaywall`. When that flag is true the
         // only path that fires this callback is a successful purchase. When
-        // it's true the close button reappears and dismiss also advances.
+        // it's false the close button reappears and dismiss also advances.
         // Seed the screen with the burden so its subtitle and preview render
         // the user's matched declaration text instead of a generic fallback.
         notificationResponses.heaviestBurden = selectedBurden

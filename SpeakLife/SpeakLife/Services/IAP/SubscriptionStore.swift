@@ -419,14 +419,14 @@ final class SubscriptionStore: ObservableObject {
 
     // MARK: - High Conversion Paywall Flag
     @Published var useHighConversionPaywall = false
-    // Soft-onboarding-paywall switch. RC key kept as "showPayWhatYouCanLink" for
-    // back-compat with the existing Remote Config setup. When true, the
-    // onboarding paywall stays soft: it shows the close button and, on dismiss,
-    // the one-time welcome-offer discount. When false, onboarding callsites
-    // (isHardPaywall: true) render a hard wall (no X, and therefore no exit
-    // discount). NOTE: this no longer controls the visible "pay what you can"
-    // link — that moved to showPayWhatYouCanCTA below.
-    @Published var showPayWhatYouCanLink = true
+    // Hard-onboarding-paywall switch (RC key "hardOnboardingPaywall"). When
+    // true, onboarding callsites (isHardPaywall: true) render a hard wall: no X,
+    // and therefore no exit discount. When false, the onboarding paywall stays
+    // soft: close button plus the one-time welcome-offer discount on dismiss.
+    // Starts false (soft) until the first fetch lands. Older builds read
+    // the inverted legacy key "showPayWhatYouCanLink" (false = hard), so keep
+    // both keys in the console in agreement until those builds age out.
+    @Published var hardOnboardingPaywall = false
     // Gates ONLY the "Can't afford full price? Pay what you can →" CTA link,
     // independent of the soft/hard wall and the welcome offer. Default OFF: the
     // link stays hidden everywhere until Remote Config sets showPayWhatYouCanCTA.
@@ -765,7 +765,12 @@ final class SubscriptionStore: ObservableObject {
 
         // High Conversion Paywall Flag
         useHighConversionPaywall = remoteConfig["useHighConversionPaywall"].boolValue
-        showPayWhatYouCanLink = remoteConfig["showPayWhatYouCanLink"].boolValue
+        // Falls back to the inverted legacy key while the new one is unset in
+        // the console, so publishing this build never flips the wall on its own.
+        let hardWall = remoteConfig["hardOnboardingPaywall"]
+        hardOnboardingPaywall = hardWall.source == .static
+            ? !remoteConfig["showPayWhatYouCanLink"].boolValue
+            : hardWall.boolValue
         showPayWhatYouCanCTA = remoteConfig["showPayWhatYouCanCTA"].boolValue
 
         // Clean Paywall Layout A/B Test (unset key resolves false — ships dormant)
