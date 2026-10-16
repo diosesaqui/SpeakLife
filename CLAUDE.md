@@ -24,6 +24,8 @@ Every declaration must be spoken in the first person. Use **I / me / my / mine**
 
 Exception: references to what God does toward the speaker are fine ("God knows the plans He has for *me*").
 
+Exception: entries with `"book": "Jesus"` are deliberately in Jesus' voice, spoken to the reader ("I took your sickness to the cross, and your body is healed."). Their `bibleVerseText` holds the red-letter words of Jesus they stand on. Do not convert them to first person. Every other rule still applies to them.
+
 ### 2. Present / Active Tense
 Declarations are spoken NOW — they are not memories or future wishes.
 - ✅ "I walk through fire without being burned."

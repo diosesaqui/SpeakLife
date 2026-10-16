@@ -1,5 +1,5 @@
 {
-  "count": 3591,
+  "count": 4155,
   "version": 10,
   "declarations": [
     {
@@ -42,6 +42,78 @@
       "text": "By the wounds of Jesus I am healed, and my mouth says so.",
       "bibleVerseText": "He himself bore our sins in his body on the cross, so that we might die to sins and live for righteousness; by his wounds you have been healed.",
       "book": "1 Peter 2:24",
+      "category": "speaklife"
+    },
+    {
+      "text": "You speak to the mountain without doubt, and what you say comes to pass.",
+      "bibleVerseText": "Truly I tell you, if anyone says to this mountain, 'Go, throw yourself into the sea,' and does not doubt in their heart but believes that what they say will happen, it will be done for them.",
+      "book": "Jesus",
+      "category": "speaklife"
+    },
+    {
+      "text": "Faith as small as a mustard seed moves mountains when you speak, and nothing is impossible for you.",
+      "bibleVerseText": "He replied, 'Because you have so little faith. Truly I tell you, if you have faith as small as a mustard seed, you can say to this mountain, \"Move from here to there,\" and it will move. Nothing will be impossible for you.'",
+      "book": "Jesus",
+      "category": "speaklife"
+    },
+    {
+      "text": "Even a tree obeys your words of faith.",
+      "bibleVerseText": "He replied, 'If you have faith as small as a mustard seed, you can say to this mulberry tree, \"Be uprooted and planted in the sea,\" and it will obey you.'",
+      "book": "Jesus",
+      "category": "speaklife"
+    },
+    {
+      "text": "Your words carry eternal weight, so you speak life and blessing.",
+      "bibleVerseText": "For by your words you will be acquitted, and by your words you will be condemned.",
+      "book": "Jesus",
+      "category": "speaklife"
+    },
+    {
+      "text": "Good things are stored in your heart, and good things pour out of your mouth.",
+      "bibleVerseText": "A good man brings good things out of the good stored up in his heart, and an evil man brings evil things out of the evil stored up in his heart. For the mouth speaks what the heart is full of.",
+      "book": "Jesus",
+      "category": "speaklife"
+    },
+    {
+      "text": "You live on every word from God's mouth, and you speak it back with power.",
+      "bibleVerseText": "Jesus answered, 'It is written: \"Man shall not live on bread alone, but on every word that comes from the mouth of God.\"'",
+      "book": "Jesus",
+      "category": "speaklife"
+    },
+    {
+      "text": "Peace to this house is yours to say, and your peace rests where you speak it.",
+      "bibleVerseText": "When you enter a house, first say, 'Peace to this house.' If someone who promotes peace is there, your peace will rest on them; if not, it will return to you.",
+      "book": "Jesus",
+      "category": "speaklife"
+    },
+    {
+      "text": "What you bind on earth is bound in heaven, and what you loose is loosed.",
+      "bibleVerseText": "Truly I tell you, whatever you bind on earth will be bound in heaven, and whatever you loose on earth will be loosed in heaven.",
+      "book": "Jesus",
+      "category": "speaklife"
+    },
+    {
+      "text": "Rivers of living water flow from within you, and they pour out in your words.",
+      "bibleVerseText": "Whoever believes in me, as Scripture has said, rivers of living water will flow from within them.",
+      "book": "Jesus",
+      "category": "speaklife"
+    },
+    {
+      "text": "Just as you believed, it is done, and the word you speak in faith is answered.",
+      "bibleVerseText": "Then Jesus said to the centurion, 'Go! Let it be done just as you believed it would.' And his servant was healed at that moment.",
+      "book": "Jesus",
+      "category": "speaklife"
+    },
+    {
+      "text": "Ask for anything in My name and I do it, because My name is in your mouth.",
+      "bibleVerseText": "You may ask me for anything in my name, and I will do it.",
+      "book": "Jesus",
+      "category": "speaklife"
+    },
+    {
+      "text": "My words never pass away, and when you speak them they stand forever.",
+      "bibleVerseText": "Heaven and earth will pass away, but my words will never pass away.",
+      "book": "Jesus",
       "category": "speaklife"
     },
     {
@@ -498,6 +570,78 @@
       "text": "I am held in the Father's hand, and no one snatches me out of it.",
       "bibleVerseText": "My Father, who has given them to me, is greater than all; no one can snatch them out of my Father's hand.",
       "book": "John 10:29",
+      "category": "love"
+    },
+    {
+      "text": "Your Father knows what you need before you ask, including the godly love you long for.",
+      "bibleVerseText": "Do not be like them, for your Father knows what you need before you ask him.",
+      "book": "Jesus",
+      "category": "love"
+    },
+    {
+      "text": "Seeking My kingdom first, you watch your Father add every good thing to your life.",
+      "bibleVerseText": "But seek first his kingdom and his righteousness, and all these things will be given to you as well.",
+      "book": "Jesus",
+      "category": "love"
+    },
+    {
+      "text": "Good gifts come from your Father, and a godly spouse is a gift He gives gladly.",
+      "bibleVerseText": "If you, then, though you are evil, know how to give good gifts to your children, how much more will your Father in heaven give good gifts to those who ask him!",
+      "book": "Jesus",
+      "category": "love"
+    },
+    {
+      "text": "I chose you and I love you, so your heart never settles for less than My best.",
+      "bibleVerseText": "You did not choose me, but I chose you and appointed you so that you might go and bear fruit—fruit that will last—and so that whatever you ask in my name the Father will give you.",
+      "book": "Jesus",
+      "category": "love"
+    },
+    {
+      "text": "As the Father loves Me, I love you, and your heart is full while you wait.",
+      "bibleVerseText": "As the Father has loved me, so have I loved you. Now remain in my love.",
+      "book": "Jesus",
+      "category": "love"
+    },
+    {
+      "text": "Ask in My name for a godly spouse, and your joy is complete.",
+      "bibleVerseText": "Until now you have not asked for anything in my name. Ask and you will receive, and your joy will be complete.",
+      "book": "Jesus",
+      "category": "love"
+    },
+    {
+      "text": "The Creator made man and woman for each other, and He prepares godly love for you.",
+      "bibleVerseText": "But at the beginning of creation God 'made them male and female.'",
+      "book": "Jesus",
+      "category": "love"
+    },
+    {
+      "text": "Pure in heart, you see God clearly as you choose who to love.",
+      "bibleVerseText": "Blessed are the pure in heart, for they will see God.",
+      "book": "Jesus",
+      "category": "love"
+    },
+    {
+      "text": "My Father is working on the desire of your heart today, and so am I.",
+      "bibleVerseText": "In his defense Jesus said to them, \"My Father is always at his work to this very day, and I too am working.\"",
+      "book": "Jesus",
+      "category": "love"
+    },
+    {
+      "text": "Precious to your Father, you are never overlooked, and He sees your longing for love.",
+      "bibleVerseText": "Indeed, the very hairs of your head are all numbered. Don't be afraid; you are worth more than many sparrows.",
+      "book": "Jesus",
+      "category": "love"
+    },
+    {
+      "text": "Your life stands on My words, so the love you build is built on rock.",
+      "bibleVerseText": "Therefore everyone who hears these words of mine and puts them into practice is like a wise man who built his house on the rock.",
+      "book": "Jesus",
+      "category": "love"
+    },
+    {
+      "text": "Believe Me, and you see the glory of God in the love He brings you.",
+      "bibleVerseText": "Then Jesus said, \"Did I not tell you that if you believe, you will see the glory of God?\"",
+      "book": "Jesus",
       "category": "love"
     },
     {
@@ -1488,6 +1632,78 @@
       "text": "Jesus redeemed me, and by faith I receive the promised Holy Spirit.",
       "bibleVerseText": "He redeemed us in order that the blessing given to Abraham might come to the Gentiles through Christ Jesus, so that by faith we might receive the promise of the Spirit.",
       "book": "Galatians 3:14",
+      "category": "faith"
+    },
+    {
+      "text": "Your faith has healed you, so go in peace and be free.",
+      "bibleVerseText": "He said to her, \"Daughter, your faith has healed you. Go in peace and be freed from your suffering.\"",
+      "book": "Jesus",
+      "category": "faith"
+    },
+    {
+      "text": "Everything is possible for you, because you believe.",
+      "bibleVerseText": "\"'If you can'?\" said Jesus. \"Everything is possible for one who believes.\"",
+      "book": "Jesus",
+      "category": "faith"
+    },
+    {
+      "text": "Faith as small as a mustard seed moves mountains, and nothing is impossible for you.",
+      "bibleVerseText": "He replied, \"Because you have so little faith. Truly I tell you, if you have faith as small as a mustard seed, you can say to this mountain, 'Move from here to there,' and it will move. Nothing will be impossible for you.\"",
+      "book": "Jesus",
+      "category": "faith"
+    },
+    {
+      "text": "Whatever you ask in prayer, believe you have received it, and it is yours.",
+      "bibleVerseText": "Therefore I tell you, whatever you ask for in prayer, believe that you have received it, and it will be yours.",
+      "book": "Jesus",
+      "category": "faith"
+    },
+    {
+      "text": "Speak to the mountain without doubting, and it goes into the sea.",
+      "bibleVerseText": "Truly I tell you, if anyone says to this mountain, 'Go, throw yourself into the sea,' and does not doubt in their heart but believes that what they say will happen, it will be done for them.",
+      "book": "Jesus",
+      "category": "faith"
+    },
+    {
+      "text": "If you believe, you see the glory of God in this very situation.",
+      "bibleVerseText": "Then Jesus said, \"Did I not tell you that if you believe, you will see the glory of God?\"",
+      "book": "Jesus",
+      "category": "faith"
+    },
+    {
+      "text": "Blessed are you, who have not seen Me and yet believe.",
+      "bibleVerseText": "Then Jesus told him, \"Because you have seen me, you have believed; blessed are those who have not seen and yet have believed.\"",
+      "book": "Jesus",
+      "category": "faith"
+    },
+    {
+      "text": "I have prayed for you, and your faith does not fail.",
+      "bibleVerseText": "But I have prayed for you, Simon, that your faith may not fail. And when you have turned back, strengthen your brothers.",
+      "book": "Jesus",
+      "category": "faith"
+    },
+    {
+      "text": "Let it be done for you just as you believed.",
+      "bibleVerseText": "Then Jesus said to the centurion, \"Go! Let it be done just as you believed it would.\" And his servant was healed at that moment.",
+      "book": "Jesus",
+      "category": "faith"
+    },
+    {
+      "text": "When I say come, you step out of the boat and walk on water.",
+      "bibleVerseText": "\"Come,\" he said. Then Peter got down out of the boat, walked on the water and came toward Jesus.",
+      "book": "Jesus",
+      "category": "faith"
+    },
+    {
+      "text": "You have great faith, and your request is granted.",
+      "bibleVerseText": "Then Jesus said to her, \"Woman, you have great faith! Your request is granted.\" And her daughter was healed at that moment.",
+      "book": "Jesus",
+      "category": "faith"
+    },
+    {
+      "text": "Believing in Me is the work, and you are already doing it.",
+      "bibleVerseText": "Jesus answered, \"The work of God is this: to believe in the one he has sent.\"",
+      "book": "Jesus",
       "category": "faith"
     },
     {
@@ -2529,6 +2745,78 @@
       "category": "rest"
     },
     {
+      "text": "Come to Me with every burden, and I give you rest.",
+      "bibleVerseText": "Come to me, all you who are weary and burdened, and I will give you rest.",
+      "book": "Jesus",
+      "category": "rest"
+    },
+    {
+      "text": "I am gentle and humble in heart, and your soul finds rest in Me.",
+      "bibleVerseText": "Take my yoke upon you and learn from me, for I am gentle and humble in heart, and you will find rest for your souls.",
+      "book": "Jesus",
+      "category": "rest"
+    },
+    {
+      "text": "My yoke is easy and My burden is light, so you live unhurried.",
+      "bibleVerseText": "For my yoke is easy and my burden is light.",
+      "book": "Jesus",
+      "category": "rest"
+    },
+    {
+      "text": "I call you away to a quiet place, and you rest with Me.",
+      "bibleVerseText": "Then, because so many people were coming and going that they did not even have a chance to eat, he said to them, 'Come with me by yourselves to a quiet place and get some rest.'",
+      "book": "Jesus",
+      "category": "rest"
+    },
+    {
+      "text": "Night and day the seed grows while you sleep, because I am working.",
+      "bibleVerseText": "Night and day, whether he sleeps or gets up, the seed sprouts and grows, though he does not know how.",
+      "book": "Jesus",
+      "category": "rest"
+    },
+    {
+      "text": "My Father is always at work, so you sleep in peace tonight.",
+      "bibleVerseText": "In his defense Jesus said to them, 'My Father is always at his work to this very day, and I too am working.'",
+      "book": "Jesus",
+      "category": "rest"
+    },
+    {
+      "text": "It is finished, so you rest in what I have already done.",
+      "bibleVerseText": "When he had received the drink, Jesus said, 'It is finished.' With that, he bowed his head and gave up his spirit.",
+      "book": "Jesus",
+      "category": "rest"
+    },
+    {
+      "text": "The Sabbath was made for you, and rest is My gift to you.",
+      "bibleVerseText": "Then he said to them, 'The Sabbath was made for man, not man for the Sabbath.'",
+      "book": "Jesus",
+      "category": "rest"
+    },
+    {
+      "text": "At your table I sit with you, and you rest in My company.",
+      "bibleVerseText": "Here I am! I stand at the door and knock. If anyone hears my voice and opens the door, I will come in and eat with that person, and they with me.",
+      "book": "Jesus",
+      "category": "rest"
+    },
+    {
+      "text": "You remain in My love, and there your soul rests completely.",
+      "bibleVerseText": "As the Father has loved me, so have I loved you. Now remain in my love.",
+      "book": "Jesus",
+      "category": "rest"
+    },
+    {
+      "text": "The flowers do not labor or spin, and you rest in the Father's care.",
+      "bibleVerseText": "And why do you worry about clothes? See how the flowers of the field grow. They do not labor or spin.",
+      "book": "Jesus",
+      "category": "rest"
+    },
+    {
+      "text": "You come in and go out through Me, and you always find pasture.",
+      "bibleVerseText": "I am the gate; whoever enters through me will be saved. They will come in and go out, and find pasture.",
+      "book": "Jesus",
+      "category": "rest"
+    },
+    {
       "text": "Through the resurrection of Jesus, I am born again into a living hope.",
       "bibleVerseText": "Praise be to the God and Father of our Lord Jesus Christ! In his great mercy he has given us new birth into a living hope through the resurrection of Jesus Christ from the dead,",
       "book": "1 Peter 1:3",
@@ -2913,6 +3201,78 @@
       "category": "hope"
     },
     {
+      "text": "What is impossible with man is possible with God, and your future rests in His hands.",
+      "bibleVerseText": "Jesus replied, \"What is impossible with man is possible with God.\"",
+      "book": "Jesus",
+      "category": "hope"
+    },
+    {
+      "text": "Everything is possible for one who believes, and you believe Me.",
+      "bibleVerseText": "\"'If you can'?\" said Jesus. \"Everything is possible for one who believes.\"",
+      "book": "Jesus",
+      "category": "hope"
+    },
+    {
+      "text": "Heaven and earth pass away, but every promise I made you stands forever.",
+      "bibleVerseText": "Heaven and earth will pass away, but my words will never pass away.",
+      "book": "Jesus",
+      "category": "hope"
+    },
+    {
+      "text": "Your Father is pleased to give you the kingdom, so your future is bright.",
+      "bibleVerseText": "Do not be afraid, little flock, for your Father has been pleased to give you the kingdom.",
+      "book": "Jesus",
+      "category": "hope"
+    },
+    {
+      "text": "You ask, and it is given to you. You knock, and the door opens.",
+      "bibleVerseText": "Ask and it will be given to you; seek and you will find; knock and the door will be opened to you.",
+      "book": "Jesus",
+      "category": "hope"
+    },
+    {
+      "text": "What you ask in prayer and believe, you have already received, and it is yours.",
+      "bibleVerseText": "Therefore I tell you, whatever you ask for in prayer, believe that you have received it, and it will be yours.",
+      "book": "Jesus",
+      "category": "hope"
+    },
+    {
+      "text": "You believe, and you see the glory of God in your life.",
+      "bibleVerseText": "Then Jesus said, \"Did I not tell you that if you believe, you will see the glory of God?\"",
+      "book": "Jesus",
+      "category": "hope"
+    },
+    {
+      "text": "I am coming back for you, and you are where I am forever.",
+      "bibleVerseText": "And if I go and prepare a place for you, I will come back and take you to be with me that you also may be where I am.",
+      "book": "Jesus",
+      "category": "hope"
+    },
+    {
+      "text": "Faith the size of a seed moves mountains, and nothing is impossible for you.",
+      "bibleVerseText": "He replied, \"Because you have so little faith. Truly I tell you, if you have faith as small as a mustard seed, you can say to this mountain, 'Move from here to there,' and it will move. Nothing will be impossible for you.\"",
+      "book": "Jesus",
+      "category": "hope"
+    },
+    {
+      "text": "A kingdom prepared for you since the world began is your inheritance in Me.",
+      "bibleVerseText": "Then the King will say to those on his right, 'Come, you who are blessed by my Father; take your inheritance, the kingdom prepared for you since the creation of the world.'",
+      "book": "Jesus",
+      "category": "hope"
+    },
+    {
+      "text": "Your story is not over, because I came to give you life to the full.",
+      "bibleVerseText": "The thief comes only to steal and kill and destroy; I have come that they may have life, and have it to the full.",
+      "book": "Jesus",
+      "category": "hope"
+    },
+    {
+      "text": "Blessed are you, because the tears of today turn into laughter.",
+      "bibleVerseText": "Blessed are you who hunger now, for you will be satisfied. Blessed are you who weep now, for you will laugh.",
+      "book": "Jesus",
+      "category": "hope"
+    },
+    {
       "text": "Jesus endured the cross for joy, and that joy lives in me.",
       "bibleVerseText": "fixing our eyes on Jesus, the pioneer and perfecter of faith. For the joy set before him he endured the cross, scorning its shame, and sat down at the right hand of the throne of God.",
       "book": "Hebrews 12:2",
@@ -3264,6 +3624,78 @@
       "text": "The Lord Jesus goes with me and never leaves, so my joy is strong.",
       "bibleVerseText": "Be strong and courageous. Do not be afraid or terrified because of them, for the Lord your God goes with you; he will never leave you nor forsake you.",
       "book": "Deuteronomy 31:6",
+      "category": "joy"
+    },
+    {
+      "text": "My joy is in you, and your joy is complete.",
+      "bibleVerseText": "I have told you this so that my joy may be in you and that your joy may be complete.",
+      "book": "Jesus",
+      "category": "joy"
+    },
+    {
+      "text": "You carry the full measure of My joy inside you today.",
+      "bibleVerseText": "I am coming to you now, but I say these things while I am still in the world, so that they may have the full measure of my joy within them.",
+      "book": "Jesus",
+      "category": "joy"
+    },
+    {
+      "text": "You ask in My name and receive, and your joy is full.",
+      "bibleVerseText": "Until now you have not asked for anything in my name. Ask and you will receive, and your joy will be complete.",
+      "book": "Jesus",
+      "category": "joy"
+    },
+    {
+      "text": "No one takes away the joy I give you. It is yours for keeps.",
+      "bibleVerseText": "So with you: Now is your time of grief, but I will see you again and you will rejoice, and no one will take away your joy.",
+      "book": "Jesus",
+      "category": "joy"
+    },
+    {
+      "text": "Your name is written in heaven, and that is a joy nothing can touch.",
+      "bibleVerseText": "However, do not rejoice that the spirits submit to you, but rejoice that your names are written in heaven.",
+      "book": "Jesus",
+      "category": "joy"
+    },
+    {
+      "text": "Heaven rejoices over you, and that same joy fills your heart today.",
+      "bibleVerseText": "I tell you that in the same way there will be more rejoicing in heaven over one sinner who repents than over ninety-nine righteous persons who do not need to repent.",
+      "book": "Jesus",
+      "category": "joy"
+    },
+    {
+      "text": "Come and share My happiness. You are welcome in My joy.",
+      "bibleVerseText": "His master replied, 'Well done, good and faithful servant! You have been faithful with a few things; I will put you in charge of many things. Come and share your master's happiness!'",
+      "book": "Jesus",
+      "category": "joy"
+    },
+    {
+      "text": "Finding My kingdom is finding treasure, and joy runs through your whole life.",
+      "bibleVerseText": "The kingdom of heaven is like treasure hidden in a field. When a man found it, he hid it again, and then in his joy went and sold all he had and bought that field.",
+      "book": "Jesus",
+      "category": "joy"
+    },
+    {
+      "text": "My Father celebrates you, because you were lost and now you are found.",
+      "bibleVerseText": "For this son of mine was dead and is alive again; he was lost and is found.' So they began to celebrate.",
+      "book": "Jesus",
+      "category": "joy"
+    },
+    {
+      "text": "Life to the full is My gift to you, and joy fills every day of it.",
+      "bibleVerseText": "The thief comes only to steal and kill and destroy; I have come that they may have life, and have it to the full.",
+      "book": "Jesus",
+      "category": "joy"
+    },
+    {
+      "text": "A spring of living water rises in you, and joy never runs dry.",
+      "bibleVerseText": "but whoever drinks the water I give them will never thirst. Indeed, the water I give them will become in them a spring of water welling up to eternal life.",
+      "book": "Jesus",
+      "category": "joy"
+    },
+    {
+      "text": "I call you My friend, and My friendship fills your heart with joy.",
+      "bibleVerseText": "I no longer call you servants, because a servant does not know his master's business. Instead, I have called you friends, for everything that I learned from my Father I have made known to you.",
+      "book": "Jesus",
       "category": "joy"
     },
     {
@@ -4899,6 +5331,78 @@
       "category": "warfare"
     },
     {
+      "text": "You have My authority over all the power of the enemy, and nothing harms you.",
+      "bibleVerseText": "I have given you authority to trample on snakes and scorpions and to overcome all the power of the enemy; nothing will harm you.",
+      "book": "Jesus",
+      "category": "warfare"
+    },
+    {
+      "text": "I saw Satan fall like lightning from heaven, and you stand in My victory.",
+      "bibleVerseText": "He replied, 'I saw Satan fall like lightning from heaven.'",
+      "book": "Jesus",
+      "category": "warfare"
+    },
+    {
+      "text": "Take heart, I have overcome the world, and My victory is yours today.",
+      "bibleVerseText": "I have told you these things, so that in me you may have peace. In this world you will have trouble. But take heart! I have overcome the world.",
+      "book": "Jesus",
+      "category": "warfare"
+    },
+    {
+      "text": "The prince of this world is driven out, and he holds no claim on you.",
+      "bibleVerseText": "Now is the time for judgment on this world; now the prince of this world will be driven out.",
+      "book": "Jesus",
+      "category": "warfare"
+    },
+    {
+      "text": "The gates of hell cannot overcome My church, and you are built into it.",
+      "bibleVerseText": "And I tell you that you are Peter, and on this rock I will build my church, and the gates of Hades will not overcome it.",
+      "book": "Jesus",
+      "category": "warfare"
+    },
+    {
+      "text": "All authority in heaven and on earth is Mine, and I stand with you.",
+      "bibleVerseText": "Then Jesus came to them and said, 'All authority in heaven and on earth has been given to me.'",
+      "book": "Jesus",
+      "category": "warfare"
+    },
+    {
+      "text": "I hold the keys of death and the grave, and no enemy holds your life.",
+      "bibleVerseText": "I am the Living One; I was dead, and now look, I am alive for ever and ever! And I hold the keys of death and Hades.",
+      "book": "Jesus",
+      "category": "warfare"
+    },
+    {
+      "text": "Your enemy is tied up, and I carried you out of his house free.",
+      "bibleVerseText": "Or again, how can anyone enter a strong man's house and carry off his possessions unless he first ties up the strong man? Then he can plunder his house.",
+      "book": "Jesus",
+      "category": "warfare"
+    },
+    {
+      "text": "My prayer is over you, and your faith does not fail.",
+      "bibleVerseText": "But I have prayed for you, Simon, that your faith may not fail. And when you have turned back, strengthen your brothers.",
+      "book": "Jesus",
+      "category": "warfare"
+    },
+    {
+      "text": "No thief takes your life from you, because I came to give you life to the full.",
+      "bibleVerseText": "The thief comes only to steal and kill and destroy; I have come that they may have life, and have it to the full.",
+      "book": "Jesus",
+      "category": "warfare"
+    },
+    {
+      "text": "By the power of God I drive out demons, and His kingdom has come upon you.",
+      "bibleVerseText": "But if I drive out demons by the finger of God, then the kingdom of God has come upon you.",
+      "book": "Jesus",
+      "category": "warfare"
+    },
+    {
+      "text": "Your chains are gone. I set you free, and you are free indeed.",
+      "bibleVerseText": "So if the Son sets you free, you will be free indeed.",
+      "book": "Jesus",
+      "category": "warfare"
+    },
+    {
       "text": "The Spirit who raised Christ lives in me and gives life to my body.",
       "bibleVerseText": "And if the Spirit of him who raised Jesus from the dead is living in you, he who raised Christ from the dead will also give life to your mortal bodies because of his Spirit who lives in you.",
       "book": "Romans 8:11",
@@ -5178,6 +5682,78 @@
       "text": "The One on the throne makes everything new, and my life is new in Christ.",
       "bibleVerseText": "He who was seated on the throne said, 'I am making everything new!' Then he said, 'Write this down, for these words are trustworthy and true.'",
       "book": "Revelation 21:5",
+      "category": "miracles"
+    },
+    {
+      "text": "What is impossible with man is possible with God, and God is with you.",
+      "bibleVerseText": "Jesus replied, 'What is impossible with man is possible with God.'",
+      "book": "Jesus",
+      "category": "miracles"
+    },
+    {
+      "text": "You speak to the mountain without doubt, and it moves.",
+      "bibleVerseText": "Truly I tell you, if anyone says to this mountain, 'Go, throw yourself into the sea,' and does not doubt in their heart but believes that what they say will happen, it will be done for them.",
+      "book": "Jesus",
+      "category": "miracles"
+    },
+    {
+      "text": "What you ask in prayer and believe you have received is yours.",
+      "bibleVerseText": "Therefore I tell you, whatever you ask for in prayer, believe that you have received it, and it will be yours.",
+      "book": "Jesus",
+      "category": "miracles"
+    },
+    {
+      "text": "Greater works than Mine flow through you, because you believe in Me.",
+      "bibleVerseText": "Very truly I tell you, whoever believes in me will do the works I have been doing, and they will do even greater things than these, because I am going to the Father.",
+      "book": "Jesus",
+      "category": "miracles"
+    },
+    {
+      "text": "Because you believe, you see the glory of God in your life.",
+      "bibleVerseText": "Then Jesus said, 'Did I not tell you that if you believe, you will see the glory of God?'",
+      "book": "Jesus",
+      "category": "miracles"
+    },
+    {
+      "text": "Faith as small as a mustard seed moves mountains, and nothing is impossible for you.",
+      "bibleVerseText": "He replied, 'Because you have so little faith. Truly I tell you, if you have faith as small as a mustard seed, you can say to this mountain, \"Move from here to there,\" and it will move. Nothing will be impossible for you.'",
+      "book": "Jesus",
+      "category": "miracles"
+    },
+    {
+      "text": "My words live in you, so whatever you ask is done for you.",
+      "bibleVerseText": "If you remain in me and my words remain in you, ask whatever you wish, and it will be done for you.",
+      "book": "Jesus",
+      "category": "miracles"
+    },
+    {
+      "text": "Signs follow you because you believe, and miracles happen in My name.",
+      "bibleVerseText": "And these signs will accompany those who believe: In my name they will drive out demons; they will speak in new tongues;",
+      "book": "Jesus",
+      "category": "miracles"
+    },
+    {
+      "text": "My voice called a dead man out of the grave, and that same voice speaks over you.",
+      "bibleVerseText": "When he had said this, Jesus called in a loud voice, 'Lazarus, come out!'",
+      "book": "Jesus",
+      "category": "miracles"
+    },
+    {
+      "text": "You believe I am able, so it is done to you according to your faith.",
+      "bibleVerseText": "Then he touched their eyes and said, 'According to your faith let it be done to you';",
+      "book": "Jesus",
+      "category": "miracles"
+    },
+    {
+      "text": "All authority in heaven and on earth is Mine, and I stand behind you.",
+      "bibleVerseText": "Then Jesus came to them and said, 'All authority in heaven and on earth has been given to me.'",
+      "book": "Jesus",
+      "category": "miracles"
+    },
+    {
+      "text": "One word from Me is enough, and you go home believing what I said.",
+      "bibleVerseText": "'Go,' Jesus replied, 'your son will live.' The man took Jesus at his word and departed.",
+      "book": "Jesus",
       "category": "miracles"
     },
     {
@@ -5577,6 +6153,78 @@
       "category": "health"
     },
     {
+      "text": "I am willing, and over your body I say be clean and be whole.",
+      "bibleVerseText": "Jesus reached out his hand and touched the man. 'I am willing,' he said. 'Be clean!' Immediately he was cleansed of his leprosy.",
+      "book": "Jesus",
+      "category": "health"
+    },
+    {
+      "text": "Your faith has healed you. Go in peace, your body free and whole.",
+      "bibleVerseText": "He said to her, 'Daughter, your faith has healed you. Go in peace and be freed from your suffering.'",
+      "book": "Jesus",
+      "category": "health"
+    },
+    {
+      "text": "You are set free from your infirmity, and strength fills your body today.",
+      "bibleVerseText": "When Jesus saw her, he called her forward and said to her, 'Woman, you are set free from your infirmity.'",
+      "book": "Jesus",
+      "category": "health"
+    },
+    {
+      "text": "Get up and walk, because My healing power runs through every part of your body.",
+      "bibleVerseText": "Then Jesus said to him, 'Get up! Pick up your mat and walk.'",
+      "book": "Jesus",
+      "category": "health"
+    },
+    {
+      "text": "Every part of you I touch is completely restored, sound, and strong.",
+      "bibleVerseText": "Then he said to the man, 'Stretch out your hand.' So he stretched it out and it was completely restored, just as sound as the other.",
+      "book": "Jesus",
+      "category": "health"
+    },
+    {
+      "text": "Hands laid on you in My name carry My healing, and your body is well.",
+      "bibleVerseText": "they will pick up snakes with their hands; and when they drink deadly poison, it will not hurt them at all; they will place their hands on sick people, and they will get well.",
+      "book": "Jesus",
+      "category": "health"
+    },
+    {
+      "text": "My Spirit anointed Me to set you free, and My healing reaches every cell of your body.",
+      "bibleVerseText": "The Spirit of the Lord is on me, because he has anointed me to proclaim good news to the poor. He has sent me to proclaim freedom for the prisoners and recovery of sight for the blind, to set the oppressed free,",
+      "book": "Jesus",
+      "category": "health"
+    },
+    {
+      "text": "Full life is why I came, and that life fills your body today.",
+      "bibleVerseText": "The thief comes only to steal and kill and destroy; I have come that they may have life, and have it to the full.",
+      "book": "Jesus",
+      "category": "health"
+    },
+    {
+      "text": "It is done for you just as you believed, and healing reaches your body at this moment.",
+      "bibleVerseText": "Then Jesus said to the centurion, 'Go! Let it be done just as you believed it would.' And his servant was healed at that moment.",
+      "book": "Jesus",
+      "category": "health"
+    },
+    {
+      "text": "Just believe, because the healing I speak over your body is already done.",
+      "bibleVerseText": "Hearing this, Jesus said to Jairus, 'Don't be afraid; just believe, and she will be healed.'",
+      "book": "Jesus",
+      "category": "health"
+    },
+    {
+      "text": "My resurrection life rises strong in your body, because I am the life.",
+      "bibleVerseText": "Jesus said to her, 'I am the resurrection and the life. The one who believes in me will live, even though they die;'",
+      "book": "Jesus",
+      "category": "health"
+    },
+    {
+      "text": "The lame walk and the blind see, and that same power is healing your body now.",
+      "bibleVerseText": "The blind receive sight, the lame walk, those who have leprosy are cleansed, the deaf hear, the dead are raised, and the good news is proclaimed to the poor.",
+      "book": "Jesus",
+      "category": "health"
+    },
+    {
       "text": "By the wounds of Jesus my heart is healed and whole.",
       "bibleVerseText": "He himself bore our sins in his body on the cross, so that we might die to sins and live for righteousness; by his wounds you have been healed.",
       "book": "1 Peter 2:24",
@@ -5868,6 +6516,78 @@
       "text": "Goodness and love follow me all the days of my life.",
       "bibleVerseText": "Surely your goodness and love will follow me all the days of my life, and I will dwell in the house of the LORD forever.",
       "book": "Psalm 23:6",
+      "category": "innerHealing"
+    },
+    {
+      "text": "I set you free, and your heart is free indeed.",
+      "bibleVerseText": "So if the Son sets you free, you will be free indeed.",
+      "book": "Jesus",
+      "category": "innerHealing"
+    },
+    {
+      "text": "Neither do I condemn you, and your heart is clean before Me.",
+      "bibleVerseText": "'No one, sir,' she said. 'Then neither do I condemn you,' Jesus declared. 'Go now and leave your life of sin.'",
+      "book": "Jesus",
+      "category": "innerHealing"
+    },
+    {
+      "text": "Blessed are you who mourn, because My comfort reaches the deepest place in your heart.",
+      "bibleVerseText": "Blessed are those who mourn, for they will be comforted.",
+      "book": "Jesus",
+      "category": "innerHealing"
+    },
+    {
+      "text": "Your sins are forgiven, and your heart is clean and whole.",
+      "bibleVerseText": "Then Jesus said to her, 'Your sins are forgiven.'",
+      "book": "Jesus",
+      "category": "innerHealing"
+    },
+    {
+      "text": "By name I call you, and your heart knows you are Mine.",
+      "bibleVerseText": "Jesus said to her, 'Mary.' She turned toward him and cried out in Aramaic, 'Rabboni!' (which means 'Teacher').",
+      "book": "Jesus",
+      "category": "innerHealing"
+    },
+    {
+      "text": "You are not an orphan, because I come to you and stay.",
+      "bibleVerseText": "I will not leave you as orphans; I will come to you.",
+      "book": "Jesus",
+      "category": "innerHealing"
+    },
+    {
+      "text": "Laughter is yours, because I turn every tear in your heart into joy.",
+      "bibleVerseText": "Blessed are you who hunger now, for you will be satisfied. Blessed are you who weep now, for you will laugh.",
+      "book": "Jesus",
+      "category": "innerHealing"
+    },
+    {
+      "text": "No one takes your joy away, because I see you and your heart rejoices.",
+      "bibleVerseText": "So with you: Now is your time of grief, but I will see you again and you will rejoice, and no one will take away your joy.",
+      "book": "Jesus",
+      "category": "innerHealing"
+    },
+    {
+      "text": "Friend is what I call you, and your heart is safe with Me.",
+      "bibleVerseText": "I no longer call you servants, because a servant does not know his master's business. Instead, I have called you friends, for everything that I learned from my Father I have made known to you.",
+      "book": "Jesus",
+      "category": "innerHealing"
+    },
+    {
+      "text": "You are welcome with Me, and I never turn you away.",
+      "bibleVerseText": "All those the Father gives me will come to me, and whoever comes to me I will never drive away.",
+      "book": "Jesus",
+      "category": "innerHealing"
+    },
+    {
+      "text": "Your faith has saved you, so go in peace with a healed heart.",
+      "bibleVerseText": "Jesus said to the woman, 'Your faith has saved you; go in peace.'",
+      "book": "Jesus",
+      "category": "innerHealing"
+    },
+    {
+      "text": "As the Father loves Me, so I love you, and that love heals your heart.",
+      "bibleVerseText": "As the Father has loved me, so have I loved you. Now remain in my love.",
+      "book": "Jesus",
       "category": "innerHealing"
     },
     {
@@ -6225,6 +6945,78 @@
       "category": "obedience"
     },
     {
+      "text": "You love Me and keep My word, and the Father and I make Our home with you.",
+      "bibleVerseText": "Jesus replied, \"Anyone who loves me will obey my teaching. My Father will love them, and we will come to them and make our home with them.",
+      "book": "Jesus",
+      "category": "obedience"
+    },
+    {
+      "text": "Built on the rock, your life stands because you hear My words and do them.",
+      "bibleVerseText": "Therefore everyone who hears these words of mine and puts them into practice is like a wise man who built his house on the rock.",
+      "book": "Jesus",
+      "category": "obedience"
+    },
+    {
+      "text": "Blessed are you, because you hear the word of God and do it.",
+      "bibleVerseText": "He replied, \"Blessed rather are those who hear the word of God and obey it.\"",
+      "book": "Jesus",
+      "category": "obedience"
+    },
+    {
+      "text": "My sheep hear My voice, and you know it and follow Me.",
+      "bibleVerseText": "My sheep listen to my voice; I know them, and they follow me.",
+      "book": "Jesus",
+      "category": "obedience"
+    },
+    {
+      "text": "Keeping My commands, you remain in My love, just as I remain in My Father's.",
+      "bibleVerseText": "If you keep my commands, you will remain in my love, just as I have kept my Father's commands and remain in his love.",
+      "book": "Jesus",
+      "category": "obedience"
+    },
+    {
+      "text": "I set the example, and you do as I have done for you.",
+      "bibleVerseText": "I have set you an example that you should do as I have done for you.",
+      "book": "Jesus",
+      "category": "obedience"
+    },
+    {
+      "text": "Whoever does My Father's will is My brother and sister, and that is you.",
+      "bibleVerseText": "For whoever does the will of my Father in heaven is my brother and sister and mother.",
+      "book": "Jesus",
+      "category": "obedience"
+    },
+    {
+      "text": "I show Myself to you, because you hold My commands and love Me.",
+      "bibleVerseText": "Whoever has my commands and keeps them is the one who loves me. The one who loves me will be loved by my Father, and I too will love them and show myself to them.",
+      "book": "Jesus",
+      "category": "obedience"
+    },
+    {
+      "text": "Doing My Father's will feeds you, just as it feeds Me.",
+      "bibleVerseText": "\"My food,\" said Jesus, \"is to do the will of him who sent me and to finish his work.\"",
+      "book": "Jesus",
+      "category": "obedience"
+    },
+    {
+      "text": "The Spirit reminds you of everything I said, so you walk in My ways.",
+      "bibleVerseText": "But the Advocate, the Holy Spirit, whom the Father will send in my name, will teach you all things and will remind you of everything I have said to you.",
+      "book": "Jesus",
+      "category": "obedience"
+    },
+    {
+      "text": "My yoke is easy, so following Me is joy and never a heavy load.",
+      "bibleVerseText": "For my yoke is easy and my burden is light.",
+      "book": "Jesus",
+      "category": "obedience"
+    },
+    {
+      "text": "You are My friend, and you do what I ask with a glad heart.",
+      "bibleVerseText": "You are my friends if you do what I command.",
+      "book": "Jesus",
+      "category": "obedience"
+    },
+    {
       "text": "I am washed clean, made holy, and justified in the name of Jesus.",
       "bibleVerseText": "But you were washed, you were sanctified, you were justified in the name of the Lord Jesus Christ and by the Spirit of our God.",
       "book": "1 Corinthians 6:11",
@@ -6558,6 +7350,78 @@
       "text": "Through Jesus Christ, God keeps me from stumbling and presents me faultless with joy.",
       "bibleVerseText": "Now to him who is able to keep you from stumbling and to present you before his glorious presence without fault and with great joy.",
       "book": "Jude 1:24",
+      "category": "purity"
+    },
+    {
+      "text": "Your heart is pure, and your eyes are open to see God.",
+      "bibleVerseText": "Blessed are the pure in heart, for they will see God.",
+      "book": "Jesus",
+      "category": "purity"
+    },
+    {
+      "text": "You are already clean because of the word I have spoken over you.",
+      "bibleVerseText": "You are already clean because of the word I have spoken to you.",
+      "book": "Jesus",
+      "category": "purity"
+    },
+    {
+      "text": "Your whole body is clean, because I washed you Myself.",
+      "bibleVerseText": "Jesus answered, \"Those who have had a bath need only to wash their feet; their whole body is clean. And you are clean, though not every one of you.\"",
+      "book": "Jesus",
+      "category": "purity"
+    },
+    {
+      "text": "I am willing, and I say it over you: be clean.",
+      "bibleVerseText": "Jesus reached out his hand and touched the man. \"I am willing,\" he said. \"Be clean!\" Immediately he was cleansed of his leprosy.",
+      "book": "Jesus",
+      "category": "purity"
+    },
+    {
+      "text": "My word makes you holy, and your thoughts are full of truth.",
+      "bibleVerseText": "Sanctify them by the truth; your word is truth.",
+      "book": "Jesus",
+      "category": "purity"
+    },
+    {
+      "text": "Light fills your whole body, because your eyes are healthy and fixed on Me.",
+      "bibleVerseText": "The eye is the lamp of the body. If your eyes are healthy, your whole body will be full of light.",
+      "book": "Jesus",
+      "category": "purity"
+    },
+    {
+      "text": "You are the light of the world, and you have nothing to hide.",
+      "bibleVerseText": "You are the light of the world. A town built on a hill cannot be hidden.",
+      "book": "Jesus",
+      "category": "purity"
+    },
+    {
+      "text": "Neither do I condemn you, and you walk free into a clean new life.",
+      "bibleVerseText": "\"No one, sir,\" she said. \"Then neither do I condemn you,\" Jesus declared. \"Go now and leave your life of sin.\"",
+      "book": "Jesus",
+      "category": "purity"
+    },
+    {
+      "text": "Dressed in white, you belong to Me, and I speak your name before My Father.",
+      "bibleVerseText": "The one who is victorious will, like them, be dressed in white. I will never blot out the name of that person from the book of life, but will acknowledge that name before my Father and his angels.",
+      "book": "Jesus",
+      "category": "purity"
+    },
+    {
+      "text": "My Father and I make Our home in you, and Our home is holy.",
+      "bibleVerseText": "Jesus replied, \"Anyone who loves me will obey my teaching. My Father will love them, and we will come to them and make our home with them.\"",
+      "book": "Jesus",
+      "category": "purity"
+    },
+    {
+      "text": "I came as light, so you never stay in darkness, and your mind is clean.",
+      "bibleVerseText": "I have come into the world as a light, so that no one who believes in me should stay in darkness.",
+      "book": "Jesus",
+      "category": "purity"
+    },
+    {
+      "text": "For your sake I gave Myself, so you are truly holy, body and soul.",
+      "bibleVerseText": "For them I sanctify myself, that they too may be truly sanctified.",
+      "book": "Jesus",
       "category": "purity"
     },
     {
@@ -7059,6 +7923,78 @@
       "category": "gratitude"
     },
     {
+      "text": "Every time you turn back to thank Me, I say your faith has made you well.",
+      "bibleVerseText": "Then he said to him, 'Rise and go; your faith has made you well.'",
+      "book": "Jesus",
+      "category": "gratitude"
+    },
+    {
+      "text": "I thanked My Father before Lazarus walked out, and you thank Him before you see it too.",
+      "bibleVerseText": "So they took away the stone. Then Jesus looked up and said, 'Father, I thank you that you have heard me.'",
+      "book": "Jesus",
+      "category": "gratitude"
+    },
+    {
+      "text": "Your sins are forgiven, and your heart overflows with thanks for it.",
+      "bibleVerseText": "Then Jesus said to her, 'Your sins are forgiven.'",
+      "book": "Jesus",
+      "category": "gratitude"
+    },
+    {
+      "text": "You are My friend, not My servant, and that alone fills you with thanks.",
+      "bibleVerseText": "I no longer call you servants, because a servant does not know his master's business. Instead, I have called you friends, for everything that I learned from my Father I have made known to you.",
+      "book": "Jesus",
+      "category": "gratitude"
+    },
+    {
+      "text": "No greater love exists than Mine for you, and your heart is full of thanks.",
+      "bibleVerseText": "Greater love has no one than this: to lay down one's life for one's friends.",
+      "book": "Jesus",
+      "category": "gratitude"
+    },
+    {
+      "text": "Look at the birds your Father feeds, and thank Him, for you are worth far more.",
+      "bibleVerseText": "Look at the birds of the air; they do not sow or reap or store away in barns, and yet your heavenly Father feeds them. Are you not much more valuable than they?",
+      "book": "Jesus",
+      "category": "gratitude"
+    },
+    {
+      "text": "My joy is in you, and your joy is complete, so thanks pour out of you.",
+      "bibleVerseText": "I have told you this so that my joy may be in you and that your joy may be complete.",
+      "book": "Jesus",
+      "category": "gratitude"
+    },
+    {
+      "text": "My Father loves to give you good gifts, and every one is a reason to thank Him.",
+      "bibleVerseText": "If you, then, though you are evil, know how to give good gifts to your children, how much more will your Father in heaven give good gifts to those who ask him!",
+      "book": "Jesus",
+      "category": "gratitude"
+    },
+    {
+      "text": "Look how much the Lord has done for you, and how much mercy He has shown you.",
+      "bibleVerseText": "Jesus did not let him, but said, 'Go home to your own people and tell them how much the Lord has done for you, and how he has had mercy on you.'",
+      "book": "Jesus",
+      "category": "gratitude"
+    },
+    {
+      "text": "I gave thanks and broke the bread, My body given for you, and you remember Me with thanks.",
+      "bibleVerseText": "And he took bread, gave thanks and broke it, and gave it to them, saying, 'This is my body given for you; do this in remembrance of me.'",
+      "book": "Jesus",
+      "category": "gratitude"
+    },
+    {
+      "text": "This is My blood, poured out for your forgiveness, and you stand clean and thankful.",
+      "bibleVerseText": "This is my blood of the covenant, which is poured out for many for the forgiveness of sins.",
+      "book": "Jesus",
+      "category": "gratitude"
+    },
+    {
+      "text": "Peace is My gift to you, and you receive it with a thankful heart.",
+      "bibleVerseText": "Peace I leave with you; my peace I give you. I do not give to you as the world gives. Do not let your hearts be troubled and do not be afraid.",
+      "book": "Jesus",
+      "category": "gratitude"
+    },
+    {
       "text": "God made my spouse suited to me. My marriage is His gift.",
       "bibleVerseText": "The Lord God said, \"It is not good for the man to be alone. I will make a helper suitable for him.\"",
       "book": "Genesis 2:18",
@@ -7503,6 +8439,78 @@
       "category": "marriage"
     },
     {
+      "text": "What God joins is holy, and I made you and your spouse one flesh.",
+      "bibleVerseText": "So they are no longer two, but one flesh. Therefore what God has joined together, let no one separate.",
+      "book": "Jesus",
+      "category": "marriage"
+    },
+    {
+      "text": "Your home stands on My words, and no storm brings it down.",
+      "bibleVerseText": "The rain came down, the streams rose, and the winds blew and beat against that house; yet it did not fall, because it had its foundation on the rock.",
+      "book": "Jesus",
+      "category": "marriage"
+    },
+    {
+      "text": "Right at the center of your marriage, I am there with you both.",
+      "bibleVerseText": "For where two or three gather in my name, there am I with them.",
+      "book": "Jesus",
+      "category": "marriage"
+    },
+    {
+      "text": "My peace rules your home, and your heart toward your spouse is at rest.",
+      "bibleVerseText": "Peace I leave with you; my peace I give you. I do not give to you as the world gives. Do not let your hearts be troubled and do not be afraid.",
+      "book": "Jesus",
+      "category": "marriage"
+    },
+    {
+      "text": "Loved by Me first, you pour that same love into your marriage.",
+      "bibleVerseText": "A new command I give you: Love one another. As I have loved you, so you must love one another.",
+      "book": "Jesus",
+      "category": "marriage"
+    },
+    {
+      "text": "Joy from Me fills your marriage to the brim, and laughter lives in your home.",
+      "bibleVerseText": "I have told you this so that my joy may be in you and that your joy may be complete.",
+      "book": "Jesus",
+      "category": "marriage"
+    },
+    {
+      "text": "I came to give your marriage life to the full, and the thief has no place here.",
+      "bibleVerseText": "The thief comes only to steal and kill and destroy; I have come that they may have life, and have it to the full.",
+      "book": "Jesus",
+      "category": "marriage"
+    },
+    {
+      "text": "Everything is new in My hands, and that includes your marriage.",
+      "bibleVerseText": "He who was seated on the throne said, \"I am making everything new!\" Then he said, \"Write this down, for these words are trustworthy and true.\"",
+      "book": "Jesus",
+      "category": "marriage"
+    },
+    {
+      "text": "Nothing in your marriage is too hard for Me. With God all things are possible.",
+      "bibleVerseText": "Jesus looked at them and said, \"With man this is impossible, but with God all things are possible.\"",
+      "book": "Jesus",
+      "category": "marriage"
+    },
+    {
+      "text": "Serving like Me, you give yourself to your spouse with joy, not duty.",
+      "bibleVerseText": "For even the Son of Man did not come to be served, but to serve, and to give his life as a ransom for many.",
+      "book": "Jesus",
+      "category": "marriage"
+    },
+    {
+      "text": "I have prayed for you, and your faith for this marriage does not fail.",
+      "bibleVerseText": "But I have prayed for you, Simon, that your faith may not fail. And when you have turned back, strengthen your brothers.",
+      "book": "Jesus",
+      "category": "marriage"
+    },
+    {
+      "text": "You carry My authority over every attack on your home, and nothing harms your marriage.",
+      "bibleVerseText": "I have given you authority to trample on snakes and scorpions and to overcome all the power of the enemy; nothing will harm you.",
+      "book": "Jesus",
+      "category": "marriage"
+    },
+    {
       "text": "In Christ my children and I are shielded, and He lifts our heads high.",
       "bibleVerseText": "But you, Lord, are a shield around me, my glory, the One who lifts my head high.",
       "book": "Psalm 3:3",
@@ -7770,6 +8778,78 @@
       "text": "Jesus, the Mighty Warrior who saves, rejoices over my children with singing.",
       "bibleVerseText": "The Lord your God is with you, the Mighty Warrior who saves. He will take great delight in you; in his love he will no longer rebuke you, but will rejoice over you with singing.",
       "book": "Zephaniah 3:17",
+      "category": "parenting"
+    },
+    {
+      "text": "Heaven's kingdom belongs to your children, and I welcome them close.",
+      "bibleVerseText": "Jesus said, \"Let the little children come to me, and do not hinder them, for the kingdom of heaven belongs to such as these.\"",
+      "book": "Jesus",
+      "category": "parenting"
+    },
+    {
+      "text": "Their angels see My Father's face, and heaven watches over your children every day.",
+      "bibleVerseText": "See that you do not despise one of these little ones. For I tell you that their angels in heaven always see the face of my Father in heaven.",
+      "book": "Jesus",
+      "category": "parenting"
+    },
+    {
+      "text": "Your Father is not willing that one of your children be lost.",
+      "bibleVerseText": "In the same way your Father in heaven is not willing that any of these little ones should perish.",
+      "book": "Jesus",
+      "category": "parenting"
+    },
+    {
+      "text": "Great is your faith for your children, and your prayers for them are heard.",
+      "bibleVerseText": "Then Jesus said to her, \"Woman, you have great faith! Your request is granted.\" And her daughter was healed at that moment.",
+      "book": "Jesus",
+      "category": "parenting"
+    },
+    {
+      "text": "Everything is possible for you as you believe for your children.",
+      "bibleVerseText": "\"'If you can'?\" said Jesus. \"Everything is possible for one who believes.\"",
+      "book": "Jesus",
+      "category": "parenting"
+    },
+    {
+      "text": "Good gifts flow from your Father to your children through your hands.",
+      "bibleVerseText": "If you, then, though you are evil, know how to give good gifts to your children, how much more will your Father in heaven give good gifts to those who ask him!",
+      "book": "Jesus",
+      "category": "parenting"
+    },
+    {
+      "text": "Taught by God, your children hear the Father and learn from Him.",
+      "bibleVerseText": "It is written in the Prophets: 'They will all be taught by God.' Everyone who has heard the Father and learned from him comes to me.",
+      "book": "Jesus",
+      "category": "parenting"
+    },
+    {
+      "text": "I seek every child who wanders, and I never stop seeking yours.",
+      "bibleVerseText": "Suppose one of you has a hundred sheep and loses one of them. Doesn't he leave the ninety-nine in the open country and go after the lost sheep until he finds it?",
+      "book": "Jesus",
+      "category": "parenting"
+    },
+    {
+      "text": "Welcoming your children in My name, you welcome Me into your home.",
+      "bibleVerseText": "And whoever welcomes one such child in my name welcomes me.",
+      "book": "Jesus",
+      "category": "parenting"
+    },
+    {
+      "text": "Wisdom fills you as a parent, because My Spirit teaches you all things.",
+      "bibleVerseText": "But the Advocate, the Holy Spirit, whom the Father will send in my name, will teach you all things and will remind you of everything I have said to you.",
+      "book": "Jesus",
+      "category": "parenting"
+    },
+    {
+      "text": "Peace stays in you as you raise your children, because I am with you always.",
+      "bibleVerseText": "and teaching them to obey everything I have commanded you. And surely I am with you always, to the very end of the age.",
+      "book": "Jesus",
+      "category": "parenting"
+    },
+    {
+      "text": "Taking Me at My word over your children, you walk home in peace.",
+      "bibleVerseText": "\"Go,\" Jesus replied, \"your son will live.\" The man took Jesus at his word and departed.",
+      "book": "Jesus",
       "category": "parenting"
     },
     {
@@ -8052,6 +9132,78 @@
       "text": "God knows me fully, and in Christ He loves me fully.",
       "bibleVerseText": "For now we see only a reflection as in a mirror; then we shall see face to face. Now I know in part; then I shall know fully, even as I am fully known.",
       "book": "1 Corinthians 13:12",
+      "category": "friendship"
+    },
+    {
+      "text": "I call you My friend, and I tell you everything My Father shows Me.",
+      "bibleVerseText": "I no longer call you servants, because a servant does not know his master's business. Instead, I have called you friends, for everything that I learned from my Father I have made known to you.",
+      "book": "Jesus",
+      "category": "friendship"
+    },
+    {
+      "text": "Greater love has no one than Mine, and I laid down My life for you, My friend.",
+      "bibleVerseText": "Greater love has no one than this: to lay down one's life for one's friends.",
+      "book": "Jesus",
+      "category": "friendship"
+    },
+    {
+      "text": "Where two or three gather in My name, I am right there among your friends.",
+      "bibleVerseText": "For where two or three gather in my name, there am I with them.",
+      "book": "Jesus",
+      "category": "friendship"
+    },
+    {
+      "text": "Your friends know you are Mine by the love you show them.",
+      "bibleVerseText": "By this everyone will know that you are my disciples, if you love one another.",
+      "book": "Jesus",
+      "category": "friendship"
+    },
+    {
+      "text": "You carry your friends to Me in faith, and I see your faith.",
+      "bibleVerseText": "When Jesus saw their faith, he said to the paralyzed man, \"Son, your sins are forgiven.\"",
+      "book": "Jesus",
+      "category": "friendship"
+    },
+    {
+      "text": "I call Lazarus My friend, and I come for My friends, including you.",
+      "bibleVerseText": "After he had said this, he went on to tell them, \"Our friend Lazarus has fallen asleep; but I am going there to wake him up.\"",
+      "book": "Jesus",
+      "category": "friendship"
+    },
+    {
+      "text": "You are My brother and sister, and My family is yours.",
+      "bibleVerseText": "Whoever does God's will is my brother and sister and mother.",
+      "book": "Jesus",
+      "category": "friendship"
+    },
+    {
+      "text": "Love flows from you to your friends, the same way I loved you.",
+      "bibleVerseText": "My command is this: Love each other as I have loved you.",
+      "book": "Jesus",
+      "category": "friendship"
+    },
+    {
+      "text": "Peacemakers are My Father's children, and you bring peace to every friendship.",
+      "bibleVerseText": "Blessed are the peacemakers, for they will be called children of God.",
+      "book": "Jesus",
+      "category": "friendship"
+    },
+    {
+      "text": "Generous with your friends, you receive a full measure poured back into your life.",
+      "bibleVerseText": "Give, and it will be given to you. A good measure, pressed down, shaken together and running over, will be poured into your lap. For with the measure you use, it will be measured to you.",
+      "book": "Jesus",
+      "category": "friendship"
+    },
+    {
+      "text": "One with Me and the Father, you share that same unity with your friends.",
+      "bibleVerseText": "that all of them may be one, Father, just as you are in me and I am in you. May they also be in us so that the world may believe that you have sent me.",
+      "book": "Jesus",
+      "category": "friendship"
+    },
+    {
+      "text": "Strength comes to your friends through you, because I have prayed for you.",
+      "bibleVerseText": "But I have prayed for you, Simon, that your faith may not fail. And when you have turned back, strengthen your brothers.",
+      "book": "Jesus",
       "category": "friendship"
     },
     {
@@ -8658,6 +9810,78 @@
       "text": "The Lord's blessing covers my whole household.",
       "bibleVerseText": "The ark of the Lord remained in the house of Obed-Edom the Gittite for three months, and the Lord blessed him and his entire household.",
       "book": "2 Samuel 6:11",
+      "category": "favor"
+    },
+    {
+      "text": "This is the year of My favor, and it rests on you today.",
+      "bibleVerseText": "to proclaim the year of the Lord's favor.",
+      "book": "Jesus",
+      "category": "favor"
+    },
+    {
+      "text": "Because you are in Me, the Father's seal of approval rests on you.",
+      "bibleVerseText": "Do not work for food that spoils, but for food that endures to eternal life, which the Son of Man will give you. For on him God the Father has placed his seal of approval.",
+      "book": "Jesus",
+      "category": "favor"
+    },
+    {
+      "text": "You are My friend, not a servant, and I tell you everything the Father told Me.",
+      "bibleVerseText": "I no longer call you servants, because a servant does not know his master's business. Instead, I have called you friends, for everything that I learned from my Father I have made known to you.",
+      "book": "Jesus",
+      "category": "favor"
+    },
+    {
+      "text": "As the Father loves Me, I love you, and you live inside that love.",
+      "bibleVerseText": "As the Father has loved me, so have I loved you. Now remain in my love.",
+      "book": "Jesus",
+      "category": "favor"
+    },
+    {
+      "text": "The Father Himself loves you, and His face shines on you with favor.",
+      "bibleVerseText": "No, the Father himself loves you because you have loved me and have believed that I came from God.",
+      "book": "Jesus",
+      "category": "favor"
+    },
+    {
+      "text": "The best robe is on you, and the family ring is on your finger.",
+      "bibleVerseText": "But the father said to his servants, 'Quick! Bring the best robe and put it on him. Put a ring on his finger and sandals on his feet.'",
+      "book": "Jesus",
+      "category": "favor"
+    },
+    {
+      "text": "Just as My Father gave Me a kingdom, I give one to you.",
+      "bibleVerseText": "And I confer on you a kingdom, just as my Father conferred one on me,",
+      "book": "Jesus",
+      "category": "favor"
+    },
+    {
+      "text": "I want you with Me where I am, and you see My glory up close.",
+      "bibleVerseText": "Father, I want those you have given me to be with me where I am, and to see my glory, the glory you have given me because you loved me before the creation of the world.",
+      "book": "Jesus",
+      "category": "favor"
+    },
+    {
+      "text": "You sit with Me on My throne, and you share My victory.",
+      "bibleVerseText": "To the one who is victorious, I will give the right to sit with me on my throne, just as I was victorious and sat down with my Father on his throne.",
+      "book": "Jesus",
+      "category": "favor"
+    },
+    {
+      "text": "I hold the key, and what I open for you, no one can shut.",
+      "bibleVerseText": "To the angel of the church in Philadelphia write: These are the words of him who is holy and true, who holds the key of David. What he opens no one can shut, and what he shuts no one can open.",
+      "book": "Jesus",
+      "category": "favor"
+    },
+    {
+      "text": "My Father loves you because you love Me, and I show Myself to you.",
+      "bibleVerseText": "Whoever has my commands and keeps them is the one who loves me. The one who loves me will be loved by my Father, and I too will love them and show myself to them.",
+      "book": "Jesus",
+      "category": "favor"
+    },
+    {
+      "text": "By name I call you, and you are known and wanted by Me.",
+      "bibleVerseText": "The gatekeeper opens the gate for him, and the sheep listen to his voice. He calls his own sheep by name and leads them out.",
+      "book": "Jesus",
       "category": "favor"
     },
     {
@@ -9273,6 +10497,78 @@
       "category": "work"
     },
     {
+      "text": "I tell you where to cast your net, and your work brings in a full catch.",
+      "bibleVerseText": "When he had finished speaking, he said to Simon, 'Put out into deep water, and let down the nets for a catch.'",
+      "book": "Jesus",
+      "category": "work"
+    },
+    {
+      "text": "My Father is at work, and I am working right beside you every shift.",
+      "bibleVerseText": "In his defense Jesus said to them, 'My Father is always at his work to this very day, and I too am working.'",
+      "book": "Jesus",
+      "category": "work"
+    },
+    {
+      "text": "Believing in Me, you do greater things than these right where you work.",
+      "bibleVerseText": "Very truly I tell you, whoever believes in me will do the works I have been doing, and they will do even greater things than these, because I am going to the Father.",
+      "book": "Jesus",
+      "category": "work"
+    },
+    {
+      "text": "You are faithful in small things, and I put you in charge of more.",
+      "bibleVerseText": "'Well done, my good servant!' his master replied. 'Because you have been trustworthy in a very small matter, take charge of ten cities.'",
+      "book": "Jesus",
+      "category": "work"
+    },
+    {
+      "text": "Friend, move up higher. You are honored in front of everyone at work.",
+      "bibleVerseText": "But when you are invited, take the lowest place, so that when your host comes, he will say to you, 'Friend, move up to a better place.' Then you will be honored in the presence of all the other guests.",
+      "book": "Jesus",
+      "category": "work"
+    },
+    {
+      "text": "Your light shines at your job, and people see your good deeds and praise My Father.",
+      "bibleVerseText": "In the same way, let your light shine before others, that they may see your good deeds and glorify your Father in heaven.",
+      "book": "Jesus",
+      "category": "work"
+    },
+    {
+      "text": "You finish every assignment My Father gives you, and it brings Him glory.",
+      "bibleVerseText": "I have brought you glory on earth by finishing the work you gave me to do.",
+      "book": "Jesus",
+      "category": "work"
+    },
+    {
+      "text": "Every hour you work is worth its wage, and you are paid in full.",
+      "bibleVerseText": "Stay there, eating and drinking whatever they give you, for the worker deserves his wages. Do not move around from house to house.",
+      "book": "Jesus",
+      "category": "work"
+    },
+    {
+      "text": "No one can shut the door of work I open before you.",
+      "bibleVerseText": "I know your deeds. See, I have placed before you an open door that no one can shut. I know that you have little strength, yet you have kept my word and have not denied my name.",
+      "book": "Jesus",
+      "category": "work"
+    },
+    {
+      "text": "My yoke on you is easy, so your workday is light and your heart rested.",
+      "bibleVerseText": "For my yoke is easy and my burden is light.",
+      "book": "Jesus",
+      "category": "work"
+    },
+    {
+      "text": "I bring My reward with Me, and I repay every hour you work.",
+      "bibleVerseText": "Look, I am coming soon! My reward is with me, and I will give to each person according to what they have done.",
+      "book": "Jesus",
+      "category": "work"
+    },
+    {
+      "text": "Right where you work, I send you to reap a harvest you never planted.",
+      "bibleVerseText": "I sent you to reap what you have not worked for. Others have done the hard work, and you have reaped the benefits of their labor.",
+      "book": "Jesus",
+      "category": "work"
+    },
+    {
       "text": "Made right through Jesus Christ, I have lasting peace with God.",
       "bibleVerseText": "Therefore, since we have been justified through faith, we have peace with God through our Lord Jesus Christ.",
       "book": "Romans 5:1",
@@ -9546,6 +10842,78 @@
       "text": "Jesus holds me in His hand, and no one can take me from Him.",
       "bibleVerseText": "I give them eternal life, and they shall never perish; no one will snatch them out of my hand.",
       "book": "John 10:28",
+      "category": "anxiety"
+    },
+    {
+      "text": "Tomorrow is in My hands, so your mind is at rest today.",
+      "bibleVerseText": "Therefore do not worry about tomorrow, for tomorrow will worry about itself. Each day has enough trouble of its own.",
+      "book": "Jesus",
+      "category": "anxiety"
+    },
+    {
+      "text": "My own peace is yours, a peace the world can never give you.",
+      "bibleVerseText": "Peace I leave with you; my peace I give you. I do not give to you as the world gives. Do not let your hearts be troubled and do not be afraid.",
+      "book": "Jesus",
+      "category": "anxiety"
+    },
+    {
+      "text": "The birds are fed by your Father, and you are worth far more to Him.",
+      "bibleVerseText": "Look at the birds of the air; they do not sow or reap or store away in barns, and yet your heavenly Father feeds them. Are you not much more valuable than they?",
+      "book": "Jesus",
+      "category": "anxiety"
+    },
+    {
+      "text": "Your heart is settled, because you trust God and you trust Me.",
+      "bibleVerseText": "Do not let your hearts be troubled. You believe in God; believe also in me.",
+      "book": "Jesus",
+      "category": "anxiety"
+    },
+    {
+      "text": "I said be still to the waves, and your mind is completely calm.",
+      "bibleVerseText": "He got up, rebuked the wind and said to the waves, 'Quiet! Be still!' Then the wind died down and it was completely calm.",
+      "book": "Jesus",
+      "category": "anxiety"
+    },
+    {
+      "text": "Every need you have is known by your Father before you ask.",
+      "bibleVerseText": "Do not be like them, for your Father knows what you need before you ask him.",
+      "book": "Jesus",
+      "category": "anxiety"
+    },
+    {
+      "text": "It pleases your Father to give you the kingdom, so your heart is at rest.",
+      "bibleVerseText": "Do not be afraid, little flock, for your Father has been pleased to give you the kingdom.",
+      "book": "Jesus",
+      "category": "anxiety"
+    },
+    {
+      "text": "In Me you have peace, because I have already overcome the world.",
+      "bibleVerseText": "I have told you these things, so that in me you may have peace. In this world you will have trouble. But take heart! I have overcome the world.",
+      "book": "Jesus",
+      "category": "anxiety"
+    },
+    {
+      "text": "I am with you every moment, so your thoughts are steady and clear.",
+      "bibleVerseText": "and teaching them to obey everything I have commanded you. And surely I am with you always, to the very end of the age.",
+      "book": "Jesus",
+      "category": "anxiety"
+    },
+    {
+      "text": "Peace be with you, I say, and My peace fills your mind right now.",
+      "bibleVerseText": "On the evening of that first day of the week, when the disciples were together, with the doors locked for fear of the Jewish leaders, Jesus came and stood among them and said, 'Peace be with you!'",
+      "book": "Jesus",
+      "category": "anxiety"
+    },
+    {
+      "text": "You hear My voice above every other voice, and it settles your mind.",
+      "bibleVerseText": "My sheep listen to my voice; I know them, and they follow me.",
+      "book": "Jesus",
+      "category": "anxiety"
+    },
+    {
+      "text": "Every hour of your life is in My hands, and your mind is free from worry.",
+      "bibleVerseText": "Who of you by worrying can add a single hour to your life?",
+      "book": "Jesus",
       "category": "anxiety"
     },
     {
@@ -9828,6 +11196,78 @@
       "text": "God's goodness and love follow me, so I walk brave.",
       "bibleVerseText": "Surely your goodness and love will follow me all the days of my life, and I will dwell in the house of the LORD forever.",
       "book": "Psalm 23:6",
+      "category": "fear"
+    },
+    {
+      "text": "It is I beside you, so take courage and stand bold.",
+      "bibleVerseText": "But Jesus immediately said to them: 'Take courage! It is I. Don't be afraid.'",
+      "book": "Jesus",
+      "category": "fear"
+    },
+    {
+      "text": "Just believe, because My word over you is stronger than any report.",
+      "bibleVerseText": "Overhearing what they said, Jesus told him, 'Don't be afraid; just believe.'",
+      "book": "Jesus",
+      "category": "fear"
+    },
+    {
+      "text": "You are worth more than many sparrows, and your Father counts every hair on your head.",
+      "bibleVerseText": "Indeed, the very hairs of your head are all numbered. Don't be afraid; you are worth more than many sparrows.",
+      "book": "Jesus",
+      "category": "fear"
+    },
+    {
+      "text": "I hold the keys of death and Hades, so nothing has power over your life.",
+      "bibleVerseText": "I am the Living One; I was dead, and now look, I am alive for ever and ever! And I hold the keys of death and Hades.",
+      "book": "Jesus",
+      "category": "fear"
+    },
+    {
+      "text": "All the power of the enemy is under the authority I gave you, and nothing harms you.",
+      "bibleVerseText": "I have given you authority to trample on snakes and scorpions and to overcome all the power of the enemy; nothing will harm you.",
+      "book": "Jesus",
+      "category": "fear"
+    },
+    {
+      "text": "No one snatches you out of My hand, and you are safe forever.",
+      "bibleVerseText": "I give them eternal life, and they shall never perish; no one will snatch them out of my hand.",
+      "book": "Jesus",
+      "category": "fear"
+    },
+    {
+      "text": "I am with you always, to the very end, and you walk bold and unafraid.",
+      "bibleVerseText": "and teaching them to obey everything I have commanded you. And surely I am with you always, to the very end of the age.",
+      "book": "Jesus",
+      "category": "fear"
+    },
+    {
+      "text": "My touch lifts you up, and you rise with courage in your heart.",
+      "bibleVerseText": "But Jesus came and touched them. 'Get up,' he said. 'Don't be afraid.'",
+      "book": "Jesus",
+      "category": "fear"
+    },
+    {
+      "text": "Not a hair of your head perishes, because I guard you completely.",
+      "bibleVerseText": "But not a hair of your head will perish.",
+      "book": "Jesus",
+      "category": "fear"
+    },
+    {
+      "text": "Take heart, because I have overcome the world and you stand in My victory.",
+      "bibleVerseText": "I have told you these things, so that in me you may have peace. In this world you will have trouble. But take heart! I have overcome the world.",
+      "book": "Jesus",
+      "category": "fear"
+    },
+    {
+      "text": "Words and wisdom from Me fill your mouth, and no opponent can stand against them.",
+      "bibleVerseText": "For I will give you words and wisdom that none of your adversaries will be able to resist or contradict.",
+      "book": "Jesus",
+      "category": "fear"
+    },
+    {
+      "text": "My right hand is on you, and because I am the First and the Last, you are unafraid.",
+      "bibleVerseText": "When I saw him, I fell at his feet as though dead. Then he placed his right hand on me and said: 'Do not be afraid. I am the First and the Last.'",
+      "book": "Jesus",
       "category": "fear"
     },
     {
@@ -10254,6 +11694,78 @@
       "text": "Jesus is my light and my salvation, and He is the stronghold of my life.",
       "bibleVerseText": "The LORD is my light and my salvation, whom shall I fear? The LORD is the stronghold of my life, of whom shall I be afraid?",
       "book": "Psalm 27:1",
+      "category": "hardtimes"
+    },
+    {
+      "text": "Take heart. I have overcome the world, and My victory is yours today.",
+      "bibleVerseText": "I have told you these things, so that in me you may have peace. In this world you will have trouble. But take heart! I have overcome the world.",
+      "book": "Jesus",
+      "category": "hardtimes"
+    },
+    {
+      "text": "Your Father knows every need in front of you, and He meets each one.",
+      "bibleVerseText": "For the pagans run after all these things, and your heavenly Father knows that you need them.",
+      "book": "Jesus",
+      "category": "hardtimes"
+    },
+    {
+      "text": "Courage is yours, because I am right here in the storm with you.",
+      "bibleVerseText": "But Jesus immediately said to them: \"Take courage! It is I. Don't be afraid.\"",
+      "book": "Jesus",
+      "category": "hardtimes"
+    },
+    {
+      "text": "I speak peace over your life, and the wind and the waves go still.",
+      "bibleVerseText": "He got up, rebuked the wind and said to the waves, \"Quiet! Be still!\" Then the wind died down and it was completely calm.",
+      "book": "Jesus",
+      "category": "hardtimes"
+    },
+    {
+      "text": "Your life is built on My word, and no storm knocks it down.",
+      "bibleVerseText": "The rain came down, the streams rose, and the winds blew and beat against that house; yet it did not fall, because it had its foundation on the rock.",
+      "book": "Jesus",
+      "category": "hardtimes"
+    },
+    {
+      "text": "I am with you always, every single day, to the very end.",
+      "bibleVerseText": "and teaching them to obey everything I have commanded you. And surely I am with you always, to the very end of the age.",
+      "book": "Jesus",
+      "category": "hardtimes"
+    },
+    {
+      "text": "My prayers cover you, and your faith does not fail.",
+      "bibleVerseText": "But I have prayed for you, Simon, that your faith may not fail. And when you have turned back, strengthen your brothers.",
+      "book": "Jesus",
+      "category": "hardtimes"
+    },
+    {
+      "text": "The birds never go hungry, and you are worth far more to your Father than they are.",
+      "bibleVerseText": "Look at the birds of the air; they do not sow or reap or store away in barns, and yet your heavenly Father feeds them. Are you not much more valuable than they?",
+      "book": "Jesus",
+      "category": "hardtimes"
+    },
+    {
+      "text": "Not a hair of your head perishes, because you are safe in My hands.",
+      "bibleVerseText": "But not a hair of your head will perish.",
+      "book": "Jesus",
+      "category": "hardtimes"
+    },
+    {
+      "text": "No one snatches you out of My hand, and you are held in every season.",
+      "bibleVerseText": "I give them eternal life, and they shall never perish; no one will snatch them out of my hand.",
+      "book": "Jesus",
+      "category": "hardtimes"
+    },
+    {
+      "text": "My yoke is easy, and with Me this load is light.",
+      "bibleVerseText": "For my yoke is easy and my burden is light.",
+      "book": "Jesus",
+      "category": "hardtimes"
+    },
+    {
+      "text": "Nothing in front of you is too hard for God, because with Him all things are possible.",
+      "bibleVerseText": "Jesus looked at them and said, \"With man this is impossible, but with God all things are possible.\"",
+      "book": "Jesus",
       "category": "hardtimes"
     },
     {
@@ -10767,6 +12279,78 @@
       "category": "addiction"
     },
     {
+      "text": "I set you free, and you are free indeed, today and every day.",
+      "bibleVerseText": "So if the Son sets you free, you will be free indeed.",
+      "book": "Jesus",
+      "category": "addiction"
+    },
+    {
+      "text": "I came to set prisoners free, and every chain on your life is broken.",
+      "bibleVerseText": "The Spirit of the Lord is on me, because he has anointed me to proclaim good news to the poor. He has sent me to proclaim freedom for the prisoners and recovery of sight for the blind, to set the oppressed free,",
+      "book": "Jesus",
+      "category": "addiction"
+    },
+    {
+      "text": "It is finished, and your freedom was paid for in full at the cross.",
+      "bibleVerseText": "When he had received the drink, Jesus said, \"It is finished.\" With that, he bowed his head and gave up his spirit.",
+      "book": "Jesus",
+      "category": "addiction"
+    },
+    {
+      "text": "You are set free from what held you, and you walk out whole.",
+      "bibleVerseText": "When Jesus saw her, he called her forward and said to her, \"Woman, you are set free from your infirmity.\"",
+      "book": "Jesus",
+      "category": "addiction"
+    },
+    {
+      "text": "Your grave clothes are off. You walk out alive and free.",
+      "bibleVerseText": "The dead man came out, his hands and feet wrapped with strips of linen, and a cloth around his face. Jesus said to them, \"Take off the grave clothes and let him go.\"",
+      "book": "Jesus",
+      "category": "addiction"
+    },
+    {
+      "text": "The water I give satisfies your deepest thirst, and you never thirst again.",
+      "bibleVerseText": "but whoever drinks the water I give them will never thirst. Indeed, the water I give them will become in them a spring of water welling up to eternal life.",
+      "book": "Jesus",
+      "category": "addiction"
+    },
+    {
+      "text": "Every craving finds its end in Me, because I am the bread that satisfies you.",
+      "bibleVerseText": "Then Jesus declared, \"I am the bread of life. Whoever comes to me will never go hungry, and whoever believes in me will never be thirsty.\"",
+      "book": "Jesus",
+      "category": "addiction"
+    },
+    {
+      "text": "All the power of the enemy is under your feet, because I gave you authority.",
+      "bibleVerseText": "I have given you authority to trample on snakes and scorpions and to overcome all the power of the enemy; nothing will harm you.",
+      "book": "Jesus",
+      "category": "addiction"
+    },
+    {
+      "text": "Go in peace, freed from your suffering, because your faith has made you whole.",
+      "bibleVerseText": "He said to her, \"Daughter, your faith has healed you. Go in peace and be freed from your suffering.\"",
+      "book": "Jesus",
+      "category": "addiction"
+    },
+    {
+      "text": "A son belongs in the family forever, and you are God's child, not a slave.",
+      "bibleVerseText": "Now a slave has no permanent place in the family, but a son belongs to it forever.",
+      "book": "Jesus",
+      "category": "addiction"
+    },
+    {
+      "text": "Full life is My gift to you, and it fills your body and mind.",
+      "bibleVerseText": "The thief comes only to steal and kill and destroy; I have come that they may have life, and have it to the full.",
+      "book": "Jesus",
+      "category": "addiction"
+    },
+    {
+      "text": "You overcome as I overcame, and you sit with Me in victory.",
+      "bibleVerseText": "To the one who is victorious, I will give the right to sit with me on my throne, just as I was victorious and sat down with my Father on his throne.",
+      "book": "Jesus",
+      "category": "addiction"
+    },
+    {
       "text": "I am born again into a living hope, because Jesus rose from the dead.",
       "bibleVerseText": "Praise be to the God and Father of our Lord Jesus Christ! In his great mercy he has given us new birth into a living hope through the resurrection of Jesus Christ from the dead.",
       "book": "1 Peter 1:3",
@@ -11076,6 +12660,78 @@
       "text": "I have an eternal house in heaven, built by God.",
       "bibleVerseText": "For we know that if the earthly tent we live in is destroyed, we have a building from God, an eternal house in heaven, not built by human hands.",
       "book": "2 Corinthians 5:1",
+      "category": "heaven"
+    },
+    {
+      "text": "In My Father's house there is a room prepared for you, and I made it ready.",
+      "bibleVerseText": "My Father's house has many rooms; if that were not so, would I have told you that I am going there to prepare a place for you?",
+      "book": "Jesus",
+      "category": "heaven"
+    },
+    {
+      "text": "I come back for you and take you to be with Me where I am.",
+      "bibleVerseText": "And if I go and prepare a place for you, I will come back and take you to be with me that you also may be where I am.",
+      "book": "Jesus",
+      "category": "heaven"
+    },
+    {
+      "text": "I am the resurrection and the life, and because you believe in Me, you never die.",
+      "bibleVerseText": "Jesus said to her, 'I am the resurrection and the life. The one who believes in me will live, even though they die; and whoever lives by believing in me will never die. Do you believe this?'",
+      "book": "Jesus",
+      "category": "heaven"
+    },
+    {
+      "text": "Paradise with Me is yours, as surely as I promised it on the cross.",
+      "bibleVerseText": "Jesus answered him, 'Truly I tell you, today you will be with me in paradise.'",
+      "book": "Jesus",
+      "category": "heaven"
+    },
+    {
+      "text": "Your name is written in heaven, and that is your greatest joy.",
+      "bibleVerseText": "However, do not rejoice that the spirits submit to you, but rejoice that your names are written in heaven.",
+      "book": "Jesus",
+      "category": "heaven"
+    },
+    {
+      "text": "Come, you are blessed by My Father, and the kingdom prepared for you is yours.",
+      "bibleVerseText": "Then the King will say to those on his right, 'Come, you who are blessed by my Father; take your inheritance, the kingdom prepared for you since the creation of the world.'",
+      "book": "Jesus",
+      "category": "heaven"
+    },
+    {
+      "text": "You have crossed over from death to life, and eternal life is yours now.",
+      "bibleVerseText": "Very truly I tell you, whoever hears my word and believes him who sent me has eternal life and will not be judged but has crossed over from death to life.",
+      "book": "Jesus",
+      "category": "heaven"
+    },
+    {
+      "text": "Because I live, you also live, now and forever.",
+      "bibleVerseText": "Before long, the world will not see me anymore, but you will see me. Because I live, you also will live.",
+      "book": "Jesus",
+      "category": "heaven"
+    },
+    {
+      "text": "Everyone who looks to Me has eternal life, and I raise you up at the last day.",
+      "bibleVerseText": "For my Father's will is that everyone who looks to the Son and believes in him shall have eternal life, and I will raise them up at the last day.",
+      "book": "Jesus",
+      "category": "heaven"
+    },
+    {
+      "text": "You share My throne with Me, because My victory is your victory.",
+      "bibleVerseText": "To the one who is victorious, I will give the right to sit with me on my throne, just as I was victorious and sat down with my Father on his throne.",
+      "book": "Jesus",
+      "category": "heaven"
+    },
+    {
+      "text": "In My Father's kingdom you shine like the sun.",
+      "bibleVerseText": "Then the righteous will shine like the sun in the kingdom of their Father. Whoever has ears, let them hear.",
+      "book": "Jesus",
+      "category": "heaven"
+    },
+    {
+      "text": "My Father is glad to give you the kingdom, and it is yours forever.",
+      "bibleVerseText": "Do not be afraid, little flock, for your Father has been pleased to give you the kingdom.",
+      "book": "Jesus",
       "category": "heaven"
     },
     {
@@ -18814,6 +20470,78 @@
       "bibleVerseText": "But thanks be to God! He gives us the victory through our Lord Jesus Christ."
     },
     {
+      "text": "It is finished, and every debt you owed is paid in full.",
+      "bibleVerseText": "When he had received the drink, Jesus said, \"It is finished.\" With that, he bowed his head and gave up his spirit.",
+      "book": "Jesus",
+      "category": "grace"
+    },
+    {
+      "text": "Neither do I condemn you, so lift your head and walk free.",
+      "bibleVerseText": "\"No one, sir,\" she said. \"Then neither do I condemn you,\" Jesus declared. \"Go now and leave your life of sin.\"",
+      "book": "Jesus",
+      "category": "grace"
+    },
+    {
+      "text": "Your sins are forgiven, friend, and I see you clean.",
+      "bibleVerseText": "When Jesus saw their faith, he said, \"Friend, your sins are forgiven.\"",
+      "book": "Jesus",
+      "category": "grace"
+    },
+    {
+      "text": "My blood of the covenant was poured out for the forgiveness of your sins.",
+      "bibleVerseText": "This is my blood of the covenant, which is poured out for many for the forgiveness of sins.",
+      "book": "Jesus",
+      "category": "grace"
+    },
+    {
+      "text": "I came for sinners, not the righteous, and I came for you.",
+      "bibleVerseText": "But go and learn what this means: 'I desire mercy, not sacrifice.' For I have not come to call the righteous, but sinners.",
+      "book": "Jesus",
+      "category": "grace"
+    },
+    {
+      "text": "You believe in Me, so you are not condemned, not now and not ever.",
+      "bibleVerseText": "Whoever believes in him is not condemned, but whoever does not believe stands condemned already because they have not believed in the name of God's one and only Son.",
+      "book": "Jesus",
+      "category": "grace"
+    },
+    {
+      "text": "Gentle and humble in heart, I give your soul rest.",
+      "bibleVerseText": "Take my yoke upon you and learn from me, for I am gentle and humble in heart, and you will find rest for your souls.",
+      "book": "Jesus",
+      "category": "grace"
+    },
+    {
+      "text": "The Father puts the best robe on you and a ring on your finger.",
+      "bibleVerseText": "But the father said to his servants, 'Quick! Bring the best robe and put it on him. Put a ring on his finger and sandals on his feet.",
+      "book": "Jesus",
+      "category": "grace"
+    },
+    {
+      "text": "When you were still far off, the Father ran to you and held you close.",
+      "bibleVerseText": "So he got up and went to his father. But while he was still a long way off, his father saw him and was filled with compassion for him; he ran to his son, threw his arms around him and kissed him.",
+      "book": "Jesus",
+      "category": "grace"
+    },
+    {
+      "text": "Everything the Father has is yours, and you are always with Him.",
+      "bibleVerseText": "'My son,' the father said, 'you are always with me, and everything I have is yours.",
+      "book": "Jesus",
+      "category": "grace"
+    },
+    {
+      "text": "I laid down My life for you, My friend, and that love is yours.",
+      "bibleVerseText": "Greater love has no one than this: to lay down one's life for one's friends.",
+      "book": "Jesus",
+      "category": "grace"
+    },
+    {
+      "text": "Not to condemn you, but to save you, the Father sent Me.",
+      "bibleVerseText": "For God did not send his Son into the world to condemn the world, but to save the world through him.",
+      "book": "Jesus",
+      "category": "grace"
+    },
+    {
       "text": "I am a citizen of heaven, and my Savior Jesus holds my future secure.",
       "isFavorite": false,
       "category": "destiny",
@@ -19073,6 +20801,78 @@
       "bibleVerseText": "So we say with confidence, 'The Lord is my helper; I will not be afraid. What can mere mortals do to me?'"
     },
     {
+      "text": "You bear much fruit, and your life brings glory to My Father.",
+      "bibleVerseText": "This is to my Father's glory, that you bear much fruit, showing yourselves to be my disciples.",
+      "book": "Jesus",
+      "category": "destiny"
+    },
+    {
+      "text": "Follow Me, and I send you out to bring people home to God.",
+      "bibleVerseText": "\"Come, follow me,\" Jesus said, \"and I will send you out to fish for people.\"",
+      "book": "Jesus",
+      "category": "destiny"
+    },
+    {
+      "text": "As the Father sent Me, so I am sending you.",
+      "bibleVerseText": "Again Jesus said, \"Peace be with you! As the Father has sent me, I am sending you.\"",
+      "book": "Jesus",
+      "category": "destiny"
+    },
+    {
+      "text": "A room is waiting for you in My Father's house, and I prepared it Myself.",
+      "bibleVerseText": "My Father's house has many rooms; if that were not so, would I have told you that I am going there to prepare a place for you?",
+      "book": "Jesus",
+      "category": "destiny"
+    },
+    {
+      "text": "Yours is the kingdom prepared for you since the creation of the world.",
+      "bibleVerseText": "Then the King will say to those on his right, 'Come, you who are blessed by my Father; take your inheritance, the kingdom prepared for you since the creation of the world.",
+      "book": "Jesus",
+      "category": "destiny"
+    },
+    {
+      "text": "The Spirit of truth guides you and tells you what is to come.",
+      "bibleVerseText": "But when he, the Spirit of truth, comes, he will guide you into all the truth. He will not speak on his own; he will speak only what he hears, and he will tell you what is yet to come.",
+      "book": "Jesus",
+      "category": "destiny"
+    },
+    {
+      "text": "You are faithful with little, and I put you in charge of much.",
+      "bibleVerseText": "His master replied, 'Well done, good and faithful servant! You have been faithful with a few things; I will put you in charge of many things. Come and share your master's happiness!'",
+      "book": "Jesus",
+      "category": "destiny"
+    },
+    {
+      "text": "I give you a seat beside Me on My throne, because you overcome in Me.",
+      "bibleVerseText": "To the one who is victorious, I will give the right to sit with me on my throne, just as I was victorious and sat down with my Father on his throne.",
+      "book": "Jesus",
+      "category": "destiny"
+    },
+    {
+      "text": "Filled with the Spirit's power, you carry My name to the ends of the earth.",
+      "bibleVerseText": "But you will receive power when the Holy Spirit comes on you; and you will be my witnesses in Jerusalem, and in all Judea and Samaria, and to the ends of the earth.",
+      "book": "Jesus",
+      "category": "destiny"
+    },
+    {
+      "text": "My Father honors you as you serve Me, and where I am, you are.",
+      "bibleVerseText": "Whoever serves me must follow me; and where I am, my servant also will be. My Father will honor the one who serves me.",
+      "book": "Jesus",
+      "category": "destiny"
+    },
+    {
+      "text": "Righteous in Me, you shine like the sun in My Father's kingdom.",
+      "bibleVerseText": "Then the righteous will shine like the sun in the kingdom of their Father. Whoever has ears, let them hear.",
+      "book": "Jesus",
+      "category": "destiny"
+    },
+    {
+      "text": "I came so you have life, and have it to the full.",
+      "bibleVerseText": "The thief comes only to steal and kill and destroy; I have come that they may have life, and have it to the full.",
+      "book": "Jesus",
+      "category": "destiny"
+    },
+    {
       "text": "Through Jesus, the Lord's favor rests on me and establishes the work of my hands.",
       "bibleVerseText": "May the favor of the Lord our God rest on us; establish the work of our hands for us. Yes, establish the work of our hands.",
       "book": "Psalm 90:17",
@@ -19220,6 +21020,78 @@
       "text": "God's Word stays on my lips, so I am prosperous and successful.",
       "bibleVerseText": "Keep this Book of the Law always on your lips; meditate on it day and night, so that you may be careful to do everything written in it. Then you will be prosperous and successful.",
       "book": "Joshua 1:8",
+      "category": "business"
+    },
+    {
+      "text": "This small seed of a business grows into a tree that shelters many.",
+      "bibleVerseText": "Though it is the smallest of all seeds, yet when it grows, it is the largest of garden plants and becomes a tree, so that the birds come and perch in its branches.",
+      "book": "Jesus",
+      "category": "business"
+    },
+    {
+      "text": "What I entrust to you, you double, and your business keeps gaining more.",
+      "bibleVerseText": "The man who had received five bags of gold brought the other five. 'Master,' he said, 'you entrusted me with five bags of gold. See, I have gained five more.'",
+      "book": "Jesus",
+      "category": "business"
+    },
+    {
+      "text": "One word from Me fills your nets, and your business hauls in more than it can hold.",
+      "bibleVerseText": "He said, 'Throw your net on the right side of the boat and you will find some.' When they did, they were unable to haul the net in because of the large number of fish.",
+      "book": "Jesus",
+      "category": "business"
+    },
+    {
+      "text": "I set your business on a stand, and its light reaches every customer.",
+      "bibleVerseText": "Neither do people light a lamp and put it under a bowl. Instead they put it on its stand, and it gives light to everyone in the house.",
+      "book": "Jesus",
+      "category": "business"
+    },
+    {
+      "text": "Your business bears much fruit, and that fruit brings glory to My Father.",
+      "bibleVerseText": "This is to my Father's glory, that you bear much fruit, showing yourselves to be my disciples.",
+      "book": "Jesus",
+      "category": "business"
+    },
+    {
+      "text": "You remain in Me, and whatever you ask for this business is done for you.",
+      "bibleVerseText": "If you remain in me and my words remain in you, ask whatever you wish, and it will be done for you.",
+      "book": "Jesus",
+      "category": "business"
+    },
+    {
+      "text": "Open your eyes. The fields are ripe, and your customers are ready now.",
+      "bibleVerseText": "Don't you have a saying, 'It's still four months until harvest'? I tell you, open your eyes and look at the fields! They are ripe for harvest.",
+      "book": "Jesus",
+      "category": "business"
+    },
+    {
+      "text": "I give you wisdom to count the cost, and you finish what you build.",
+      "bibleVerseText": "Suppose one of you wants to build a tower. Won't you first sit down and estimate the cost to see if you have enough money to complete it?",
+      "book": "Jesus",
+      "category": "business"
+    },
+    {
+      "text": "You give good measure to every customer, and it comes back to you running over.",
+      "bibleVerseText": "Give, and it will be given to you. A good measure, pressed down, shaken together and running over, will be poured into your lap. For with the measure you use, it will be measured to you.",
+      "book": "Jesus",
+      "category": "business"
+    },
+    {
+      "text": "On My words you build this business, and it stands on rock.",
+      "bibleVerseText": "Therefore everyone who hears these words of mine and puts them into practice is like a wise man who built his house on the rock.",
+      "book": "Jesus",
+      "category": "business"
+    },
+    {
+      "text": "This business is good soil, and it produces a crop many times over.",
+      "bibleVerseText": "But the seed falling on good soil refers to someone who hears the word and understands it. This is the one who produces a crop, yielding a hundred, sixty or thirty times what was sown.",
+      "book": "Jesus",
+      "category": "business"
+    },
+    {
+      "text": "Faithful with little, you are trusted with much in this business.",
+      "bibleVerseText": "Whoever can be trusted with very little can also be trusted with much, and whoever is dishonest with very little will also be dishonest with much.",
+      "book": "Jesus",
       "category": "business"
     },
     {
@@ -19373,6 +21245,78 @@
       "category": "newSeason"
     },
     {
+      "text": "Look, I make everything new, and that includes you today.",
+      "bibleVerseText": "He who was seated on the throne said, 'I am making everything new!' Then he said, 'Write this down, for these words are trustworthy and true.'",
+      "book": "Jesus",
+      "category": "newSeason"
+    },
+    {
+      "text": "You are born again, and your life starts over clean with Me.",
+      "bibleVerseText": "Jesus replied, 'Very truly I tell you, no one can see the kingdom of God unless they are born again.'",
+      "book": "Jesus",
+      "category": "newSeason"
+    },
+    {
+      "text": "You have crossed over from death to life, and the old life is behind you.",
+      "bibleVerseText": "Very truly I tell you, whoever hears my word and believes him who sent me has eternal life and will not be judged but has crossed over from death to life.",
+      "book": "Jesus",
+      "category": "newSeason"
+    },
+    {
+      "text": "New wine needs a new wineskin, and I have made you new to hold it.",
+      "bibleVerseText": "No, new wine must be poured into new wineskins.",
+      "book": "Jesus",
+      "category": "newSeason"
+    },
+    {
+      "text": "A new name is yours from Me, and the old one no longer fits.",
+      "bibleVerseText": "Whoever has ears, let them hear what the Spirit says to the churches. To the one who is victorious, I will give some of the hidden manna. I will also give that person a white stone with a new name written on it, known only to the one who receives it.",
+      "book": "Jesus",
+      "category": "newSeason"
+    },
+    {
+      "text": "Every fresh start begins with Me, because I am the Beginning and the End.",
+      "bibleVerseText": "I am the Alpha and the Omega, the First and the Last, the Beginning and the End.",
+      "book": "Jesus",
+      "category": "newSeason"
+    },
+    {
+      "text": "I call you out by name into new life, and you walk out free.",
+      "bibleVerseText": "When he had said this, Jesus called in a loud voice, 'Lazarus, come out!'",
+      "book": "Jesus",
+      "category": "newSeason"
+    },
+    {
+      "text": "Today you are with Me, and a new day has begun for you.",
+      "bibleVerseText": "Jesus answered him, 'Truly I tell you, today you will be with me in paradise.'",
+      "book": "Jesus",
+      "category": "newSeason"
+    },
+    {
+      "text": "I go ahead of you into this new season, and you know My voice.",
+      "bibleVerseText": "When he has brought out all his own, he goes on ahead of them, and his sheep follow him because they know his voice.",
+      "book": "Jesus",
+      "category": "newSeason"
+    },
+    {
+      "text": "Neither do I condemn you, so you step into a clean new start.",
+      "bibleVerseText": "'No one, sir,' she said. 'Then neither do I condemn you,' Jesus declared. 'Go now and leave your life of sin.'",
+      "book": "Jesus",
+      "category": "newSeason"
+    },
+    {
+      "text": "Get up and walk, because your new season has already started.",
+      "bibleVerseText": "Then Jesus said to him, 'Get up! Pick up your mat and walk.'",
+      "book": "Jesus",
+      "category": "newSeason"
+    },
+    {
+      "text": "Go in peace. You are free, and your new life begins now.",
+      "bibleVerseText": "He said to her, 'Daughter, your faith has healed you. Go in peace and be freed from your suffering.'",
+      "book": "Jesus",
+      "category": "newSeason"
+    },
+    {
       "text": "In Jesus' name I ask for wisdom in every class, and God gives it generously.",
       "bibleVerseText": "If any of you lacks wisdom, you should ask God, who gives generously to all without finding fault, and it will be given to you.",
       "book": "James 1:5",
@@ -19520,6 +21464,78 @@
       "text": "I laid the foundation of my studies, and I finish what I start.",
       "bibleVerseText": "The hands of Zerubbabel have laid the foundation of this temple; his hands will also complete it. Then you will know that the Lord Almighty has sent me to you.",
       "book": "Zechariah 4:9",
+      "category": "education"
+    },
+    {
+      "text": "The Holy Spirit teaches you all things and brings every lesson back to your mind.",
+      "bibleVerseText": "But the Advocate, the Holy Spirit, whom the Father will send in my name, will teach you all things and will remind you of everything I have said to you.",
+      "book": "Jesus",
+      "category": "education"
+    },
+    {
+      "text": "I give you words and wisdom, and your mind is clear in every exam.",
+      "bibleVerseText": "For I will give you words and wisdom that none of your adversaries will be able to resist or contradict.",
+      "book": "Jesus",
+      "category": "education"
+    },
+    {
+      "text": "In the exam room, the Holy Spirit shows you what to write.",
+      "bibleVerseText": "for the Holy Spirit will teach you at that time what you should say.",
+      "book": "Jesus",
+      "category": "education"
+    },
+    {
+      "text": "You learn from Me, and your mind is at rest while you study.",
+      "bibleVerseText": "Take my yoke upon you and learn from me, for I am gentle and humble in heart, and you will find rest for your souls.",
+      "book": "Jesus",
+      "category": "education"
+    },
+    {
+      "text": "You are taught by God Himself, and you understand what you study.",
+      "bibleVerseText": "It is written in the Prophets: 'They will all be taught by God.' Everyone who has heard the Father and learned from him comes to me.",
+      "book": "Jesus",
+      "category": "education"
+    },
+    {
+      "text": "Your eyes see and your ears hear, so every lecture sinks in.",
+      "bibleVerseText": "But blessed are your eyes because they see, and your ears because they hear.",
+      "book": "Jesus",
+      "category": "education"
+    },
+    {
+      "text": "I am your Teacher, and you learn from the best in every class.",
+      "bibleVerseText": "You call me 'Teacher' and 'Lord,' and rightly so, for that is what I am.",
+      "book": "Jesus",
+      "category": "education"
+    },
+    {
+      "text": "Hard lessons become clear to you, because I am the One explaining them.",
+      "bibleVerseText": "Jesus replied, 'You do not realize now what I am doing, but later you will understand.'",
+      "book": "Jesus",
+      "category": "education"
+    },
+    {
+      "text": "All these things are clear to you, and you answer with confidence.",
+      "bibleVerseText": "'Have you understood all these things?' Jesus asked. 'Yes,' they replied.",
+      "book": "Jesus",
+      "category": "education"
+    },
+    {
+      "text": "My light shines on every page you study, and you see it clearly.",
+      "bibleVerseText": "When Jesus spoke again to the people, he said, 'I am the light of the world. Whoever follows me will never walk in darkness, but will have the light of life.'",
+      "book": "Jesus",
+      "category": "education"
+    },
+    {
+      "text": "Whatever you ask for this exam, believe you have it, and it is yours.",
+      "bibleVerseText": "Therefore I tell you, whatever you ask for in prayer, believe that you have received it, and it will be yours.",
+      "book": "Jesus",
+      "category": "education"
+    },
+    {
+      "text": "As I finished the work My Father gave Me, you finish school and graduate.",
+      "bibleVerseText": "I have brought you glory on earth by finishing the work you gave me to do.",
+      "book": "Jesus",
       "category": "education"
     },
     {
@@ -19673,6 +21689,78 @@
       "category": "confidence"
     },
     {
+      "text": "Take courage. It is I, and with Me beside you, you stand unafraid.",
+      "bibleVerseText": "But Jesus immediately said to them: \"Take courage! It is I. Don't be afraid.\"",
+      "book": "Jesus",
+      "category": "confidence"
+    },
+    {
+      "text": "I am with you always, so you walk into every room with confidence.",
+      "bibleVerseText": "and teaching them to obey everything I have commanded you. And surely I am with you always, to the very end of the age.",
+      "book": "Jesus",
+      "category": "confidence"
+    },
+    {
+      "text": "When you open your mouth, My Spirit gives you the words to say.",
+      "bibleVerseText": "for the Holy Spirit will teach you at that time what you should say.",
+      "book": "Jesus",
+      "category": "confidence"
+    },
+    {
+      "text": "I give you words and wisdom that no opponent can resist.",
+      "bibleVerseText": "For I will give you words and wisdom that none of your adversaries will be able to resist or contradict.",
+      "book": "Jesus",
+      "category": "confidence"
+    },
+    {
+      "text": "You carry My authority over all the power of the enemy.",
+      "bibleVerseText": "I have given you authority to trample on snakes and scorpions and to overcome all the power of the enemy; nothing will harm you.",
+      "book": "Jesus",
+      "category": "confidence"
+    },
+    {
+      "text": "Every hair on your head is counted, and you are precious to Me.",
+      "bibleVerseText": "Indeed, the very hairs of your head are all numbered. Don't be afraid; you are worth more than many sparrows.",
+      "book": "Jesus",
+      "category": "confidence"
+    },
+    {
+      "text": "The gates of hell cannot overcome My church, and you stand in it unshaken.",
+      "bibleVerseText": "And I tell you that you are Peter, and on this rock I will build my church, and the gates of Hades will not overcome it.",
+      "book": "Jesus",
+      "category": "confidence"
+    },
+    {
+      "text": "Take heart. I have overcome the world, and you stand in My victory.",
+      "bibleVerseText": "I have told you these things, so that in me you may have peace. In this world you will have trouble. But take heart! I have overcome the world.",
+      "book": "Jesus",
+      "category": "confidence"
+    },
+    {
+      "text": "You speak My name before others, and I speak your name before My Father.",
+      "bibleVerseText": "Whoever acknowledges me before others, I will also acknowledge before my Father in heaven.",
+      "book": "Jesus",
+      "category": "confidence"
+    },
+    {
+      "text": "My Spirit has come on you, and you carry His power wherever you go.",
+      "bibleVerseText": "But you will receive power when the Holy Spirit comes on you; and you will be my witnesses in Jerusalem, and in all Judea and Samaria, and to the ends of the earth.",
+      "book": "Jesus",
+      "category": "confidence"
+    },
+    {
+      "text": "Before you stands an open door that no one can shut.",
+      "bibleVerseText": "I know your deeds. See, I have placed before you an open door that no one can shut. I know that you have little strength, yet you have kept my word and have not denied my name.",
+      "book": "Jesus",
+      "category": "confidence"
+    },
+    {
+      "text": "Believing in Me, you do the works I do and even greater things.",
+      "bibleVerseText": "Very truly I tell you, whoever believes in me will do the works I have been doing, and they will do even greater things than these, because I am going to the Father.",
+      "book": "Jesus",
+      "category": "confidence"
+    },
+    {
       "text": "I thirst for God like a deer pants for water.",
       "bibleVerseText": "As the deer pants for streams of water, so my soul pants for you, my God.",
       "book": "Psalm 42:1",
@@ -19820,6 +21908,78 @@
       "text": "Through the blood of Jesus I draw near, and God draws near to me.",
       "bibleVerseText": "Come near to God and he will come near to you. Wash your hands, you sinners, and purify your hearts, you double-minded.",
       "book": "James 4:8",
+      "category": "spiritualGrowth"
+    },
+    {
+      "text": "Remaining in Me, you bear much fruit, because I am the vine and you are the branch.",
+      "bibleVerseText": "I am the vine; you are the branches. If you remain in me and I in you, you will bear much fruit; apart from me you can do nothing.",
+      "book": "Jesus",
+      "category": "spiritualGrowth"
+    },
+    {
+      "text": "You live on every word from God's mouth, and it makes you strong.",
+      "bibleVerseText": "Jesus answered, \"It is written: 'Man shall not live on bread alone, but on every word that comes from the mouth of God.'\"",
+      "book": "Jesus",
+      "category": "spiritualGrowth"
+    },
+    {
+      "text": "My joy is in you, and your joy is full.",
+      "bibleVerseText": "I have told you this so that my joy may be in you and that your joy may be complete.",
+      "book": "Jesus",
+      "category": "spiritualGrowth"
+    },
+    {
+      "text": "The water I give you becomes a spring inside you, welling up to eternal life.",
+      "bibleVerseText": "but whoever drinks the water I give them will never thirst. Indeed, the water I give them will become in them a spring of water welling up to eternal life.",
+      "book": "Jesus",
+      "category": "spiritualGrowth"
+    },
+    {
+      "text": "Rivers of living water flow from within you because you believe in Me.",
+      "bibleVerseText": "Whoever believes in me, as Scripture has said, rivers of living water will flow from within them.",
+      "book": "Jesus",
+      "category": "spiritualGrowth"
+    },
+    {
+      "text": "Like seed on good soil, you hear My word, hold it fast, and bear a rich harvest.",
+      "bibleVerseText": "But the seed on good soil stands for those with a noble and good heart, who hear the word, retain it, and by persevering produce a crop.",
+      "book": "Jesus",
+      "category": "spiritualGrowth"
+    },
+    {
+      "text": "The Spirit of truth guides you deeper into all truth every day.",
+      "bibleVerseText": "But when he, the Spirit of truth, comes, he will guide you into all the truth. He will not speak on his own; he will speak only what he hears, and he will tell you what is yet to come.",
+      "book": "Jesus",
+      "category": "spiritualGrowth"
+    },
+    {
+      "text": "I am the bread of life, and in Me you never go hungry.",
+      "bibleVerseText": "Then Jesus declared, \"I am the bread of life. Whoever comes to me will never go hungry, and whoever believes in me will never be thirsty.",
+      "book": "Jesus",
+      "category": "spiritualGrowth"
+    },
+    {
+      "text": "You know My truth, and that truth sets you free.",
+      "bibleVerseText": "Then you will know the truth, and the truth will set you free.",
+      "book": "Jesus",
+      "category": "spiritualGrowth"
+    },
+    {
+      "text": "Pure in heart, you see God more clearly every day.",
+      "bibleVerseText": "Blessed are the pure in heart, for they will see God.",
+      "book": "Jesus",
+      "category": "spiritualGrowth"
+    },
+    {
+      "text": "Blessed are your eyes, because they see, and your ears, because they hear.",
+      "bibleVerseText": "But blessed are your eyes because they see, and your ears because they hear.",
+      "book": "Jesus",
+      "category": "spiritualGrowth"
+    },
+    {
+      "text": "Eternal life is knowing the Father and Me, and you know Us more each day.",
+      "bibleVerseText": "Now this is eternal life: that they know you, the only true God, and Jesus Christ, whom you have sent.",
+      "book": "Jesus",
       "category": "spiritualGrowth"
     },
     {
@@ -19973,6 +22133,78 @@
       "category": "debt"
     },
     {
+      "text": "When I set you free, you are free indeed, down to your bank account.",
+      "bibleVerseText": "So if the Son sets you free, you will be free indeed.",
+      "book": "Jesus",
+      "category": "debt"
+    },
+    {
+      "text": "I took pity on you, canceled the debt, and let you go free.",
+      "bibleVerseText": "The servant's master took pity on him, canceled the debt and let him go.",
+      "book": "Jesus",
+      "category": "debt"
+    },
+    {
+      "text": "It is finished, and the One who paid your greatest debt provides for every other one.",
+      "bibleVerseText": "When he had received the drink, Jesus said, 'It is finished.' With that, he bowed his head and gave up his spirit.",
+      "book": "Jesus",
+      "category": "debt"
+    },
+    {
+      "text": "Over your finances I proclaim freedom, and you live as a free person today.",
+      "bibleVerseText": "The Spirit of the Lord is on me, because he has anointed me to proclaim good news to the poor. He has sent me to proclaim freedom for the prisoners and recovery of sight for the blind, to set the oppressed free,",
+      "book": "Jesus",
+      "category": "debt"
+    },
+    {
+      "text": "This is the year of My favor, and your finances are released.",
+      "bibleVerseText": "to proclaim the year of the Lord's favor.",
+      "book": "Jesus",
+      "category": "debt"
+    },
+    {
+      "text": "You speak to this mountain of debt, and it is thrown into the sea.",
+      "bibleVerseText": "Truly I tell you, if anyone says to this mountain, 'Go, throw yourself into the sea,' and does not doubt in their heart but believes that what they say will happen, it will be done for them.",
+      "book": "Jesus",
+      "category": "debt"
+    },
+    {
+      "text": "My yoke is easy and My burden is light, so your finances rest on My shoulders.",
+      "bibleVerseText": "For my yoke is easy and my burden is light.",
+      "book": "Jesus",
+      "category": "debt"
+    },
+    {
+      "text": "You lend to others freely, and your reward from the Most High is great.",
+      "bibleVerseText": "But love your enemies, do good to them, and lend to them without expecting to get anything back. Then your reward will be great, and you will be children of the Most High, because he is kind to the ungrateful and wicked.",
+      "book": "Jesus",
+      "category": "debt"
+    },
+    {
+      "text": "The truth I speak over your money sets you free from every debt.",
+      "bibleVerseText": "Then you will know the truth, and the truth will set you free.",
+      "book": "Jesus",
+      "category": "debt"
+    },
+    {
+      "text": "With God all things are possible, and that includes your full freedom from debt.",
+      "bibleVerseText": "Jesus looked at them and said, 'With man this is impossible, but with God all things are possible.'",
+      "book": "Jesus",
+      "category": "debt"
+    },
+    {
+      "text": "I have overcome the world, and that victory covers every debt in your name.",
+      "bibleVerseText": "I have told you these things, so that in me you may have peace. In this world you will have trouble. But take heart! I have overcome the world.",
+      "book": "Jesus",
+      "category": "debt"
+    },
+    {
+      "text": "Your Father knows what you need before you ask, and He meets it in full.",
+      "bibleVerseText": "Do not be like them, for your Father knows what you need before you ask him.",
+      "book": "Jesus",
+      "category": "debt"
+    },
+    {
       "text": "Jesus is preparing my place in His Father's house.",
       "bibleVerseText": "My Father's house has many rooms; if that were not so, would I have told you that I am going there to prepare a place for you?",
       "book": "John 14:2",
@@ -20120,6 +22352,78 @@
       "text": "I am righteous in Christ, and I inherit the land forever.",
       "bibleVerseText": "The righteous will inherit the land and dwell in it forever.",
       "book": "Psalm 37:29",
+      "category": "housing"
+    },
+    {
+      "text": "Built on My words, your home stands on rock that no storm can move.",
+      "bibleVerseText": "Therefore everyone who hears these words of mine and puts them into practice is like a wise man who built his house on the rock.",
+      "book": "Jesus",
+      "category": "housing"
+    },
+    {
+      "text": "Wherever you live, you are home, because you are in Me and I am in you.",
+      "bibleVerseText": "On that day you will realize that I am in my Father, and you are in me, and I am in you.",
+      "book": "Jesus",
+      "category": "housing"
+    },
+    {
+      "text": "Peace rests on your house, room by room, because I speak it over you.",
+      "bibleVerseText": "When you enter a house, first say, 'Peace to this house.'",
+      "book": "Jesus",
+      "category": "housing"
+    },
+    {
+      "text": "Salvation has come to your house today, and My blessing fills it.",
+      "bibleVerseText": "Jesus said to him, 'Today salvation has come to this house, because this man, too, is a son of Abraham.'",
+      "book": "Jesus",
+      "category": "housing"
+    },
+    {
+      "text": "I invite Myself into your house today, and joy moves in with Me.",
+      "bibleVerseText": "When Jesus reached the spot, he looked up and said to him, 'Zacchaeus, come down immediately. I must stay at your house today.'",
+      "book": "Jesus",
+      "category": "housing"
+    },
+    {
+      "text": "My Father and I make Our home with you, and Our presence fills your house.",
+      "bibleVerseText": "Jesus replied, 'Anyone who loves me will obey my teaching. My Father will love them, and we will come to them and make our home with them.'",
+      "book": "Jesus",
+      "category": "housing"
+    },
+    {
+      "text": "A place is prepared for you, and you always have a home with Me.",
+      "bibleVerseText": "And if I go and prepare a place for you, I will come back and take you to be with me that you also may be where I am.",
+      "book": "Jesus",
+      "category": "housing"
+    },
+    {
+      "text": "You are a child in My Father's family, and you belong in His house forever.",
+      "bibleVerseText": "Now a slave has no permanent place in the family, but a son belongs to it forever.",
+      "book": "Jesus",
+      "category": "housing"
+    },
+    {
+      "text": "You inherit the earth with Me, so you always have a place to live.",
+      "bibleVerseText": "Blessed are the meek, for they will inherit the earth.",
+      "book": "Jesus",
+      "category": "housing"
+    },
+    {
+      "text": "Because you put Me first, I give back homes and fields many times over.",
+      "bibleVerseText": "And everyone who has left houses or brothers or sisters or father or mother or wife or children or fields for my sake will receive a hundred times as much and will inherit eternal life.",
+      "book": "Jesus",
+      "category": "housing"
+    },
+    {
+      "text": "I knock and you open the door, and now I sit at your table every night.",
+      "bibleVerseText": "Here I am! I stand at the door and knock. If anyone hears my voice and opens the door, I will come in and eat with that person, and they with me.",
+      "book": "Jesus",
+      "category": "housing"
+    },
+    {
+      "text": "Your Father knows you need a roof over your head, and He provides it.",
+      "bibleVerseText": "For the pagans run after all these things, and your heavenly Father knows that you need them.",
+      "book": "Jesus",
       "category": "housing"
     },
     {
@@ -20273,6 +22577,78 @@
       "category": "wellness"
     },
     {
+      "text": "Your life is more than food, and your body is precious to Me.",
+      "bibleVerseText": "Therefore I tell you, do not worry about your life, what you will eat or drink; or about your body, what you will wear. Is not life more than food, and the body more than clothes?",
+      "book": "Jesus",
+      "category": "wellness"
+    },
+    {
+      "text": "Bread alone does not hold your life, because every word from God feeds you.",
+      "bibleVerseText": "Jesus answered, 'It is written: \"Man shall not live on bread alone, but on every word that comes from the mouth of God.\"'",
+      "book": "Jesus",
+      "category": "wellness"
+    },
+    {
+      "text": "I am the bread of life, and in Me your deepest hunger is fully satisfied.",
+      "bibleVerseText": "Then Jesus declared, 'I am the bread of life. Whoever comes to me will never go hungry, and whoever believes in me will never be thirsty.'",
+      "book": "Jesus",
+      "category": "wellness"
+    },
+    {
+      "text": "Every hair on your head is counted, and I treasure every part of your body.",
+      "bibleVerseText": "And even the very hairs of your head are all numbered.",
+      "book": "Jesus",
+      "category": "wellness"
+    },
+    {
+      "text": "My yoke is easy, so healthy habits grow in you by My grace, not strain.",
+      "bibleVerseText": "For my yoke is easy and my burden is light.",
+      "book": "Jesus",
+      "category": "wellness"
+    },
+    {
+      "text": "I set you free, so no craving rules your body and you are free indeed.",
+      "bibleVerseText": "So if the Son sets you free, you will be free indeed.",
+      "book": "Jesus",
+      "category": "wellness"
+    },
+    {
+      "text": "Your eyes are healthy, and your whole body is full of My light.",
+      "bibleVerseText": "The eye is the lamp of the body. If your eyes are healthy, your whole body will be full of light.",
+      "book": "Jesus",
+      "category": "wellness"
+    },
+    {
+      "text": "You remain in Me, so self-control and healthy habits bear fruit in your life.",
+      "bibleVerseText": "I am the vine; you are the branches. If you remain in me and I in you, you will bear much fruit; apart from me you can do nothing.",
+      "book": "Jesus",
+      "category": "wellness"
+    },
+    {
+      "text": "Far more valuable than the birds, you are seen and treasured by Me.",
+      "bibleVerseText": "Consider the ravens: They do not sow or reap, they have no storeroom or barn; yet God feeds them. And how much more valuable you are than birds!",
+      "book": "Jesus",
+      "category": "wellness"
+    },
+    {
+      "text": "The food I give lasts forever, and your heart is satisfied in Me.",
+      "bibleVerseText": "Do not work for food that spoils, but for food that endures to eternal life, which the Son of Man will give you. For on him God the Father has placed his seal of approval.",
+      "book": "Jesus",
+      "category": "wellness"
+    },
+    {
+      "text": "You seek My kingdom first, and every need of your body is supplied.",
+      "bibleVerseText": "But seek first his kingdom and his righteousness, and all these things will be given to you as well.",
+      "book": "Jesus",
+      "category": "wellness"
+    },
+    {
+      "text": "My body was given for you, and your body is honored, loved, and Mine.",
+      "bibleVerseText": "And he took bread, gave thanks and broke it, and gave it to them, saying, 'This is my body given for you; do this in remembrance of me.'",
+      "book": "Jesus",
+      "category": "wellness"
+    },
+    {
       "text": "I delight in the Lord Jesus, and He gives me the desires of my heart.",
       "bibleVerseText": "Take delight in the LORD, and he will give you the desires of your heart.",
       "book": "Psalm 37:4",
@@ -20420,6 +22796,78 @@
       "text": "Jesus rises to show me compassion, and I am blessed as I wait for Him.",
       "bibleVerseText": "Yet the LORD longs to be gracious to you; therefore he will rise up to show you compassion. For the LORD is a God of justice. Blessed are all who wait for him!",
       "book": "Isaiah 30:18",
+      "category": "relationship"
+    },
+    {
+      "text": "I am at the center of this relationship, and My light guides every step you take together.",
+      "bibleVerseText": "When Jesus spoke again to the people, he said, \"I am the light of the world. Whoever follows me will never walk in darkness, but will have the light of life.\"",
+      "book": "Jesus",
+      "category": "relationship"
+    },
+    {
+      "text": "My Spirit leads you into all truth about this relationship, so you walk in clarity.",
+      "bibleVerseText": "But when he, the Spirit of truth, comes, he will guide you into all the truth. He will not speak on his own; he will speak only what he hears, and he will tell you what is yet to come.",
+      "book": "Jesus",
+      "category": "relationship"
+    },
+    {
+      "text": "Hearing My voice clearly, you know which way to go in this relationship.",
+      "bibleVerseText": "My sheep listen to my voice; I know them, and they follow me.",
+      "book": "Jesus",
+      "category": "relationship"
+    },
+    {
+      "text": "Pure in heart, you honor this person the way I honor you.",
+      "bibleVerseText": "Blessed are the pure in heart, for they will see God.",
+      "book": "Jesus",
+      "category": "relationship"
+    },
+    {
+      "text": "On My words you build this relationship, and your footing is solid rock.",
+      "bibleVerseText": "Therefore everyone who hears these words of mine and puts them into practice is like a wise man who built his house on the rock.",
+      "book": "Jesus",
+      "category": "relationship"
+    },
+    {
+      "text": "As I loved you, so you love this person, with honor and patience.",
+      "bibleVerseText": "My command is this: Love each other as I have loved you.",
+      "book": "Jesus",
+      "category": "relationship"
+    },
+    {
+      "text": "Truth sets you free, so you date with open eyes and a settled heart.",
+      "bibleVerseText": "Then you will know the truth, and the truth will set you free.",
+      "book": "Jesus",
+      "category": "relationship"
+    },
+    {
+      "text": "Wise and pure, you walk this relationship with a sharp mind and a clean heart.",
+      "bibleVerseText": "I am sending you out like sheep among wolves. Therefore be as shrewd as snakes and as innocent as doves.",
+      "book": "Jesus",
+      "category": "relationship"
+    },
+    {
+      "text": "Peace is My gift to you in this relationship, and your heart is at rest.",
+      "bibleVerseText": "Peace I leave with you; my peace I give you. I do not give to you as the world gives. Do not let your hearts be troubled and do not be afraid.",
+      "book": "Jesus",
+      "category": "relationship"
+    },
+    {
+      "text": "You give the one you love the honor you want, and I bless the way you love.",
+      "bibleVerseText": "Do to others as you would have them do to you.",
+      "book": "Jesus",
+      "category": "relationship"
+    },
+    {
+      "text": "Connected to Me like a branch to the vine, your love bears good fruit.",
+      "bibleVerseText": "I am the vine; you are the branches. If you remain in me and I in you, you will bear much fruit; apart from me you can do nothing.",
+      "book": "Jesus",
+      "category": "relationship"
+    },
+    {
+      "text": "Your eyes are clear and full of light, so you see this relationship as it truly is.",
+      "bibleVerseText": "The eye is the lamp of the body. If your eyes are healthy, your whole body will be full of light.",
+      "book": "Jesus",
       "category": "relationship"
     },
     {
@@ -20573,6 +23021,78 @@
       "category": "singleParent"
     },
     {
+      "text": "My heart goes out to you, and I carry this home with you.",
+      "bibleVerseText": "When the Lord saw her, his heart went out to her and he said, \"Don't cry.\"",
+      "book": "Jesus",
+      "category": "singleParent"
+    },
+    {
+      "text": "Never alone, you raise your children with Me beside you every day.",
+      "bibleVerseText": "and teaching them to obey everything I have commanded you. And surely I am with you always, to the very end of the age.",
+      "book": "Jesus",
+      "category": "singleParent"
+    },
+    {
+      "text": "Rest is yours, because My yoke is easy and I carry the weight of this home.",
+      "bibleVerseText": "For my yoke is easy and my burden is light.",
+      "book": "Jesus",
+      "category": "singleParent"
+    },
+    {
+      "text": "Your Father feeds the birds, and He provides everything your children need.",
+      "bibleVerseText": "Look at the birds of the air; they do not sow or reap or store away in barns, and yet your heavenly Father feeds them. Are you not much more valuable than they?",
+      "book": "Jesus",
+      "category": "singleParent"
+    },
+    {
+      "text": "I am the Good Shepherd of your family, and I lead your children with you.",
+      "bibleVerseText": "I am the good shepherd. The good shepherd lays down his life for the sheep.",
+      "book": "Jesus",
+      "category": "singleParent"
+    },
+    {
+      "text": "Not one of your needs is hidden from your Father, and He meets them all.",
+      "bibleVerseText": "For the pagans run after all these things, and your heavenly Father knows that you need them.",
+      "book": "Jesus",
+      "category": "singleParent"
+    },
+    {
+      "text": "Like the mother who came to Me alone, you have great faith for your children.",
+      "bibleVerseText": "Then Jesus said to her, \"Woman, you have great faith! Your request is granted.\" And her daughter was healed at that moment.",
+      "book": "Jesus",
+      "category": "singleParent"
+    },
+    {
+      "text": "Every hair on your head is counted, and you are worth more than you know.",
+      "bibleVerseText": "Indeed, the very hairs of your head are all numbered. Don't be afraid; you are worth more than many sparrows.",
+      "book": "Jesus",
+      "category": "singleParent"
+    },
+    {
+      "text": "We make Our home with you, so this house is never without a Father.",
+      "bibleVerseText": "Jesus replied, \"Anyone who loves me will obey my teaching. My Father will love them, and we will come to them and make our home with them.\"",
+      "book": "Jesus",
+      "category": "singleParent"
+    },
+    {
+      "text": "Strength flows from Me, the vine, so you bear fruit in your children every day.",
+      "bibleVerseText": "I am the vine; you are the branches. If you remain in me and I in you, you will bear much fruit; apart from me you can do nothing.",
+      "book": "Jesus",
+      "category": "singleParent"
+    },
+    {
+      "text": "Peace I give you, and it settles over your home and your children.",
+      "bibleVerseText": "Peace I leave with you; my peace I give you. I do not give to you as the world gives. Do not let your hearts be troubled and do not be afraid.",
+      "book": "Jesus",
+      "category": "singleParent"
+    },
+    {
+      "text": "Your Father is pleased to give you His kingdom, and your house lacks nothing.",
+      "bibleVerseText": "Do not be afraid, little flock, for your Father has been pleased to give you the kingdom.",
+      "book": "Jesus",
+      "category": "singleParent"
+    },
+    {
       "text": "Jesus is patient with the people I love, and He wants them home.",
       "bibleVerseText": "The Lord is not slow in keeping his promise, as some understand slowness. Instead he is patient with you, not wanting anyone to perish, but everyone to come to repentance.",
       "book": "2 Peter 3:9",
@@ -20720,6 +23240,78 @@
       "text": "I plant and water in prayer, and God gives the growth in my family.",
       "bibleVerseText": "I planted the seed, Apollos watered it, but God has been making it grow.",
       "book": "1 Corinthians 3:6",
+      "category": "salvation"
+    },
+    {
+      "text": "The one you love is not hidden from Me. I came to seek and save the lost.",
+      "bibleVerseText": "For the Son of Man came to seek and to save the lost.",
+      "book": "Jesus",
+      "category": "salvation"
+    },
+    {
+      "text": "I leave the ninety-nine and go after the one you love.",
+      "bibleVerseText": "Suppose one of you has a hundred sheep and loses one of them. Doesn't he leave the ninety-nine in the open country and go after the lost sheep until he finds it?",
+      "book": "Jesus",
+      "category": "salvation"
+    },
+    {
+      "text": "Your Father in heaven is not willing for the one you love to perish.",
+      "bibleVerseText": "In the same way your Father in heaven is not willing that any of these little ones should perish.",
+      "book": "Jesus",
+      "category": "salvation"
+    },
+    {
+      "text": "Lifted up on the cross, I draw all people to Myself, including the one you love.",
+      "bibleVerseText": "And I, when I am lifted up from the earth, will draw all people to myself.",
+      "book": "Jesus",
+      "category": "salvation"
+    },
+    {
+      "text": "All heaven celebrates one sinner who turns home, and I keep calling the one you love.",
+      "bibleVerseText": "I tell you that in the same way there will be more rejoicing in heaven over one sinner who repents than over ninety-nine righteous persons who do not need to repent.",
+      "book": "Jesus",
+      "category": "salvation"
+    },
+    {
+      "text": "I stand at the door and knock, and I keep knocking for the one you love.",
+      "bibleVerseText": "Here I am! I stand at the door and knock. If anyone hears my voice and opens the door, I will come in and eat with that person, and they with me.",
+      "book": "Jesus",
+      "category": "salvation"
+    },
+    {
+      "text": "Your faith does not fail while you wait, because I am praying for you.",
+      "bibleVerseText": "But I have prayed for you, Simon, that your faith may not fail. And when you have turned back, strengthen your brothers.",
+      "book": "Jesus",
+      "category": "salvation"
+    },
+    {
+      "text": "Day and night you cry out, and My Father hears every word.",
+      "bibleVerseText": "And will not God bring about justice for his chosen ones, who cry out to him day and night? Will he keep putting them off?",
+      "book": "Jesus",
+      "category": "salvation"
+    },
+    {
+      "text": "The Father runs to every child who turns toward home, and His arms are open to yours.",
+      "bibleVerseText": "So he got up and went to his father. But while he was still a long way off, his father saw him and was filled with compassion for him; he ran to his son, threw his arms around him and kissed him.",
+      "book": "Jesus",
+      "category": "salvation"
+    },
+    {
+      "text": "God so loved the world that He gave His Son for the one you love too.",
+      "bibleVerseText": "For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life.",
+      "book": "Jesus",
+      "category": "salvation"
+    },
+    {
+      "text": "Bring Me your heavy heart for them, and I give you rest.",
+      "bibleVerseText": "Come to me, all you who are weary and burdened, and I will give you rest.",
+      "book": "Jesus",
+      "category": "salvation"
+    },
+    {
+      "text": "My Father is always at work, and I am working too, for the one you love.",
+      "bibleVerseText": "In his defense Jesus said to them, \"My Father is always at his work to this very day, and I too am working.\"",
+      "book": "Jesus",
       "category": "salvation"
     },
     {
@@ -20873,6 +23465,78 @@
       "category": "forgiveness"
     },
     {
+      "text": "I forgave from the cross, and My forgiveness flows through you to them.",
+      "bibleVerseText": "Jesus said, \"Father, forgive them, for they do not know what they are doing.\" And they divided up his clothes by casting lots.",
+      "book": "Jesus",
+      "category": "forgiveness"
+    },
+    {
+      "text": "My grace runs deeper than any offense, so you forgive again and again.",
+      "bibleVerseText": "Jesus answered, \"I tell you, not seven times, but seventy-seven times.\"",
+      "book": "Jesus",
+      "category": "forgiveness"
+    },
+    {
+      "text": "You forgive, and your Father forgives you, and your heart walks free.",
+      "bibleVerseText": "For if you forgive other people when they sin against you, your heavenly Father will also forgive you.",
+      "book": "Jesus",
+      "category": "forgiveness"
+    },
+    {
+      "text": "You release them as you pray, and your Father pours His forgiveness over you.",
+      "bibleVerseText": "And when you stand praying, if you hold anything against anyone, forgive them, so that your Father in heaven may forgive you your sins.",
+      "book": "Jesus",
+      "category": "forgiveness"
+    },
+    {
+      "text": "Forgiveness flows out of you, and forgiveness flows back to you in full.",
+      "bibleVerseText": "Do not judge, and you will not be judged. Do not condemn, and you will not be condemned. Forgive, and you will be forgiven.",
+      "book": "Jesus",
+      "category": "forgiveness"
+    },
+    {
+      "text": "I canceled your whole debt, so you have nothing to collect from anyone.",
+      "bibleVerseText": "The servant's master took pity on him, canceled the debt and let him go.",
+      "book": "Jesus",
+      "category": "forgiveness"
+    },
+    {
+      "text": "Your prayers bless the ones who hurt you, and your heart stays free.",
+      "bibleVerseText": "But I tell you, love your enemies and pray for those who persecute you,",
+      "book": "Jesus",
+      "category": "forgiveness"
+    },
+    {
+      "text": "Your sins are forgiven, and that mercy makes your heart soft toward others.",
+      "bibleVerseText": "Then Jesus said to her, \"Your sins are forgiven.\"",
+      "book": "Jesus",
+      "category": "forgiveness"
+    },
+    {
+      "text": "My blood was poured out for forgiveness, and it washes every grudge from your heart.",
+      "bibleVerseText": "This is my blood of the covenant, which is poured out for many for the forgiveness of sins.",
+      "book": "Jesus",
+      "category": "forgiveness"
+    },
+    {
+      "text": "The Son has set you free, and no old wound holds you anymore.",
+      "bibleVerseText": "So if the Son sets you free, you will be free indeed.",
+      "book": "Jesus",
+      "category": "forgiveness"
+    },
+    {
+      "text": "As I loved you, you love freely, and old offenses lose their grip on you.",
+      "bibleVerseText": "A new command I give you: Love one another. As I have loved you, so you must love one another.",
+      "book": "Jesus",
+      "category": "forgiveness"
+    },
+    {
+      "text": "Mercy was given to you in full, so mercy flows freely from you.",
+      "bibleVerseText": "Shouldn't you have had mercy on your fellow servant just as I had on you?'",
+      "book": "Jesus",
+      "category": "forgiveness"
+    },
+    {
       "text": "I am quick to listen, slow to speak, and slow to anger.",
       "bibleVerseText": "My dear brothers and sisters, take note of this: Everyone should be quick to listen, slow to speak and slow to become angry,",
       "book": "James 1:19",
@@ -21020,6 +23684,78 @@
       "text": "Jesus gave me His own peace, a peace the world can never give.",
       "bibleVerseText": "Peace I leave with you; my peace I give you. I do not give to you as the world gives. Do not let your hearts be troubled and do not be afraid.",
       "book": "John 14:27",
+      "category": "anger"
+    },
+    {
+      "text": "I am gentle and humble in heart, and My gentleness lives in you.",
+      "bibleVerseText": "Take my yoke upon you and learn from me, for I am gentle and humble in heart, and you will find rest for your souls.",
+      "book": "Jesus",
+      "category": "anger"
+    },
+    {
+      "text": "My peace rules your heart, and it does not shake when others push.",
+      "bibleVerseText": "Peace I leave with you; my peace I give you. I do not give to you as the world gives. Do not let your hearts be troubled and do not be afraid.",
+      "book": "Jesus",
+      "category": "anger"
+    },
+    {
+      "text": "I speak calm over your heart, and the storm inside you goes still.",
+      "bibleVerseText": "He got up, rebuked the wind and said to the waves, \"Quiet! Be still!\" Then the wind died down and it was completely calm.",
+      "book": "Jesus",
+      "category": "anger"
+    },
+    {
+      "text": "You are a peacemaker, and that makes you a child of God.",
+      "bibleVerseText": "Blessed are the peacemakers, for they will be called children of God.",
+      "book": "Jesus",
+      "category": "anger"
+    },
+    {
+      "text": "Gentle strength is yours, and the earth is your inheritance.",
+      "bibleVerseText": "Blessed are the meek, for they will inherit the earth.",
+      "book": "Jesus",
+      "category": "anger"
+    },
+    {
+      "text": "Your heart is full of My goodness, so good words come out of your mouth.",
+      "bibleVerseText": "A good man brings good things out of the good stored up in his heart, and an evil man brings evil things out of the evil stored up in his heart. For the mouth speaks what the heart is full of.",
+      "book": "Jesus",
+      "category": "anger"
+    },
+    {
+      "text": "Living in My love keeps your temper calm and your words kind.",
+      "bibleVerseText": "As the Father has loved me, so have I loved you. Now remain in my love.",
+      "book": "Jesus",
+      "category": "anger"
+    },
+    {
+      "text": "Even toward those who curse you, your mouth speaks blessing, because My love fills you.",
+      "bibleVerseText": "bless those who curse you, pray for those who mistreat you.",
+      "book": "Jesus",
+      "category": "anger"
+    },
+    {
+      "text": "Peace be with you. My calm goes with you into every conversation.",
+      "bibleVerseText": "Again Jesus said, \"Peace be with you! As the Father has sent me, I am sending you.\"",
+      "book": "Jesus",
+      "category": "anger"
+    },
+    {
+      "text": "Mercy is your first response, because I have shown you mercy.",
+      "bibleVerseText": "Blessed are the merciful, for they will be shown mercy.",
+      "book": "Jesus",
+      "category": "anger"
+    },
+    {
+      "text": "Patient love flows out of you, because I have loved you first.",
+      "bibleVerseText": "A new command I give you: Love one another. As I have loved you, so you must love one another.",
+      "book": "Jesus",
+      "category": "anger"
+    },
+    {
+      "text": "Your Father is merciful, and His kind heart beats in you.",
+      "bibleVerseText": "Be merciful, just as your Father is merciful.",
+      "book": "Jesus",
       "category": "anger"
     },
     {
@@ -21173,6 +23909,78 @@
       "category": "grief"
     },
     {
+      "text": "I comfort you Myself, and My comfort reaches the deepest place of your heart.",
+      "bibleVerseText": "Blessed are those who mourn, for they will be comforted.",
+      "book": "Jesus",
+      "category": "grief"
+    },
+    {
+      "text": "I am the resurrection and the life, and death never gets the final word.",
+      "bibleVerseText": "Jesus said to her, \"I am the resurrection and the life. The one who believes in me will live, even though they die;",
+      "book": "Jesus",
+      "category": "grief"
+    },
+    {
+      "text": "A room is ready in My Father's house for everyone who trusts Me.",
+      "bibleVerseText": "My Father's house has many rooms; if that were not so, would I have told you that I am going there to prepare a place for you?",
+      "book": "Jesus",
+      "category": "grief"
+    },
+    {
+      "text": "You are never left alone, because I come to you and I stay.",
+      "bibleVerseText": "I will not leave you as orphans; I will come to you.",
+      "book": "Jesus",
+      "category": "grief"
+    },
+    {
+      "text": "Everyone who trusts Me has eternal life, and no one snatches them from My hand.",
+      "bibleVerseText": "I give them eternal life, and they shall never perish; no one will snatch them out of my hand.",
+      "book": "Jesus",
+      "category": "grief"
+    },
+    {
+      "text": "Your grief turns to joy, and I am the One turning it.",
+      "bibleVerseText": "Very truly I tell you, you will weep and mourn while the world rejoices. You will grieve, but your grief will turn to joy.",
+      "book": "Jesus",
+      "category": "grief"
+    },
+    {
+      "text": "Death has no hold on My people, because I hold its keys forever.",
+      "bibleVerseText": "I am the Living One; I was dead, and now look, I am alive for ever and ever! And I hold the keys of death and Hades.",
+      "book": "Jesus",
+      "category": "grief"
+    },
+    {
+      "text": "My heart goes out to you, and I hold you close through every tear.",
+      "bibleVerseText": "When the Lord saw her, his heart went out to her and he said, \"Don't cry.\"",
+      "book": "Jesus",
+      "category": "grief"
+    },
+    {
+      "text": "Paradise is real, and everyone who trusts Me goes home to be with Me.",
+      "bibleVerseText": "Jesus answered him, \"Truly I tell you, today you will be with me in paradise.\"",
+      "book": "Jesus",
+      "category": "grief"
+    },
+    {
+      "text": "Come to Me, and I lift the weight off your heart and give you rest.",
+      "bibleVerseText": "Come to me, all you who are weary and burdened, and I will give you rest.",
+      "book": "Jesus",
+      "category": "grief"
+    },
+    {
+      "text": "My peace I give you, and it holds your heart steady through every goodbye.",
+      "bibleVerseText": "Peace I leave with you; my peace I give you. I do not give to you as the world gives. Do not let your hearts be troubled and do not be afraid.",
+      "book": "Jesus",
+      "category": "grief"
+    },
+    {
+      "text": "Because I live, you also live, and My life is stronger than any grave.",
+      "bibleVerseText": "Before long, the world will not see me anymore, but you will see me. Because I live, you also will live.",
+      "book": "Jesus",
+      "category": "grief"
+    },
+    {
       "text": "God's love for me cannot be shaken, and in Jesus His covenant of peace stands.",
       "bibleVerseText": "Though the mountains be shaken and the hills be removed, yet my unfailing love for you will not be shaken nor my covenant of peace be removed,” says the LORD, who has compassion on you.",
       "book": "Isaiah 54:10",
@@ -21320,6 +24128,78 @@
       "text": "God gave His Son Jesus for me, so nothing can stand against me.",
       "bibleVerseText": "What, then, shall we say in response to these things? If God is for us, who can be against us?",
       "book": "Romans 8:31",
+      "category": "divorce"
+    },
+    {
+      "text": "I am making everything new, and your life after divorce is full of fresh beginnings.",
+      "bibleVerseText": "He who was seated on the throne said, \"I am making everything new!\" Then he said, \"Write this down, for these words are trustworthy and true.\"",
+      "book": "Jesus",
+      "category": "divorce"
+    },
+    {
+      "text": "Whoever comes to Me I never drive away, and you are welcome here forever.",
+      "bibleVerseText": "All those the Father gives me will come to me, and whoever comes to me I will never drive away.",
+      "book": "Jesus",
+      "category": "divorce"
+    },
+    {
+      "text": "Never abandoned, you have Me, and I come to you every single day.",
+      "bibleVerseText": "I will not leave you as orphans; I will come to you.",
+      "book": "Jesus",
+      "category": "divorce"
+    },
+    {
+      "text": "Neither do I condemn you, so shame has no hold on your story.",
+      "bibleVerseText": "\"No one, sir,\" she said. \"Then neither do I condemn you,\" Jesus declared. \"Go now and leave your life of sin.\"",
+      "book": "Jesus",
+      "category": "divorce"
+    },
+    {
+      "text": "Living water fills you, and your heart never goes thirsty for love again.",
+      "bibleVerseText": "But whoever drinks the water I give them will never thirst. Indeed, the water I give them will become in them a spring of water welling up to eternal life.",
+      "book": "Jesus",
+      "category": "divorce"
+    },
+    {
+      "text": "Rest is yours, because I carry the weight of this ending and you walk free.",
+      "bibleVerseText": "Come to me, all you who are weary and burdened, and I will give you rest.",
+      "book": "Jesus",
+      "category": "divorce"
+    },
+    {
+      "text": "Joy rises in you again, and no one can ever take it from you.",
+      "bibleVerseText": "So with you: Now is your time of grief, but I will see you again and you will rejoice, and no one will take away your joy.",
+      "book": "Jesus",
+      "category": "divorce"
+    },
+    {
+      "text": "Chosen by Me, you are wanted, valued, and never cast aside.",
+      "bibleVerseText": "You did not choose me, but I chose you and appointed you so that you might go and bear fruit—fruit that will last—and so that whatever you ask in my name the Father will give you.",
+      "book": "Jesus",
+      "category": "divorce"
+    },
+    {
+      "text": "In My hand you are held fast, and no one snatches you out.",
+      "bibleVerseText": "I give them eternal life, and they shall never perish; no one will snatch them out of my hand.",
+      "book": "Jesus",
+      "category": "divorce"
+    },
+    {
+      "text": "Free indeed, you start again with a clean heart and a whole future.",
+      "bibleVerseText": "So if the Son sets you free, you will be free indeed.",
+      "book": "Jesus",
+      "category": "divorce"
+    },
+    {
+      "text": "Laughter fills your home again, and I make your heart glad.",
+      "bibleVerseText": "Blessed are you who hunger now, for you will be satisfied. Blessed are you who weep now, for you will laugh.",
+      "book": "Jesus",
+      "category": "divorce"
+    },
+    {
+      "text": "Worth more than you know, you are fully seen and fully loved by your Father.",
+      "bibleVerseText": "Indeed, the very hairs of your head are all numbered. Don't be afraid; you are worth more than many sparrows.",
+      "book": "Jesus",
       "category": "divorce"
     },
     {
@@ -21473,6 +24353,78 @@
       "category": "mentalHealth"
     },
     {
+      "text": "Your mind is Mine, whole and sound, and you love God with all of it.",
+      "bibleVerseText": "Jesus replied: 'Love the Lord your God with all your heart and with all your soul and with all your mind.'",
+      "book": "Jesus",
+      "category": "mentalHealth"
+    },
+    {
+      "text": "My mercy restores your mind, and your story tells how much the Lord has done.",
+      "bibleVerseText": "Jesus did not let him, but said, 'Go home to your own people and tell them how much the Lord has done for you, and how he has had mercy on you.'",
+      "book": "Jesus",
+      "category": "mentalHealth"
+    },
+    {
+      "text": "My peace is yours, so your heart and mind stay steady and untroubled.",
+      "bibleVerseText": "Peace I leave with you; my peace I give you. I do not give to you as the world gives. Do not let your hearts be troubled and do not be afraid.",
+      "book": "Jesus",
+      "category": "mentalHealth"
+    },
+    {
+      "text": "Freedom for the oppressed is why I came, and your mind walks free in Me.",
+      "bibleVerseText": "The Spirit of the Lord is on me, because he has anointed me to proclaim good news to the poor. He has sent me to proclaim freedom for the prisoners and recovery of sight for the blind, to set the oppressed free,",
+      "book": "Jesus",
+      "category": "mentalHealth"
+    },
+    {
+      "text": "You know My truth, and that truth sets your mind free.",
+      "bibleVerseText": "Then you will know the truth, and the truth will set you free.",
+      "book": "Jesus",
+      "category": "mentalHealth"
+    },
+    {
+      "text": "Light came into the world in Me, and your mind lives in that light.",
+      "bibleVerseText": "I have come into the world as a light, so that no one who believes in me should stay in darkness.",
+      "book": "Jesus",
+      "category": "mentalHealth"
+    },
+    {
+      "text": "Your mind stands firm on My rock, unshaken by any storm.",
+      "bibleVerseText": "The rain came down, the streams rose, and the winds blew and beat against that house; yet it did not fall, because it had its foundation on the rock.",
+      "book": "Jesus",
+      "category": "mentalHealth"
+    },
+    {
+      "text": "In Me you have peace, and I have overcome everything that troubles your mind.",
+      "bibleVerseText": "I have told you these things, so that in me you may have peace. In this world you will have trouble. But take heart! I have overcome the world.",
+      "book": "Jesus",
+      "category": "mentalHealth"
+    },
+    {
+      "text": "No one snatches you from My hand, and your mind rests secure in Me.",
+      "bibleVerseText": "I give them eternal life, and they shall never perish; no one will snatch them out of my hand.",
+      "book": "Jesus",
+      "category": "mentalHealth"
+    },
+    {
+      "text": "Gentle and humble in heart, I give your mind rest in Me.",
+      "bibleVerseText": "Take my yoke upon you and learn from me, for I am gentle and humble in heart, and you will find rest for your souls.",
+      "book": "Jesus",
+      "category": "mentalHealth"
+    },
+    {
+      "text": "Grace from Me is enough for you, and My power rests on your mind.",
+      "bibleVerseText": "But he said to me, 'My grace is sufficient for you, for my power is made perfect in weakness.' Therefore I will boast all the more gladly about my weaknesses, so that Christ's power may rest on me.",
+      "book": "Jesus",
+      "category": "mentalHealth"
+    },
+    {
+      "text": "I am making everything new, and that includes your memories and your mind.",
+      "bibleVerseText": "He who was seated on the throne said, 'I am making everything new!' Then he said, 'Write this down, for these words are trustworthy and true.'",
+      "book": "Jesus",
+      "category": "mentalHealth"
+    },
+    {
       "text": "I am Abraham's heir through Christ, blessed like Sarah, and my womb is full of life.",
       "bibleVerseText": "I will bless her and will surely give you a son by her. I will bless her so that she will be the mother of nations; kings of peoples will come from her.",
       "book": "Genesis 17:16",
@@ -21623,9 +24575,153 @@
       "category": "fertility"
     },
     {
+      "text": "I am willing, and your body is whole and ready for life.",
+      "bibleVerseText": "Jesus reached out his hand and touched the man. \"I am willing,\" he said. \"Be clean!\" Immediately he was cleansed of his leprosy.",
+      "book": "Jesus",
+      "category": "fertility"
+    },
+    {
+      "text": "Set free from every infirmity, your body is healed and fruitful.",
+      "bibleVerseText": "When Jesus saw her, he called her forward and said to her, \"Woman, you are set free from your infirmity.\"",
+      "book": "Jesus",
+      "category": "fertility"
+    },
+    {
+      "text": "Daughter of Abraham, you are set free, and the promise of children is yours.",
+      "bibleVerseText": "Then should not this woman, a daughter of Abraham, whom Satan has kept bound for eighteen long years, be set free on the Sabbath day from what bound her?",
+      "book": "Jesus",
+      "category": "fertility"
+    },
+    {
+      "text": "Believe that you have received it, and this child is yours.",
+      "bibleVerseText": "Therefore I tell you, whatever you ask for in prayer, believe that you have received it, and it will be yours.",
+      "book": "Jesus",
+      "category": "fertility"
+    },
+    {
+      "text": "The joy of holding your child is yours, and all the waiting fades away.",
+      "bibleVerseText": "A woman giving birth to a child has pain because her time has come; but when her baby is born she forgets the anguish because of her joy that a child is born into the world.",
+      "book": "Jesus",
+      "category": "fertility"
+    },
+    {
+      "text": "Everything is possible for you who believe, and you believe for this child.",
+      "bibleVerseText": "\"'If you can'?\" said Jesus. \"Everything is possible for one who believes.\"",
+      "book": "Jesus",
+      "category": "fertility"
+    },
+    {
+      "text": "Your Father gives good gifts, and the child you ask for is a good gift.",
+      "bibleVerseText": "If you, then, though you are evil, know how to give good gifts to your children, how much more will your Father in heaven give good gifts to those who ask him!",
+      "book": "Jesus",
+      "category": "fertility"
+    },
+    {
+      "text": "Life to the full is what I came to give, and your body overflows with it.",
+      "bibleVerseText": "The thief comes only to steal and kill and destroy; I have come that they may have life, and have it to the full.",
+      "book": "Jesus",
+      "category": "fertility"
+    },
+    {
+      "text": "With God all things are possible, and your body carries new life.",
+      "bibleVerseText": "Jesus looked at them and said, \"With man this is impossible, but with God all things are possible.\"",
+      "book": "Jesus",
+      "category": "fertility"
+    },
+    {
+      "text": "Ask in My name, and your joy is complete as you hold your child.",
+      "bibleVerseText": "Until now you have not asked for anything in my name. Ask and you will receive, and your joy will be complete.",
+      "book": "Jesus",
+      "category": "fertility"
+    },
+    {
+      "text": "Peace I give you, and it fills every day of this pregnancy.",
+      "bibleVerseText": "Peace I leave with you; my peace I give you. I do not give to you as the world gives. Do not let your hearts be troubled and do not be afraid.",
+      "book": "Jesus",
+      "category": "fertility"
+    },
+    {
+      "text": "God's glory fills your home, and you see it in the face of your child.",
+      "bibleVerseText": "Then Jesus said, \"Did I not tell you that if you believe, you will see the glory of God?\"",
+      "book": "Jesus",
+      "category": "fertility"
+    },
+    {
       "text": "I keep God's Word in my mouth day and night, so I am prosperous and successful.",
       "bibleVerseText": "Keep this Book of the Law always on your lips; meditate on it day and night, so that you may be careful to do everything written in it. Then you will be prosperous and successful.",
       "book": "Joshua 1:8",
+      "category": "wealth"
+    },
+    {
+      "text": "You seek My kingdom first, and everything you need is added to you.",
+      "bibleVerseText": "But seek first his kingdom and his righteousness, and all these things will be given to you as well.",
+      "book": "Jesus",
+      "category": "wealth"
+    },
+    {
+      "text": "Every gift you give comes back into your lap, pressed down and running over.",
+      "bibleVerseText": "Give, and it will be given to you. A good measure, pressed down, shaken together and running over, will be poured into your lap. For with the measure you use, it will be measured to you.",
+      "book": "Jesus",
+      "category": "wealth"
+    },
+    {
+      "text": "My Father is pleased to give you the kingdom, and its riches are yours.",
+      "bibleVerseText": "Do not be afraid, little flock, for your Father has been pleased to give you the kingdom.",
+      "book": "Jesus",
+      "category": "wealth"
+    },
+    {
+      "text": "You ask, and your Father gives good gifts, much more than any earthly father could.",
+      "bibleVerseText": "If you, then, though you are evil, know how to give good gifts to your children, how much more will your Father in heaven give good gifts to those who ask him!",
+      "book": "Jesus",
+      "category": "wealth"
+    },
+    {
+      "text": "Everything the Father has is yours, because you are always with Me.",
+      "bibleVerseText": "'My son,' the father said, 'you are always with me, and everything I have is yours.'",
+      "book": "Jesus",
+      "category": "wealth"
+    },
+    {
+      "text": "When I send you, you lack nothing, not one thing, not one day.",
+      "bibleVerseText": "Then Jesus asked them, 'When I sent you without purse, bag or sandals, did you lack anything?' 'Nothing,' they answered.",
+      "book": "Jesus",
+      "category": "wealth"
+    },
+    {
+      "text": "I feed you until you are full, and there are leftovers to spare.",
+      "bibleVerseText": "When they had all had enough to eat, he said to his disciples, 'Gather the pieces that are left over. Let nothing be wasted.'",
+      "book": "Jesus",
+      "category": "wealth"
+    },
+    {
+      "text": "Freely you received from Me, and freely you give from a full hand.",
+      "bibleVerseText": "Heal the sick, raise the dead, cleanse those who have leprosy, drive out demons. Freely you have received, freely give.",
+      "book": "Jesus",
+      "category": "wealth"
+    },
+    {
+      "text": "Your Father sees every gift you give in secret, and He rewards you.",
+      "bibleVerseText": "so that your giving may be in secret. Then your Father, who sees what is done in secret, will reward you.",
+      "book": "Jesus",
+      "category": "wealth"
+    },
+    {
+      "text": "God feeds the birds, and you are worth far more, so your table is full.",
+      "bibleVerseText": "Consider the ravens: They do not sow or reap, they have no storeroom or barn, yet God feeds them. And how much more valuable you are than birds!",
+      "book": "Jesus",
+      "category": "wealth"
+    },
+    {
+      "text": "Ask in My name and receive, so your joy is full and your needs are met.",
+      "bibleVerseText": "Until now you have not asked for anything in my name. Ask and you will receive, and your joy will be complete.",
+      "book": "Jesus",
+      "category": "wealth"
+    },
+    {
+      "text": "Your treasure is stored in heaven, where no thief can touch it.",
+      "bibleVerseText": "But store up for yourselves treasures in heaven, where moths and vermin do not destroy, and where thieves do not break in and steal.",
+      "book": "Jesus",
       "category": "wealth"
     },
     {
@@ -21635,9 +24731,153 @@
       "category": "godsprotection"
     },
     {
+      "text": "No one can snatch you out of My hand, and you never perish.",
+      "bibleVerseText": "I give them eternal life, and they shall never perish; no one will snatch them out of my hand.",
+      "book": "Jesus",
+      "category": "godsprotection"
+    },
+    {
+      "text": "Not one hair on your head is lost while I hold you.",
+      "bibleVerseText": "But not a hair of your head will perish.",
+      "book": "Jesus",
+      "category": "godsprotection"
+    },
+    {
+      "text": "I count every hair on your head, and you are precious and safe with Me.",
+      "bibleVerseText": "And even the very hairs of your head are all numbered. So don't be afraid; you are worth more than many sparrows.",
+      "book": "Jesus",
+      "category": "godsprotection"
+    },
+    {
+      "text": "Wherever you go, I am with you always, to the very end of the age.",
+      "bibleVerseText": "and teaching them to obey everything I have commanded you. And surely I am with you always, to the very end of the age.",
+      "book": "Jesus",
+      "category": "godsprotection"
+    },
+    {
+      "text": "My Father protects you by the power of His name, the name He gave Me.",
+      "bibleVerseText": "I will remain in the world no longer, but they are still in the world, and I am coming to you. Holy Father, protect them by the power of your name, the name you gave me, so that they may be one as we are one.",
+      "book": "Jesus",
+      "category": "godsprotection"
+    },
+    {
+      "text": "The Father keeps you from the evil one, because I asked Him to.",
+      "bibleVerseText": "My prayer is not that you take them out of the world but that you protect them from the evil one.",
+      "book": "Jesus",
+      "category": "godsprotection"
+    },
+    {
+      "text": "Your house is built on Me, the Rock, and no storm brings it down.",
+      "bibleVerseText": "The rain came down, the streams rose, and the winds blew and beat against that house; yet it did not fall, because it had its foundation on the rock.",
+      "book": "Jesus",
+      "category": "godsprotection"
+    },
+    {
+      "text": "Wind and waves obey Me, and around you it is completely calm.",
+      "bibleVerseText": "He got up, rebuked the wind and said to the waves, 'Quiet! Be still!' Then the wind died down and it was completely calm.",
+      "book": "Jesus",
+      "category": "godsprotection"
+    },
+    {
+      "text": "Take courage, it is I, and you are safe in My presence.",
+      "bibleVerseText": "But Jesus immediately said to them: 'Take courage! It is I. Don't be afraid.'",
+      "book": "Jesus",
+      "category": "godsprotection"
+    },
+    {
+      "text": "I am your good shepherd. I laid down My life for you, and I guard you still.",
+      "bibleVerseText": "I am the good shepherd. The good shepherd lays down his life for the sheep.",
+      "book": "Jesus",
+      "category": "godsprotection"
+    },
+    {
+      "text": "None of those the Father gave Me are lost, and you are one of them.",
+      "bibleVerseText": "And this is the will of him who sent me, that I shall lose none of all those he has given me, but raise them up at the last day.",
+      "book": "Jesus",
+      "category": "godsprotection"
+    },
+    {
+      "text": "Peace I leave with you, My own peace, and your heart rests secure in Me.",
+      "bibleVerseText": "Peace I leave with you; my peace I give you. I do not give to you as the world gives. Do not let your hearts be troubled and do not be afraid.",
+      "book": "Jesus",
+      "category": "godsprotection"
+    },
+    {
       "text": "God gave me authority over the work of His hands.",
       "bibleVerseText": "You gave them charge of everything you made, putting all things under their authority— the flocks and the herds and all the wild animals, the birds in the sky, the fish in the sea, and everything that swims the ocean currents.",
       "book": "Psalms 8:6-8",
+      "category": "identity"
+    },
+    {
+      "text": "You are My friend, and I share with you everything My Father showed Me.",
+      "bibleVerseText": "I no longer call you servants, because a servant does not know his master's business. Instead, I have called you friends, for everything that I learned from my Father I have made known to you.",
+      "book": "Jesus",
+      "category": "identity"
+    },
+    {
+      "text": "My word has made you clean, and you stand spotless before Me.",
+      "bibleVerseText": "You are already clean because of the word I have spoken to you.",
+      "book": "Jesus",
+      "category": "identity"
+    },
+    {
+      "text": "As the Father loves Me, so I love you, and you live in My love.",
+      "bibleVerseText": "As the Father has loved me, so have I loved you. Now remain in my love.",
+      "book": "Jesus",
+      "category": "identity"
+    },
+    {
+      "text": "I chose you out of the world, and you belong to Me.",
+      "bibleVerseText": "If you belonged to the world, it would love you as its own. As it is, you do not belong to the world, but I have chosen you out of the world. That is why the world hates you.",
+      "book": "Jesus",
+      "category": "identity"
+    },
+    {
+      "text": "Your name is written in heaven, and you are Mine.",
+      "bibleVerseText": "However, do not rejoice that the spirits submit to you, but rejoice that your names are written in heaven.",
+      "book": "Jesus",
+      "category": "identity"
+    },
+    {
+      "text": "Born of the Spirit, you are brand new from the inside out.",
+      "bibleVerseText": "Flesh gives birth to flesh, but the Spirit gives birth to spirit.",
+      "book": "Jesus",
+      "category": "identity"
+    },
+    {
+      "text": "You are the light of the world, and My light shines through you.",
+      "bibleVerseText": "You are the light of the world. A town built on a hill cannot be hidden.",
+      "book": "Jesus",
+      "category": "identity"
+    },
+    {
+      "text": "The Father Himself loves you, because you love Me and believe in Me.",
+      "bibleVerseText": "No, the Father himself loves you because you have loved me and have believed that I came from God.",
+      "book": "Jesus",
+      "category": "identity"
+    },
+    {
+      "text": "No one can snatch you out of My hand, and you are Mine forever.",
+      "bibleVerseText": "I give them eternal life, and they shall never perish; no one will snatch them out of my hand.",
+      "book": "Jesus",
+      "category": "identity"
+    },
+    {
+      "text": "Like Me, you do not belong to this world. You belong to My Father.",
+      "bibleVerseText": "They are not of the world, even as I am not of it.",
+      "book": "Jesus",
+      "category": "identity"
+    },
+    {
+      "text": "I am in you and you are in Me, so you are never on your own.",
+      "bibleVerseText": "On that day you will realize that I am in my Father, and you are in me, and I am in you.",
+      "book": "Jesus",
+      "category": "identity"
+    },
+    {
+      "text": "Little flock, My Father is pleased to give you the kingdom.",
+      "bibleVerseText": "Do not be afraid, little flock, for your Father has been pleased to give you the kingdom.",
+      "book": "Jesus",
       "category": "identity"
     },
     {
@@ -21647,9 +24887,153 @@
       "category": "praise"
     },
     {
+      "text": "Your praise belongs to Me, and no stone has to cry out in your place.",
+      "bibleVerseText": "'I tell you,' he replied, 'if they keep quiet, the stones will cry out.'",
+      "book": "Jesus",
+      "category": "praise"
+    },
+    {
+      "text": "The Father is looking for true worshipers, and He finds one in you.",
+      "bibleVerseText": "Yet a time is coming and has now come when the true worshipers will worship the Father in the Spirit and in truth, for they are the kind of worshipers the Father seeks.",
+      "book": "Jesus",
+      "category": "praise"
+    },
+    {
+      "text": "The Father calls praise out of children's mouths, and yours is one He loves to hear.",
+      "bibleVerseText": "'Do you hear what these children are saying?' they asked him. 'Yes,' replied Jesus, 'have you never read, \"From the lips of children and infants you, Lord, have called forth your praise\"?'",
+      "book": "Jesus",
+      "category": "praise"
+    },
+    {
+      "text": "I am the Beginning and the End, and every day of your life rings with praise to Me.",
+      "bibleVerseText": "I am the Alpha and the Omega, the First and the Last, the Beginning and the End.",
+      "book": "Jesus",
+      "category": "praise"
+    },
+    {
+      "text": "I am the bright Morning Star, and your morning praise belongs to Me.",
+      "bibleVerseText": "I, Jesus, have sent my angel to give you this testimony for the churches. I am the Root and the Offspring of David, and the bright Morning Star.",
+      "book": "Jesus",
+      "category": "praise"
+    },
+    {
+      "text": "Your light shines before others, and they see it and praise your Father in heaven.",
+      "bibleVerseText": "In the same way, let your light shine before others, that they may see your good deeds and glorify your Father in heaven.",
+      "book": "Jesus",
+      "category": "praise"
+    },
+    {
+      "text": "Lifted up on the cross, I draw all people to Myself, and your praise lifts My name high.",
+      "bibleVerseText": "And I, when I am lifted up from the earth, will draw all people to myself.",
+      "book": "Jesus",
+      "category": "praise"
+    },
+    {
+      "text": "My Father and I are one, and when you praise Me you praise Him.",
+      "bibleVerseText": "I and the Father are one.",
+      "book": "Jesus",
+      "category": "praise"
+    },
+    {
+      "text": "Through Me you come to the Father, and your praise is welcome in His presence.",
+      "bibleVerseText": "Jesus answered, 'I am the way and the truth and the life. No one comes to the Father except through me.'",
+      "book": "Jesus",
+      "category": "praise"
+    },
+    {
+      "text": "Before Abraham was born, I am, and your worship rises to the eternal One.",
+      "bibleVerseText": "'Very truly I tell you,' Jesus answered, 'before Abraham was born, I am!'",
+      "book": "Jesus",
+      "category": "praise"
+    },
+    {
+      "text": "Much fruit grows in your life, and every bit of it glorifies My Father.",
+      "bibleVerseText": "This is to my Father's glory, that you bear much fruit, showing yourselves to be my disciples.",
+      "book": "Jesus",
+      "category": "praise"
+    },
+    {
+      "text": "Every song you sing honors Me, and all authority in heaven and on earth is Mine.",
+      "bibleVerseText": "Then Jesus came to them and said, 'All authority in heaven and on earth has been given to me.'",
+      "book": "Jesus",
+      "category": "praise"
+    },
+    {
       "text": "I know God is real, and that knowing makes me wise.",
       "bibleVerseText": "Only fools say in their hearts, “There is no God.”",
       "book": "Psalms 14:1",
+      "category": "wisdom"
+    },
+    {
+      "text": "The Holy Spirit teaches you all things and reminds you of every word I said.",
+      "bibleVerseText": "But the Advocate, the Holy Spirit, whom the Father will send in my name, will teach you all things and will remind you of everything I have said to you.",
+      "book": "Jesus",
+      "category": "wisdom"
+    },
+    {
+      "text": "The Spirit of truth guides you into all truth, and your steps are clear.",
+      "bibleVerseText": "But when he, the Spirit of truth, comes, he will guide you into all the truth. He will not speak on his own; he will speak only what he hears, and he will tell you what is yet to come.",
+      "book": "Jesus",
+      "category": "wisdom"
+    },
+    {
+      "text": "I give you words and wisdom that no opponent can resist or contradict.",
+      "bibleVerseText": "For I will give you words and wisdom that none of your adversaries will be able to resist or contradict.",
+      "book": "Jesus",
+      "category": "wisdom"
+    },
+    {
+      "text": "You hear My words and put them into practice, so your life stands on rock.",
+      "bibleVerseText": "Therefore everyone who hears these words of mine and puts them into practice is like a wise man who built his house on the rock.",
+      "book": "Jesus",
+      "category": "wisdom"
+    },
+    {
+      "text": "You know the truth, and the truth sets you free in every decision.",
+      "bibleVerseText": "Then you will know the truth, and the truth will set you free.",
+      "book": "Jesus",
+      "category": "wisdom"
+    },
+    {
+      "text": "Ask Me for wisdom and you receive it, seek and you find it.",
+      "bibleVerseText": "Ask and it will be given to you; seek and you will find; knock and the door will be opened to you.",
+      "book": "Jesus",
+      "category": "wisdom"
+    },
+    {
+      "text": "My sheep know My voice, and you hear it clearly in every choice.",
+      "bibleVerseText": "My sheep listen to my voice; I know them, and they follow me.",
+      "book": "Jesus",
+      "category": "wisdom"
+    },
+    {
+      "text": "Blessed are your eyes, because they see, and your ears, because they hear Me.",
+      "bibleVerseText": "But blessed are your eyes because they see, and your ears because they hear.",
+      "book": "Jesus",
+      "category": "wisdom"
+    },
+    {
+      "text": "Kingdom secrets are given to you, and you understand what others miss.",
+      "bibleVerseText": "He replied, 'Because the knowledge of the secrets of the kingdom of heaven has been given to you, but not to them.'",
+      "book": "Jesus",
+      "category": "wisdom"
+    },
+    {
+      "text": "Everything I learned from My Father I make known to you, My friend.",
+      "bibleVerseText": "I no longer call you servants, because a servant does not know his master's business. Instead, I have called you friends, for everything that I learned from my Father I have made known to you.",
+      "book": "Jesus",
+      "category": "wisdom"
+    },
+    {
+      "text": "In the moment you need words, the Holy Spirit teaches you what to say.",
+      "bibleVerseText": "for the Holy Spirit will teach you at that time what you should say.",
+      "book": "Jesus",
+      "category": "wisdom"
+    },
+    {
+      "text": "Walking with Me, you never walk in darkness, and the light of life shows your way.",
+      "bibleVerseText": "When Jesus spoke again to the people, he said, 'I am the light of the world. Whoever follows me will never walk in darkness, but will have the light of life.'",
+      "book": "Jesus",
       "category": "wisdom"
     }
   ]
