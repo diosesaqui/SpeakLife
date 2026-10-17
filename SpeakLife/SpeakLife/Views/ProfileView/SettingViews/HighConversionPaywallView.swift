@@ -767,14 +767,18 @@ struct HighConversionPaywallView: View {
     /// Per-day equivalent of the annual price ("$0.16/day"), the smallest
     /// honest unit of the same billed amount. StoreKit price ÷ 365, formatted
     /// in the product's own locale and currency, so it is never a hardcoded "$".
+    /// Rides the `hardOnboardingPaywall` Remote Config switch: nil while it is
+    /// off, and every per-day spot falls back to its pre-per-day copy.
     private var annualPerDay: String? {
-        guard let p = subscriptionStore.currentOfferedPremium else { return nil }
+        guard subscriptionStore.hardOnboardingPaywall,
+              let p = subscriptionStore.currentOfferedPremium else { return nil }
         return localizedPrice(p.price / 365, in: p)
     }
     /// Per-day equivalent of the non-annual plan: weekly ÷ 7, or monthly × 12
     /// ÷ 365 (a month is not 30 days, so this is the true daily cost across a
-    /// year of billing). Same storefront formatting as annualPerDay.
+    /// year of billing). Same storefront formatting and same flag as annualPerDay.
     private var nonAnnualPerDay: String? {
+        guard subscriptionStore.hardOnboardingPaywall else { return nil }
         if showWeeklyPlan, let w = subscriptionStore.currentOfferedWeekly {
             return localizedPrice(w.price / 7, in: w)
         }
@@ -1370,7 +1374,8 @@ struct HighConversionPaywallView: View {
                     .frame(width: cardWidth)
                 }
             }
-            .frame(height: 120)
+            // Taller only when the per-day line is showing.
+            .frame(height: annualPerDay != nil || nonAnnualPerDay != nil ? 120 : 104)
         }
     }
 
@@ -1820,7 +1825,7 @@ struct HighConversionPaywallView: View {
 
     private var cleanNonAnnualSubline: String {
         let cadence = showWeeklyPlan ? "weekly" : "monthly"
-        let perDay = nonAnnualPerDay.map { " · \($0)/day" } ?? ""
+        let perDay = nonAnnualPerDay.map { " · \($0)/day" } ?? "."
         guard let yearly = nonAnnualYearlyEquivalent else { return "Billed \(cadence)\(perDay)" }
         return "\(yearly) /year if billed \(cadence)\(perDay)"
     }
