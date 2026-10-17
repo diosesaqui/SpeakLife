@@ -814,6 +814,13 @@ final class TikTokAnalyticsProvider: AnalyticsProvider {
     }
 }
 
+extension AppEvents.ParameterName {
+    /// Native Meta events are built by hand rather than from the dispatched
+    /// parameters, so they miss the global context. Carry the release on them
+    /// under the same key Firebase and PostHog use.
+    static let appVersion = AppEvents.ParameterName(AnalyticsContext.Key.appVersion)
+}
+
 /// Meta (Facebook) App Events: optimizes ad campaigns on subscription funnel
 /// events. Only the purchase / trial semantics map to native Meta events.
 final class MetaAnalyticsProvider: AnalyticsProvider {
@@ -830,7 +837,8 @@ final class MetaAnalyticsProvider: AnalyticsProvider {
                 valueToSum: 0.00,
                 parameters: [
                     AppEvents.ParameterName("product_id"): productId as NSString,
-                    AppEvents.ParameterName("currency"): currency as NSString
+                    AppEvents.ParameterName("currency"): currency as NSString,
+                    .appVersion: AnalyticsContext.shared.appVersion as NSString
                 ]
             )
 
@@ -843,14 +851,17 @@ final class MetaAnalyticsProvider: AnalyticsProvider {
                 parameters: [
                     AppEvents.ParameterName("product_id"): productId as NSString,
                     AppEvents.ParameterName("currency"): currency as NSString,
-                    AppEvents.ParameterName("conversion_type"): "trial_to_paid" as NSString
+                    AppEvents.ParameterName("conversion_type"): "trial_to_paid" as NSString,
+                    .appVersion: AnalyticsContext.shared.appVersion as NSString
                 ]
             )
-            AppEvents.shared.logPurchase(amount: price, currency: currency)
+            AppEvents.shared.logPurchase(amount: price, currency: currency,
+                                         parameters: [.appVersion: AnalyticsContext.shared.appVersion as NSString])
 
         case .subscriptionRenewal(let price, let currency):
             // Log renewals as purchases for LTV tracking.
-            AppEvents.shared.logPurchase(amount: price, currency: currency)
+            AppEvents.shared.logPurchase(amount: price, currency: currency,
+                                         parameters: [.appVersion: AnalyticsContext.shared.appVersion as NSString])
 
         case .qualifiedTrial(let productId):
             // A trial still set to renew 24h after it started. Sent as the
@@ -861,7 +872,8 @@ final class MetaAnalyticsProvider: AnalyticsProvider {
                 .addedPaymentInfo,
                 parameters: [
                     .contentID: productId,
-                    .currency: "USD"
+                    .currency: "USD",
+                    .appVersion: AnalyticsContext.shared.appVersion as NSString
                 ]
             )
             // This usually fires on a foreground, and the person may leave
