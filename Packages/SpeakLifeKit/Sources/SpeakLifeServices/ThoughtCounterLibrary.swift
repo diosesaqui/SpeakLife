@@ -173,7 +173,7 @@ public enum ThoughtCounterLibrary {
 
     /// What may be spoken out loud in this drill.
     ///
-    /// Four exclusions, each for its own reason:
+    /// Five exclusions, each for its own reason:
     ///
     /// - **Book categories** (psalms, john, romans…) are read-through-a-book
     ///   content, written to the older two-sentence expository standard. CLAUDE.md
@@ -185,6 +185,10 @@ public enum ThoughtCounterLibrary {
     ///   every line in it was checked by a person.
     /// - **Lines with no first person, or too long to say in one breath.** The
     ///   drill ends in a mouth, not on a page.
+    /// - **Jesus-voice lines** (`book == "Jesus"`). Jesus speaks to the reader
+    ///   in them ("I took your sickness to the cross"), so they carry "I" and
+    ///   "My" and slip past the first-person check, but in the reader's mouth
+    ///   they would claim to be Jesus.
     /// - **Lines with no verse behind them.** The REPLACE screen puts the
     ///   scripture under the declaration, and a hundred-odd entries in the
     ///   library carry no reference. An empty half-card is not what someone
@@ -194,6 +198,7 @@ public enum ThoughtCounterLibrary {
             guard declaration.contentType == .affirmation else { return false }
             guard let verse = declaration.bibleVerseText, !verse.isEmpty,
                   let book = declaration.book, !book.isEmpty else { return false }
+            guard book != jesusVoiceBook else { return false }
             guard !excludedCategories.contains(declaration.category) else { return false }
             guard EnforcementAssembler.isCampaignable(declaration.category) else { return false }
             let text = declaration.text
@@ -209,6 +214,9 @@ public enum ThoughtCounterLibrary {
     private static let excludedCategories: Set<DeclarationCategory> = [
         .myOwn, .favorites, .general, .speaklife
     ]
+
+    /// The `book` value for lines written in Jesus' voice, spoken to the reader.
+    static let jesusVoiceBook = "Jesus"
 
     private static let firstPerson: Set<String> = ["i", "i'm", "i've", "i'll", "my", "me", "mine", "myself"]
 
