@@ -104,21 +104,31 @@ extension Event {
 // MARK: - TikTok Analytics Helper
 extension Event {
     
+    /// Native TikTok events are built here rather than from the dispatched
+    /// parameters, so they miss the global context. Carry the release on them
+    /// under the same key Firebase and PostHog use.
+    private static func tikTokEvent(_ name: String) -> TikTokBaseEvent {
+        let event = TikTokBaseEvent(eventName: name)
+        event.addProperty(withKey: AnalyticsContext.Key.appVersion,
+                          value: AnalyticsContext.shared.appVersion)
+        return event
+    }
+    
     // Track key SpeakLife events for TikTok
     static func trackTikTokAppInstall() {
         // InstallApp is auto-tracked by SDK, but we can manually track it too
-        TikTokBusiness.trackTTEvent(.init(eventName:"LaunchAPP"))
+        TikTokBusiness.trackTTEvent(tikTokEvent("LaunchAPP"))
         AnalyticsService.shared.track("tiktok_app_install")
     }
     
     static func trackTikTokAppLaunch() {
-        TikTokBusiness.trackTTEvent(.init(eventName: "LAUNCHAPP"))
+        TikTokBusiness.trackTTEvent(tikTokEvent("LAUNCHAPP"))
         AnalyticsService.shared.track("tiktok_app_launch")
     }
     
     static func trackTikTokPremiumPurchase(value: Double, currency: String = "USD") {
         // Track TikTok purchase with revenue
-        let ttEvent = TikTokBaseEvent(eventName: "Purchase")
+        let ttEvent = tikTokEvent("Purchase")
         ttEvent.addProperty(withKey: "value", value: value)
         ttEvent.addProperty(withKey: "currency", value: currency)
         TikTokBusiness.trackTTEvent(ttEvent)
@@ -131,7 +141,7 @@ extension Event {
     }
     
     static func trackTikTokContentView(contentType: String, contentId: String) {
-        TikTokBusiness.trackTTEvent(.init(eventName:"ViewContent"))
+        TikTokBusiness.trackTTEvent(tikTokEvent("ViewContent"))
         AnalyticsService.shared.track("tiktok_view_content", parameters: [
             "content_type": contentType,
             "content_id": contentId
@@ -139,14 +149,14 @@ extension Event {
     }
     
     static func trackTikTokShare(contentType: String) {
-        TikTokBusiness.trackTTEvent(.init(eventName:"Share"))
+        TikTokBusiness.trackTTEvent(tikTokEvent("Share"))
         AnalyticsService.shared.track("tiktok_share", parameters: [
             "content_type": contentType
         ])
     }
     
     static func trackTikTokEngagement(action: String, category: String? = nil) {
-        TikTokBusiness.trackTTEvent(.init(eventName:"UserEngagement"))
+        TikTokBusiness.trackTTEvent(tikTokEvent("UserEngagement"))
         var params: [String: Any] = ["action": action]
         if let category = category {
             params["category"] = category

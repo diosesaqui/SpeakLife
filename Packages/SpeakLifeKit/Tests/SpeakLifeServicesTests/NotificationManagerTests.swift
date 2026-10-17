@@ -164,4 +164,31 @@ final class NotificationManagerTests: XCTestCase {
                            "\(category.rawValue) holds no reminder content and must not become a topic")
         }
     }
+
+    // MARK: - Explicit feed category switch → reminder topic
+
+    func testSwitchReplacesAMultiTopicSelection() {
+        // Onboarding seeded several topics; the user then switched to Health
+        // and kept getting faith/grace/rest pushes.
+        XCTAssertTrue(NotificationManager.shouldFollowFeedCategoryChange(.health,
+                                                                        currentTopics: [.faith, .grace, .rest]))
+    }
+
+    func testSwitchReplacesASingleOldTopic() {
+        XCTAssertTrue(NotificationManager.shouldFollowFeedCategoryChange(.health,
+                                                                        currentTopics: [.faith]))
+    }
+
+    func testSwitchToTheCurrentTopicIsANoOp() {
+        XCTAssertFalse(NotificationManager.shouldFollowFeedCategoryChange(.health,
+                                                                         currentTopics: [.health]))
+    }
+
+    func testSwitchToBibleBookOrSpecialRowLeavesTopicsAlone() {
+        for category: DeclarationCategory in [.psalms, .john, .favorites, .myOwn, .general] {
+            XCTAssertFalse(NotificationManager.shouldFollowFeedCategoryChange(category,
+                                                                             currentTopics: [.faith]),
+                           "\(category.rawValue) is not a reminder topic")
+        }
+    }
 }

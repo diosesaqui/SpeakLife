@@ -172,8 +172,6 @@ Start a new branch for each session, named `claude/<short-topic>` (for example
 the PR from it. Never reuse an earlier session's branch, and never commit
 straight to `main`.
 
----
-
 ## Analytics
 
 **Read `docs/ANALYTICS_DATA_QUALITY.md` before answering any question with

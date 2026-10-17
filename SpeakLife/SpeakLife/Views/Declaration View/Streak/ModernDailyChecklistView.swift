@@ -80,11 +80,9 @@ struct ModernDailyChecklistView: View {
     ///
     /// At the limit it falls back to the list, which is where the count and the
     /// upgrade path live.
-    private var declarationTileLabel: String {
-        if activeDeclarations.isEmpty { return "Name what you're believing for" }
-        return canAddDeclaration
-            ? "Write a new declaration"
-            : "See all \(activeDeclarations.count)"
+    private var declarationTileMode: DeclarationCreateButton.Mode {
+        if activeDeclarations.isEmpty { return .invite }
+        return canAddDeclaration ? .addAnother : .seeAll(activeDeclarations.count)
     }
     // Modal presentations surfaced directly on the Today tab (instead of routing
     // the user over to the Speak feed and presenting there).
@@ -262,7 +260,11 @@ struct ModernDailyChecklistView: View {
     /// Today to a second one at all.
     ///
     /// It now WRITES rather than routing to the list a second time — see
-    /// `declarationTileLabel`.
+    /// `declarationTileMode`.
+    ///
+    /// It used to render as 13pt grey text at half opacity, which read as a
+    /// footnote rather than something to tap. It is a real card button now —
+    /// see `DeclarationCreateButton`.
     ///
     /// ALWAYS SHOWN, including when they carry none. That empty case is the
     /// whole point: the create path used to live two taps inside My
@@ -277,8 +279,7 @@ struct ModernDailyChecklistView: View {
     /// celebration for exactly the people this was meant to help.
     private var personalDeclarationTile: AnyView? {
         AnyView(
-            Button {
-                Juice.play(.tapLight)
+            DeclarationCreateButton(mode: declarationTileMode) {
                 guard canAddDeclaration else {
                     showMyDeclarations = true
                     return
@@ -290,13 +291,7 @@ struct ModernDailyChecklistView: View {
                     "existing_count": activeDeclarations.count
                 ])
                 showNewDeclarationSheet = true
-            } label: {
-                Text(declarationTileLabel)
-                    .font(.system(size: 13, weight: .semibold, design: .rounded))
-                    .foregroundColor(.white.opacity(0.5))
-                    .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.dsPressable(feel: .tapLight, haptics: false))
             .padding(.top, 4)
         )
     }
@@ -1772,7 +1767,190 @@ struct JournalEntrySheet: View {
     }
 }
 
+// MARK: - Declaration Create Button
+
+/// The Today checklist's doorway into writing a personal declaration.
+///
+/// Built to read unmistakably as a button: a gold-lit card with an icon medallion,
+/// a title that names the action, a line of why, and a chevron. With no
+/// declaration yet it is the most inviting thing under the checklist — a slow
+/// light sweep crosses it and the medallion breathes — because this is the
+/// moment the feature either gets discovered or doesn't. Once they carry one,
+/// it settles down to a still card; at the limit it becomes a quiet route to
+/// the list.
+struct DeclarationCreateButton: View {
+    enum Mode: Equatable {
+        /// No declaration yet.
+        case invite
+        /// Has at least one, room for more.
+        case addAnother
+        /// At the cap; routes to the list.
+        case seeAll(Int)
+    }
+
+    let mode: Mode
+    let action: () -> Void
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var sweep: CGFloat = -1
+    @State private var pulse = false
+
+    /// Gold for the two create states; the list route stays neutral.
+    private var isLit: Bool { if case .seeAll = mode { return false } else { return true } }
+    private var isAnimated: Bool { mode == .invite && !reduceMotion }
+
+    private var title: String {
+        switch mode {
+        case .invite: return "Name what you're believing for"
+        case .addAnother: return "Write a new declaration"
+        case .seeAll(let count): return "See all \(count) declarations"
+        }
+    }
+
+    private var subtitle: String {
+        switch mode {
+        case .invite: return "Make your own declaration and speak it daily"
+        case .addAnother: return "Stand on God's Word for one more thing"
+        case .seeAll: return "Everything you're believing God for"
+        }
+    }
+
+    private var icon: String {
+        switch mode {
+        case .invite: return "pencil.and.outline"
+        case .addAnother: return "plus"
+        case .seeAll: return "list.bullet"
+        }
+    }
+
+    var body: some View {
+        Button {
+            Juice.play(.tapSolid)
+            action()
+        } label: {
+            HStack(spacing: 14) {
+                medallion
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(title)
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
+                    Text(subtitle)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.white.opacity(0.7))
+                        .lineLimit(2)
+                }
+                Spacer(minLength: 8)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(isLit ? Color.black.opacity(0.75) : .white.opacity(0.7))
+                    .frame(width: 26, height: 26)
+                    .background(
+                        Circle().fill(isLit
+                                      ? AnyShapeStyle(DS.Gradient.gold)
+                                      : AnyShapeStyle(Color.white.opacity(0.12)))
+                    )
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .background(cardBackground)
+            .overlay(shimmer)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(isLit
+                            ? AnyShapeStyle(DS.Gradient.gold)
+                            : AnyShapeStyle(DS.Palette.hairline),
+                            lineWidth: isLit ? 1.2 : 1)
+            )
+            .shadow(color: isLit ? DS.Palette.gold.opacity(mode == .invite ? 0.35 : 0.2) : .clear,
+                    radius: 12, x: 0, y: 4)
+            .contentShape(RoundedRectangle(cornerRadius: 16))
+        }
+        .buttonStyle(.dsPressable(feel: .tapSolid, haptics: false))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(title)
+        .accessibilityHint(subtitle)
+        .accessibilityAddTraits(.isButton)
+        .onAppear(perform: startAnimations)
+        .onChange(of: mode) { _, _ in startAnimations() }
+    }
+
+    private var medallion: some View {
+        ZStack {
+            if isAnimated {
+                Circle()
+                    .stroke(DS.Palette.gold.opacity(0.6), lineWidth: 2)
+                    .frame(width: 42, height: 42)
+                    .scaleEffect(pulse ? 1.35 : 1.0)
+                    .opacity(pulse ? 0 : 0.8)
+            }
+            Circle()
+                .fill(isLit ? AnyShapeStyle(DS.Gradient.gold) : AnyShapeStyle(Color.white.opacity(0.12)))
+                .frame(width: 42, height: 42)
+            Image(systemName: icon)
+                .font(.system(size: 17, weight: .bold))
+                .foregroundColor(isLit ? Color.black.opacity(0.8) : .white.opacity(0.85))
+        }
+        .frame(width: 46, height: 46)
+    }
+
+    private var cardBackground: some View {
+        RoundedRectangle(cornerRadius: 16)
+            .fill(
+                isLit
+                ? AnyShapeStyle(LinearGradient(
+                    colors: [DS.Palette.gold.opacity(0.24), DS.Palette.gold.opacity(0.06)],
+                    startPoint: .topLeading, endPoint: .bottomTrailing))
+                : AnyShapeStyle(DS.Palette.surface)
+            )
+    }
+
+    /// A soft band of light that crosses the card every few seconds, only in
+    /// the invite state. Hit-testing is off so it never eats the tap.
+    @ViewBuilder
+    private var shimmer: some View {
+        if isAnimated {
+            GeometryReader { geo in
+                LinearGradient(
+                    colors: [.clear, Color.white.opacity(0.22), .clear],
+                    startPoint: .leading, endPoint: .trailing
+                )
+                .frame(width: geo.size.width * 0.45)
+                .rotationEffect(.degrees(18))
+                .offset(x: sweep * geo.size.width)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .allowsHitTesting(false)
+        }
+    }
+
+    private func startAnimations() {
+        guard isAnimated else { return }
+        sweep = -1
+        pulse = false
+        withAnimation(.easeInOut(duration: 1.6).delay(1.2).repeatForever(autoreverses: false)) {
+            sweep = 1.4
+        }
+        withAnimation(.easeOut(duration: 1.8).repeatForever(autoreverses: false)) {
+            pulse = true
+        }
+    }
+}
+
 #if DEBUG
+struct DeclarationCreateButton_Previews: PreviewProvider {
+    static var previews: some View {
+        VStack(spacing: 16) {
+            DeclarationCreateButton(mode: .invite) {}
+            DeclarationCreateButton(mode: .addAnother) {}
+            DeclarationCreateButton(mode: .seeAll(3)) {}
+        }
+        .padding(20)
+        .background(Color.black)
+    }
+}
+
 struct ModernDailyChecklistView_Previews: PreviewProvider {
     static var previews: some View {
         ModernDailyChecklistView(viewModel: EnhancedStreakViewModel())
