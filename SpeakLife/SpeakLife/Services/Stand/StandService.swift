@@ -325,7 +325,13 @@ final class StandService: ObservableObject, StandMirroring {
         }
         guard let room = StandRoom(id: id, data: data, date: Self.dateFromFirestore) else { return }
 
-        let wasComplete = rooms.first { $0.id == id }?.everyoneFinished ?? false
+        // In-memory state alone is not enough: the cache keeps room ids, not
+        // bodies, so after a relaunch every finished room arrived looking new
+        // and the celebration replayed on every launch until the room was
+        // swept, a week or more after the stand ended. The persisted set is
+        // what makes "once" survive a cold start.
+        let wasComplete = (rooms.first { $0.id == id }?.everyoneFinished ?? false)
+            || celebratedRoomIds().contains(id)
         if let index = rooms.firstIndex(where: { $0.id == id }) {
             rooms[index] = room
         } else {
@@ -336,6 +342,7 @@ final class StandService: ObservableObject, StandMirroring {
         // Present the celebration on the transition, not on every snapshot —
         // otherwise reopening a finished stand re-congratulates them forever.
         if room.everyoneFinished, !wasComplete {
+            markCelebrated(id)
             justCompletedRoom = room
             AnalyticsService.shared.track("stand_completed", parameters: [
                 "room_id": room.id,
@@ -464,6 +471,19 @@ final class StandService: ObservableObject, StandMirroring {
 
     private func cachedRoomIds() -> [String] {
         UserDefaults.standard.stringArray(forKey: cacheKey) ?? []
+    }
+
+    /// Rooms whose completion has already been celebrated on this device.
+    private let celebratedKey = "celebratedStandRoomIds"
+
+    private func celebratedRoomIds() -> Set<String> {
+        Set(UserDefaults.standard.stringArray(forKey: celebratedKey) ?? [])
+    }
+
+    private func markCelebrated(_ id: String) {
+        var ids = celebratedRoomIds()
+        ids.insert(id)
+        UserDefaults.standard.set(Array(ids), forKey: celebratedKey)
     }
 }
 
