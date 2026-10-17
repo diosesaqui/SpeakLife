@@ -499,6 +499,17 @@
             "tag": "godsHeart"
         },
         {
+            "id": "speaklife-s5e1.mp3",
+            "title": "Take Your Dose",
+            "subtitle": "SpeakLife",
+            "duration": "4m",
+            "imageUrl": "devotional",
+            "isPremium": true,
+            "tag": "speaklife",
+            "season": 5,
+            "episode": 1
+        },
+        {
             "id": "speaklife-s4e9.mp3",
             "title": "The Higher Law",
             "subtitle": "SpeakLife",
