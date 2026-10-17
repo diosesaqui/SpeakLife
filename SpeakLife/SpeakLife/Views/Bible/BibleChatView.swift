@@ -790,7 +790,20 @@ struct BibleChatConversationView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
-        .background(Color.black.opacity(0.2))
+        // Solid, not translucent: the transcript and empty-state cards scroll
+        // under this bar, and at 20% black they showed straight through it,
+        // making the field hard to read. The fill matches the bottom of the
+        // screen's gradient and runs down under the keyboard / home indicator
+        // so nothing peeks through the gap below the bar either.
+        .background(
+            Color(red: 0.02, green: 0.07, blue: 0.15)
+                .overlay(alignment: .top) {
+                    Rectangle()
+                        .fill(Color.white.opacity(0.08))
+                        .frame(height: 0.5)
+                }
+                .ignoresSafeArea(edges: .bottom)
+        )
     }
 
     private var messageField: some View {
