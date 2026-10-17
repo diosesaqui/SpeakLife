@@ -96,6 +96,37 @@ public final class NotificationManager: NSObject {
         rescheduleFromUserDefaults()
     }
 
+    /// Whether a category the user has just switched TO in the feed should
+    /// replace their reminder topics.
+    ///
+    /// Looser than `shouldAdoptFeedCategory` on purpose. That one guards the
+    /// passive paths (the startup heal, the empty-topics fallback), where the
+    /// feed category is only a guess. A switch is the user's newest word on
+    /// what they want to hear about, so it outranks a multi-topic set seeded by
+    /// onboarding and an older curation in Settings alike. Leaving either in
+    /// place is how people kept getting pushes for the category they had just
+    /// moved away from. Settings can still re-curate afterwards.
+    public static func shouldFollowFeedCategoryChange(_ category: DeclarationCategory,
+                                                      currentTopics: Set<DeclarationCategory>) -> Bool {
+        guard !category.isBibleBook, !nonTopicCategories.contains(category) else { return false }
+        return currentTopics != [category]
+    }
+
+    /// Call when the user switches feed category (not when the app restores
+    /// the saved one). Points the reminder topics at it and rebuilds the batch
+    /// right away, so the already-queued pushes for the old category are
+    /// replaced instead of draining over the next few days.
+    public func followFeedCategoryChange(to category: DeclarationCategory) {
+        let defaults = UserDefaults.standard
+        let stored = defaults.string(forKey: Self.selectedTopicsKey) ?? ""
+        let current = Set(stored.split(separator: ",").compactMap { DeclarationCategory(rawValue: String($0)) })
+        guard Self.shouldFollowFeedCategoryChange(category, currentTopics: current) else { return }
+
+        defaults.set(category.rawValue, forKey: Self.selectedTopicsKey)
+        print("🔔 Reminder topic switched with the feed: \(current.map(\.rawValue).sorted()) → \(category.rawValue)")
+        rescheduleFromUserDefaults()
+    }
+
     private override init() {}
 
     /// Submits a background-refresh request to the OS. Injected as a
