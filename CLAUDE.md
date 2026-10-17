@@ -163,6 +163,9 @@ Every declaration must be understood instantly, the first time, by anyone. This 
 project's Resources build phase. Edit THIS file. Do not recreate the old
 single-nested `SpeakLife/Preview Content/...` copy, which the build never used.)
 
+After editing it, copy it over the package test copy or CI fails on drift:
+`cp "SpeakLife/SpeakLife/Preview Content/AffirmationData/declarationsv10.json" Packages/SpeakLifeKit/Tests/SpeakLifeCoreTests/Resources/declarationsv10.json`
+
 ## Development Branch
 Start a new branch for each session, named `claude/<short-topic>` (for example
 `claude/paywall-price-per-day`), cut from the latest `main`. Push there and open
