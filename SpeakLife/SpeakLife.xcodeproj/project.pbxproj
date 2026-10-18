@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C0070000000000000001BBBB /* GiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0070000000000000001AAAA /* GiveView.swift */; };
 		TIC00SVC000000000000004B /* TakeThoughtCaptiveIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00SVC000000000000004A /* TakeThoughtCaptiveIntent.swift */; };
 		TIC00VW0000000000000001B /* TakeItCaptiveFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00VW0000000000000001A /* TakeItCaptiveFlowView.swift */; };
 		TIC00VW0000000000000003B /* ReplaceDeclarationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00VW0000000000000003A /* ReplaceDeclarationView.swift */; };
@@ -435,6 +436,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		C0070000000000000001AAAA /* GiveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GiveView.swift; sourceTree = "<group>"; };
 		TIC00SVC000000000000004A /* TakeThoughtCaptiveIntent.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TakeThoughtCaptiveIntent.swift; sourceTree = "<group>"; };
 		TIC00VW0000000000000001A /* TakeItCaptiveFlowView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TakeItCaptiveFlowView.swift; sourceTree = "<group>"; };
 		TIC00VW0000000000000003A /* ReplaceDeclarationView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReplaceDeclarationView.swift; sourceTree = "<group>"; };
@@ -1661,6 +1663,7 @@
 				7AA870A728DACCB700134ADB /* SettingsRow.swift */,
 				4590BF9D2BCA4F1A00CF4F54 /* FeatureView.swift */,
 				C0060000000000000006AAAA /* PayWhatYouCanView.swift */,
+				C0070000000000000001AAAA /* GiveView.swift */,
 			);
 			path = SettingViews;
 			sourceTree = "<group>";
@@ -2368,6 +2371,7 @@
 				4597E1F02E412346009D6C66 /* ChecklistNotificationSettings.swift in Sources */,
 				7AF18C8829FF8CEE005A6E31 /* TipsView.swift in Sources */,
 				4575C9402E45AA00007C14F3 /* OptimizedSubscriptionView.swift in Sources */,
+				C0070000000000000001BBBB /* GiveView.swift in Sources */,
 				452F6AE22E87CDD400A27856 /* AIIntelligenceService.swift in Sources */,
 				458510D72B15935100230EE5 /* HideTabModifier.swift in Sources */,
 				45C15A902F357857006171F5 /* LazyJSONLoader.swift in Sources */,
