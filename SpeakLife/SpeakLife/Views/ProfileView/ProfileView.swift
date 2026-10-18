@@ -147,7 +147,7 @@ struct ProfileView: View {
                     
                     
                     Section(header: Text("SUPPORT").font(.caption)) {
-    
+                        giveRow
                         emailRow
                         shareRow
                         reviewRow
@@ -247,6 +247,20 @@ struct ProfileView: View {
             }
         }
         .foregroundColor(.white)
+    }
+
+    @MainActor
+    private var giveRow: some View {
+        HStack {
+            Image(systemName: "heart.fill")
+                .foregroundColor(Constants.DAMidBlue)
+            NavigationLink(destination: LazyView(GiveView())) {
+                HStack {
+                    Text("Give to SpeakLife", comment: "give row")
+                    Spacer()
+                }
+            }
+        }
     }
 
     @MainActor
