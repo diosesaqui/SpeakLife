@@ -849,6 +849,15 @@ final class SubscriptionStore: ObservableObject {
             ?? Self.parseDay(Self.defaultLapsedWallSince)
             ?? .distantFuture
         monthlyAnnualOffer = remoteConfig["monthlyAnnualOffer"].boolValue
+        // Dormant ladder for paying subscribers: on unless the console turns
+        // it off (an unset key reads on), with a stable holdout, default 10%,
+        // that never gets it so the lift can be measured.
+        let ladder = remoteConfig["dormantLadder"]
+        let holdout = remoteConfig["dormantLadderHoldoutPct"]
+        LifecycleNotificationService.shared.updateDormantLadderConfig(
+            enabled: ladder.source == .static ? true : ladder.boolValue,
+            holdoutPercent: holdout.source == .static ? 10 : holdout.numberValue.intValue
+        )
         let offerDays = remoteConfig["monthlyAnnualOfferDays"].numberValue.intValue
         monthlyAnnualOfferDays = offerDays > 0 ? offerDays : 5
 
@@ -1001,6 +1010,11 @@ final class SubscriptionStore: ObservableObject {
         activePremiumProductID = activeEntitlement?.productIdentifier
         premiumPeriodEndsAt = activeEntitlement?.expirationDate
         premiumWillRenew   = activeEntitlement?.willRenew ?? false
+        // Paying subscribers only: trials and free users keep lapsed_d5.
+        LifecycleNotificationService.shared.updateDormantLadderSubscriber(
+            paying: premiumActive && !isInTrial,
+            annual: activeEntitlement.map { GrowthMetrics.billingTerm(for: $0.productIdentifier) == "annual" } ?? false
+        )
         premiumOriginalPurchaseDate = premiumActive
             ? RevenueCatManager.shared.premiumOriginalPurchaseDate(info)
             : nil

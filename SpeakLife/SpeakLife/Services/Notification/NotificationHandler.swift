@@ -55,7 +55,11 @@ final class NotificationHandler: NSObject, ObservableObject, UNUserNotificationC
         // when present; the request identifier is the fallback, since every
         // scheduler sets a stable one.
         GrowthMetrics.shared.trackNotificationOpened(
-            type: content.userInfo["action"] as? String
+            // `notification_type` wins where set, so a push that reuses
+            // another one's routing (the dormant ladder reuses the burst's
+            // `action`) still reports as itself.
+            type: content.userInfo["notification_type"] as? String
+                ?? content.userInfo["action"] as? String
                 ?? response.notification.request.identifier,
             identifier: response.notification.request.identifier,
             category: content.categoryIdentifier
