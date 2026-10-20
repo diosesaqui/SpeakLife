@@ -87,29 +87,17 @@ struct BibleView: View {
             
             ToolbarItem(placement: .navigationBarTrailing) {
                 HStack(spacing: DS.Spacing.md) {
-                    // Auth status indicator
-                    if !viewModel.isAuthenticated {
-                        Button(action: { viewModel.showAuthView = true }) {
-                            Image(systemName: "person.crop.circle.badge.exclamationmark")
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.orange)
-                        }
-                    }
-                    
+                    // No sign-in prompt here. Sign-in only ever served the
+                    // old abibliadigital provider, which the reader no longer
+                    // uses (it reads from Wldeh/HelloAO, which need no account
+                    // and have no hourly limit). That service now fails with
+                    // a server error, so the prompt was a dead end.
                     Button(action: { showSearch.toggle() }) {
                         Image(systemName: "magnifyingglass")
                             .font(.system(size: 16, weight: .medium))
                     }
                     
                     Menu {
-                        if !viewModel.isAuthenticated {
-                            Button(action: { viewModel.showAuthView = true }) {
-                                Label("Sign In for Unlimited Access", systemImage: "person.crop.circle.badge.plus")
-                            }
-                            
-                            Divider()
-                        }
-                        
                         Button(action: { showBookmarks.toggle() }) {
                             Label("Bookmarks", systemImage: "bookmark.fill")
                         }
