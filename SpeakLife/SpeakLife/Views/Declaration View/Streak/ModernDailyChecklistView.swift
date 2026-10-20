@@ -1972,7 +1972,8 @@ struct ModernDailyChecklistView_Previews: PreviewProvider {
 /// days, so the card names three days as the line to cross. Treatment group
 /// of the trial-habit test only (see TrialExperienceService).
 private struct TrialProgressCard: View {
-    @ObservedObject var service: TrialExperienceService
+    /// State lives in UserDefaults, not @Published, so this is read on render.
+    let service: TrialExperienceService
     private static let goalDays = 3
 
     var body: some View {
@@ -1984,7 +1985,7 @@ private struct TrialProgressCard: View {
                 .tracking(1.4)
                 .foregroundColor(DS.Palette.gold.opacity(0.9))
             HStack(alignment: .center) {
-                Text("Day \(service.trialDay) of \(service.trialLengthDays)")
+                Text("Day \(service.trialCalendarDay) of \(service.trialLengthDays)")
                     .font(.system(size: 20, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
                 Spacer()
@@ -2013,7 +2014,7 @@ private struct TrialProgressCard: View {
             guard UserDefaults.standard.double(forKey: key) != today else { return }
             UserDefaults.standard.set(today, forKey: key)
             AnalyticsService.shared.track("trial_progress_card_shown", parameters: [
-                "trial_day": service.trialDay,
+                "trial_day": service.trialCalendarDay,
                 "active_days": shown
             ])
         }

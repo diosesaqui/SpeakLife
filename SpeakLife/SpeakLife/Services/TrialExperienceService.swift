@@ -92,7 +92,7 @@ final class TrialExperienceService: ObservableObject {
         UserDefaults.standard.set(0, forKey: kTrialDeclarationCount)
         UserDefaults.standard.set(length, forKey: kTrialLengthDays)
 
-        assignHabitGroup()
+        assignHabitGroup(trialLengthDays: length)
         scheduleTrialPushes(from: now, trialLengthDays: length)
         // Start every trial at "not used", so a trial that never touches a
         // feature reads false rather than missing, and the two groups can be
@@ -391,6 +391,9 @@ extension TrialExperienceService {
     private static let habitBucketKey = "trial_habit_bucket"
     private static let habitGroupKey = "trial_habit_group"
     private static let activeDaysKey = "trial_habit_active_days"
+    private static let stoppedKey = "trial_habit_stopped"
+    /// The layer needs room for the days 2-4 nudges and a three-day goal.
+    private static let minimumTrialDays = 5
     static let nudgeIDs = ["trial_nudge_d2", "trial_nudge_d3", "trial_nudge_d4"]
 
     /// Remote Config side, persisted so trial start (in onboarding, often
@@ -411,7 +414,24 @@ extension TrialExperienceService {
 
     /// Trial still running, in the treatment group: the progress card shows.
     var showsTrialProgress: Bool {
-        isInHabitTreatment && isTrialActive && trialDay >= 1 && Date() < trialEndDate
+        isInHabitTreatment && isTrialActive && !habitStopped && Date() < trialEndDate
+    }
+
+    /// Calendar day of the trial, 1 on the day it started. The nudges are
+    /// scheduled on calendar days, so clearing and the card must count the
+    /// same way; `trialDay` counts 24-hour periods and lags after a late
+    /// start.
+    var trialCalendarDay: Int {
+        guard let start = UserDefaults.standard.object(forKey: "trial_experience_start_date") as? Date else { return 0 }
+        let calendar = Calendar.current
+        let days = calendar.dateComponents([.day], from: calendar.startOfDay(for: start),
+                                           to: calendar.startOfDay(for: Date())).day ?? 0
+        return min(max(days + 1, 1), trialLengthDays)
+    }
+
+    /// Set when the trialist turns off auto-renew: no more nudges or card.
+    private var habitStopped: Bool {
+        UserDefaults.standard.bool(forKey: Self.stoppedKey)
     }
 
     /// Distinct calendar days the app was opened since the trial began.
@@ -428,14 +448,18 @@ extension TrialExperienceService {
 
     /// Draws the trial's group once, at trial start. Unset config reads on
     /// with a 10% holdout.
-    func assignHabitGroup() {
+    func assignHabitGroup(trialLengthDays: Int) {
         let defaults = UserDefaults.standard
         // The trial starts inside the app, after this launch's foreground
         // hook has already run, so day 1 is counted here.
         defaults.set([Self.dayStamp(Date())], forKey: Self.activeDaysKey)
+        defaults.removeObject(forKey: Self.stoppedKey)
         let enabled = defaults.object(forKey: Self.habitEnabledKey) as? Bool ?? true
-        guard enabled else {
+        // Off, or a trial too short to treat: not in the test either way, and
+        // the person property says so rather than keeping an earlier trial's.
+        guard enabled, trialLengthDays >= Self.minimumTrialDays else {
             defaults.removeObject(forKey: Self.habitGroupKey)
+            AnalyticsService.shared.setUserProperty("trial_habit_group", value: "not_eligible")
             return
         }
         let holdoutPct = defaults.object(forKey: Self.habitHoldoutKey) as? Int ?? 10
@@ -455,6 +479,18 @@ extension TrialExperienceService {
         ])
     }
 
+    /// The trialist turned off auto-renew: stop nudging and hide the card.
+    /// They have decided; the readout should not count them as nudged.
+    func onTrialAutoRenewOff() {
+        guard isTrialActive, !habitStopped, Date() < trialEndDate else { return }
+        UserDefaults.standard.set(true, forKey: Self.stoppedKey)
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: Self.nudgeIDs)
+        AnalyticsService.shared.track("trial_habit_stopped", parameters: [
+            "trial_day": trialCalendarDay,
+            "active_days": trialActiveDays
+        ])
+    }
+
     /// Call on every foreground. Counts today as a trial day and clears
     /// today's "haven't opened" nudge, since they just did.
     func onAppOpenDuringTrial() {
@@ -466,7 +502,7 @@ extension TrialExperienceService {
             days.append(today)
             defaults.set(days, forKey: Self.activeDaysKey)
         }
-        let day = trialDay
+        let day = trialCalendarDay
         if (2...4).contains(day) {
             UNUserNotificationCenter.current().removePendingNotificationRequests(
                 withIdentifiers: ["trial_nudge_d\(day)"])
@@ -477,16 +513,19 @@ extension TrialExperienceService {
     /// which runs at trial start and again once notification permission is
     /// granted (onboarding asks after the paywall).
     func scheduleHabitPushes(from start: Date, trialLengthDays: Int, ownedByStormArm: Bool) {
-        guard isInHabitTreatment, trialLengthDays >= 5 else { return }
+        guard isInHabitTreatment, !habitStopped, trialLengthDays >= Self.minimumTrialDays else { return }
         let category = UserDefaults.standard.string(forKey: "selectedCategory")
 
         if !ownedByStormArm {
-            // Night 1 audio replaces tonight's bedtime push (see
-            // scheduleTrialFirstNightAudio) rather than adding a second.
+            // Night 1 audio replaces that night's bedtime push (see
+            // scheduleTrialFirstNightAudio) rather than adding a second. A
+            // trial started after 8:30pm gets it the next night: about a
+            // quarter of trials start 9pm-midnight.
             LifecycleNotificationService.shared.scheduleTrialFirstNightAudio(
                 category: category ?? "",
                 title: "For tonight's quiet 🎧",
-                body: "Your trial includes Scripture audio for sleep. Press play and let His Word be the last thing you hear."
+                body: "Your trial includes Scripture audio for sleep. Press play and let His Word be the last thing you hear.",
+                rollToTomorrow: true
             )
             if UserDefaults.standard.bool(forKey: "enableAIFeatures") {
                 scheduleTrialPush(
@@ -497,7 +536,11 @@ extension TrialExperienceService {
             }
         }
 
-        // Days 2-4 at 7pm, each cleared by an open that day.
+        // Days 2-4 at 7pm, each cleared by an open that day. A day already
+        // counted active is skipped, so a re-schedule later in the day (the
+        // permission grant path) cannot re-arm a nudge the open cleared.
+        let calendar = Calendar.current
+        let activeDays = Set(UserDefaults.standard.stringArray(forKey: Self.activeDaysKey) ?? [])
         let nudges: [(day: Int, title: String, body: String)] = [
             (2, "Day 2 of your week ☀️",
              "Your declarations for today are ready. Three minutes, out loud."),
@@ -507,6 +550,8 @@ extension TrialExperienceService {
              "Speak today's declarations over whatever is in front of you."),
         ]
         for nudge in nudges {
+            if let date = calendar.date(byAdding: .day, value: nudge.day - 1, to: start),
+               activeDays.contains(Self.dayStamp(date)) { continue }
             scheduleTrialPush(
                 id: "trial_nudge_d\(nudge.day)", dayOffset: nudge.day - 1, hour: 19, minute: 0, start: start,
                 title: nudge.title, body: nudge.body,
@@ -532,10 +577,14 @@ extension TrialExperienceService {
             trigger: UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)))
     }
 
-    private static func dayStamp(_ date: Date) -> String {
+    private static let dayFormatter: DateFormatter = {
         let f = DateFormatter()
         f.locale = Locale(identifier: "en_US_POSIX")
         f.dateFormat = "yyyy-MM-dd"
-        return f.string(from: date)
+        return f
+    }()
+
+    private static func dayStamp(_ date: Date) -> String {
+        dayFormatter.string(from: date)
     }
 }

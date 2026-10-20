@@ -1009,6 +1009,11 @@ final class SubscriptionStore: ObservableObject {
         activePremiumProductID = activeEntitlement?.productIdentifier
         premiumPeriodEndsAt = activeEntitlement?.expirationDate
         premiumWillRenew   = activeEntitlement?.willRenew ?? false
+        // A trialist who turned off auto-renew has decided: stop the
+        // trial-week nudges and card.
+        if isInTrial && activeEntitlement?.willRenew == false {
+            TrialExperienceService.shared.onTrialAutoRenewOff()
+        }
         premiumOriginalPurchaseDate = premiumActive
             ? RevenueCatManager.shared.premiumOriginalPurchaseDate(info)
             : nil
