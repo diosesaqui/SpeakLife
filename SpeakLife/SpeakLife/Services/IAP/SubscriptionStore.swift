@@ -816,6 +816,9 @@ final class SubscriptionStore: ObservableObject {
 
         // Anthropic API key from Remote Config
         AnthropicConfig.apiKey = remoteConfig["anthropic_api_key"].stringValue
+
+        // NLT API key from Remote Config (unset keeps NLT out of the Bible reader)
+        NLTConfig.apiKey = remoteConfig["nlt_api_key"].stringValue
         
         // Sync to UserDefaults for TaskLibrary access
         UserDefaults.standard.set(enableAIFeatures, forKey: "enableAIFeatures")

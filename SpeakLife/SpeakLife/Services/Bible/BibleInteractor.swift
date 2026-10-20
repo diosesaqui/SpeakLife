@@ -11,7 +11,6 @@ import Combine
 protocol BibleInteractorProtocol {
     func loadBooks() async throws -> [BibleBook]
     func loadChapter(bookAbbrev: String, chapter: Int, version: String) async throws -> BibleChapter
-    func searchVerses(query: String, version: String) async throws -> BibleSearchResponse
     func getRandomVerse(version: String) async throws -> RandomVerse
     func loadVersions() async throws -> [BibleVersion]
     
@@ -49,6 +48,7 @@ final class BibleInteractor: BibleInteractorProtocol {
     private let helloAOService: HelloAOBibleAPIService
     private let wldehService: WldehBibleAPIService
     private let bibliaService: BibleAPIService
+    private let nltService: NLTBibleAPIService
     private let cacheManager: BibleCacheManager
     private let userDefaults = UserDefaults.standard
     
@@ -142,6 +142,7 @@ final class BibleInteractor: BibleInteractorProtocol {
         self.helloAOService = HelloAOBibleAPIService.shared
         self.wldehService = WldehBibleAPIService.shared
         self.bibliaService = BibleAPIService.shared
+        self.nltService = NLTBibleAPIService.shared
         self.cacheManager = BibleCacheManager()
         
         // Load saved provider preference
@@ -750,6 +751,14 @@ final class BibleInteractor: BibleInteractorProtocol {
     
     func loadChapter(bookAbbrev: String, chapter: Int, version: String = "kjv") async throws -> BibleChapter {
         
+        // NLT is served by Tyndale whatever the provider, and is never written
+        // to disk until the licence confirms offline storage is allowed.
+        if NLTConfig.isNLT(version) {
+            let chapterData = try await nltService.fetchChapter(abbrev: bookAbbrev, chapter: chapter)
+            saveReadingHistory(bookAbbrev: bookAbbrev, chapter: chapter)
+            return chapterData
+        }
+        
         // Check cache first
         if let cachedChapter = cacheManager.getCachedChapter(bookAbbrev: bookAbbrev, chapter: chapter, version: version) {
             // Save to reading history
@@ -814,19 +823,6 @@ final class BibleInteractor: BibleInteractorProtocol {
         return Self.bookAbbrevMapping[abbrev.lowercased()] ?? abbrev.uppercased()
     }
     
-    
-    func searchVerses(query: String, version: String = "kjv") async throws -> BibleSearchResponse {
-        
-        // HelloAO doesn't have search API, implement client-side search
-        
-        // For now, return empty results
-        // TODO: Implement client-side search by fetching and searching through books
-        return BibleSearchResponse(
-            occurrence: 0,
-            version: version,
-            verses: []
-        )
-    }
     
     func getRandomVerse(version: String = "kjv") async throws -> RandomVerse {
         
@@ -901,6 +897,16 @@ final class BibleInteractor: BibleInteractorProtocol {
     }
     
     func loadVersions() async throws -> [BibleVersion] {
+        let versions = try await loadProviderVersions()
+        
+        // Added after the cache so it appears as soon as the Remote Config key
+        // does, and disappears again if the key is withdrawn.
+        let others = versions.filter { !NLTConfig.isNLT($0.version) }
+        guard NLTConfig.isAvailable else { return others }
+        return others + [BibleVersion(version: NLTConfig.versionId, verses: 31102)]
+    }
+    
+    private func loadProviderVersions() async throws -> [BibleVersion] {
         
         // Check cache first
         if let cachedVersions = cacheManager.getCachedVersions() {

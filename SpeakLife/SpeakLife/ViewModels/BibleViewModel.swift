@@ -14,7 +14,6 @@ final class BibleViewModel: ObservableObject {
     // MARK: - Published Properties
     @Published var testamentSections: [TestamentSection] = []
     @Published var currentChapter: ChapterDisplayModel?
-    @Published var searchResults: [SearchResultDisplayModel] = []
     @Published var readingHistory: [ReadingHistoryDisplayModel] = []
     @Published var bookmarks: [BibleBookmark] = []
     @Published var dailyVerse: RandomVerse?
@@ -32,9 +31,6 @@ final class BibleViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var showError = false
     @Published var showAuthView = false
-    @Published var showSearchError = false
-    @Published var searchText = ""
-    @Published var isSearching = false
     @Published var isAuthenticated = false
     
     // Navigation State
@@ -54,7 +50,6 @@ final class BibleViewModel: ObservableObject {
 
     // MARK: - Task Management
     private var currentChapterLoadTask: Task<Void, Never>?
-    private var searchTask: Task<Void, Never>?
     private var initialLoadTask: Task<Void, Never>?
 
     // MARK: - Initialization
@@ -74,7 +69,6 @@ final class BibleViewModel: ObservableObject {
     deinit {
         // Cancel all running tasks to prevent memory leaks
         currentChapterLoadTask?.cancel()
-        searchTask?.cancel()
         initialLoadTask?.cancel()
     }
     
@@ -189,85 +183,6 @@ final class BibleViewModel: ObservableObject {
     func retryFailedChapter() async {
         guard let chapter = failedChapterNumber, let book = selectedBook else { return }
         await loadChapter(bookAbbrev: book.abbreviation.lowercased(), chapterNumber: chapter)
-    }
-    
-    func searchVerses(query: String) async {
-        guard !query.isEmpty else { return }
-        
-        // Cancel any existing search task
-        searchTask?.cancel()
-        
-        searchTask = Task {
-            await MainActor.run {
-                isSearching = true
-                errorMessage = nil
-                showSearchError = false
-            }
-            
-            do {
-                let results = try await interactor.searchVerses(query: query, version: selectedVersion)
-                await MainActor.run {
-                    searchResults = presenter.formatSearchResults(results, searchTerm: query)
-                    isSearching = false
-                }
-                
-                // Track analytics
-                AnalyticsService.shared.trackSearch(
-                    query: query,
-                    resultCount: results.occurrence,
-                    category: "bible_\(selectedVersion)"
-                )
-            } catch {
-                // A cancelled search was superseded by a newer query; ignore it.
-                if Self.isCancellation(error) || Task.isCancelled { return }
-                await MainActor.run {
-                    // Handle search errors locally without dismissing the search sheet
-                    handleSearchError(error)
-                    isSearching = false
-                }
-            }
-        }
-        
-        await searchTask?.value
-    }
-    
-    private func handleSearchError(_ error: Error) {
-        
-        if let apiError = error as? BibleAPIError {
-            switch apiError {
-            case .rateLimited:
-                if !isAuthenticated {
-                    errorMessage = "You've reached the free limit. Sign in through Settings → Bible Version for unlimited access."
-                } else {
-                    errorMessage = "Too many requests. Please wait a moment and try again."
-                }
-                showSearchError = true
-            case .unauthorized:
-                errorMessage = "Your session has expired. Please sign in through Settings for unlimited access."
-                showSearchError = true
-            case .networkError:
-                errorMessage = "No internet connection. Please check your network and try again."
-                showSearchError = true
-            case .noData:
-                errorMessage = "No search results found for this query."
-                showSearchError = true
-            case .serverError(let code):
-                if code >= 500 {
-                    errorMessage = "The Bible service is temporarily unavailable. Please try again later."
-                } else {
-                    errorMessage = "Unable to search. Please try again."
-                }
-                showSearchError = true
-            default:
-                errorMessage = apiError.errorDescription ?? "Search failed. Please try again."
-                showSearchError = true
-            }
-        } else {
-            errorMessage = "Search failed. Please try again."
-            showSearchError = true
-        }
-        
-        // Ensure we don't trigger auth view from search
     }
     
     func loadDailyVerse() async {
