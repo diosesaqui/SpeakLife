@@ -109,7 +109,7 @@ audience, and specifically the ninth we can already reach.
 (A comment in `DirectOnboardingView` claims post-paywall screens are seen by
 "everyone, because the paywall is hard and the flow continues through it either
 way." The data disagrees; that comment predates the current
-`showPayWhatYouCanLink` setting.)
+`hardOnboardingPaywall` setting.)
 
 **Before the review wall, not after it.** The wall is social proof placed
 deliberately against the paywall, and 98.9% of the people who see it go on to
