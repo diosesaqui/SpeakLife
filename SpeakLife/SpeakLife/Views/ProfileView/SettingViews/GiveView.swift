@@ -71,7 +71,7 @@ struct GiveView: View {
             } else {
                 if !gifts.isEmpty {
                     Section(header: Text("One-time gift").font(.caption),
-                            footer: Text("A gift unlocks nothing new. It keeps SpeakLife free for people who cannot pay, and you can give as often as you like.")) {
+                            footer: Text("Your gift helps SpeakLife grow, keeps it running, and keeps it free for people who cannot pay. Give as often as you like.")) {
                         ForEach(gifts, id: \.id) { product in
                             row(title: product.displayName,
                                 subtitle: product.description,
