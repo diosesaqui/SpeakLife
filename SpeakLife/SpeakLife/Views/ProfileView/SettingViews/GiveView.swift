@@ -72,7 +72,7 @@ struct GiveView: View {
             } else {
                 if !gifts.isEmpty {
                     Section(header: Text("One-time gift").font(.caption),
-                            footer: Text("Your gift helps SpeakLife grow, keeps it running, and keeps it free for people who cannot pay. Give as often as you like.")) {
+                            footer: Text("If SpeakLife has blessed you, a gift helps it keep growing. We pay for ads to reach people who need God's Word, and your gift reaches one more.")) {
                         ForEach(gifts, id: \.id) { product in
                             row(title: product.displayName,
                                 subtitle: product.description,
@@ -287,9 +287,9 @@ struct GiftThankYouView: View {
     private var message: String {
         switch item.kind {
         case .gift(let price):
-            return "Your \(price) gift puts God's Word in the hands of someone who could not afford it."
+            return "Your \(price) gift helps SpeakLife reach someone who needs God's Word today."
         case .lifetime:
-            return "SpeakLife is yours for life, and your support keeps it free for someone who cannot pay."
+            return "SpeakLife is yours for life, and your support helps us reach more people who need it."
         }
     }
 
