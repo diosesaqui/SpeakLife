@@ -207,6 +207,47 @@ final class SubscriptionStore: ObservableObject {
     /// The lapsed entitlement's last period was the free trial: they never paid.
     @Published private(set) var lapsedFromTrial = false
 
+    /// Store product behind the active premium entitlement, its next renewal
+    /// (or end) date, and whether auto-renew is still on. From RevenueCat.
+    @Published private(set) var activePremiumProductID: String?
+    @Published private(set) var premiumPeriodEndsAt: Date?
+    @Published private(set) var premiumWillRenew = false
+
+    /// True when the active paid plan bills monthly. Read from the StoreKit
+    /// product's period, so a Remote Config repointed monthly SKU still counts.
+    var activePlanIsMonthly: Bool {
+        guard let id = activePremiumProductID else { return false }
+        if let product = subscriptions.first(where: { $0.id == id }) {
+            return product.subscription?.subscriptionPeriod.unit == .month
+        }
+        return id == resolvedMonthlyID
+    }
+
+    /// The yearly plan to offer a monthly subscriber, priced per month against
+    /// what they pay now. Nil unless they are a paying monthly subscriber and
+    /// both products are loaded.
+    var monthlyToAnnualOffer: MonthlyToAnnualOffer? {
+        guard isPremium, !isInTrial, activePlanIsMonthly,
+              let annual = currentOfferedPremium,
+              annual.subscription?.subscriptionPeriod.unit == .year,
+              let id = activePremiumProductID,
+              let monthly = subscriptions.first(where: { $0.id == id }) ?? currentOfferedPremiumMonthly
+        else { return nil }
+        return MonthlyToAnnualOffer(monthly: monthly, annual: annual)
+    }
+
+    /// Whether the pre-renewal monthly-to-yearly sheet is due: Remote Config
+    /// `monthlyAnnualOffer` is on and the current month ends within
+    /// `monthlyAnnualOfferDays`. Once per billing period is enforced by the
+    /// presenter, which records the period it was shown for.
+    @MainActor
+    var monthlyAnnualOfferDue: Bool {
+        guard monthlyAnnualOffer, entitlementsResolved, monthlyToAnnualOffer != nil,
+              let endsAt = premiumPeriodEndsAt else { return false }
+        let days = endsAt.timeIntervalSinceNow / 86_400
+        return days > 0 && days <= Double(monthlyAnnualOfferDays)
+    }
+
     /// Whether the lapsed-user wall replaces the app. Waits for RevenueCat so a
     /// subscriber is never walled on the launch-time `isPremium = false`, and
     /// exempts anyone with access from another source (Stand Pass, devotional).
@@ -456,6 +497,13 @@ final class SubscriptionStore: ObservableObject {
     // wall went hard, so older lapsers are never swept up by surprise.
     static let defaultLapsedWallSince = "2026-09-28"
     @Published var lapsedWallSince: Date = SubscriptionStore.parseDay(SubscriptionStore.defaultLapsedWallSince) ?? .distantFuture
+    // Monthly-to-yearly offer before a monthly subscriber's renewal (RC key
+    // "monthlyAnnualOffer", default off) and how many days ahead of the
+    // renewal it appears (RC key "monthlyAnnualOfferDays", default 5).
+    // Monthly churns about a third of subscribers every cycle; yearly costs
+    // them roughly a third as much per month.
+    @Published var monthlyAnnualOffer = false
+    @Published var monthlyAnnualOfferDays = 5
     // Gates ONLY the "Can't afford full price? Pay what you can →" CTA link,
     // independent of the soft/hard wall and the welcome offer. Default OFF: the
     // link stays hidden everywhere until Remote Config sets showPayWhatYouCanCTA.
@@ -800,6 +848,9 @@ final class SubscriptionStore: ObservableObject {
         lapsedWallSince = Self.parseDay(remoteConfig["lapsedWallSince"].stringValue.trimmingCharacters(in: .whitespacesAndNewlines))
             ?? Self.parseDay(Self.defaultLapsedWallSince)
             ?? .distantFuture
+        monthlyAnnualOffer = remoteConfig["monthlyAnnualOffer"].boolValue
+        let offerDays = remoteConfig["monthlyAnnualOfferDays"].numberValue.intValue
+        monthlyAnnualOfferDays = offerDays > 0 ? offerDays : 5
 
         // Clean Paywall Layout A/B Test (unset key resolves false — ships dormant)
         useCleanPaywallVariant = remoteConfig["useCleanPaywallVariant"].boolValue
@@ -946,6 +997,10 @@ final class SubscriptionStore: ObservableObject {
         // revocation; date it to now so the cutoff still applies.
         premiumLapsedAt    = lapsed.map { $0.expirationDate ?? Date() }
         lapsedFromTrial    = lapsed?.periodType == .trial
+        let activeEntitlement = RevenueCatManager.shared.activePremiumEntitlement(info)
+        activePremiumProductID = activeEntitlement?.productIdentifier
+        premiumPeriodEndsAt = activeEntitlement?.expirationDate
+        premiumWillRenew   = activeEntitlement?.willRenew ?? false
         premiumOriginalPurchaseDate = premiumActive
             ? RevenueCatManager.shared.premiumOriginalPurchaseDate(info)
             : nil

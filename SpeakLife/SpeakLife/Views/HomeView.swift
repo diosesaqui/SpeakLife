@@ -104,6 +104,10 @@ struct HomeView: View {
     @State private var isPresented = false
     @State var showSubscription = false
     @State private var showTriggeredPaywall = false
+    @State private var showMonthlyAnnualOffer = false
+    /// The billing-period end the monthly-to-yearly sheet was last shown for,
+    /// so it appears at most once per month however often the app opens.
+    @AppStorage("monthlyAnnualOfferShownForPeriod") private var monthlyAnnualOfferShownForPeriod: Double = 0
     @StateObject private var paywallTrigger = PaywallTriggerManager.shared
     @State private var showDeclarationPrompt = false
     @AppStorage("hasCreatedFirstDeclaration") private var hasCreatedFirstDeclaration = false
@@ -219,6 +223,20 @@ struct HomeView: View {
 //                                .environmentObject(declarationStore)
 //                                .environmentObject(subscriptionStore)
 //                            }
+                            .sheet(isPresented: $showMonthlyAnnualOffer) {
+                                MonthlyToAnnualOfferView { showMonthlyAnnualOffer = false }
+                                    .environmentObject(subscriptionStore)
+                                    .presentationDetents([.large])
+                            }
+                            // RevenueCat answers after the first frame, so the
+                            // renewal date is not known on appear. Re-check once
+                            // it lands and whenever the app comes forward.
+                            .onChange(of: subscriptionStore.premiumPeriodEndsAt) { _ in
+                                checkMonthlyAnnualOffer()
+                            }
+                            .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+                                checkMonthlyAnnualOffer()
+                            }
                             .onReceive(NotificationCenter.default.publisher(for: .devotionalVersionUpdated)) { notification in
                                 if let version = notification.userInfo?["version"] as? Int {
                                     // Received devotional version update notification
@@ -517,6 +535,19 @@ struct HomeView: View {
             "experiment": "onboarding_variant",
             "variant": variant
         ])
+    }
+
+    /// Shows the monthly-to-yearly sheet when the current month ends within
+    /// the configured window, once per billing period, and never on top of
+    /// another paywall.
+    private func checkMonthlyAnnualOffer() {
+        guard subscriptionStore.monthlyAnnualOfferDue,
+              let endsAt = subscriptionStore.premiumPeriodEndsAt,
+              endsAt.timeIntervalSince1970 != monthlyAnnualOfferShownForPeriod,
+              !showMonthlyAnnualOffer, !showSubscription, !showTriggeredPaywall
+        else { return }
+        monthlyAnnualOfferShownForPeriod = endsAt.timeIntervalSince1970
+        showMonthlyAnnualOffer = true
     }
 
     private func finishOnboarding() {

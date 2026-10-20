@@ -43,6 +43,7 @@ final class GrowthMetrics {
         static let lastOpenAt = "growth_last_open_at"
         static let featuresUsed = "growth_features_used"
         static let maxStreak = "growth_max_streak"
+        static let activeDays = "growth_active_days"
         static let aliasedRevenueID = "growth_aliased_revenue_id"
     }
 
@@ -59,6 +60,9 @@ final class GrowthMetrics {
         static let activatedAt = "activated_at"
         static let hoursToActivate = "hours_to_activate"
         static let maxStreak = "max_streak"
+        static let currentStreak = "current_streak"
+        static let totalDaysCompleted = "total_days_completed"
+        static let activeDays = "active_days"
         static let featuresUsedCount = "features_used_count"
         static let installDate = "install_date"
         static let churnedAt = "churned_at"
@@ -125,7 +129,14 @@ final class GrowthMetrics {
     // day and carries the gap since the previous one, which is what D1/D7/D30
     // retention and resurrection actually need.
 
-    func trackDayStarted(currentStreak: Int) {
+    /// - Parameters:
+    ///   - longestStreak / totalDaysCompleted: the streak model's own numbers,
+    ///     mirrored to the person once a day. `max_streak` used to be written
+    ///     only from checklist task completion and only when it beat a
+    ///     device-local best, so most subscribers never carried it: on
+    ///     2026-10-20, 97 of 116 subscribers with app activity had none, and
+    ///     "does a 7-day streak predict renewal" could not be answered.
+    func trackDayStarted(currentStreak: Int, longestStreak: Int = 0, totalDaysCompleted: Int = 0) {
         let today = Self.dayStamp(Date())
 
         lock.lock()
@@ -137,7 +148,22 @@ final class GrowthMetrics {
         let lastOpen = defaults.object(forKey: Key.lastOpenAt) as? Date
         defaults.set(today, forKey: Key.lastDayStarted)
         defaults.set(Date(), forKey: Key.lastOpenAt)
+        let activeDays = defaults.integer(forKey: Key.activeDays) + 1
+        defaults.set(activeDays, forKey: Key.activeDays)
+        let bestStreak = max(longestStreak, currentStreak, defaults.integer(forKey: Key.maxStreak))
+        defaults.set(bestStreak, forKey: Key.maxStreak)
         lock.unlock()
+
+        // Habit depth as person properties, once a day. Renewers opened the
+        // app ~8.7 days in their last month against ~3.5 for those who turned
+        // off auto-renew; these make that a cohort instead of a join.
+        // `active_days` counts from this build on, not from install.
+        AnalyticsService.shared.setUserProperty(Person.maxStreak, value: bestStreak)
+        AnalyticsService.shared.setUserProperty(Person.currentStreak, value: currentStreak)
+        AnalyticsService.shared.setUserProperty(Person.activeDays, value: activeDays)
+        if totalDaysCompleted > 0 {
+            AnalyticsService.shared.setUserProperty(Person.totalDaysCompleted, value: totalDaysCompleted)
+        }
 
         let daysSinceLastOpen = lastOpen.map {
             max(0, Calendar.current.dateComponents([.day], from: $0, to: Date()).day ?? 0)

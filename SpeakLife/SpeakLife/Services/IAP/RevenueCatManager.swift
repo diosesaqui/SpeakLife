@@ -121,6 +121,15 @@ final class RevenueCatManager {
         return entitlement.periodType == .trial
     }
 
+    /// The premium entitlement when it is active, else nil. Carries the
+    /// renewal date (`expirationDate`) and whether auto-renew is still on
+    /// (`willRenew`), which the monthly-to-yearly offer times itself against.
+    func activePremiumEntitlement(_ info: CustomerInfo) -> EntitlementInfo? {
+        guard let entitlement = info.entitlements[Self.premiumEntitlement],
+              entitlement.isActive else { return nil }
+        return entitlement
+    }
+
     /// Store product id behind the active premium entitlement, or nil when
     /// premium is not active. Reflects renewals, restores, offer codes and
     /// App Store-side plan changes, none of which pass through `purchase`.
