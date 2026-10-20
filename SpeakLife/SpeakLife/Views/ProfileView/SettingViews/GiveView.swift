@@ -30,7 +30,8 @@ enum GiftProduct {
         "SpeakLifeGift10",
         "SpeakLifeGift25",
         "SpeakLifeGift50",
-        "SpeakLifeGift100"
+        "SpeakLifeGift100",
+        "SpeakLifeGift500"
     ]
 }
 
