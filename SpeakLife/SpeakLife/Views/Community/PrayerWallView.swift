@@ -30,6 +30,9 @@ struct PrayerWallView: View {
     @State private var selectedTab: PrayerTab = .wall
     @State private var showPostForm = false
     @State private var showSignInPrompt = false
+    /// What the user tapped before being asked to sign in. Runs once the
+    /// sign-in sheet closes with them signed in, so they don't tap twice.
+    @State private var afterSignIn: (() -> Void)?
     @State private var agreementRequest: AgreementPresentationRequest?
 
     // Broadcast messages from SpeakLife used to live here as a third segment,
@@ -92,7 +95,7 @@ struct PrayerWallView: View {
                         if appleSignIn.isSignedIn {
                             showPostForm = true
                         } else {
-                            showSignInPrompt = true
+                            requireSignIn { showPostForm = true }
                         }
                     } label: {
                         Image(systemName: "square.and.pencil")
@@ -108,7 +111,11 @@ struct PrayerWallView: View {
             PostPrayerView(viewModel: viewModel)
                 .environmentObject(subscriptionStore)
         }
-        .sheet(isPresented: $showSignInPrompt) {
+        .sheet(isPresented: $showSignInPrompt, onDismiss: {
+            let action = afterSignIn
+            afterSignIn = nil
+            if appleSignIn.isSignedIn { action?() }
+        }) {
             AppleSignInPromptView(appleSignIn: appleSignIn)
                 .environmentObject(subscriptionStore)
         }
@@ -120,6 +127,11 @@ struct PrayerWallView: View {
             )
             .environmentObject(subscriptionStore)
             .presentationDetentsCompat()
+        }
+        .onChange(of: viewModel.needsSignIn) { needed in
+            guard needed else { return }
+            viewModel.needsSignIn = false
+            requireSignIn(then: nil)
         }
         .alert("Error", isPresented: Binding(
             get: { viewModel.errorMessage != nil },
@@ -233,6 +245,17 @@ struct PrayerWallView: View {
         }
     }
 
+    private func requireSignIn(then action: (() -> Void)?) {
+        afterSignIn = action
+        // iOS won't present a second sheet over one that's still up (or still
+        // animating away), so close the agreement sheet first and wait it out.
+        let otherSheetUp = agreementRequest != nil || showPostForm
+        agreementRequest = nil
+        DispatchQueue.main.asyncAfter(deadline: .now() + (otherSheetUp ? 0.5 : 0)) {
+            showSignInPrompt = true
+        }
+    }
+
     private var postList: some View {
         ScrollView {
             LazyVStack(spacing: 14) {
@@ -246,7 +269,8 @@ struct PrayerWallView: View {
                                 post: post,
                                 reaction: reaction
                             )
-                        }
+                        },
+                        onRequireSignIn: { action in requireSignIn(then: action) }
                     )
                 }
 
@@ -332,6 +356,9 @@ struct PrayerPostCard: View {
     /// host one per card because per-card sheets race each other when
     /// the post list re-renders after a reaction publishes a change.
     let onPresentAgreement: (WarriorRoomReaction) -> Void
+    /// Every Warrior Room write needs a signed-in account. Opens the sign-in
+    /// sheet, then runs the action once they're signed in.
+    let onRequireSignIn: (_ then: @escaping () -> Void) -> Void
     @ObservedObject private var appleSignIn = AppleSignInService.shared
 
     @State private var showReportAlert = false
@@ -397,8 +424,8 @@ struct PrayerPostCard: View {
 
             // Always-visible "Stand in agreement" button — no auto-pop
             // after reactions; users add their voice explicitly here.
-            // Hidden once the user has already added an agreement (and
-            // for non-signed-in users, who'd hit a sign-in hint instead).
+            // Hidden once the user has already added an agreement. Signed-out
+            // users still see it; tapping asks them to sign in first.
             if canAddAgreement {
                 addAgreementButton
             }
@@ -439,7 +466,11 @@ struct PrayerPostCard: View {
                         }
                     } else {
                         Button(role: .destructive) {
-                            showReportAlert = true
+                            if appleSignIn.isSignedIn {
+                                showReportAlert = true
+                            } else {
+                                onRequireSignIn { showReportAlert = true }
+                            }
                         } label: {
                             Label("Report", systemImage: "flag")
                         }
@@ -549,6 +580,12 @@ struct PrayerPostCard: View {
     }
 
     private func handleReactionTap(_ reaction: WarriorRoomReaction) {
+        // Same gate as posting: without it the tap updated the count locally,
+        // then the write was rejected and an error alert popped.
+        guard appleSignIn.isSignedIn else {
+            onRequireSignIn { viewModel.toggleReaction(reaction, on: post) }
+            return
+        }
         viewModel.toggleReaction(reaction, on: post)
         // Reactions no longer auto-open the agreement sheet. The user opts
         // in explicitly via the always-visible "Stand in agreement" button
@@ -638,16 +675,14 @@ struct PrayerPostCard: View {
     }
 
     private var canAddAgreement: Bool {
-        appleSignIn.isSignedIn && !viewModel.hasAgreed(on: post)
+        !viewModel.hasAgreed(on: post)
     }
 
     private var emptyAgreementHint: String {
         // Shown in place of the disclosure row once we know the chain is
         // empty, and as a fallback if an expanded chain loads empty. The
         // "Stand in agreement" CTA sits right above it.
-        appleSignIn.isSignedIn
-            ? "Be the first to stand in agreement."
-            : "Sign in to stand in agreement."
+        "Be the first to stand in agreement."
     }
 
     private var addAgreementButton: some View {
@@ -670,7 +705,10 @@ struct PrayerPostCard: View {
     /// registers a `.standing` reaction first so the agreement always carries
     /// a reaction context.
     private func startAgreementFlow() {
-        guard appleSignIn.isSignedIn else { return }
+        guard appleSignIn.isSignedIn else {
+            onRequireSignIn { startAgreementFlow() }
+            return
+        }
         guard !viewModel.hasAgreed(on: post) else { return }
 
         // Capture the reaction we want to prompt for; the parent presents.
