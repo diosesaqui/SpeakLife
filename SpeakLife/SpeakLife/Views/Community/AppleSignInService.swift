@@ -39,7 +39,11 @@ final class AppleSignInService: NSObject, ObservableObject {
     // MARK: - Check Current User
 
     func checkCurrentUser() {
-        if let user = Auth.auth().currentUser {
+        // An anonymous account (created by Stand With Me's invite flow) is not
+        // a sign-in. The Warrior Room rules reject anonymous writes, so
+        // counting it here let people tap reactions that then failed with
+        // "Missing or insufficient permissions".
+        if let user = Auth.auth().currentUser, !user.isAnonymous {
             isSignedIn = true
             uid = user.uid
             displayName = user.displayName ?? ""

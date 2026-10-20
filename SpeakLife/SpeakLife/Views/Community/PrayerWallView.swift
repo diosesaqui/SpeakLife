@@ -246,7 +246,8 @@ struct PrayerWallView: View {
                                 post: post,
                                 reaction: reaction
                             )
-                        }
+                        },
+                        onRequireSignIn: { showSignInPrompt = true }
                     )
                 }
 
@@ -332,6 +333,8 @@ struct PrayerPostCard: View {
     /// host one per card because per-card sheets race each other when
     /// the post list re-renders after a reaction publishes a change.
     let onPresentAgreement: (WarriorRoomReaction) -> Void
+    /// Reactions write to Firestore, which only accepts signed-in accounts.
+    let onRequireSignIn: () -> Void
     @ObservedObject private var appleSignIn = AppleSignInService.shared
 
     @State private var showReportAlert = false
@@ -549,6 +552,12 @@ struct PrayerPostCard: View {
     }
 
     private func handleReactionTap(_ reaction: WarriorRoomReaction) {
+        // Same gate as posting: without it the tap updated the count locally,
+        // then the write was rejected and an error alert popped.
+        guard appleSignIn.isSignedIn else {
+            onRequireSignIn()
+            return
+        }
         viewModel.toggleReaction(reaction, on: post)
         // Reactions no longer auto-open the agreement sheet. The user opts
         // in explicitly via the always-visible "Stand in agreement" button
