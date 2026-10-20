@@ -280,7 +280,12 @@ struct CancelInterventionView: View {
             (subscriptionStore.currentOfferedWeekly,          "Weekly"),
             (subscriptionStore.currentOfferedLifetime,        "Lifetime"),
         ]
-        var seen = Set<String>()
+        // The plan they already have is not an offer, and for a monthly
+        // subscriber the yearly plan leads the step as its own card.
+        var seen = Set<String>([subscriptionStore.activePremiumProductID].compactMap { $0})
+        if let offer = subscriptionStore.monthlyToAnnualOffer {
+            seen.insert(offer.annual.id)
+        }
         return candidates.compactMap { product, label -> (Product, String)? in
             guard let p = product, seen.insert(p.id).inserted else { return nil }
             return (p, label)
@@ -307,7 +312,20 @@ struct CancelInterventionView: View {
                             .padding(.horizontal, 24)
                     }
 
-                    if products.isEmpty {
+                    if let offer = subscriptionStore.monthlyToAnnualOffer {
+                        MonthlyToAnnualCard(offer: offer, isPurchasing: isPurchasing) {
+                            Task { await switchToAnnual(offer) }
+                        }
+                        .padding(.horizontal, 20)
+                        .onAppear {
+                            var params = offer.analytics
+                            params["source"] = "cancel_flow"
+                            params["reason"] = selectedReason?.rawValue ?? "skipped"
+                            AnalyticsService.shared.track("monthly_annual_offer_shown", parameters: params)
+                        }
+                    }
+
+                    if products.isEmpty && subscriptionStore.monthlyToAnnualOffer == nil {
                         Text("No alternative plans available right now.")
                             .font(.system(size: 14))
                             .foregroundColor(.white.opacity(0.5))
@@ -399,6 +417,27 @@ struct CancelInterventionView: View {
                 .fill(Color.white.opacity(0.06))
                 .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.12), lineWidth: 1))
         )
+    }
+
+    @MainActor
+    private func switchToAnnual(_ offer: MonthlyToAnnualOffer) async {
+        isPurchasing = true
+        purchaseError = nil
+        var params = offer.analytics
+        params["source"] = "cancel_flow"
+        params["reason"] = selectedReason?.rawValue ?? "skipped"
+        do {
+            let outcome = try await subscriptionStore.purchaseOutcome(offer.annual, paywallName: "monthly_to_annual_cancel_flow")
+            if outcome == .purchased {
+                AnalyticsService.shared.track("monthly_annual_offer_purchased", parameters: params)
+                isPresented = false
+            }
+        } catch {
+            purchaseError = "The switch didn't go through. Please try again."
+            params["error"] = String(describing: error)
+            AnalyticsService.shared.track("monthly_annual_offer_failed", parameters: params)
+        }
+        isPurchasing = false
     }
 
     @MainActor
