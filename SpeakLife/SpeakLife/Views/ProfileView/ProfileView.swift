@@ -123,8 +123,12 @@ struct ProfileView: View {
                         redeemCodeRow
                     }
 
-                    Section(header: Text("Book".uppercased()).font(.caption)) {
-                        bookLink
+                    // Rides the `hardOnboardingPaywall` Remote Config switch,
+                    // like the paywall's per-day pricing: hidden while it is off.
+                    if subscriptionStore.hardOnboardingPaywall {
+                        Section(header: Text("Book".uppercased()).font(.caption)) {
+                            bookLink
+                        }
                     }
                     
                     
