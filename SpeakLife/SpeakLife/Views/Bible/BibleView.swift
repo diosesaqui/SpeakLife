@@ -10,7 +10,6 @@ import SwiftUI
 struct BibleView: View {
     @StateObject private var viewModel: BibleViewModel
     @EnvironmentObject var navigator: BibleNavigator
-    @State private var showSearch = false
     @State private var showBookmarks = false
     @State private var showSettings = false
     @State private var showAuthSheet = false
@@ -92,11 +91,6 @@ struct BibleView: View {
                     // uses (it reads from Wldeh/HelloAO, which need no account
                     // and have no hourly limit). That service now fails with
                     // a server error, so the prompt was a dead end.
-                    Button(action: { showSearch.toggle() }) {
-                        Image(systemName: "magnifyingglass")
-                            .font(.system(size: 16, weight: .medium))
-                    }
-                    
                     Menu {
                         Button(action: { showBookmarks.toggle() }) {
                             Label("Bookmarks", systemImage: "bookmark.fill")
@@ -121,10 +115,6 @@ struct BibleView: View {
                     }
                 }
             }
-        }
-        .sheet(isPresented: $showSearch) {
-            BibleSearchView(viewModel: viewModel)
-                .preferredColorScheme(.dark)
         }
         .sheet(isPresented: $showBookmarks) {
             BibleBookmarksView(viewModel: viewModel)

@@ -51,7 +51,10 @@ final class NLTBibleAPIService {
 
     func fetchChapter(abbrev: String, chapter: Int) async throws -> BibleChapter {
         let key = NLTConfig.apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !key.isEmpty else { throw BibleAPIError.unauthorized }
+        // Key and quota failures are reported as server errors on purpose: the
+        // reader treats .unauthorized and .rateLimited as the old abibliadigital
+        // sign-in limits and opens a sign-in sheet that cannot fix an NLT key.
+        guard !key.isEmpty else { throw BibleAPIError.serverError(401) }
 
         let bookKey = BibleBookMapping.abbreviationToApiName[abbrev.lowercased()] ?? abbrev.lowercased()
         guard let bookInfo = BibleBookMapping.bookNames[bookKey] else { throw BibleAPIError.noData }
@@ -68,11 +71,8 @@ final class NLTBibleAPIService {
         do {
             let (body, response) = try await session.data(from: url)
             if let httpResponse = response as? HTTPURLResponse {
-                switch httpResponse.statusCode {
-                case 200...299: break
-                case 401, 403: throw BibleAPIError.unauthorized
-                case 429: throw BibleAPIError.rateLimited
-                default: throw BibleAPIError.serverError(httpResponse.statusCode)
+                guard (200...299).contains(httpResponse.statusCode) else {
+                    throw BibleAPIError.serverError(httpResponse.statusCode)
                 }
             }
             data = body
@@ -144,21 +144,8 @@ final class NLTBibleAPIService {
         // Footnotes can hold nested spans (e.g. small-caps LORD), so a regex
         // would stop at the first inner </span> and leak footnote text.
         var text = removingSpans(withClass: "tn", from: html)
-        let removals = [
-            #"(?s)<a class="a-tn">.*?</a>"#,
-            // Verse number and chapter labels.
-            #"(?s)<span class="vn">.*?</span>"#,
-            #"(?s)<span class="cw_ch">.*?</span>"#,
-            #"(?s)<span class="cw">.*?</span>"#,
-            // Section headings. Ended by the next tag rather than a closing tag,
-            // since the API sometimes closes these with a bare <p>.
-            #"(?s)<h\d[^>]*>.*?</h\d>"#,
-            #"<p class="(?:subhead|chapter-number)[^"]*"[^>]*>[^<]*"#,
-            // Everything else is presentation.
-            #"<[^>]+>"#
-        ]
-        for pattern in removals {
-            text = text.replacingOccurrences(of: pattern, with: " ", options: [.regularExpression, .caseInsensitive])
+        for regex in removals {
+            text = regex.stringByReplacingMatches(in: text, range: NSRange(text.startIndex..., in: text), withTemplate: " ")
         }
 
         text = decodeEntities(text)
@@ -167,6 +154,21 @@ final class NLTBibleAPIService {
         text = text.replacingOccurrences(of: #" +([,.;:!?’”)])"#, with: "$1", options: .regularExpression)
         return text.trimmingCharacters(in: .whitespacesAndNewlines)
     }
+
+    /// Compiled once: a long chapter runs these over every verse.
+    private static let removals: [NSRegularExpression] = [
+        #"(?s)<a class="a-tn">.*?</a>"#,
+        // Verse number and chapter labels.
+        #"(?s)<span class="vn">.*?</span>"#,
+        #"(?s)<span class="cw_ch">.*?</span>"#,
+        #"(?s)<span class="cw">.*?</span>"#,
+        // Section headings, including any markup inside them. Ended by the
+        // next paragraph rather than only a closing tag, since the API
+        // sometimes closes these with a bare <p>.
+        #"(?s)<(?:h\d|p class="subhead[^"]*")[^>]*>.*?(?=</h\d>|</p>|<p[\s>]|$)"#,
+        // Everything else is presentation.
+        #"<[^>]+>"#
+    ].compactMap { try? NSRegularExpression(pattern: $0, options: .caseInsensitive) }
 
     /// Removes every `<span class="…">` with the given class, including any
     /// spans nested inside it.
@@ -182,7 +184,9 @@ final class NLTBibleAPIService {
             while depth > 0 {
                 let nextOpen = rest.range(of: "<span", range: cursor..<rest.endIndex)
                 guard let nextClose = rest.range(of: "</span>", range: cursor..<rest.endIndex) else {
-                    cursor = rest.endIndex
+                    // Unclosed: drop only the opening tag so the verse
+                    // after it is not lost.
+                    cursor = start.upperBound
                     break
                 }
                 if let nextOpen, nextOpen.lowerBound < nextClose.lowerBound {

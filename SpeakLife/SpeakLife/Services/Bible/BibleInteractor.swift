@@ -11,7 +11,6 @@ import Combine
 protocol BibleInteractorProtocol {
     func loadBooks() async throws -> [BibleBook]
     func loadChapter(bookAbbrev: String, chapter: Int, version: String) async throws -> BibleChapter
-    func searchVerses(query: String, version: String) async throws -> BibleSearchResponse
     func getRandomVerse(version: String) async throws -> RandomVerse
     func loadVersions() async throws -> [BibleVersion]
     
@@ -824,19 +823,6 @@ final class BibleInteractor: BibleInteractorProtocol {
         return Self.bookAbbrevMapping[abbrev.lowercased()] ?? abbrev.uppercased()
     }
     
-    
-    func searchVerses(query: String, version: String = "kjv") async throws -> BibleSearchResponse {
-        
-        // HelloAO doesn't have search API, implement client-side search
-        
-        // For now, return empty results
-        // TODO: Implement client-side search by fetching and searching through books
-        return BibleSearchResponse(
-            occurrence: 0,
-            version: version,
-            verses: []
-        )
-    }
     
     func getRandomVerse(version: String = "kjv") async throws -> RandomVerse {
         

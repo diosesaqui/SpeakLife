@@ -58,7 +58,7 @@ struct BibleReaderView: View {
                     .padding()
 
                     // Tyndale requires this notice wherever NLT text is shown.
-                    if NLTConfig.isNLT(viewModel.selectedVersion) {
+                    if NLTConfig.isNLT(chapter.version) {
                         Text(NLTConfig.copyrightNotice)
                             .font(.system(size: 11))
                             .foregroundColor(.secondary)
