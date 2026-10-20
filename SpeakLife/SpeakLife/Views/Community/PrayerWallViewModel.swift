@@ -16,6 +16,9 @@ class PrayerWallViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var isSubmitting = false
     @Published var errorMessage: String?
+    /// Set when a write needs a full account. The view answers it with the
+    /// sign-in sheet instead of an error alert.
+    @Published var needsSignIn = false
     @Published var submissionMessage: String?
     @Published var isShowingPostForm = false
     /// False until we detect the last batch was smaller than batchSize,
@@ -370,7 +373,9 @@ class PrayerWallViewModel: ObservableObject {
                     guard let self = self else { return }
                     self.isSubmitting = false
                     if let error = error {
-                        self.errorMessage = "Error posting: \(error.localizedDescription)"
+                        // Shown inside the post form, so no sign-in hand-off
+                        // here: that would close the form and lose the text.
+                        self.errorMessage = "Couldn't share your prayer. Please try again."
                     } else {
                         self.submissionMessage = isTestimony
                             ? "Testimony shared. God gets all the glory \u{1F3C6}"
@@ -500,10 +505,57 @@ class PrayerWallViewModel: ObservableObject {
             .updateData(updates) { [weak self] error in
                 if let error = error {
                     DispatchQueue.main.async {
-                        self?.errorMessage = "Error saving reaction: \(error.localizedDescription)"
+                        guard let self = self else { return }
+                        self.rollBackReaction(postId: postId, removed: remove, added: add)
+                        self.handleWriteError(error, fallback: "Couldn't save your reaction.")
                     }
                 }
             }
+    }
+
+    /// Undo the optimistic local change after the server rejects a reaction,
+    /// so the count and highlight match what was actually saved.
+    private func rollBackReaction(postId: String,
+                                  removed: WarriorRoomReaction?,
+                                  added: WarriorRoomReaction?) {
+        var reactions = userReactions
+        reactions[postId] = removed?.rawValue
+        userReactions = reactions
+
+        let undo: (inout PrayerWallPost) -> Void = { post in
+            var counts = post.reactionCounts ?? [:]
+            if let a = added {
+                counts[a.rawValue] = max(0, (counts[a.rawValue] ?? 0) - 1)
+            }
+            if let r = removed {
+                counts[r.rawValue] = (counts[r.rawValue] ?? 0) + 1
+            }
+            post.reactionCounts = counts
+            var delta = 0
+            if added != nil { delta -= 1 }
+            if removed != nil { delta += 1 }
+            post.prayerCount = max(0, post.prayerCount + delta)
+        }
+        if let idx = posts.firstIndex(where: { $0.id == postId }) {
+            undo(&posts[idx])
+        }
+        if let idx = myPosts.firstIndex(where: { $0.id == postId }) {
+            undo(&myPosts[idx])
+        }
+    }
+
+    /// A permission-denied write means the account can't write to the
+    /// Warrior Room (signed out, or an anonymous Stand With Me account), so
+    /// ask them to sign in. Anything else gets a plain message instead of
+    /// Firestore's raw error text.
+    private func handleWriteError(_ error: Error, fallback: String) {
+        let nsError = error as NSError
+        if nsError.domain == FirestoreErrorDomain,
+           nsError.code == FirestoreErrorCode.permissionDenied.rawValue {
+            needsSignIn = true
+        } else {
+            errorMessage = "\(fallback) Please try again."
+        }
     }
 
     // MARK: - Mark As Answered
@@ -542,7 +594,7 @@ class PrayerWallViewModel: ObservableObject {
                     reason: String = "inappropriate") {
         guard let postId = post.id else { return }
         guard !reporterUid.isEmpty else {
-            errorMessage = "Sign in to report a post."
+            needsSignIn = true
             return
         }
 
@@ -558,7 +610,7 @@ class PrayerWallViewModel: ObservableObject {
                 DispatchQueue.main.async {
                     guard let self = self else { return }
                     if let error = error {
-                        self.errorMessage = "Error reporting post: \(error.localizedDescription)"
+                        self.handleWriteError(error, fallback: "Couldn't report this post.")
                     }
                 }
             }
@@ -819,7 +871,7 @@ class PrayerWallViewModel: ObservableObject {
                             self.agreementsByPost[postId] = current
                             self.adjustAgreementCount(postId: postId, by: -1)
 
-                            self.errorMessage = "Couldn't save your agreement: \(error.localizedDescription)"
+                            self.handleWriteError(error, fallback: "Couldn't save your agreement.")
                         } else {
                             // Resolves the count for posts whose aggregation
                             // never landed, so the card stops saying
