@@ -443,9 +443,8 @@ final class SubscriptionStore: ObservableObject {
     // true, onboarding callsites (isHardPaywall: true) render a hard wall: no X,
     // and therefore no exit discount. When false, the onboarding paywall stays
     // soft: close button plus the one-time welcome-offer discount on dismiss.
-    // Starts false (soft) until the first fetch lands. Older builds read
-    // the inverted legacy key "showPayWhatYouCanLink" (false = hard), so keep
-    // both keys in the console in agreement until those builds age out.
+    // Starts false (soft) until the first fetch lands, and reads false if the
+    // key is missing from the console.
     @Published var hardOnboardingPaywall = false
     // Lapsed-user wall (RC key "hardLapsedPaywall"). When true, an onboarded
     // user whose premium trial or subscription has ended sees LapsedPaywallView
@@ -795,12 +794,7 @@ final class SubscriptionStore: ObservableObject {
 
         // High Conversion Paywall Flag
         useHighConversionPaywall = remoteConfig["useHighConversionPaywall"].boolValue
-        // Falls back to the inverted legacy key while the new one is unset in
-        // the console, so publishing this build never flips the wall on its own.
-        let hardWall = remoteConfig["hardOnboardingPaywall"]
-        hardOnboardingPaywall = hardWall.source == .static
-            ? !remoteConfig["showPayWhatYouCanLink"].boolValue
-            : hardWall.boolValue
+        hardOnboardingPaywall = remoteConfig["hardOnboardingPaywall"].boolValue
         showPayWhatYouCanCTA = remoteConfig["showPayWhatYouCanCTA"].boolValue
         hardLapsedPaywall = remoteConfig["hardLapsedPaywall"].boolValue
         lapsedWallSince = Self.parseDay(remoteConfig["lapsedWallSince"].stringValue.trimmingCharacters(in: .whitespacesAndNewlines))
