@@ -337,7 +337,9 @@ struct SpeakLifeApp: App {
                 // (see SubscriptionStore.applyCustomerInfo).
                 Task { await QualifiedTrialTracker.shared.evaluate() }
                 GrowthMetrics.shared.trackDayStarted(
-                    currentStreak: enhancedStreakViewModel.streakStats.currentStreak
+                    currentStreak: enhancedStreakViewModel.streakStats.currentStreak,
+                    longestStreak: enhancedStreakViewModel.streakStats.longestStreak,
+                    totalDaysCompleted: enhancedStreakViewModel.streakStats.totalDaysCompleted
                 )
 
                 // Set up app state references
