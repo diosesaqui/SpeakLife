@@ -92,6 +92,7 @@ final class TrialExperienceService: ObservableObject {
         UserDefaults.standard.set(0, forKey: kTrialDeclarationCount)
         UserDefaults.standard.set(length, forKey: kTrialLengthDays)
 
+        assignHabitGroup()
         scheduleTrialPushes(from: now, trialLengthDays: length)
         // Start every trial at "not used", so a trial that never touches a
         // feature reads false rather than missing, and the two groups can be
@@ -161,7 +162,7 @@ final class TrialExperienceService: ObservableObject {
     /// Call when user converts (premium_succeeded)
     func onTrialConverted() {
         UserDefaults.standard.set(false, forKey: kTrialActive)
-        center.removePendingNotificationRequests(withIdentifiers: ["trial_d2", "trial_d3", StormTrialReminder.identifier, StormTrialPushes.bibleChatID])
+        center.removePendingNotificationRequests(withIdentifiers: ["trial_d2", "trial_d3", StormTrialReminder.identifier, StormTrialPushes.bibleChatID] + Self.nudgeIDs)
         AnalyticsService.shared.track("trial_experience_converted", parameters: [
             "declarations_during_trial": declarationCountDuringTrial,
             "trial_day": trialDay
@@ -172,7 +173,7 @@ final class TrialExperienceService: ObservableObject {
     /// Used as a defensive cleanup after a non-trial purchase by a user who
     /// has stale pushes from the pre-fix isTrialProduct/willStartTrial bug.
     func clearPendingTrialPushes() {
-        center.removePendingNotificationRequests(withIdentifiers: ["trial_d2", "trial_d3", StormTrialReminder.identifier])
+        center.removePendingNotificationRequests(withIdentifiers: ["trial_d2", "trial_d3", StormTrialReminder.identifier] + Self.nudgeIDs)
     }
 
     /// Re-schedule the D2/D3 trial-ending pushes from the persisted trial
@@ -208,6 +209,8 @@ final class TrialExperienceService: ObservableObject {
                 self?.scheduleDay2Push(from: startDate, trialLengthDays: trialLengthDays)
             }
             self?.scheduleDay3Push(from: startDate, trialLengthDays: trialLengthDays)
+            self?.scheduleHabitPushes(from: startDate, trialLengthDays: trialLengthDays,
+                                      ownedByStormArm: StormTrialReminder.ownsTrialWarning)
         }
     }
 
@@ -360,5 +363,179 @@ final class TrialExperienceService: ObservableObject {
                 "You're becoming someone who speaks God's truth over their life daily. Don't quit on that person. Open SpeakLife to continue your journey."
             )
         }
+    }
+}
+
+// MARK: - Trial-week habit (all onboarding arms, 10% holdout)
+//
+// Trial-week app days predict paying more than anything else we track
+// (trials since Sep 2026): 5-7 days converted 68%, 3-4 days 48%, 1-2 days
+// 19%, and 1-2 days is the biggest group (54 of 140). Converters also used
+// audio (79-84% vs 39%). So the trial week aims at three app days:
+//
+// - the storm arm's first-night audio and Day-2 Ask the Bible pushes, for
+//   every arm (the storm arm keeps its own, storm-worded ones);
+// - "haven't opened today" nudges at 7pm on days 2-4, each cleared the
+//   moment the app opens that day, so engaged trialists never see them;
+// - a progress card on Today (TrialProgressCard).
+//
+// Controlled test: a stable 10% of installs (Remote Config
+// `trialHabitHoldoutPct`) get today's trial week instead. The person
+// property `trial_habit_group` marks the side, so trial-to-paid compares
+// treatment against holdout. Remote Config `trialHabit` (unset = on)
+// switches the whole layer off.
+extension TrialExperienceService {
+
+    static let habitEnabledKey = "trial_habit_enabled"
+    static let habitHoldoutKey = "trial_habit_holdout_pct"
+    private static let habitBucketKey = "trial_habit_bucket"
+    private static let habitGroupKey = "trial_habit_group"
+    private static let activeDaysKey = "trial_habit_active_days"
+    static let nudgeIDs = ["trial_nudge_d2", "trial_nudge_d3", "trial_nudge_d4"]
+
+    /// Remote Config side, persisted so trial start (in onboarding, often
+    /// before config lands on a fresh install) reads the last known value.
+    static func updateHabitConfig(enabled: Bool, holdoutPercent: Int) {
+        let defaults = UserDefaults.standard
+        defaults.set(enabled, forKey: habitEnabledKey)
+        defaults.set(min(max(holdoutPercent, 0), 100), forKey: habitHoldoutKey)
+    }
+
+    /// "treatment" or "holdout" for the current trial, or nil when the layer
+    /// is off or no trial has started.
+    var habitGroup: String? {
+        UserDefaults.standard.string(forKey: Self.habitGroupKey)
+    }
+
+    var isInHabitTreatment: Bool { habitGroup == "treatment" }
+
+    /// Trial still running, in the treatment group: the progress card shows.
+    var showsTrialProgress: Bool {
+        isInHabitTreatment && isTrialActive && trialDay >= 1 && Date() < trialEndDate
+    }
+
+    /// Distinct calendar days the app was opened since the trial began.
+    var trialActiveDays: Int {
+        (UserDefaults.standard.stringArray(forKey: Self.activeDaysKey) ?? []).count
+    }
+
+    private var trialEndDate: Date {
+        guard let start = UserDefaults.standard.object(forKey: "trial_experience_start_date") as? Date else {
+            return .distantPast
+        }
+        return Calendar.current.date(byAdding: .day, value: trialLengthDays, to: start) ?? .distantPast
+    }
+
+    /// Draws the trial's group once, at trial start. Unset config reads on
+    /// with a 10% holdout.
+    func assignHabitGroup() {
+        let defaults = UserDefaults.standard
+        // The trial starts inside the app, after this launch's foreground
+        // hook has already run, so day 1 is counted here.
+        defaults.set([Self.dayStamp(Date())], forKey: Self.activeDaysKey)
+        let enabled = defaults.object(forKey: Self.habitEnabledKey) as? Bool ?? true
+        guard enabled else {
+            defaults.removeObject(forKey: Self.habitGroupKey)
+            return
+        }
+        let holdoutPct = defaults.object(forKey: Self.habitHoldoutKey) as? Int ?? 10
+        let bucket: Int
+        if let stored = defaults.object(forKey: Self.habitBucketKey) as? Int {
+            bucket = stored
+        } else {
+            bucket = Int.random(in: 0..<100)
+            defaults.set(bucket, forKey: Self.habitBucketKey)
+        }
+        let group = bucket < holdoutPct ? "holdout" : "treatment"
+        defaults.set(group, forKey: Self.habitGroupKey)
+        AnalyticsService.shared.setUserProperty("trial_habit_group", value: group)
+        AnalyticsService.shared.track("trial_habit_assigned", parameters: [
+            "group": group,
+            "holdout_pct": holdoutPct
+        ])
+    }
+
+    /// Call on every foreground. Counts today as a trial day and clears
+    /// today's "haven't opened" nudge, since they just did.
+    func onAppOpenDuringTrial() {
+        guard isTrialActive, Date() < trialEndDate else { return }
+        let defaults = UserDefaults.standard
+        let today = Self.dayStamp(Date())
+        var days = defaults.stringArray(forKey: Self.activeDaysKey) ?? []
+        if !days.contains(today) {
+            days.append(today)
+            defaults.set(days, forKey: Self.activeDaysKey)
+        }
+        let day = trialDay
+        if (2...4).contains(day) {
+            UNUserNotificationCenter.current().removePendingNotificationRequests(
+                withIdentifiers: ["trial_nudge_d\(day)"])
+        }
+    }
+
+    /// The treatment group's pushes. Called from the trial-push scheduler,
+    /// which runs at trial start and again once notification permission is
+    /// granted (onboarding asks after the paywall).
+    func scheduleHabitPushes(from start: Date, trialLengthDays: Int, ownedByStormArm: Bool) {
+        guard isInHabitTreatment, trialLengthDays >= 5 else { return }
+        let category = UserDefaults.standard.string(forKey: "selectedCategory")
+
+        if !ownedByStormArm {
+            // Night 1 audio replaces tonight's bedtime push (see
+            // scheduleTrialFirstNightAudio) rather than adding a second.
+            LifecycleNotificationService.shared.scheduleTrialFirstNightAudio(
+                category: category ?? "",
+                title: "For tonight's quiet 🎧",
+                body: "Your trial includes Scripture audio for sleep. Press play and let His Word be the last thing you hear."
+            )
+            if UserDefaults.standard.bool(forKey: "enableAIFeatures") {
+                scheduleTrialPush(
+                    id: StormTrialPushes.bibleChatID, dayOffset: 1, hour: 12, minute: 0, start: start,
+                    title: "Ask the Bible anything 💬",
+                    body: "Bring the question you'd never ask out loud. It answers from Scripture.",
+                    userInfo: ["action": StormTrialPushes.bibleChatID, "deepLink": "bibleChat"])
+            }
+        }
+
+        // Days 2-4 at 7pm, each cleared by an open that day.
+        let nudges: [(day: Int, title: String, body: String)] = [
+            (2, "Day 2 of your week ☀️",
+             "Your declarations for today are ready. Three minutes, out loud."),
+            (3, "Day 3 is where it starts to stick 🔥",
+             "Show up today and you're building a habit. Today's declarations are ready."),
+            (4, "Halfway through your week",
+             "Speak today's declarations over whatever is in front of you."),
+        ]
+        for nudge in nudges {
+            scheduleTrialPush(
+                id: "trial_nudge_d\(nudge.day)", dayOffset: nudge.day - 1, hour: 19, minute: 0, start: start,
+                title: nudge.title, body: nudge.body,
+                userInfo: ["action": "daily_declaration_burst",
+                           "notification_type": "trial_nudge_d\(nudge.day)"])
+        }
+    }
+
+    private func scheduleTrialPush(id: String, dayOffset: Int, hour: Int, minute: Int, start: Date,
+                                   title: String, body: String, userInfo: [String: Any]) {
+        let calendar = Calendar.current
+        guard let day = calendar.date(byAdding: .day, value: dayOffset, to: start),
+              let fire = calendar.date(bySettingHour: hour, minute: minute, second: 0, of: day),
+              fire > Date() else { return }
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        content.sound = .default
+        content.userInfo = userInfo
+        let comps = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: fire)
+        UNUserNotificationCenter.current().add(UNNotificationRequest(
+            identifier: id, content: content,
+            trigger: UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)))
+    }
+
+    private static func dayStamp(_ date: Date) -> String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = "yyyy-MM-dd"
+        return f.string(from: date)
     }
 }

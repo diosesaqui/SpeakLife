@@ -336,6 +336,8 @@ struct SpeakLifeApp: App {
                 // trialist crosses the 24h mark; RevenueCat updates cover the rest
                 // (see SubscriptionStore.applyCustomerInfo).
                 Task { await QualifiedTrialTracker.shared.evaluate() }
+                // Trial week: count today and clear today's "haven't opened" nudge.
+                TrialExperienceService.shared.onAppOpenDuringTrial()
                 GrowthMetrics.shared.trackDayStarted(
                     currentStreak: enhancedStreakViewModel.streakStats.currentStreak,
                     longestStreak: enhancedStreakViewModel.streakStats.longestStreak,
