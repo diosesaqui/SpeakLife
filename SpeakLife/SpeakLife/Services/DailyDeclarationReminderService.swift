@@ -220,37 +220,37 @@ class DailyDeclarationReminderService: ObservableObject {
         // Sunday
         (
             title: "🚨 Time to exercise your authority",
-            body: "Faith grows when you speak it. Your Daily Burst is ready. Three minutes, out loud, before the week starts."
+            body: "Faith grows when you speak it. 1 minute, out loud, to enforce victory for the day."
         ),
         // Monday
         (
             title: "🚨 Your authority is waiting",
-            body: "Jesus spoke to the storm. Today you speak to yours. Seven declarations, out loud, right now."
+            body: "Jesus spoke to the storm. Today you speak to yours. 1 minute, out loud, to enforce victory for the day."
         ),
         // Tuesday
         (
             title: "🚨 Don't skip today's Daily Burst",
-            body: "Faith comes by hearing, every day (Romans 10:17). Put His Word in your mouth before the day starts."
+            body: "Faith comes by hearing, every day (Romans 10:17). 1 minute, out loud, to enforce victory for the day."
         ),
         // Wednesday
         (
             title: "🚨 Time to build your faith",
-            body: "Yesterday's declarations were for yesterday. Today needs today's. Your Daily Burst is ready."
+            body: "Yesterday's declarations were for yesterday. 1 minute, out loud, to enforce victory for the day."
         ),
         // Thursday
         (
             title: "🚨 Exercise your authority today",
-            body: "What you speak this morning steers your whole day (James 3:4). Three minutes, out loud."
+            body: "What you speak this morning steers your whole day (James 3:4). 1 minute, out loud, to enforce victory."
         ),
         // Friday
         (
             title: "🚨 Your Daily Burst is ready",
-            body: "Authority you never speak does nothing. Say today's seven declarations and take your ground."
+            body: "Authority you never speak does nothing. 1 minute, out loud, to enforce victory for the day."
         ),
         // Saturday
         (
             title: "🚨 Faith is built daily",
-            body: "Not weekly. Not when it's convenient. Your Daily Burst is ready. Speak it before the day gets away."
+            body: "Not weekly. Not when it's convenient. 1 minute, out loud, to enforce victory for the day."
         )
     ]
 
