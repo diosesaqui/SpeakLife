@@ -11,11 +11,8 @@ struct WhatsNewBottomSheet: View {
     @Binding var isPresented: Bool
     let version: String
     let features = [
-       // "NEW Bible Tab",
-        "Multiple personal declaration",
-        "New Weekly Enforcement",
-        "Invite a friend to enforce victory",
-       // "New Spiritual Faith Tree 🌳"
+        "Read the Bible in the New Living Translation (NLT)",
+        "Invite a friend to stand with you in your Daily Burst"
     ]
 
     var body: some View {
