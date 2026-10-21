@@ -14,18 +14,12 @@
 //  typed in. If the regular price ever drops to the offer price or below, the
 //  "% off" badge disappears instead of making a false claim.
 //
+//  The route, the percent and trial math, and who sees it are in
+//  SpeakLifeCore/PushOffer.swift, covered by PushOfferTests.
+//
 
 import SwiftUI
 import StoreKit
-
-/// What a tapped offer push asked for. Boxed for `.sheet(item:)`.
-struct PushOfferRoute: Identifiable, Equatable {
-    let productId: String
-    let campaign: String
-    var id: String { productId + campaign }
-
-    static let defaultProductId = InAppId.Subscription.speakLife1YR29.id
-}
 
 struct PushOfferView: View {
 
@@ -54,11 +48,10 @@ struct PushOfferView: View {
     /// Whole percent off the regular yearly price, or nil when there is no
     /// honest discount to show.
     private var percentOff: Int? {
-        guard let offer = offerProduct, let regular = regularProduct,
-              offer.id != regular.id, regular.price > 0, offer.price < regular.price else { return nil }
-        let ratio = NSDecimalNumber(decimal: (regular.price - offer.price) / regular.price).doubleValue
-        let percent = Int((ratio * 100).rounded(.down))
-        return percent >= 5 ? percent : nil
+        guard let offer = offerProduct, let regular = regularProduct else { return nil }
+        return PushOfferRule.percentOff(offerPrice: offer.price,
+                                        regularPrice: regular.price,
+                                        sameProduct: offer.id == regular.id)
     }
 
     /// Free trial length in days, when this user can still take one.
@@ -66,16 +59,15 @@ struct PushOfferView: View {
         guard trialEligible,
               let intro = offerProduct?.subscription?.introductoryOffer,
               intro.paymentMode == .freeTrial else { return nil }
-        let period = intro.period
-        let days: Int
-        switch period.unit {
-        case .day: days = period.value
-        case .week: days = period.value * 7
-        case .month: days = period.value * 30
-        case .year: days = period.value * 365
+        let unit: PushOfferRule.PeriodUnit
+        switch intro.period.unit {
+        case .day: unit = .day
+        case .week: unit = .week
+        case .month: unit = .month
+        case .year: unit = .year
         @unknown default: return nil
         }
-        return days * max(intro.periodCount, 1)
+        return PushOfferRule.trialDays(unit: unit, value: intro.period.value, periodCount: intro.periodCount)
     }
 
     var body: some View {
@@ -254,7 +246,7 @@ struct PushOfferView: View {
                 Text("\(trialDays) days free, then \(product.displayPrice)/year")
                     .font(.system(size: 14)).foregroundColor(.white.opacity(0.65))
             } else {
-                Text("Just \((product.price / 12).formatted(product.priceFormatStyle))/month, billed yearly")
+                Text("Just \(PushOfferRule.monthlyEquivalent(yearlyPrice: product.price).formatted(product.priceFormatStyle))/month, billed yearly")
                     .font(.system(size: 14)).foregroundColor(.white.opacity(0.65))
             }
         }

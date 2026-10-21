@@ -529,16 +529,18 @@ struct SpeakLifeApp: App {
             case "offer":
                 // Discount push: open the offer screen, unless they subscribed
                 // after the push went out. Product and campaign ride the data.
-                let productId = (content.userInfo["productId"] as? String)
-                    .flatMap { $0.isEmpty ? nil : $0 } ?? PushOfferRoute.defaultProductId
-                let campaign = (content.userInfo["campaign"] as? String) ?? "none"
+                // On a cold launch isPremium can still be false until
+                // RevenueCat answers; PushOfferView closes itself when it flips.
+                let route = PushOfferRoute(userInfo: content.userInfo) ?? PushOfferRoute()
+                let present = PushOfferRule.shouldPresent(isPremium: subscriptionStore.isPremium)
                 AnalyticsService.shared.track("offer_push_opened", parameters: [
-                    "product_id": productId,
-                    "campaign": campaign,
-                    "is_premium": subscriptionStore.isPremium
+                    "product_id": route.productId,
+                    "campaign": route.campaign,
+                    "is_premium": subscriptionStore.isPremium,
+                    "presented": present
                 ])
-                if !subscriptionStore.isPremium {
-                    appState.pushOffer = PushOfferRoute(productId: productId, campaign: campaign)
+                if present {
+                    appState.pushOffer = route
                 }
                 return
             case "bibleChat":
