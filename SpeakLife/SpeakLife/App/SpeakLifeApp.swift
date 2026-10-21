@@ -526,6 +526,21 @@ struct SpeakLifeApp: App {
                     appState.remoteMessage = message
                 }
                 return
+            case "offer":
+                // Discount push: open the offer screen, unless they subscribed
+                // after the push went out. Product and campaign ride the data.
+                let productId = (content.userInfo["productId"] as? String)
+                    .flatMap { $0.isEmpty ? nil : $0 } ?? PushOfferRoute.defaultProductId
+                let campaign = (content.userInfo["campaign"] as? String) ?? "none"
+                AnalyticsService.shared.track("offer_push_opened", parameters: [
+                    "product_id": productId,
+                    "campaign": campaign,
+                    "is_premium": subscriptionStore.isPremium
+                ])
+                if !subscriptionStore.isPremium {
+                    appState.pushOffer = PushOfferRoute(productId: productId, campaign: campaign)
+                }
+                return
             case "bibleChat":
                 // Trial push introducing Bible chat: open the Ask the Bible tab.
                 // With AI features off that tab is the prayer wall; go home.
