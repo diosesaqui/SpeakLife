@@ -47,15 +47,13 @@ struct ReminderView: View {
                                     .padding(.horizontal)
                             }
 
-                            BedtimeAudioReminderCell(showConfirmation: $showConfirmation)
+                            ChecklistNotificationSettings(showConfirmation: $showConfirmation)
                                 .cornerRadius(DS.Radius.md)
                                 .padding(.horizontal)
 
-//                            // Checklist Notifications Section
-//                            ChecklistNotificationSettings(showConfirmation: $showConfirmation)
-//                                .cornerRadius(16)
-//                                .padding(.horizontal)
-//                                .padding(.top, 8)
+                            BedtimeAudioReminderCell(showConfirmation: $showConfirmation)
+                                .cornerRadius(DS.Radius.md)
+                                .padding(.horizontal)
                         }
                         .padding(.bottom)
                     }
