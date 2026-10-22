@@ -1553,9 +1553,10 @@ public struct TaskLibrary {
     ///
     /// **Why it is back.** `gratitude_moment` was retired because it was a
     /// manual checkbox with nothing behind it (58 completions from 238 unlocks)
-    /// and its destination duplicated `journal_insight`. This row is different
-    /// on both counts: it opens its own three-line form, and it is earned by
-    /// saving that form, not by ticking a box.
+    /// and its destination duplicated `journal_insight`. This row is earned by
+    /// writing, not by ticking a box: it opens the journal with its own prompt
+    /// ("Tell God three things you're thankful for today."), and saving the
+    /// entry is what completes it.
     ///
     /// **Injected, not in `foundationTasks`**, for the reason `withGuard` gives:
     /// the later phases pick foundation rows by id, so an array entry would drop

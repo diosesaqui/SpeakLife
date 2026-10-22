@@ -136,8 +136,8 @@ struct ModernDailyChecklistView: View {
         case .bibleChat:
             showBibleChat = true
         case .journal:
-            // The gratitude row shares the journal destination but has its own
-            // three-line form, which is what completes it.
+            // The gratitude row opens the journal with a gratitude prompt,
+            // and saving the entry is what completes it.
             if task.id == TaskLibrary.gratitudeTaskId {
                 showGratitude = true
             } else {
@@ -166,7 +166,7 @@ struct ModernDailyChecklistView: View {
         }
     }
 
-    /// Ticks the gratitude row once its three lines are saved.
+    /// Ticks the gratitude row once its journal entry is saved.
     private func completeGratitudeTask() {
         let taskId = TaskLibrary.gratitudeTaskId
         guard let task = viewModel.todayChecklist.tasks.first(where: { $0.id == taskId }),
@@ -684,8 +684,8 @@ struct ModernDailyChecklistView: View {
                                     openTakeItCaptive()
                                     return
                                 }
-                                // Gratitude is earned by writing the three
-                                // lines, so an unticked box opens the form.
+                                // Gratitude is earned by writing it down, so
+                                // an unticked box opens the journal.
                                 // Unticking a finished row still works below.
                                 if taskId == TaskLibrary.gratitudeTaskId && !task.isCompleted {
                                     showGratitude = true
@@ -975,8 +975,13 @@ struct ModernDailyChecklistView: View {
         .sheet(isPresented: $showJournal) {
             JournalEntrySheet(category: getUserTopCategories().first)
         }
+        // The gratitude row opens the same journal, with its own prompt.
+        // Saving the entry is what completes the row.
         .sheet(isPresented: $showGratitude) {
-            GratitudeEntrySheet { completeGratitudeTask() }
+            JournalEntrySheet(category: nil,
+                              prompt: "Tell God three things you're thankful for today.",
+                              taskId: TaskLibrary.gratitudeTaskId,
+                              onSaved: { completeGratitudeTask() })
         }
         // Warrior Room — the community prayer wall, surfaced from Today as a
         // quick-access tile. subscriptionStore injected explicitly since SwiftUI
@@ -1575,6 +1580,14 @@ private struct ClearTextEditorBackground: ViewModifier {
 
 struct JournalEntrySheet: View {
     let category: String?
+    /// Replaces the category prompt. Set by checklist rows that open the
+    /// journal for a specific practice, like gratitude.
+    var promptOverride: String? = nil
+    /// The checklist row this entry completes, for analytics. Nil for the
+    /// plain journal.
+    var taskId: String? = nil
+    /// Called once the entry is saved.
+    var onSaved: (() -> Void)? = nil
     @Environment(\.dismiss) private var dismiss
     @State private var text: String = ""
     @State private var showSaveConfirmation = false
@@ -1582,7 +1595,15 @@ struct JournalEntrySheet: View {
     @State private var voiceTask: Task<Void, Never>?
     @FocusState private var focused: Bool
 
-    private var prompt: String { JournalEntrySheet.prompt(for: category) }
+    private var prompt: String { promptOverride ?? JournalEntrySheet.prompt(for: category) }
+
+    init(category: String?, prompt: String? = nil, taskId: String? = nil,
+         onSaved: (() -> Void)? = nil) {
+        self.category = category
+        self.promptOverride = prompt
+        self.taskId = taskId
+        self.onSaved = onSaved
+    }
 
     var body: some View {
         ZStack {
@@ -1766,7 +1787,8 @@ struct JournalEntrySheet: View {
                 AnalyticsService.shared.track("journal_entry_saved", parameters: [
                     "category": category ?? "none",
                     "char_count": trimmed.count,
-                    "source": "checklist"
+                    "source": "checklist",
+                    "task_id": taskId ?? "none"
                 ])
             } catch {
                 // Don't leave an orphaned inserted object that a later viewContext
@@ -1777,6 +1799,7 @@ struct JournalEntrySheet: View {
         }
         PremiumHaptics.affirmationCompleted()
         focused = false
+        onSaved?()
         // Show the saved animation; it dismisses the sheet when it completes.
         withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
             showSaveConfirmation = true
@@ -1797,135 +1820,6 @@ struct JournalEntrySheet: View {
         case "wisdom":                return "What decision needs God's wisdom right now?"
         case "destiny":               return "What is God stirring you toward?"
         default:                      return "What is God showing you today?"
-        }
-    }
-}
-
-// MARK: - Gratitude Entry Sheet
-
-/// The daily gratitude row's form: three short lines, saved together.
-///
-/// Three separate fields rather than one text box, because "three things" is
-/// the whole instruction. Save stays off until all three are filled, and saving
-/// is what completes the row. The entry lands in the journal like any other.
-struct GratitudeEntrySheet: View {
-    var onSaved: () -> Void
-    @Environment(\.dismiss) private var dismiss
-    @State private var items = ["", "", ""]
-    @State private var showSaveConfirmation = false
-    @FocusState private var focusedIndex: Int?
-
-    private static let placeholders = [
-        "Someone who showed you love",
-        "Something that went right",
-        "A promise God kept",
-    ]
-
-    private var trimmed: [String] {
-        items.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-    }
-
-    private var canSave: Bool { trimmed.allSatisfy { !$0.isEmpty } }
-
-    var body: some View {
-        ZStack {
-        NavigationView {
-            ZStack {
-                LinearGradient(
-                    colors: [Color(red: 0.1, green: 0.15, blue: 0.3), Color(red: 0.02, green: 0.07, blue: 0.15)],
-                    startPoint: .top, endPoint: .bottom
-                ).ignoresSafeArea()
-
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 14) {
-                        Text("What are three things you're grateful for today?")
-                            .font(.system(size: 20, weight: .bold))
-                            .foregroundColor(.white)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .padding(.top, 8)
-
-                        Text("Big or small. Thank God for each one.")
-                            .font(.system(size: 15))
-                            .foregroundColor(.white.opacity(0.6))
-                            .padding(.bottom, 6)
-
-                        ForEach(0..<3, id: \.self) { index in
-                            HStack(spacing: 12) {
-                                Text("\(index + 1)")
-                                    .font(.system(size: 15, weight: .bold, design: .rounded))
-                                    .foregroundColor(.white)
-                                    .frame(width: 30, height: 30)
-                                    .background(Circle().fill(Color(hex: "#D97706")))
-                                TextField("", text: $items[index],
-                                          prompt: Text(Self.placeholders[index]).foregroundColor(.white.opacity(0.35)))
-                                    .font(.system(size: 16))
-                                    .foregroundColor(.white)
-                                    .focused($focusedIndex, equals: index)
-                                    .submitLabel(index < 2 ? .next : .done)
-                                    .onSubmit { focusedIndex = index < 2 ? index + 1 : nil }
-                            }
-                            .padding(14)
-                            .background(RoundedRectangle(cornerRadius: 14).fill(Color.white.opacity(0.06)))
-                        }
-                    }
-                    .padding(20)
-                }
-            }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Text("Gratitude").font(.system(size: 18, weight: .bold)).foregroundColor(.white)
-                }
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Close") { dismiss() }.foregroundColor(.white.opacity(0.7))
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { save() }
-                        .fontWeight(.semibold)
-                        .disabled(!canSave)
-                }
-            }
-        }
-        .onAppear {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { focusedIndex = 0 }
-        }
-
-            if showSaveConfirmation {
-                SaveConfirmationView(contentType: .journal) {
-                    dismiss()
-                }
-                .transition(.scale.combined(with: .opacity))
-                .zIndex(1)
-            }
-        }
-    }
-
-    private func save() {
-        let lines = trimmed
-        guard lines.allSatisfy({ !$0.isEmpty }) else { return }
-        let context = PersistenceController.shared.container.viewContext
-        let entry = JournalEntry(context: context)
-        entry.text = "Grateful for:\n" + lines.enumerated()
-            .map { "\($0.offset + 1). \($0.element)" }
-            .joined(separator: "\n")
-        // Same tag as the journal sheet, so it shows up in Create Your Own.
-        entry.category = DeclarationCategory.myOwn.rawValue
-        Task {
-            do {
-                try await JournalRepository(context: context).create(entry)
-                AnalyticsService.shared.track("gratitude_entry_saved", parameters: [
-                    "char_count": lines.reduce(0) { $0 + $1.count },
-                    "source": "checklist"
-                ])
-            } catch {
-                context.performAndWait { context.delete(entry) }
-            }
-        }
-        PremiumHaptics.affirmationCompleted()
-        focusedIndex = nil
-        onSaved()
-        withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
-            showSaveConfirmation = true
         }
     }
 }
