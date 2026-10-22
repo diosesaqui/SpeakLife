@@ -20,11 +20,12 @@ public struct EveningTaskNudge: Equatable {
     /// Foundation-week episode the audio row points at, so the tap plays it.
     public let audioId: String?
 
-    /// Which open task to call out when several are. Audio and journal lead:
-    /// they are the two the user asked to surface, and the two whose payoff
-    /// fits the end of a day.
+    /// Which open task to call out when several are. Audio, gratitude and
+    /// journal lead: they are the ones the user asked to surface, and the ones
+    /// whose payoff fits the end of a day.
     static let priority = [
         "listen_audio",
+        TaskLibrary.gratitudeTaskId,
         "journal_insight",
         "read_devotional",
         TaskLibrary.personalDeclarationTaskId,
@@ -53,6 +54,12 @@ public struct EveningTaskNudge: Equatable {
                 title: "Burst spoken. Now let faith rise 🎧",
                 body: "Faith comes by hearing. Give the Word a few minutes tonight and fall asleep with it settling in.",
                 deepLink: "audio", audioId: task.recommendedAudioId)
+        case TaskLibrary.gratitudeTaskId:
+            return EveningTaskNudge(
+                taskId: task.id,
+                title: "Three things you're grateful for 🙏",
+                body: "Before you sleep, write down three good things from today and thank God for each one.",
+                deepLink: nil, audioId: nil)
         case "journal_insight":
             return EveningTaskNudge(
                 taskId: task.id,

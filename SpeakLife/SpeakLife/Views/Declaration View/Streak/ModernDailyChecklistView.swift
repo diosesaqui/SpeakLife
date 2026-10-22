@@ -42,6 +42,7 @@ struct ModernDailyChecklistView: View {
     /// flow can tell an interception apart from the day's task.
     @State private var takeItCaptiveFromIntent = false
     @State private var showJournal = false
+    @State private var showGratitude = false
     @State private var showWarriorRoom = false
     @State private var showCreateYourOwn = false
     @State private var showBible = false
@@ -135,7 +136,13 @@ struct ModernDailyChecklistView: View {
         case .bibleChat:
             showBibleChat = true
         case .journal:
-            showJournal = true
+            // The gratitude row opens the journal with a gratitude prompt,
+            // and saving the entry is what completes it.
+            if task.id == TaskLibrary.gratitudeTaskId {
+                showGratitude = true
+            } else {
+                showJournal = true
+            }
         case .personalDeclaration:
             // One row for all of them: the card when they carry one, the list
             // when they carry several, since every one has to be spoken before
@@ -157,6 +164,18 @@ struct ModernDailyChecklistView: View {
         case .none:
             viewModel.completeTask(taskId: task.id)
         }
+    }
+
+    /// Ticks the gratitude row once its journal entry is saved.
+    private func completeGratitudeTask() {
+        let taskId = TaskLibrary.gratitudeTaskId
+        guard let task = viewModel.todayChecklist.tasks.first(where: { $0.id == taskId }),
+              !task.isCompleted else { return }
+        viewModel.completeTask(taskId: taskId)
+        completedTasks.insert(taskId)
+        GrowthMetrics.shared.trackActivation(action: "checklist_task_completed")
+        GrowthMetrics.shared.trackFeatureFirstUse("checklist_\(task.type.rawValue)")
+        GrowthMetrics.shared.recordStreak(viewModel.streakStats.currentStreak)
     }
 
     /// Guarding — the fifth pillar. Presented right here on Today rather than
@@ -704,6 +723,13 @@ struct ModernDailyChecklistView: View {
                                     openTakeItCaptive()
                                     return
                                 }
+                                // Gratitude is earned by writing it down, so
+                                // an unticked box opens the journal.
+                                // Unticking a finished row still works below.
+                                if taskId == TaskLibrary.gratitudeTaskId && !task.isCompleted {
+                                    showGratitude = true
+                                    return
+                                }
                                 if task.isCompleted {
                                     viewModel.uncompleteTask(taskId: taskId)
                                     completedTasks.remove(taskId)
@@ -1003,6 +1029,14 @@ struct ModernDailyChecklistView: View {
         }
         .sheet(isPresented: $showJournal) {
             JournalEntrySheet(category: getUserTopCategories().first)
+        }
+        // The gratitude row opens the same journal, with its own prompt.
+        // Saving the entry is what completes the row.
+        .sheet(isPresented: $showGratitude) {
+            JournalEntrySheet(category: nil,
+                              prompt: "Tell God three things you're thankful for today.",
+                              taskId: TaskLibrary.gratitudeTaskId,
+                              onSaved: { completeGratitudeTask() })
         }
         // Warrior Room — the community prayer wall, surfaced from Today as a
         // quick-access tile. subscriptionStore injected explicitly since SwiftUI
@@ -1601,6 +1635,14 @@ private struct ClearTextEditorBackground: ViewModifier {
 
 struct JournalEntrySheet: View {
     let category: String?
+    /// Replaces the category prompt. Set by checklist rows that open the
+    /// journal for a specific practice, like gratitude.
+    var promptOverride: String? = nil
+    /// The checklist row this entry completes, for analytics. Nil for the
+    /// plain journal.
+    var taskId: String? = nil
+    /// Called once the entry is saved.
+    var onSaved: (() -> Void)? = nil
     @Environment(\.dismiss) private var dismiss
     @State private var text: String = ""
     @State private var showSaveConfirmation = false
@@ -1608,7 +1650,15 @@ struct JournalEntrySheet: View {
     @State private var voiceTask: Task<Void, Never>?
     @FocusState private var focused: Bool
 
-    private var prompt: String { JournalEntrySheet.prompt(for: category) }
+    private var prompt: String { promptOverride ?? JournalEntrySheet.prompt(for: category) }
+
+    init(category: String?, prompt: String? = nil, taskId: String? = nil,
+         onSaved: (() -> Void)? = nil) {
+        self.category = category
+        self.promptOverride = prompt
+        self.taskId = taskId
+        self.onSaved = onSaved
+    }
 
     var body: some View {
         ZStack {
@@ -1792,7 +1842,8 @@ struct JournalEntrySheet: View {
                 AnalyticsService.shared.track("journal_entry_saved", parameters: [
                     "category": category ?? "none",
                     "char_count": trimmed.count,
-                    "source": "checklist"
+                    "source": "checklist",
+                    "task_id": taskId ?? "none"
                 ])
             } catch {
                 // Don't leave an orphaned inserted object that a later viewContext
@@ -1803,6 +1854,7 @@ struct JournalEntrySheet: View {
         }
         PremiumHaptics.affirmationCompleted()
         focused = false
+        onSaved?()
         // Show the saved animation; it dismisses the sheet when it completes.
         withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
             showSaveConfirmation = true

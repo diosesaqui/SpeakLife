@@ -1382,7 +1382,8 @@ public struct TaskLibrary {
             let led = leadWithPreferredModality(owned, style: connectStyle, streakDay: streakDay)
             let guarded = withGuard(burstFirst(led), completedToday: guardCompletedToday,
                                     totalDaysCompleted: totalDaysCompleted)
-            return capToTimeBudget(withPersonalDeclaration(guarded, progress: personalDeclarations),
+            return capToTimeBudget(withPersonalDeclaration(withGratitude(guarded),
+                                                           progress: personalDeclarations),
                                    budget: timeBudget, style: connectStyle)
         }
 
@@ -1440,7 +1441,8 @@ public struct TaskLibrary {
         let led = leadWithPreferredModality(tasks, style: connectStyle, streakDay: streakDay)
         let guarded = withGuard(burstFirst(led), completedToday: guardCompletedToday,
                                 totalDaysCompleted: totalDaysCompleted)
-        return capToTimeBudget(withPersonalDeclaration(guarded, progress: personalDeclarations),
+        return capToTimeBudget(withPersonalDeclaration(withGratitude(guarded),
+                                                       progress: personalDeclarations),
                                budget: timeBudget, style: connectStyle)
     }
 
@@ -1545,12 +1547,55 @@ public struct TaskLibrary {
 
     public static let guardTaskId = "take_it_captive"
 
+    public static let gratitudeTaskId = "gratitude_three"
+
+    /// Adds the daily gratitude row: write down three things you're grateful for.
+    ///
+    /// **Why it is back.** `gratitude_moment` was retired because it was a
+    /// manual checkbox with nothing behind it (58 completions from 238 unlocks)
+    /// and its destination duplicated `journal_insight`. This row is earned by
+    /// writing, not by ticking a box: it opens the journal with its own prompt
+    /// ("Tell God three things you're thankful for today."), and saving the
+    /// entry is what completes it.
+    ///
+    /// **Injected, not in `foundationTasks`**, for the reason `withGuard` gives:
+    /// the later phases pick foundation rows by id, so an array entry would drop
+    /// off the board around day 8. Injected, it is on every day of every phase,
+    /// on both task-selection paths.
+    ///
+    /// **Last on the board.** It is an end-of-day practice, so it sits behind
+    /// the speaking, hearing and reading rows, and `capToTimeBudget` trims it
+    /// first for anyone who said they have one or three minutes. It never earns
+    /// the streak; `isStreakEarned` reads the Burst alone.
+    ///
+    /// Completion is an ordinary stored completion (`completeTask` on save), so
+    /// it carries across rebuilds by id like the devotional and audio rows do.
+    static func withGratitude(_ tasks: [DailyTask]) -> [DailyTask] {
+        var result = tasks.filter { $0.id != gratitudeTaskId }
+        result.append(gratitudeTask)
+        return result
+    }
+
+    public static let gratitudeTask = DailyTask(
+        id: gratitudeTaskId,
+        title: "Write 3 Things You're Grateful For",
+        description: "Name three good things from today and thank God for them.",
+        icon: "heart.text.square.fill",
+        category: .foundation,
+        type: .reflect,
+        difficulty: .beginner,
+        // Metadata only: injected, never filtered by `getAvailableTasks`.
+        minimumStreakDay: 1,
+        estimatedMinutes: 2,
+        navigationDestination: .journal
+    )
+
     /// How many completed days the user needs behind them before Guarding
     /// appears.
     ///
-    /// Not day 1: the first day is deliberately light (Burst, devotional, audio)
-    /// so the streak is easy to earn, and day 2 already introduces gratitude.
-    /// Guarding arrives once the core loop has actually taken hold.
+    /// Not day 1: the first day is deliberately light so the streak is easy to
+    /// earn, and day 2 already introduces Ask the Bible. Guarding arrives once
+    /// the core loop has actually taken hold.
     ///
     /// **Measured in `totalDaysCompleted`, never `currentStreak`** — the same
     /// call `EnforcementService` makes, for the same reason. The streak zeroes
