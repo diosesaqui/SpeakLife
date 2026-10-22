@@ -206,6 +206,9 @@ final class SubscriptionStore: ObservableObject {
     @Published private(set) var premiumLapsedAt: Date?
     /// The lapsed entitlement's last period was the free trial: they never paid.
     @Published private(set) var lapsedFromTrial = false
+    /// RevenueCat has never recorded a premium entitlement for this user,
+    /// active or expired: no trial, no purchase, ever.
+    @Published private(set) var neverHadPremium = false
 
     /// Store product behind the active premium entitlement, its next renewal
     /// (or end) date, and whether auto-renew is still on. From RevenueCat.
@@ -246,6 +249,24 @@ final class SubscriptionStore: ObservableObject {
               let endsAt = premiumPeriodEndsAt else { return false }
         let days = endsAt.timeIntervalSinceNow / 86_400
         return days > 0 && days <= Double(monthlyAnnualOfferDays)
+    }
+
+    /// Whether the never-subscribed wall replaces the app: an onboarded user
+    /// who installed on or after `lapsedWallSince` and has never had a
+    /// trial or purchase, typically someone who closed the onboarding paywall
+    /// while it was soft. They see the onboarding paywall, hard, until they
+    /// start a trial or buy. Rides `hardOnboardingPaywall` as well, so this
+    /// wall is only ever up while new installs get the same hard wall, and
+    /// the paywall it shows always renders without a close button. Waits for
+    /// RevenueCat and exempts other access sources, like `showsLapsedWall`.
+    @MainActor
+    var showsUnsubscribedWall: Bool {
+        guard hardUnsubscribedPaywall,
+              hardOnboardingPaywall,
+              entitlementsResolved,
+              neverHadPremium,
+              AnalyticsContext.shared.userInstallDate >= lapsedWallSince else { return false }
+        return !isInDevotionalPremium && !hasFullAccess
     }
 
     /// Whether the lapsed-user wall replaces the app. Waits for RevenueCat so a
@@ -504,6 +525,12 @@ final class SubscriptionStore: ObservableObject {
     // wall went hard, so older lapsers are never swept up by surprise.
     static let defaultLapsedWallSince = "2026-09-28"
     @Published var lapsedWallSince: Date = SubscriptionStore.parseDay(SubscriptionStore.defaultLapsedWallSince) ?? .distantFuture
+    // Never-subscribed wall (RC key "hardUnsubscribedPaywall"). When true, and
+    // `hardOnboardingPaywall` is true too, an onboarded user who has never had
+    // a trial or purchase sees the onboarding paywall, hard, in place of the
+    // app. Shares the `lapsedWallSince` cutoff, applied to install date.
+    // Unset reads false, so it ships dormant.
+    @Published var hardUnsubscribedPaywall = false
     // Monthly-to-yearly offer before a monthly subscriber's renewal (RC key
     // "monthlyAnnualOffer", default off) and how many days ahead of the
     // renewal it appears (RC key "monthlyAnnualOfferDays", default 5).
@@ -856,6 +883,7 @@ final class SubscriptionStore: ObservableObject {
         lapsedWallSince = Self.parseDay(remoteConfig["lapsedWallSince"].stringValue.trimmingCharacters(in: .whitespacesAndNewlines))
             ?? Self.parseDay(Self.defaultLapsedWallSince)
             ?? .distantFuture
+        hardUnsubscribedPaywall = remoteConfig["hardUnsubscribedPaywall"].boolValue
         monthlyAnnualOffer = remoteConfig["monthlyAnnualOffer"].boolValue
         // Dormant ladder for paying subscribers: on unless the console turns
         // it off (an unset key reads on), with a stable holdout, default 10%,
@@ -1022,6 +1050,7 @@ final class SubscriptionStore: ObservableObject {
         // revocation; date it to now so the cutoff still applies.
         premiumLapsedAt    = lapsed.map { $0.expirationDate ?? Date() }
         lapsedFromTrial    = lapsed?.periodType == .trial
+        neverHadPremium    = !RevenueCatManager.shared.hasEverHadPremium(info)
         let activeEntitlement = RevenueCatManager.shared.activePremiumEntitlement(info)
         activePremiumProductID = activeEntitlement?.productIdentifier
         premiumPeriodEndsAt = activeEntitlement?.expirationDate

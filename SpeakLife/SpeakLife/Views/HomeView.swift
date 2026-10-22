@@ -139,6 +139,14 @@ struct HomeView: View {
             } else if appState.isOnboarded && !appState.debugReplayOnboarding && !StormDebugReview.isActive && subscriptionStore.showsLapsedWall {
                 LapsedPaywallView()
                     .environmentObject(subscriptionStore)
+            // Never-subscribed wall: the onboarding paywall, hard, for an
+            // onboarded user who has never had a trial or purchase. Dormant
+            // unless Remote Config `hardUnsubscribedPaywall` and
+            // `hardOnboardingPaywall` are both on. A trial or purchase flips
+            // isPremium and this branch falls through to the app.
+            } else if appState.isOnboarded && !appState.debugReplayOnboarding && !StormDebugReview.isActive && subscriptionStore.showsUnsubscribedWall {
+                HighConversionPaywallView(callback: {}, source: "unsubscribed_wall", isHardPaywall: true)
+                    .environmentObject(subscriptionStore)
             // `debugReplayOnboarding` forces the onboarding branch for a tester
             // who is already onboarded. It is never true on an App Store build.
             } else if appState.isOnboarded && !appState.debugReplayOnboarding && !StormDebugReview.isActive {
