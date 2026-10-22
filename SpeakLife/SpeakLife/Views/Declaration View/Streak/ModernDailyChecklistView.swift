@@ -308,6 +308,40 @@ struct ModernDailyChecklistView: View {
             .first(where: { $0.id == "complete_daily_burst" })?.isCompleted ?? false
     }
 
+    /// Focused first run: a brand-new user sees one card, the Burst, until they
+    /// finish one. See FirstRunFocusRule for who qualifies and when it ends.
+    private var isFirstRunFocused: Bool {
+        isHomeTab && FirstRunFocusRule.isActive(
+            flagEnabled: subscriptionStore.focusedFirstRunEnabled,
+            startedAt: appState.firstRunFocusStartDate,
+            firstBurstDone: appState.firstRunFocusBurstDone || isBurstCompletedToday,
+            now: Date()
+        )
+    }
+
+    /// Opens the first Burst on its own, once, right after onboarding. Waits a
+    /// beat so the home screen finishes appearing; a cover requested mid
+    /// transition is dropped.
+    private func openFirstRunBurstIfPending() {
+        guard appState.pendingFirstRunBurst else { return }
+        appState.pendingFirstRunBurst = false
+        guard isFirstRunFocused, !isBurstCompletedToday else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            guard !showDailyBurst, !subscriptionStore.showEmailCaptureAfterPurchase else { return }
+            AnalyticsService.shared.track("first_run_burst_auto_opened")
+            openBurst(source: .dailyTask)
+        }
+    }
+
+    /// Ends focus for good the first time the Burst task is done.
+    private func endFirstRunFocusIfBurstDone() {
+        guard isBurstCompletedToday,
+              appState.firstRunFocusStartDate != nil,
+              !appState.firstRunFocusBurstDone else { return }
+        appState.firstRunFocusBurstDone = true
+        AnalyticsService.shared.track("first_run_focus_ended", parameters: ["reason": "burst_completed"])
+    }
+
     /// Turns "my marriage is falling apart and I can't sleep" into a seven-day
     /// week built from the reviewed declaration pool.
     ///
@@ -643,6 +677,11 @@ struct ModernDailyChecklistView: View {
                             .dsAppear(0.04)
                         }
 
+                        if isFirstRunFocused {
+                            FirstRunFocusCard { openBurst(source: .dailyTask) }
+                                .padding(.horizontal, 20)
+                                .dsAppear(0.08)
+                        } else {
                         // Today's Tasks Section
                         StructuredDayView(
                             tasks: viewModel.todayChecklist.tasks,
@@ -711,11 +750,13 @@ struct ModernDailyChecklistView: View {
                         )
                         .padding(.horizontal, 20)
                         .dsAppear(0.08)
+                        }
 
                         // Quick access — the four core daily destinations, always
                         // reachable regardless of which tasks are unlocked today.
                         // Sits below the actions above: these are doorways, not
-                        // today's work.
+                        // today's work. Hidden during the focused first run.
+                        if !isFirstRunFocused {
                         VStack(spacing: 10) {
                             HStack {
                                 Text("JUMP BACK IN")
@@ -760,11 +801,12 @@ struct ModernDailyChecklistView: View {
                         .padding(.horizontal, 20)
                         .padding(.top, 12)
                         .dsAppear(0.16)
+                        }
 
                         // Unlock tomorrow — a closing "come back tomorrow" teaser.
                         // Kept at the end so it caps the feed as a retention hook
                         // rather than interrupting the actionable sections above.
-                        if !viewModel.todayChecklist.isCompleted {
+                        if !viewModel.todayChecklist.isCompleted && !isFirstRunFocused {
                             let upcomingTasks = viewModel.getUpcomingUnlocks(for: viewModel.streakStats.currentStreak)
                             if let nextTask = upcomingTasks.first {
                                 VStack(spacing: 8) {
@@ -926,7 +968,20 @@ struct ModernDailyChecklistView: View {
         .onChange(of: enforcementService.justCompleted?.id) { _, _ in
             presentCelebrationIfReady()
         }
-        .onAppear { presentCelebrationIfReady() }
+        .onAppear {
+            presentCelebrationIfReady()
+            endFirstRunFocusIfBurstDone()
+            if isFirstRunFocused {
+                AnalyticsService.shared.track("first_run_focus_viewed")
+            }
+            openFirstRunBurstIfPending()
+        }
+        .onChange(of: appState.pendingFirstRunBurst) { _, _ in
+            openFirstRunBurstIfPending()
+        }
+        .onChange(of: isBurstCompletedToday) { _, _ in
+            endFirstRunFocusIfBurstDone()
+        }
         .sheet(isPresented: $showBibleChat) {
             // The conversational Bible Chat (not the topic picker). Still reached
             // from a daily task's .bibleChat destination even though the quick
@@ -1964,6 +2019,54 @@ struct ModernDailyChecklistView_Previews: PreviewProvider {
 }
 #endif
 
+
+// MARK: - First run focus card
+
+/// The only card on Today during the focused first run. One job: say what the
+/// app is for and start it.
+private struct FirstRunFocusCard: View {
+    let onStart: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("START HERE")
+                .font(.system(size: 11, weight: .bold)).tracking(1.5)
+                .foregroundColor(DS.Palette.gold.opacity(0.95))
+
+            Text("Speak today's 7 declarations")
+                .font(.system(size: 24, weight: .bold, design: .rounded))
+                .foregroundColor(.white)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Text("Hold the button and say each one out loud. It takes about 2 minutes.")
+                .font(.system(size: 15))
+                .foregroundColor(.white.opacity(0.85))
+                .fixedSize(horizontal: false, vertical: true)
+
+            Button(action: { Juice.play(.tapSolid); onStart() }) {
+                HStack(spacing: 8) {
+                    Image(systemName: "bolt.fill")
+                    Text("Start Speaking")
+                }
+                .font(.system(size: 17, weight: .bold))
+                .foregroundColor(Color(hex: "#4C1D95"))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 15)
+                .background(Capsule().fill(Color.white))
+            }
+            .padding(.top, 4)
+            .accessibilityHint("Opens today's seven declarations")
+        }
+        .padding(22)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            LinearGradient(colors: [Color(hex: "#7C3AED"), Color(hex: "#4F46E5")],
+                           startPoint: .topLeading, endPoint: .bottomTrailing)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 22))
+        .shadow(color: Color(hex: "#7C3AED").opacity(0.45), radius: 14, x: 0, y: 6)
+    }
+}
 
 // MARK: - Trial progress card
 

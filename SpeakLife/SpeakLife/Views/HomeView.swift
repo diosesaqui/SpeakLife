@@ -587,6 +587,24 @@ struct HomeView: View {
             "conversion_type": conversionType,
             "flow": "home_view"
         ])
+        // The "write your own declaration" cover is for EXISTING users meeting
+        // the feature on an update. Its guards only check "onboarded with no
+        // declaration", which every brand-new user passes, so it was opening
+        // over the app 1.5s after they landed: the same ask onboarding dropped
+        // on purpose. New users get it after their first Burst instead
+        // (PersonalDeclarationPrompt), so mark this one as already shown.
+        pdMigrationPromptShown = true
+
+        // Focused first run: Today shows only the Burst card until the first
+        // Burst, and the Burst opens itself as soon as the app appears. Both
+        // live on the Today tab, so skip it when Today isn't the home tab.
+        if subscriptionStore.focusedFirstRunEnabled && subscriptionStore.checklistHomeEnabled {
+            appState.firstRunFocusStartedAt = Date().timeIntervalSince1970
+            appState.firstRunFocusBurstDone = false
+            appState.pendingFirstRunBurst = true
+            tabViewModel.goToChecklist()
+        }
+
         withAnimation {
             appState.isOnboarded = true
             LifecycleNotificationService.shared.scheduleLifecycleNotifications()
