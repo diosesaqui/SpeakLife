@@ -127,6 +127,33 @@ final class AcquisitionAttributionTests: XCTestCase {
         XCTAssertEqual(email?.source, "email")
     }
 
+    // MARK: - Branch: referral links (docs/REFERRAL_FE_TDD.md §9)
+
+    func test_FE_CAP_08_referralReferringLinkIsReferralChannel() {
+        let attribution = BranchAttribution.attribution(from: [
+            "+clicked_branch_link": true,
+            "~referring_link": "https://speaklife.app.link/r/K7MQ2XPA"
+        ])
+        XCTAssertEqual(attribution?.channel, .referral)
+
+        // The deep-link `ref` key reads the same way.
+        let byKey = BranchAttribution.attribution(from: [
+            "+clicked_branch_link": true,
+            "ref": "K7MQ2XPA"
+        ])
+        XCTAssertEqual(byKey?.channel, .referral)
+    }
+
+    func test_FE_CAP_09_adNetworkStillBeatsAReferralLink() {
+        let attribution = BranchAttribution.attribution(from: [
+            "+clicked_branch_link": true,
+            "~channel": "Facebook",
+            "~referring_link": "https://speaklife.app.link/r/K7MQ2XPA"
+        ])
+        XCTAssertEqual(attribution?.channel, .meta)
+        XCTAssertEqual(attribution?.source, "Facebook")
+    }
+
     // MARK: - Channel string matching
 
     func testMetaNetworkNames() {

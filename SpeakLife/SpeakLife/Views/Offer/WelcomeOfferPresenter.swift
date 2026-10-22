@@ -102,6 +102,11 @@ final class WelcomeOfferPresenter: ObservableObject {
         // the declaration is owed it is already presenting when we get here.
         // The offer stays armed and lands on the next Burst instead.
         guard !PersonalDeclarationPrompt.shared.isPendingOrShowing else { return }
+        // Never over the referral page either (FE-ORD-04, spec D5). The two
+        // do not conflict, one is a discount and the other is free, but two
+        // covers at once drops one. The offer stays armed for the next Burst.
+        guard PostOnboardingPresenter.canPresentWelcomeOffer(
+            referralPageOpen: ReferralPresentation.shared.isOpen) else { return }
         guard isArmed, isEligible(subscriptionStore) else { return }
         UserDefaults.standard.set(true, forKey: shownKey)
         UserDefaults.standard.set(false, forKey: armedKey)
