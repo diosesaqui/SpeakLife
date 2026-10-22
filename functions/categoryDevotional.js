@@ -36,7 +36,7 @@ const db = getFirestore();
 const ANTHROPIC_API_KEY = defineSecret('ANTHROPIC_API_KEY');
 const REVENUECAT_SECRET_KEY = defineSecret('REVENUECAT_SECRET_KEY');
 
-const MODEL = 'claude-opus-5-5';
+const MODEL = 'claude-sonnet-5-5';
 const MAX_TOKENS = 16000;
 // Free users get this many category devotionals, lifetime, then the paywall.
 // The daily calendar devotional stays free exactly as before.
