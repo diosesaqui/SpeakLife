@@ -487,6 +487,13 @@ final class SubscriptionStore: ObservableObject {
     // Starts false (soft) until the first fetch lands, and reads false if the
     // key is missing from the console.
     @Published var hardOnboardingPaywall = false
+    // Billed-amount-first switch (RC key "billedAmountFirst"). When true, the
+    // High Conversion paywall's Annual card leads with the amount actually
+    // charged ("$49.99/yr") and drops the per-month figure to the line under
+    // it, which is how App Review wants the billed price shown. When false the
+    // card leads with the per-month equivalent as before. Reads false if the
+    // key is missing from the console.
+    @Published var billedAmountFirst = false
     // Lapsed-user wall (RC key "hardLapsedPaywall"). When true, an onboarded
     // user whose premium trial or subscription has ended sees LapsedPaywallView
     // in place of the app until they resubscribe. Unset reads false, so it
@@ -843,6 +850,7 @@ final class SubscriptionStore: ObservableObject {
         // High Conversion Paywall Flag
         useHighConversionPaywall = remoteConfig["useHighConversionPaywall"].boolValue
         hardOnboardingPaywall = remoteConfig["hardOnboardingPaywall"].boolValue
+        billedAmountFirst = remoteConfig["billedAmountFirst"].boolValue
         showPayWhatYouCanCTA = remoteConfig["showPayWhatYouCanCTA"].boolValue
         hardLapsedPaywall = remoteConfig["hardLapsedPaywall"].boolValue
         lapsedWallSince = Self.parseDay(remoteConfig["lapsedWallSince"].stringValue.trimmingCharacters(in: .whitespacesAndNewlines))
