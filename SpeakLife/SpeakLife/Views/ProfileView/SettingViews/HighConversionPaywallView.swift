@@ -815,6 +815,10 @@ struct HighConversionPaywallView: View {
     /// Annual stays the selection regardless (onAppear pins it), so no purchase
     /// path can end up on a plan that has no card on screen.
     private var onlyShowYearly: Bool { subscriptionStore.onlyShowYearly }
+    /// Remote Config `billedAmountFirst`: the Annual card's big number is the
+    /// yearly amount charged, and the per-month (or per-week) equivalent is the
+    /// smaller line beneath it. Off keeps the per-cadence hero.
+    private var billedAmountFirst: Bool { subscriptionStore.billedAmountFirst }
     private var nonAnnualTitle: String { showWeeklyPlan ? "Weekly" : "Monthly" }
     /// Plan identity of the non-annual card, so analytics report "weekly" (not
     /// "monthly") when the useWeeklyPlan flag is on.
@@ -1361,14 +1365,19 @@ struct HighConversionPaywallView: View {
                         plan: .annual,
                         topLabel: annualSavingsPercent.map { "SAVE \($0)%" } ?? "BEST VALUE",
                         title: "Annual",
-                        price: annualComparablePrice,
-                        unit: cadenceUnit,
+                        // Under billedAmountFirst the hero is the amount charged
+                        // and the per-cadence figure moves to the line under it.
+                        price: billedAmountFirst ? annualPrice : annualComparablePrice,
+                        unit: billedAmountFirst ? "/yr" : cadenceUnit,
                         // Same guard as the SAVE badge: the anchor only appears
                         // when annual is genuinely cheaper than a year of the
                         // other plan, and it is that real derived figure, never
-                        // an invented "was" price.
-                        struck: annualSavingsPercent != nil ? nonAnnualYearlyEquivalent : nil,
-                        sub: "\(annualPrice) per year",
+                        // an invented "was" price. Dropped under
+                        // billedAmountFirst, where it would sit struck through
+                        // beside a per-month number and read as that month's
+                        // old price.
+                        struck: !billedAmountFirst && annualSavingsPercent != nil ? nonAnnualYearlyEquivalent : nil,
+                        sub: billedAmountFirst ? "Only \(annualComparablePrice)\(cadenceUnit)" : "\(annualPrice) per year",
                         perDay: annualPerDay
                     )
                     .frame(width: cardWidth)
@@ -1789,12 +1798,15 @@ struct HighConversionPaywallView: View {
             cleanPlanCard(
                 plan: .annual,
                 title: "Annual",
-                rightPrice: annualPerWeek,
-                rightUnit: "/week",
+                // billedAmountFirst: lead with the amount charged, per-week below.
+                rightPrice: billedAmountFirst ? annualPrice : annualPerWeek,
+                rightUnit: billedAmountFirst ? "/year" : "/week",
                 // Anchor only shown when annual is genuinely cheaper than a
                 // year of the non-annual plan (same guard as the SAVE badge).
-                struck: annualSavingsPercent != nil ? nonAnnualYearlyEquivalent : nil,
-                subline: annualPerDay.map { "\(annualPrice) per year · just \($0)/day" } ?? "\(annualPrice) per year",
+                struck: !billedAmountFirst && annualSavingsPercent != nil ? nonAnnualYearlyEquivalent : nil,
+                subline: billedAmountFirst
+                    ? (annualPerDay.map { "\(annualPerWeek)/week · just \($0)/day" } ?? "Just \(annualPerWeek)/week")
+                    : (annualPerDay.map { "\(annualPrice) per year · just \($0)/day" } ?? "\(annualPrice) per year"),
                 badge: "MOST POPULAR"
             )
             .padding(.top, 10) // room for the badge overhang
@@ -1992,6 +2004,7 @@ struct HighConversionPaywallView: View {
             "user_category": preferencesTracker.primaryCategory.rawValue,
             "initial_plan": "annual",
             "only_yearly": onlyShowYearly,
+            "billed_amount_first": billedAmountFirst,
             "segment": segmentParam,
             "pain": painParam
         ])
