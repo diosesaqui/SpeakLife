@@ -213,41 +213,44 @@ class DailyDeclarationReminderService: ObservableObject {
     /// `weekday + 1` math when scheduling). Designed to vary tone across the week:
     /// Sunday is reflective, Monday is reset, mid-week is momentum, Friday is
     /// finish-strong, Saturday is celebratory.
+    // Every line leads with 🚨 and frames the Burst as a daily necessity:
+    // authority is exercised and faith is built by speaking, today, not once
+    // a week. Urgent, never guilt: nothing here says what they will lose.
     private static let morningCopyByWeekday: [(title: String, body: String)] = [
         // Sunday
         (
-            title: "Sunday reset 🕊",
-            body: "Set the tone for your week. 60 seconds of declarations now shapes the next 7 days."
+            title: "🚨 Time to exercise your authority",
+            body: "Faith grows when you speak it. 1 minute, out loud, to enforce victory for the day."
         ),
         // Monday
         (
-            title: "Monday — set the tone ⚡",
-            body: "How you start Monday is how the week goes. Speak life over yours before the noise arrives."
+            title: "🚨 Your authority is waiting",
+            body: "Jesus spoke to the storm. Today you speak to yours. 1 minute, out loud, to enforce victory for the day."
         ),
         // Tuesday
         (
-            title: "Tuesday: small reps, big results 💪",
-            body: "Day two of the week. Open SpeakLife and put the words in your mouth before the day owns you."
+            title: "🚨 Don't skip today's Daily Burst",
+            body: "Faith comes by hearing, every day (Romans 10:17). 1 minute, out loud, to enforce victory for the day."
         ),
         // Wednesday
         (
-            title: "Halfway there — keep declaring 🔥",
-            body: "Mid-week is where most people coast. You don't coast. Speak life over today."
+            title: "🚨 Time to build your faith",
+            body: "Yesterday's declarations were for yesterday. 1 minute, out loud, to enforce victory for the day."
         ),
         // Thursday
         (
-            title: "Thursday momentum 🚀",
-            body: "Two days from the weekend. Two minutes from a decree. Open SpeakLife now."
+            title: "🚨 Exercise your authority today",
+            body: "What you speak this morning steers your whole day (James 3:4). 1 minute, out loud, to enforce victory."
         ),
         // Friday
         (
-            title: "Finish strong, friend 🏁",
-            body: "Don't let Friday slip into autopilot. Declare what you want before the day owns you."
+            title: "🚨 Your Daily Burst is ready",
+            body: "Authority you never speak does nothing. 1 minute, out loud, to enforce victory for the day."
         ),
         // Saturday
         (
-            title: "Saturday — own it ✨",
-            body: "Weekends are where habits die. Yours doesn't. 60 seconds of speaking life. Tap in."
+            title: "🚨 Faith is built daily",
+            body: "Not weekly. Not when it's convenient. 1 minute, out loud, to enforce victory for the day."
         )
     ]
 
