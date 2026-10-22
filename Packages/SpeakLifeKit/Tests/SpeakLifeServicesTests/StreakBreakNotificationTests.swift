@@ -34,6 +34,8 @@ final class StreakNotificationSpy: StreakNotifying {
         case scheduleAtRisk(Int, at: Date)
         case cancelAtRisk
         case scheduleLapsedNudge(at: Date)
+        case scheduleTaskNudge(taskId: String, at: Date)
+        case cancelTaskNudge
         case cancelLapsedNudge
         case scheduleBreak(previousStreak: Int)
         case cancelBreak
@@ -76,6 +78,18 @@ final class StreakNotificationSpy: StreakNotifying {
         return nil
     }
 
+    /// The task the pending evening task nudge names, or nil when none is pending.
+    var pendingTaskNudge: String? {
+        for call in calls.reversed() {
+            switch call {
+            case .scheduleTaskNudge(let taskId, _): return taskId
+            case .cancelTaskNudge: return nil
+            default: continue
+            }
+        }
+        return nil
+    }
+
     var atRiskWasEverScheduled: Bool {
         calls.contains { if case .scheduleAtRisk = $0 { return true } else { return false } }
     }
@@ -98,6 +112,10 @@ final class StreakNotificationSpy: StreakNotifying {
     func cancelStreakAtRiskNotification() { calls.append(.cancelAtRisk) }
     func scheduleLapsedStreakNudge(at fireDate: Date) { calls.append(.scheduleLapsedNudge(at: fireDate)) }
     func cancelLapsedStreakNudge() { calls.append(.cancelLapsedNudge) }
+    func scheduleEveningTaskNudge(_ nudge: EveningTaskNudge, at fireDate: Date) {
+        calls.append(.scheduleTaskNudge(taskId: nudge.taskId, at: fireDate))
+    }
+    func cancelEveningTaskNudge() { calls.append(.cancelTaskNudge) }
     func scheduleStreakBreakNotification(previousStreak: Int) { calls.append(.scheduleBreak(previousStreak: previousStreak)) }
     func cancelStreakBreakNotification() { calls.append(.cancelBreak) }
     @discardableResult
@@ -481,5 +499,78 @@ final class StreakBreakNotificationTests: XCTestCase {
 
         XCTAssertEqual(spy.pendingLapsedNudgeFireDate, day(3, 21, 0),
             "Today's burst restarts the three-day clock")
+    }
+
+    // MARK: - Evening task nudge (burst done, bonus tasks open)
+
+    func testBurstDoneWithBonusTasksOpenNamesTheNextTaskInsteadOfTheStreak() throws {
+        let time = try lateTonight()
+        try seedStreakAtRisk()
+        UserDefaults.standard.set(time.hour, forKey: Keys.hour)
+        UserDefaults.standard.set(time.minute, forKey: Keys.minute)
+        let viewModel = EnhancedStreakViewModel()
+        XCTAssertNil(spy.pendingTaskNudge, "precondition: burst open, so the streak push owns the slot")
+
+        viewModel.completeTask(taskId: "complete_daily_burst")
+
+        XCTAssertNil(spy.pendingAtRiskFireDate)
+        XCTAssertEqual(spy.pendingTaskNudge, "listen_audio",
+            "Audio leads the call-outs while it is still open")
+
+        viewModel.completeTask(taskId: "listen_audio")
+        XCTAssertNotEqual(spy.pendingTaskNudge, "listen_audio",
+            "Finishing a task moves the nudge on to one still open")
+    }
+
+    func testAllTasksDoneWithdrawsEveryEveningPush() throws {
+        let time = try lateTonight()
+        try seedStreakAtRisk()
+        UserDefaults.standard.set(time.hour, forKey: Keys.hour)
+        UserDefaults.standard.set(time.minute, forKey: Keys.minute)
+        let viewModel = EnhancedStreakViewModel()
+
+        for task in viewModel.todayChecklist.tasks {
+            viewModel.completeTask(taskId: task.id)
+        }
+        guard viewModel.todayChecklist.tasks.allSatisfy(\.isCompleted) else {
+            throw XCTSkip("a task on this list cannot be ticked by completeTask")
+        }
+
+        XCTAssertNil(spy.pendingTaskNudge)
+        XCTAssertNil(spy.pendingAtRiskFireDate)
+    }
+
+    func testTaskNudgePrioritisesAudioThenJournal() {
+        func task(_ id: String, done: Bool = false) -> DailyTask {
+            DailyTask(id: id, title: id, description: "", icon: "", category: .foundation,
+                      type: .speak, isCompleted: done)
+        }
+        var checklist = DailyChecklist(date: Date(),
+                                       tasks: [task("complete_daily_burst", done: true),
+                                               task("read_devotional"),
+                                               task("journal_insight"),
+                                               task("listen_audio")],
+                                       currentPhase: .growth)
+        XCTAssertEqual(EveningTaskNudge.next(for: checklist)?.taskId, "listen_audio")
+        XCTAssertEqual(EveningTaskNudge.next(for: checklist)?.deepLink, "audio")
+
+        checklist.tasks[3].isCompleted = true
+        XCTAssertEqual(EveningTaskNudge.next(for: checklist)?.taskId, "journal_insight")
+
+        checklist.tasks[0].isCompleted = false
+        XCTAssertNil(EveningTaskNudge.next(for: checklist),
+                     "Burst still open: the streak-at-risk push speaks, not this one")
+    }
+
+    func testUnknownTaskStillGetsANudgeNamingIt() {
+        let checklist = DailyChecklist(
+            date: Date(),
+            tasks: [DailyTask(id: "complete_daily_burst", title: "", description: "", icon: "",
+                              category: .foundation, type: .speak, isCompleted: true),
+                    DailyTask(id: "something_new", title: "Pray for a Friend", description: "",
+                              icon: "", category: .foundation, type: .speak)],
+            currentPhase: .foundation)
+        XCTAssertEqual(EveningTaskNudge.next(for: checklist)?.body,
+                       "One thing left on today's list. Next up: Pray for a Friend.")
     }
 }

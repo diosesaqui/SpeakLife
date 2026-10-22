@@ -1443,8 +1443,9 @@ public final class EnhancedStreakViewModel: ObservableObject {
         scheduleEveningCheckIn()
     }
 
-    /// Schedules today's one-off streak-at-risk push and the 3-day comeback
-    /// nudge, or withdraws them.
+    /// Schedules today's one-off evening push (streak at risk, or once the
+    /// burst is done, the next unfinished task) and the 3-day comeback nudge,
+    /// or withdraws them.
     ///
     /// One-off, not repeating, so the streak number in it is always the one
     /// read here. A daily repeat kept firing "Your N-day streak ends tonight"
@@ -1462,14 +1463,21 @@ public final class EnhancedStreakViewModel: ObservableObject {
         // Only send at-risk when user has an active streak AND hasn't done their burst yet.
         let burstDone = todayChecklist.isStreakEarned
 
-        if !burstDone && streakStats.currentStreak >= 1,
-           let fireDate = Self.eveningCheckInFireDate(defaults: userDefaults) {
+        // One push in the evening slot, never two: the streak warning while
+        // the burst is open, then a call-out for the next unfinished task.
+        let fireDate = Self.eveningCheckInFireDate(defaults: userDefaults)
+        if !burstDone && streakStats.currentStreak >= 1, let fireDate {
+            Self.notifications.cancelEveningTaskNudge()
             Self.notifications.scheduleStreakAtRiskNotification(
                 currentStreak: streakStats.currentStreak,
                 at: fireDate
             )
+        } else if let fireDate, let nudge = EveningTaskNudge.next(for: todayChecklist) {
+            Self.notifications.cancelStreakAtRiskNotification()
+            Self.notifications.scheduleEveningTaskNudge(nudge, at: fireDate)
         } else {
             Self.notifications.cancelStreakAtRiskNotification()
+            Self.notifications.cancelEveningTaskNudge()
         }
 
         // Queued ahead on every open, so it still reaches a user who never

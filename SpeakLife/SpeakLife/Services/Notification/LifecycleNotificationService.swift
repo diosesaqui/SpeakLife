@@ -9,6 +9,8 @@
 //  Streak:
 //      streak_at_risk one-off today at the evening check-in time (9pm default,
 //          user-set in Reminders), only while a streak is live and today unearned
+//      evening_task_nudge same slot once the burst is done: names the next
+//          unfinished task (audio, journal, devotional...) and what it gives
 //      lapsed_streak_d3 one-off, evening of day 3 with no completed burst
 //      streak_break next morning 9am (replaces old +2h; comeback > guilt)
 //  Lapsed:
@@ -166,6 +168,39 @@ final class LifecycleNotificationService {
 
     func cancelStreakAtRiskNotification() {
         center.removePendingNotificationRequests(withIdentifiers: ["streak_at_risk"])
+    }
+
+    // MARK: - Evening Task Nudge
+
+    /// Today's evening push once the streak is safe: the next unfinished task
+    /// and its payoff. Rescheduled on every task completion, so it always
+    /// names something still open, and withdrawn when the list is done.
+    func scheduleEveningTaskNudge(_ nudge: EveningTaskNudge, at fireDate: Date) {
+        center.removePendingNotificationRequests(withIdentifiers: ["evening_task_nudge"])
+
+        center.getNotificationSettings { [weak self] settings in
+            guard settings.authorizationStatus == .authorized else { return }
+
+            let content = UNMutableNotificationContent()
+            content.title = nudge.title
+            content.body = nudge.body
+            content.sound = .default
+            var info: [String: Any] = ["lifecycle_id": "evening_task_nudge",
+                                       "taskId": nudge.taskId,
+                                       "action": "evening_task_nudge"]
+            if let deepLink = nudge.deepLink { info["deepLink"] = deepLink }
+            if let audioId = nudge.audioId { info["audioId"] = audioId }
+            content.userInfo = info
+
+            let components = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: fireDate)
+            let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+            let request = UNNotificationRequest(identifier: "evening_task_nudge", content: content, trigger: trigger)
+            self?.center.add(request, withCompletionHandler: nil)
+        }
+    }
+
+    func cancelEveningTaskNudge() {
+        center.removePendingNotificationRequests(withIdentifiers: ["evening_task_nudge"])
     }
 
     // MARK: - Lapsed Streak Nudge
