@@ -108,6 +108,7 @@ struct CategoryChooserView: View {
     @ObservedObject var viewModel: DeclarationViewModel
     @State private var presentPremiumView  = false
     @State private var showBibleChat = false
+    @State private var showForYou = false
 
     var twoColumnGrid = [GridItem(.flexible()), GridItem(.flexible())]
 
@@ -170,6 +171,11 @@ struct CategoryChooserView: View {
                                 .environmentObject(subscriptionStore)
                         }
 
+                        if subscriptionStore.weeklyForYouEnabled {
+                            yourWeekButton
+                                .dsAppear(0.08)
+                        }
+
                         // 🚀 AI Personalized Feed Section
                         if subscriptionStore.isAIEnabled {
                             PersonalizedFeedSection()
@@ -204,6 +210,54 @@ struct CategoryChooserView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top) // Ensures proper layout
     }
     
+    /// Opens the weekly For You set. Shown only while `weeklyForYouEnabled`
+    /// is on.
+    private var yourWeekButton: some View {
+        Button {
+            AnalyticsService.shared.track("for_you_entry_tapped", parameters: ["source": "category_chooser"])
+            showForYou = true
+        } label: {
+            HStack(spacing: 14) {
+                ZStack {
+                    Circle()
+                        .fill(LinearGradient(
+                            colors: [Constants.gold, Color(red: 0.85, green: 0.55, blue: 0.15)],
+                            startPoint: .topLeading, endPoint: .bottomTrailing
+                        ))
+                        .frame(width: 48, height: 48)
+                        .shadow(color: Constants.gold.opacity(0.5), radius: 8, x: 0, y: 4)
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(.white)
+                }
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Your Week")
+                        .font(.system(size: 17, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                    Text("Ten new declarations, written from the ones you saved")
+                        .font(.system(size: 13, weight: .regular, design: .rounded))
+                        .foregroundColor(.white.opacity(0.65))
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.5))
+            }
+            .padding(.horizontal, 18)
+            .padding(.vertical, 14)
+            .dsGlass(cornerRadius: DS.Radius.md)
+        }
+        .buttonStyle(PlainButtonStyle())
+        .padding(.horizontal, 16)
+        .padding(.top, 4)
+        .sheet(isPresented: $showForYou) {
+            ForYouView(viewModel: viewModel, source: "category_chooser")
+                .environmentObject(subscriptionStore)
+        }
+    }
+
     /// Reminders follow a category switch — see
     /// NotificationManager.shouldFollowFeedCategoryChange. Re-tapping the
     /// current category is not a switch, so it never collapses topics the

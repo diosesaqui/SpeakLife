@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		F0RY0U00000000000000001B /* ForYouService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0RY0U00000000000000001A /* ForYouService.swift */; };
+		F0RY0U00000000000000002B /* ForYouView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0RY0U00000000000000002A /* ForYouView.swift */; };
 		C0070000000000000001BBBB /* GiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0070000000000000001AAAA /* GiveView.swift */; };
 		TIC00SVC000000000000004B /* TakeThoughtCaptiveIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00SVC000000000000004A /* TakeThoughtCaptiveIntent.swift */; };
 		TIC00VW0000000000000001B /* TakeItCaptiveFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00VW0000000000000001A /* TakeItCaptiveFlowView.swift */; };
@@ -438,6 +440,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		F0RY0U00000000000000001A /* ForYouService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForYouService.swift; sourceTree = "<group>"; };
+		F0RY0U00000000000000002A /* ForYouView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForYouView.swift; sourceTree = "<group>"; };
 		C0070000000000000001AAAA /* GiveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GiveView.swift; sourceTree = "<group>"; };
 		TIC00SVC000000000000004A /* TakeThoughtCaptiveIntent.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TakeThoughtCaptiveIntent.swift; sourceTree = "<group>"; };
 		TIC00VW0000000000000001A /* TakeItCaptiveFlowView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TakeItCaptiveFlowView.swift; sourceTree = "<group>"; };
@@ -880,6 +884,22 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		F0RY0UG00000000000000001 /* ForYou */ = {
+			isa = PBXGroup;
+			children = (
+				F0RY0U00000000000000002A /* ForYouView.swift */,
+			);
+			path = ForYou;
+			sourceTree = "<group>";
+		};
+		F0RY0UG00000000000000002 /* ForYou */ = {
+			isa = PBXGroup;
+			children = (
+				F0RY0U00000000000000001A /* ForYouService.swift */,
+			);
+			path = ForYou;
+			sourceTree = "<group>";
+		};
 		TIC00GRP000000000000001A /* Guard */ = {
 			isa = PBXGroup;
 			children = (
@@ -1379,6 +1399,7 @@
 		7AA8706528DACB3500134ADB /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				F0RY0UG00000000000000001 /* ForYou */,
 				STANDG000000000000000001 /* Stand */,
 				OFFERG000000000000000001 /* Offer */,
 				TIC00GRP000000000000002A /* Guard */,
@@ -1430,6 +1451,7 @@
 		7AA8706728DACB5100134ADB /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				F0RY0UG00000000000000002 /* ForYou */,
 				STANDG000000000000000002 /* Stand */,
 				TIC00GRP000000000000001A /* Guard */,
 				45567D712F29F6FA00382072 /* Auth */,
@@ -2336,6 +2358,8 @@
 				7AA870C628DACCB700134ADB /* HeartView.swift in Sources */,
 				7AA870C728DACCB700134ADB /* DeclarationContentView.swift in Sources */,
 				7AF18C932A0CBF71005A6E31 /* DevotionalService.swift in Sources */,
+				F0RY0U00000000000000001B /* ForYouService.swift in Sources */,
+				F0RY0U00000000000000002B /* ForYouView.swift in Sources */,
 				45C15A8C2F31BEB7006171F5 /* NewOnboardingScreens.swift in Sources */,
 				7AA870CE28DACCB700134ADB /* FavoritesView.swift in Sources */,
 				7AA870D428DACCB700134ADB /* CategoryButtonRow.swift in Sources */,

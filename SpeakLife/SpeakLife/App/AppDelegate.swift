@@ -319,6 +319,11 @@ final class AppDelegate: NSObject, MessagingDelegate {
             // Remote Config (or via the A/B test) to promote each user's
             // best-matching categories to the front of the audio filter row.
             "personalizedAudioOrderEnabled": false as NSNumber,
+            // Weekly For You set ships dark; flip to true in Remote Config to
+            // turn it on. Off hides every entry point and stops favorite
+            // syncing, and the server reads the same key's default value, so
+            // turning it off also stops the Sunday writing and pushes.
+            "weeklyForYouEnabled": false as NSNumber,
             // Forced update gate. Ships inert and doubly so: the switch is off
             // AND the floor is empty, either of which alone is enough to keep
             // every user running. To retire a build, publish

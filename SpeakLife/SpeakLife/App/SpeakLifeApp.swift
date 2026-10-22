@@ -152,6 +152,10 @@ struct SpeakLifeApp: App {
                     // stand push points at. Both were previously set by code that
                     // nothing read.
                     .standPresentation(appState: appState)
+                    // Opens the weekly For You set its Sunday push points at.
+                    .forYouPresentation(appState: appState,
+                                        subscriptionStore: subscriptionStore,
+                                        declarationStore: declarationStore)
                     // What a stand room needs to open a Burst. Outermost of the
                     // stand modifiers so both of them, and every room reached
                     // through them, can read it: they sit above the
@@ -336,6 +340,9 @@ struct SpeakLifeApp: App {
                 // trialist crosses the 24h mark; RevenueCat updates cover the rest
                 // (see SubscriptionStore.applyCustomerInfo).
                 Task { await QualifiedTrialTracker.shared.evaluate() }
+                // Keeps the server's copy of favorites and the push token fresh
+                // for the Sunday For You set. No-op while the flag is off.
+                ForYouService.shared.appBecameActive()
                 // Trial week: count today and clear today's "haven't opened" nudge.
                 TrialExperienceService.shared.onAppOpenDuringTrial()
                 GrowthMetrics.shared.trackDayStarted(
@@ -485,6 +492,20 @@ struct SpeakLifeApp: App {
                     "room_id": roomId
                 ])
             }
+            return
+        }
+
+        // The Sunday For You push opens the set it announces. The flag check
+        // keeps a push that was already in flight from opening a sheet that
+        // would only dismiss itself once the switch is off.
+        if let weekId = ForYouPush.weekId(from: content.userInfo) {
+            if subscriptionStore.weeklyForYouEnabled {
+                appState.pendingForYou = ForYouRoute(weekId: weekId)
+            }
+            AnalyticsService.shared.track("for_you_push_opened", parameters: [
+                "week_id": weekId,
+                "enabled": subscriptionStore.weeklyForYouEnabled,
+            ])
             return
         }
 

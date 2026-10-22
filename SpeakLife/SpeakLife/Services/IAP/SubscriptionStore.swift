@@ -442,6 +442,13 @@ final class SubscriptionStore: ObservableObject {
     // point outside the App Intent.
     @Published var guardEnabled = true
 
+    // MARK: - Weekly For You Flag
+    // Kill switch for the Sunday set of ten declarations written from the
+    // user's favorites. Defaults false (dark). Off hides the "Your Week" entry
+    // and stops ForYouService syncing; the server reads the same key and stops
+    // writing and pushing.
+    @Published var weeklyForYouEnabled = false
+
     // MARK: - Onboarding Rating Ask Flag
     // Kill switch for the App Store rating ask inside every onboarding flow.
     // Defaults true (registered in AppDelegate's Remote Config defaults); set
@@ -772,6 +779,7 @@ final class SubscriptionStore: ObservableObject {
         checklistHomeEnabled = flagValue("checklistHomeEnabled")
         enforcementEnabled = flagValue("enforcementEnabled")
         guardEnabled = flagValue("guardEnabled")
+        weeklyForYouEnabled = flagValue("weeklyForYouEnabled")
         onboardingRatingEnabled = flagValue("onboardingRatingEnabled")
         closerPledgeEnabled = flagValue("closerPledgeEnabled")
         emailCaptureEnabled = flagValue("emailCaptureEnabled")

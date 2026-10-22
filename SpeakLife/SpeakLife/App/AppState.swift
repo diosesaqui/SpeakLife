@@ -75,6 +75,9 @@ final class AppState: ObservableObject {
     /// Boxed because `.sheet(item:)` needs `Identifiable` and a bare `String?`
     /// is not one.
     @Published var pendingStandRoomId: StandRoomRoute?
+    /// The weekly For You set to open, from its Sunday push. In memory only,
+    /// for the same reason as `pendingStandRoomId`.
+    @Published var pendingForYou: ForYouRoute?
     @Published var showIntentBar = true
     @Published var onBoardingTest = true
     @Published var showScreenshotLabel = false {
