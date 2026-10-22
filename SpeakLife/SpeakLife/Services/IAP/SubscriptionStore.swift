@@ -252,7 +252,7 @@ final class SubscriptionStore: ObservableObject {
     }
 
     /// Whether the never-subscribed wall replaces the app: an onboarded user
-    /// who installed on or after `unsubscribedWallSince` and has never had a
+    /// who installed on or after `lapsedWallSince` and has never had a
     /// trial or purchase, typically someone who closed the onboarding paywall
     /// while it was soft. They see the onboarding paywall, hard, until they
     /// start a trial or buy. Rides `hardOnboardingPaywall` as well, so this
@@ -265,7 +265,7 @@ final class SubscriptionStore: ObservableObject {
               hardOnboardingPaywall,
               entitlementsResolved,
               neverHadPremium,
-              AnalyticsContext.shared.userInstallDate >= unsubscribedWallSince else { return false }
+              AnalyticsContext.shared.userInstallDate >= lapsedWallSince else { return false }
         return !isInDevotionalPremium && !hasFullAccess
     }
 
@@ -528,12 +528,9 @@ final class SubscriptionStore: ObservableObject {
     // Never-subscribed wall (RC key "hardUnsubscribedPaywall"). When true, and
     // `hardOnboardingPaywall` is true too, an onboarded user who has never had
     // a trial or purchase sees the onboarding paywall, hard, in place of the
-    // app. Unset reads false, so it ships dormant.
+    // app. Shares the `lapsedWallSince` cutoff, applied to install date.
+    // Unset reads false, so it ships dormant.
     @Published var hardUnsubscribedPaywall = false
-    // Earliest install the never-subscribed wall applies to (RC key
-    // "unsubscribedWallSince", yyyy-MM-dd). Unset or unreadable falls back to
-    // `lapsedWallSince`, so both walls share one cutoff unless told otherwise.
-    @Published var unsubscribedWallSince: Date = .distantFuture
     // Monthly-to-yearly offer before a monthly subscriber's renewal (RC key
     // "monthlyAnnualOffer", default off) and how many days ahead of the
     // renewal it appears (RC key "monthlyAnnualOfferDays", default 5).
@@ -887,8 +884,6 @@ final class SubscriptionStore: ObservableObject {
             ?? Self.parseDay(Self.defaultLapsedWallSince)
             ?? .distantFuture
         hardUnsubscribedPaywall = remoteConfig["hardUnsubscribedPaywall"].boolValue
-        unsubscribedWallSince = Self.parseDay(remoteConfig["unsubscribedWallSince"].stringValue.trimmingCharacters(in: .whitespacesAndNewlines))
-            ?? lapsedWallSince
         monthlyAnnualOffer = remoteConfig["monthlyAnnualOffer"].boolValue
         // Dormant ladder for paying subscribers: on unless the console turns
         // it off (an unset key reads on), with a stable holdout, default 10%,
