@@ -1361,6 +1361,8 @@ public struct TaskLibrary {
     /// - Parameter connectStyle: how the user said they connect best with
     ///   scripture. Defaults to whatever onboarding persisted; pass an explicit
     ///   value in tests. nil leaves the ordering exactly as it was.
+    /// - Parameter date: the day the board is for. Decides whether gratitude or
+    ///   `journal_insight` is the day's writing row; see `withGratitude`.
     /// - Parameter timeBudget: how much time the user said they have each day.
     ///   Defaults to whatever onboarding persisted; pass an explicit value in
     ///   tests. nil serves the whole board, exactly as before. See
@@ -1372,7 +1374,8 @@ public struct TaskLibrary {
                                              guardCompletedToday: Bool? = nil,
                                              totalDaysCompleted: Int = 0,
                                              connectStyle: ConnectStyle? = ConnectStyle.stored(),
-                                             timeBudget: DailyTimeBudget? = DailyTimeBudget.stored()) -> [DailyTask] {
+                                             timeBudget: DailyTimeBudget? = DailyTimeBudget.stored(),
+                                             date: Date = Date()) -> [DailyTask] {
         let audioDay = foundationAudioDay ?? streakDay
         // Check if AI features are enabled for enhanced task generation
         if isAIEnabled() {
@@ -1382,7 +1385,7 @@ public struct TaskLibrary {
             let led = leadWithPreferredModality(owned, style: connectStyle, streakDay: streakDay)
             let guarded = withGuard(burstFirst(led), completedToday: guardCompletedToday,
                                     totalDaysCompleted: totalDaysCompleted)
-            return capToTimeBudget(withPersonalDeclaration(withGratitude(guarded),
+            return capToTimeBudget(withPersonalDeclaration(withGratitude(guarded, date: date),
                                                            progress: personalDeclarations),
                                    budget: timeBudget, style: connectStyle)
         }
@@ -1441,7 +1444,7 @@ public struct TaskLibrary {
         let led = leadWithPreferredModality(tasks, style: connectStyle, streakDay: streakDay)
         let guarded = withGuard(burstFirst(led), completedToday: guardCompletedToday,
                                 totalDaysCompleted: totalDaysCompleted)
-        return capToTimeBudget(withPersonalDeclaration(withGratitude(guarded),
+        return capToTimeBudget(withPersonalDeclaration(withGratitude(guarded, date: date),
                                                        progress: personalDeclarations),
                                budget: timeBudget, style: connectStyle)
     }
@@ -1568,12 +1571,31 @@ public struct TaskLibrary {
     /// first for anyone who said they have one or three minutes. It never earns
     /// the streak; `isStreakEarned` reads the Burst alone.
     ///
+    /// **One writing row a day.** When the board already carries
+    /// `journal_insight` (journalers from day 1, everyone from day 8), the two
+    /// alternate by calendar day instead of stacking two journal rows. On a
+    /// gratitude day it takes the journal row's slot, so a journaler's writing
+    /// row keeps the place `leadWithPreferredModality` gave it. Keyed to the
+    /// date, never the streak, so a rebuild after the Burst bumps the streak
+    /// cannot swap the row mid-day.
+    ///
     /// Completion is an ordinary stored completion (`completeTask` on save), so
     /// it carries across rebuilds by id like the devotional and audio rows do.
-    static func withGratitude(_ tasks: [DailyTask]) -> [DailyTask] {
+    static func withGratitude(_ tasks: [DailyTask], date: Date) -> [DailyTask] {
         var result = tasks.filter { $0.id != gratitudeTaskId }
+        if let journalIndex = result.firstIndex(where: { $0.id == "journal_insight" }) {
+            if isGratitudeDay(date) { result[journalIndex] = gratitudeTask }
+            return result
+        }
         result.append(gratitudeTask)
         return result
+    }
+
+    /// Alternates gratitude and `journal_insight` on boards that would carry
+    /// both: every other calendar day is a gratitude day.
+    public static func isGratitudeDay(_ date: Date, calendar: Calendar = .current) -> Bool {
+        let day = calendar.ordinality(of: .day, in: .era, for: date) ?? 0
+        return day % 2 == 0
     }
 
     public static let gratitudeTask = DailyTask(

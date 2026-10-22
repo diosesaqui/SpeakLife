@@ -515,9 +515,22 @@ final class DailyChecklistTests: XCTestCase {
     /// resembling what they asked for.
     func testConnectStyle_JournalingGetsAJournalRowOnDayOne() {
         withStandardTasks {
-            let ids = TaskLibrary.getCoreTasksForStreak(1, connectStyle: .journaling).map(\.id)
+            let ids = TaskLibrary.getCoreTasksForStreak(1, connectStyle: .journaling,
+                                                        date: journalDay).map(\.id)
             XCTAssertTrue(ids.contains("journal_insight"), "day 1 served \(ids)")
             XCTAssertEqual(ids.dropFirst().first, "journal_insight", "ordered as \(ids)")
+            XCTAssertFalse(ids.contains(TaskLibrary.gratitudeTaskId), "two writing rows: \(ids)")
+        }
+    }
+
+    /// On a gratitude day the journaler's writing row is gratitude, in the same
+    /// slot, so they never see two journal rows.
+    func testConnectStyle_JournalingGetsGratitudeInTheSameSlotOnGratitudeDays() {
+        withStandardTasks {
+            let ids = TaskLibrary.getCoreTasksForStreak(1, connectStyle: .journaling,
+                                                        date: gratitudeDay).map(\.id)
+            XCTAssertEqual(ids.dropFirst().first, TaskLibrary.gratitudeTaskId, "ordered as \(ids)")
+            XCTAssertFalse(ids.contains("journal_insight"), "two writing rows: \(ids)")
         }
     }
 
@@ -600,17 +613,62 @@ final class DailyChecklistTests: XCTestCase {
 
     // MARK: - Gratitude
 
-    /// The gratitude row is daily: on every day of every phase, on both
-    /// task-selection paths, and always last so short budgets trim it first.
-    func testGratitude_IsOnEveryBoardAndAlwaysLast() {
+    /// Every board carries exactly one writing row, gratitude or the insight
+    /// journal, on every day of every phase, on both task-selection paths.
+    func testGratitude_ExactlyOneWritingRowEveryDay() {
+        let writing: Set<String> = [TaskLibrary.gratitudeTaskId, "journal_insight"]
         withBothTaskPaths {
-            for day in [1, 2, 7, 8, 30, 31, 100, 365] {
-                let ids = TaskLibrary.getCoreTasksForStreak(day, connectStyle: nil, timeBudget: nil).map(\.id)
-                XCTAssertEqual(ids.last, TaskLibrary.gratitudeTaskId, "day \(day) ordered as \(ids)")
-                XCTAssertEqual(ids.filter { $0 == TaskLibrary.gratitudeTaskId }.count, 1,
-                               "day \(day) served gratitude more than once: \(ids)")
+            for date in [gratitudeDay, journalDay] {
+                for style in [nil] + ConnectStyle.allCases.map(Optional.some) {
+                    for day in [1, 2, 7, 8, 30, 31, 100, 365] {
+                        let ids = TaskLibrary.getCoreTasksForStreak(day, connectStyle: style,
+                                                                    timeBudget: nil, date: date).map(\.id)
+                        XCTAssertEqual(ids.filter { writing.contains($0) }.count, 1,
+                                       "day \(day) \(style?.rawValue ?? "none") served \(ids)")
+                    }
+                }
             }
         }
+    }
+
+    /// With no journal row to alternate with (the foundation week, for anyone
+    /// who did not answer journaling), gratitude is there every day, last.
+    func testGratitude_IsDailyAndLastInTheFoundationWeek() {
+        withStandardTasks {
+            for date in [gratitudeDay, journalDay] {
+                for day in 1...7 {
+                    let ids = TaskLibrary.getCoreTasksForStreak(day, connectStyle: nil,
+                                                                timeBudget: nil, date: date).map(\.id)
+                    XCTAssertEqual(ids.last, TaskLibrary.gratitudeTaskId, "day \(day) ordered as \(ids)")
+                }
+            }
+        }
+    }
+
+    /// From day 8 the two rows alternate by calendar day, and the gratitude
+    /// row takes the journal row's slot rather than moving to the end.
+    func testGratitude_AlternatesWithTheJournalFromDayEight() {
+        withStandardTasks {
+            let onJournalDay = TaskLibrary.getCoreTasksForStreak(8, connectStyle: nil, timeBudget: nil,
+                                                                 date: journalDay).map(\.id)
+            let onGratitudeDay = TaskLibrary.getCoreTasksForStreak(8, connectStyle: nil, timeBudget: nil,
+                                                                   date: gratitudeDay).map(\.id)
+            XCTAssertTrue(onJournalDay.contains("journal_insight"), "\(onJournalDay)")
+            XCTAssertEqual(onGratitudeDay.firstIndex(of: TaskLibrary.gratitudeTaskId),
+                           onJournalDay.firstIndex(of: "journal_insight"),
+                           "gratitude \(onGratitudeDay) vs journal \(onJournalDay)")
+        }
+    }
+
+    /// Consecutive days alternate, and the answer holds for the whole day.
+    func testGratitude_DayAlternatesAndIsStableWithinADay() {
+        let calendar = Calendar.current
+        let morning = calendar.startOfDay(for: gratitudeDay)
+        let night = morning.addingTimeInterval(23 * 60 * 60)
+        let tomorrow = calendar.date(byAdding: .day, value: 1, to: morning)!
+        XCTAssertTrue(TaskLibrary.isGratitudeDay(morning))
+        XCTAssertTrue(TaskLibrary.isGratitudeDay(night))
+        XCTAssertFalse(TaskLibrary.isGratitudeDay(tomorrow))
     }
 
     /// It opens a screen and never earns the streak on its own.
@@ -698,6 +756,20 @@ final class DailyChecklistTests: XCTestCase {
 
     /// The AI path builds a different task set. Tests about the standard one
     /// pin the flag rather than inherit whatever ran before.
+    /// Fixed days on each side of the gratitude/journal alternation, so no
+    /// test depends on the date CI happens to run.
+    private var gratitudeDay: Date { Self.firstDay(gratitude: true) }
+    private var journalDay: Date { Self.firstDay(gratitude: false) }
+
+    private static func firstDay(gratitude: Bool) -> Date {
+        let calendar = Calendar.current
+        var day = calendar.startOfDay(for: Date(timeIntervalSince1970: 1_780_000_000))
+        while TaskLibrary.isGratitudeDay(day) != gratitude {
+            day = calendar.date(byAdding: .day, value: 1, to: day)!
+        }
+        return day.addingTimeInterval(12 * 60 * 60)
+    }
+
     private func withStandardTasks(_ body: () -> Void) {
         let key = "enableAIFeatures"
         let previous = UserDefaults.standard.bool(forKey: key)
@@ -963,7 +1035,8 @@ final class DailyChecklistTests: XCTestCase {
                     guardCompletedToday: false,
                     totalDaysCompleted: 30,
                     connectStyle: style,
-                    timeBudget: budget
+                    timeBudget: budget,
+                    date: journalDay
                 ).map(\.id)
             }
 
