@@ -586,6 +586,11 @@ struct ModernDailyChecklistView: View {
                 // the width pin on the content below.
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: 12) {
+                        // Trial week only (treatment group): progress toward
+                        // three app days, where trial-to-paid jumps.
+                        if TrialExperienceService.shared.showsTrialProgress {
+                            TrialProgressCard(service: TrialExperienceService.shared)
+                        }
                         // The active campaign sits above today's tasks: it's the
                         // reason the user came back, so it leads. Renders nothing
                         // until the user clears the foundation week.
@@ -1958,3 +1963,60 @@ struct ModernDailyChecklistView_Previews: PreviewProvider {
     }
 }
 #endif
+
+
+// MARK: - Trial progress card
+
+/// Shows a trialist their week against a three-day goal. Trials since Sep
+/// 2026 that opened the app 3+ days converted 48-68%, against 19% for 1-2
+/// days, so the card names three days as the line to cross. Treatment group
+/// of the trial-habit test only (see TrialExperienceService).
+private struct TrialProgressCard: View {
+    /// State lives in UserDefaults, not @Published, so this is read on render.
+    let service: TrialExperienceService
+    private static let goalDays = 3
+
+    var body: some View {
+        let shown = service.trialActiveDays
+        let reached = min(shown, Self.goalDays)
+        VStack(alignment: .leading, spacing: DS.Spacing.xs) {
+            Text("YOUR FIRST WEEK")
+                .font(.system(size: 11, weight: .bold))
+                .tracking(1.4)
+                .foregroundColor(DS.Palette.gold.opacity(0.9))
+            HStack(alignment: .center) {
+                Text("Day \(service.trialCalendarDay) of \(service.trialLengthDays)")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .foregroundColor(.white)
+                Spacer()
+                HStack(spacing: 6) {
+                    ForEach(0..<Self.goalDays, id: \.self) { i in
+                        Circle()
+                            .fill(i < reached ? DS.Palette.gold : Color.white.opacity(0.18))
+                            .frame(width: 14, height: 14)
+                    }
+                }
+                .accessibilityLabel("\(reached) of \(Self.goalDays) days")
+            }
+            Text(shown >= Self.goalDays
+                 ? "You've shown up \(shown) days. This is the habit taking root."
+                 : "You've shown up \(shown) of \(Self.goalDays) days. Three days is where it starts to stick.")
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.85))
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(DS.Spacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .dsGlass(cornerRadius: DS.Radius.lg, strokeOpacity: 0.16, elevation: DS.Elevation.medium)
+        .onAppear {
+            let key = "trial_progress_card_shown_day"
+            let today = Calendar.current.startOfDay(for: Date()).timeIntervalSince1970
+            guard UserDefaults.standard.double(forKey: key) != today else { return }
+            UserDefaults.standard.set(today, forKey: key)
+            AnalyticsService.shared.track("trial_progress_card_shown", parameters: [
+                "trial_day": service.trialCalendarDay,
+                "active_days": shown
+            ])
+        }
+    }
+}

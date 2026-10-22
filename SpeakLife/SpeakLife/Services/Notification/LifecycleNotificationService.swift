@@ -502,14 +502,21 @@ extension LifecycleNotificationService {
     /// It replaces tonight's nightly push rather than adding a second one.
     /// Users who touch audio in the trial convert more, so the first night is
     /// where it is introduced.
-    func scheduleTrialFirstNightAudio(category: String, title: String, body: String) {
+    /// - Parameter rollToTomorrow: when tonight's 8:30pm has passed, send it
+    ///   tomorrow night instead of not at all.
+    func scheduleTrialFirstNightAudio(category: String, title: String, body: String,
+                                      rollToTomorrow: Bool = false) {
         // Turned off on the Reminders screen: no bedtime push of any kind.
         if UserDefaults.standard.object(forKey: Self.bedtimeAudioEnabledKey) as? Bool == false { return }
         let calendar = Calendar.current
         // 8:30pm, an hour ahead of the regular 9:30pm bedtime push, which
         // stands down tonight (see scheduleBedtimeAudio).
-        guard let fire = calendar.date(bySettingHour: 20, minute: 30, second: 0, of: Date()),
-              fire > Date() else { return }
+        guard var fire = calendar.date(bySettingHour: 20, minute: 30, second: 0, of: Date()) else { return }
+        if fire <= Date() {
+            guard rollToTomorrow,
+                  let tomorrow = calendar.date(byAdding: .day, value: 1, to: fire) else { return }
+            fire = tomorrow
+        }
         let episode = Self.bedtimeEpisode(isPremium: true, category: category)
 
         let content = UNMutableNotificationContent()
@@ -522,7 +529,8 @@ extension LifecycleNotificationService {
             "audioId": episode.audioId
         ]
         let comps = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: fire)
-        UserDefaults.standard.set(Date(), forKey: Self.trialAudioNightKey)
+        // The night it fires, so scheduleBedtimeAudio stands down that night.
+        UserDefaults.standard.set(fire, forKey: Self.trialAudioNightKey)
         center.removePendingNotificationRequests(withIdentifiers: [Self.bedtimeID])
         center.add(UNNotificationRequest(
             identifier: Self.trialAudioID,

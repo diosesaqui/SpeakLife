@@ -42,6 +42,10 @@ final class AppState: ObservableObject {
     /// the duration of the presentation.
     @Published var remoteMessage: RemoteMessage?
 
+    /// A discount offer to show, from a tapped `deepLink == "offer"` push.
+    /// In memory only, like `remoteMessage`; drives the sheet in HomeView.
+    @Published var pushOffer: PushOfferRoute?
+
     /// An invite code from a Stand link, waiting to be redeemed.
     ///
     /// @AppStorage, not @Published-only, because a DEFERRED Branch link

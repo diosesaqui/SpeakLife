@@ -394,6 +394,7 @@
 		OFFERB000000000000000002 /* PersonalDeclarationPrompt.swift in Sources */ = {isa = PBXBuildFile; fileRef = OFFER0000000000000000002 /* PersonalDeclarationPrompt.swift */; };
 		OFFERB000000000000000003 /* LapsedPaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = OFFER0000000000000000003 /* LapsedPaywallView.swift */; };
 		OFFERB000000000000000004 /* MonthlyToAnnualOfferView.swift in Sources */ = {isa = PBXBuildFile; fileRef = OFFER0000000000000000004 /* MonthlyToAnnualOfferView.swift */; };
+		OFFERB000000000000000005 /* PushOfferView.swift in Sources */ = {isa = PBXBuildFile; fileRef = OFFER0000000000000000005 /* PushOfferView.swift */; };
 		STANDB000000000000000004 /* StandInviteCardRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = STAND0000000000000000004 /* StandInviteCardRenderer.swift */; };
 		STANDB000000000000000005 /* StandInviteSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = STAND0000000000000000005 /* StandInviteSheet.swift */; };
 		STANDB000000000000000006 /* StandJoinView.swift in Sources */ = {isa = PBXBuildFile; fileRef = STAND0000000000000000006 /* StandJoinView.swift */; };
@@ -810,6 +811,7 @@
 		OFFER0000000000000000002 /* PersonalDeclarationPrompt.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PersonalDeclarationPrompt.swift; sourceTree = "<group>"; };
 		OFFER0000000000000000003 /* LapsedPaywallView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LapsedPaywallView.swift; sourceTree = "<group>"; };
 		OFFER0000000000000000004 /* MonthlyToAnnualOfferView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MonthlyToAnnualOfferView.swift; sourceTree = "<group>"; };
+		OFFER0000000000000000005 /* PushOfferView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PushOfferView.swift; sourceTree = "<group>"; };
 		STAND0000000000000000004 /* StandInviteCardRenderer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StandInviteCardRenderer.swift; sourceTree = "<group>"; };
 		STAND0000000000000000005 /* StandInviteSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StandInviteSheet.swift; sourceTree = "<group>"; };
 		STAND0000000000000000006 /* StandJoinView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StandJoinView.swift; sourceTree = "<group>"; };
@@ -1875,6 +1877,7 @@
 				OFFER0000000000000000002 /* PersonalDeclarationPrompt.swift */,
 				OFFER0000000000000000003 /* LapsedPaywallView.swift */,
 				OFFER0000000000000000004 /* MonthlyToAnnualOfferView.swift */,
+				OFFER0000000000000000005 /* PushOfferView.swift */,
 			);
 			name = Offer;
 			path = Offer;
@@ -2118,6 +2121,7 @@
 				OFFERB000000000000000002 /* PersonalDeclarationPrompt.swift in Sources */,
 				OFFERB000000000000000003 /* LapsedPaywallView.swift in Sources */,
 				OFFERB000000000000000004 /* MonthlyToAnnualOfferView.swift in Sources */,
+				OFFERB000000000000000005 /* PushOfferView.swift in Sources */,
 				STANDB000000000000000004 /* StandInviteCardRenderer.swift in Sources */,
 				STANDB000000000000000005 /* StandInviteSheet.swift in Sources */,
 				STANDB000000000000000006 /* StandJoinView.swift in Sources */,
@@ -2653,7 +2657,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SpeakLife/SpeakLife.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1017;
+				CURRENT_PROJECT_VERSION = 1018;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"SpeakLife/Preview Content\"";
 				DEVELOPMENT_TEAM = G7398P2856;
@@ -2674,7 +2678,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.70;
+				MARKETING_VERSION = 4.71;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -2696,7 +2700,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SpeakLife/SpeakLife.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1017;
+				CURRENT_PROJECT_VERSION = 1018;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"SpeakLife/Preview Content\"";
 				DEVELOPMENT_TEAM = G7398P2856;
@@ -2717,7 +2721,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.70;
+				MARKETING_VERSION = 4.71;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -2738,7 +2742,7 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CODE_SIGN_ENTITLEMENTS = PromisesWidget/PromisesWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1017;
+				CURRENT_PROJECT_VERSION = 1018;
 				DEVELOPMENT_TEAM = G7398P2856;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = PromisesWidget/Info.plist;
@@ -2750,7 +2754,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 4.70;
+				MARKETING_VERSION = 4.71;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife.PromisesWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -2768,7 +2772,7 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CODE_SIGN_ENTITLEMENTS = PromisesWidget/PromisesWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1017;
+				CURRENT_PROJECT_VERSION = 1018;
 				DEVELOPMENT_TEAM = G7398P2856;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = PromisesWidget/Info.plist;
@@ -2780,7 +2784,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 4.70;
+				MARKETING_VERSION = 4.71;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife.PromisesWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
