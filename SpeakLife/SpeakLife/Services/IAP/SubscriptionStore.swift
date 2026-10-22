@@ -849,6 +849,14 @@ final class SubscriptionStore: ObservableObject {
             ?? Self.parseDay(Self.defaultLapsedWallSince)
             ?? .distantFuture
         monthlyAnnualOffer = remoteConfig["monthlyAnnualOffer"].boolValue
+        // Trial-week habit layer: on unless the console turns it off (an
+        // unset key reads on), with a stable holdout, default 10%.
+        let trialHabit = remoteConfig["trialHabit"]
+        let trialHoldout = remoteConfig["trialHabitHoldoutPct"]
+        TrialExperienceService.updateHabitConfig(
+            enabled: trialHabit.source == .static ? true : trialHabit.boolValue,
+            holdoutPercent: trialHoldout.source == .static ? 10 : trialHoldout.numberValue.intValue
+        )
         let offerDays = remoteConfig["monthlyAnnualOfferDays"].numberValue.intValue
         monthlyAnnualOfferDays = offerDays > 0 ? offerDays : 5
 
@@ -1001,6 +1009,11 @@ final class SubscriptionStore: ObservableObject {
         activePremiumProductID = activeEntitlement?.productIdentifier
         premiumPeriodEndsAt = activeEntitlement?.expirationDate
         premiumWillRenew   = activeEntitlement?.willRenew ?? false
+        // A trialist who turned off auto-renew has decided: stop the
+        // trial-week nudges and card.
+        if isInTrial && activeEntitlement?.willRenew == false {
+            TrialExperienceService.shared.onTrialAutoRenewOff()
+        }
         premiumOriginalPurchaseDate = premiumActive
             ? RevenueCatManager.shared.premiumOriginalPurchaseDate(info)
             : nil
