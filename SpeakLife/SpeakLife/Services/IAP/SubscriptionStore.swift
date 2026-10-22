@@ -449,6 +449,16 @@ final class SubscriptionStore: ObservableObject {
     // writing and pushing.
     @Published var weeklyForYouEnabled = false
 
+    // MARK: - Focused First Run Flag
+    // Brand-new users land on a Today screen with one card, "Speak today's 7
+    // declarations", until they finish a first Burst (or three days pass), and
+    // the Burst opens on its own the moment onboarding ends. Defaults true
+    // (registered in AppDelegate's Remote Config defaults); set
+    // `focusedFirstRunEnabled` to false and new installs get the full Today
+    // screen with no auto-open. Existing users never see it either way. See
+    // FirstRunFocusRule (SpeakLifeCore).
+    @Published var focusedFirstRunEnabled = true
+
     // MARK: - Onboarding Rating Ask Flag
     // Kill switch for the App Store rating ask inside every onboarding flow.
     // Defaults true (registered in AppDelegate's Remote Config defaults); set
@@ -780,6 +790,7 @@ final class SubscriptionStore: ObservableObject {
         enforcementEnabled = flagValue("enforcementEnabled")
         guardEnabled = flagValue("guardEnabled")
         weeklyForYouEnabled = flagValue("weeklyForYouEnabled")
+        focusedFirstRunEnabled = flagValue(FirstRunFocusRule.flagKey)
         onboardingRatingEnabled = flagValue("onboardingRatingEnabled")
         closerPledgeEnabled = flagValue("closerPledgeEnabled")
         emailCaptureEnabled = flagValue("emailCaptureEnabled")

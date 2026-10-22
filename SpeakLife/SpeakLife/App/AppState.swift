@@ -107,6 +107,23 @@ final class AppState: ObservableObject {
     /// never synced, never persisted, and gone on the next launch. Only the
     /// debug panel sets it, and the panel cannot open on an App Store build.
     @Published var debugReplayOnboarding = false
+
+    /// Focused first run (`FirstRunFocusRule`): when this install finished
+    /// onboarding with the switch on, as seconds since 1970. 0 means never, which
+    /// is every user who onboarded before it shipped, so they keep the full Today
+    /// screen. Deliberately not in SyncedSettingsStore: it describes this
+    /// install's first landing, not the person.
+    @AppStorage("firstRunFocusStartedAt") var firstRunFocusStartedAt: Double = 0
+    /// Set once the first Burst after onboarding is finished. Ends focus for good.
+    @AppStorage("firstRunFocusBurstDone") var firstRunFocusBurstDone = false
+    /// In memory only: onboarding just ended and the Today tab should open the
+    /// first Burst itself. Consumed once by ModernDailyChecklistView.
+    @Published var pendingFirstRunBurst = false
+
+    /// `firstRunFocusStartedAt` as a date, nil when it was never stamped.
+    var firstRunFocusStartDate: Date? {
+        firstRunFocusStartedAt > 0 ? Date(timeIntervalSince1970: firstRunFocusStartedAt) : nil
+    }
     @AppStorage("newPrayersAdded") var newPrayersAdded = true
     @AppStorage("newCategoriesAddedv4") var newCategoriesAddedv4 = true
     @AppStorage("newThemesAdded") var newThemesAdded = true

@@ -324,6 +324,12 @@ final class AppDelegate: NSObject, MessagingDelegate {
             // syncing, and the server reads the same key's default value, so
             // turning it off also stops the Sunday writing and pushes.
             "weeklyForYouEnabled": false as NSNumber,
+            // Focused first run ships on: new installs see one "Speak today's
+            // 7 declarations" card on Today and the Burst opens itself after
+            // onboarding. Flip to false in Remote Config (or split it in an
+            // A/B test) to give new installs the full Today screen instead.
+            // Read the test on `user_activated`.
+            "focusedFirstRunEnabled": true as NSNumber,
             // Forced update gate. Ships inert and doubly so: the switch is off
             // AND the floor is empty, either of which alone is enough to keep
             // every user running. To retire a build, publish
