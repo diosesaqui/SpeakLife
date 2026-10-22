@@ -105,6 +105,12 @@ final class RevenueCatManager {
         info.entitlements[Self.premiumEntitlement]?.isActive == true
     }
 
+    /// True if the premium entitlement exists at all, active or expired: the
+    /// user has had a trial or a purchase at some point.
+    func hasEverHadPremium(_ info: CustomerInfo) -> Bool {
+        info.entitlements[Self.premiumEntitlement] != nil
+    }
+
     func isDevotionalActive(_ info: CustomerInfo) -> Bool {
         info.entitlements[Self.devotionalEntitlement]?.isActive == true
     }
