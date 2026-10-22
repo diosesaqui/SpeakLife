@@ -544,7 +544,7 @@ final class DailyChecklistTests: XCTestCase {
         withStandardTasks {
             let ids = TaskLibrary.getCoreTasksForStreak(3, connectStyle: nil).map(\.id)
             XCTAssertEqual(ids, ["complete_daily_burst", "read_devotional",
-                                 "listen_audio", "ask_the_bible"],
+                                 "listen_audio", "ask_the_bible", TaskLibrary.gratitudeTaskId],
                            "unstyled day 3 ordered as \(ids)")
         }
     }
@@ -596,6 +596,31 @@ final class DailyChecklistTests: XCTestCase {
         XCTAssertEqual(ConnectStyle.stored(defaults: defaults), .journaling)
         ConnectStyle.store(nil, defaults: defaults)
         XCTAssertNil(ConnectStyle.stored(defaults: defaults))
+    }
+
+    // MARK: - Gratitude
+
+    /// The gratitude row is daily: on every day of every phase, on both
+    /// task-selection paths, and always last so short budgets trim it first.
+    func testGratitude_IsOnEveryBoardAndAlwaysLast() {
+        withBothTaskPaths {
+            for day in [1, 2, 7, 8, 30, 31, 100, 365] {
+                let ids = TaskLibrary.getCoreTasksForStreak(day, connectStyle: nil, timeBudget: nil).map(\.id)
+                XCTAssertEqual(ids.last, TaskLibrary.gratitudeTaskId, "day \(day) ordered as \(ids)")
+                XCTAssertEqual(ids.filter { $0 == TaskLibrary.gratitudeTaskId }.count, 1,
+                               "day \(day) served gratitude more than once: \(ids)")
+            }
+        }
+    }
+
+    /// It opens a screen and never earns the streak on its own.
+    func testGratitude_OpensItsFormAndNeverEarnsTheStreak() {
+        XCTAssertEqual(TaskLibrary.gratitudeTask.navigationDestination, .journal)
+        var gratitude = TaskLibrary.gratitudeTask
+        gratitude.isCompleted = true
+        let burst = TaskLibrary.foundationTasks.first { $0.id == "complete_daily_burst" }!
+        let checklist = DailyChecklist(date: Date(), tasks: [burst, gratitude], currentPhase: .foundation)
+        XCTAssertFalse(checklist.isStreakEarned)
     }
 
     // MARK: - Retired tasks
@@ -827,14 +852,26 @@ final class DailyChecklistTests: XCTestCase {
         withStandardTasks {
             let ids = TaskLibrary.getCoreTasksForStreak(3, connectStyle: nil, timeBudget: nil).map(\.id)
             XCTAssertEqual(ids, ["complete_daily_burst", "read_devotional",
-                                 "listen_audio", "ask_the_bible"],
+                                 "listen_audio", "ask_the_bible", TaskLibrary.gratitudeTaskId],
                            "unbudgeted day 3 served \(ids)")
         }
     }
 
-    /// A cap wider than the day never invents rows to fill itself. Day 1 is
-    /// deliberately three rows, and a three-minute user gets those three.
+    /// A cap wider than the day never invents rows to fill itself.
+    ///
+    /// Pinned on `capToTimeBudget` directly: since the gratitude row joined,
+    /// no public board is shorter than the three-minute cap.
     func testTimeBudget_NeverPadsAShortBoard() {
+        let short = TaskLibrary.foundationTasks.filter {
+            ["complete_daily_burst", "read_devotional"].contains($0.id)
+        }
+        let capped = TaskLibrary.capToTimeBudget(short, budget: .three, style: nil).map(\.id)
+        XCTAssertEqual(capped, ["complete_daily_burst", "read_devotional"], "capped to \(capped)")
+    }
+
+    /// Day 1 at three minutes keeps the light first day: Burst, devotional,
+    /// audio. Gratitude sits last on the board, so it is the row the cap trims.
+    func testTimeBudget_DayOneAtThreeMinutesTrimsGratitudeFirst() {
         withStandardTasks {
             let ids = TaskLibrary.getCoreTasksForStreak(1, connectStyle: nil, timeBudget: .three).map(\.id)
             XCTAssertEqual(ids, ["complete_daily_burst", "read_devotional", "listen_audio"],

@@ -195,7 +195,8 @@ struct NextUpTaskCard: View {
         case .devotional: return "Open Devotional →"
         case .audioTab:   return "Listen Now →"
         case .bibleChat:  return "Ask the Bible →"
-        case .journal:    return "Open Journal →"
+        case .journal:
+            return task.id == TaskLibrary.gratitudeTaskId ? "Write 3 Things →" : "Open Journal →"
         case .personalDeclaration: return "Speak It →"
         case .takeItCaptive: return "Take It Captive →"
         case .none:       return "Complete →"

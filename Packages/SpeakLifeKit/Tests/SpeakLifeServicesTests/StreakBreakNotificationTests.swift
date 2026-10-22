@@ -562,6 +562,28 @@ final class StreakBreakNotificationTests: XCTestCase {
                      "Burst still open: the streak-at-risk push speaks, not this one")
     }
 
+    /// Gratitude is on the evening list, right behind audio and ahead of the
+    /// journal, and the tap opens Today where the row is.
+    func testTaskNudgeIncludesGratitude() {
+        func task(_ id: String, done: Bool = false) -> DailyTask {
+            DailyTask(id: id, title: id, description: "", icon: "", category: .foundation,
+                      type: .speak, isCompleted: done)
+        }
+        var checklist = DailyChecklist(date: Date(),
+                                       tasks: [task("complete_daily_burst", done: true),
+                                               task("journal_insight"),
+                                               task(TaskLibrary.gratitudeTaskId),
+                                               task("listen_audio")],
+                                       currentPhase: .growth)
+        XCTAssertEqual(EveningTaskNudge.next(for: checklist)?.taskId, "listen_audio")
+
+        checklist.tasks[3].isCompleted = true
+        let nudge = EveningTaskNudge.next(for: checklist)
+        XCTAssertEqual(nudge?.taskId, TaskLibrary.gratitudeTaskId)
+        XCTAssertNil(nudge?.deepLink, "opens Today, where the row is")
+        XCTAssertEqual(nudge?.title, "Three things you're grateful for 🙏")
+    }
+
     func testUnknownTaskStillGetsANudgeNamingIt() {
         let checklist = DailyChecklist(
             date: Date(),

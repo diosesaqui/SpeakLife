@@ -42,6 +42,7 @@ struct ModernDailyChecklistView: View {
     /// flow can tell an interception apart from the day's task.
     @State private var takeItCaptiveFromIntent = false
     @State private var showJournal = false
+    @State private var showGratitude = false
     @State private var showWarriorRoom = false
     @State private var showCreateYourOwn = false
     @State private var showBible = false
@@ -135,7 +136,13 @@ struct ModernDailyChecklistView: View {
         case .bibleChat:
             showBibleChat = true
         case .journal:
-            showJournal = true
+            // The gratitude row shares the journal destination but has its own
+            // three-line form, which is what completes it.
+            if task.id == TaskLibrary.gratitudeTaskId {
+                showGratitude = true
+            } else {
+                showJournal = true
+            }
         case .personalDeclaration:
             // One row for all of them: the card when they carry one, the list
             // when they carry several, since every one has to be spoken before
@@ -157,6 +164,18 @@ struct ModernDailyChecklistView: View {
         case .none:
             viewModel.completeTask(taskId: task.id)
         }
+    }
+
+    /// Ticks the gratitude row once its three lines are saved.
+    private func completeGratitudeTask() {
+        let taskId = TaskLibrary.gratitudeTaskId
+        guard let task = viewModel.todayChecklist.tasks.first(where: { $0.id == taskId }),
+              !task.isCompleted else { return }
+        viewModel.completeTask(taskId: taskId)
+        completedTasks.insert(taskId)
+        GrowthMetrics.shared.trackActivation(action: "checklist_task_completed")
+        GrowthMetrics.shared.trackFeatureFirstUse("checklist_\(task.type.rawValue)")
+        GrowthMetrics.shared.recordStreak(viewModel.streakStats.currentStreak)
     }
 
     /// Guarding — the fifth pillar. Presented right here on Today rather than
@@ -665,6 +684,13 @@ struct ModernDailyChecklistView: View {
                                     openTakeItCaptive()
                                     return
                                 }
+                                // Gratitude is earned by writing the three
+                                // lines, so an unticked box opens the form.
+                                // Unticking a finished row still works below.
+                                if taskId == TaskLibrary.gratitudeTaskId && !task.isCompleted {
+                                    showGratitude = true
+                                    return
+                                }
                                 if task.isCompleted {
                                     viewModel.uncompleteTask(taskId: taskId)
                                     completedTasks.remove(taskId)
@@ -948,6 +974,9 @@ struct ModernDailyChecklistView: View {
         }
         .sheet(isPresented: $showJournal) {
             JournalEntrySheet(category: getUserTopCategories().first)
+        }
+        .sheet(isPresented: $showGratitude) {
+            GratitudeEntrySheet { completeGratitudeTask() }
         }
         // Warrior Room — the community prayer wall, surfaced from Today as a
         // quick-access tile. subscriptionStore injected explicitly since SwiftUI
@@ -1768,6 +1797,135 @@ struct JournalEntrySheet: View {
         case "wisdom":                return "What decision needs God's wisdom right now?"
         case "destiny":               return "What is God stirring you toward?"
         default:                      return "What is God showing you today?"
+        }
+    }
+}
+
+// MARK: - Gratitude Entry Sheet
+
+/// The daily gratitude row's form: three short lines, saved together.
+///
+/// Three separate fields rather than one text box, because "three things" is
+/// the whole instruction. Save stays off until all three are filled, and saving
+/// is what completes the row. The entry lands in the journal like any other.
+struct GratitudeEntrySheet: View {
+    var onSaved: () -> Void
+    @Environment(\.dismiss) private var dismiss
+    @State private var items = ["", "", ""]
+    @State private var showSaveConfirmation = false
+    @FocusState private var focusedIndex: Int?
+
+    private static let placeholders = [
+        "Someone who showed you love",
+        "Something that went right",
+        "A promise God kept",
+    ]
+
+    private var trimmed: [String] {
+        items.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+    }
+
+    private var canSave: Bool { trimmed.allSatisfy { !$0.isEmpty } }
+
+    var body: some View {
+        ZStack {
+        NavigationView {
+            ZStack {
+                LinearGradient(
+                    colors: [Color(red: 0.1, green: 0.15, blue: 0.3), Color(red: 0.02, green: 0.07, blue: 0.15)],
+                    startPoint: .top, endPoint: .bottom
+                ).ignoresSafeArea()
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 14) {
+                        Text("What are three things you're grateful for today?")
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(.white)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.top, 8)
+
+                        Text("Big or small. Thank God for each one.")
+                            .font(.system(size: 15))
+                            .foregroundColor(.white.opacity(0.6))
+                            .padding(.bottom, 6)
+
+                        ForEach(0..<3, id: \.self) { index in
+                            HStack(spacing: 12) {
+                                Text("\(index + 1)")
+                                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                                    .foregroundColor(.white)
+                                    .frame(width: 30, height: 30)
+                                    .background(Circle().fill(Color(hex: "#D97706")))
+                                TextField("", text: $items[index],
+                                          prompt: Text(Self.placeholders[index]).foregroundColor(.white.opacity(0.35)))
+                                    .font(.system(size: 16))
+                                    .foregroundColor(.white)
+                                    .focused($focusedIndex, equals: index)
+                                    .submitLabel(index < 2 ? .next : .done)
+                                    .onSubmit { focusedIndex = index < 2 ? index + 1 : nil }
+                            }
+                            .padding(14)
+                            .background(RoundedRectangle(cornerRadius: 14).fill(Color.white.opacity(0.06)))
+                        }
+                    }
+                    .padding(20)
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Gratitude").font(.system(size: 18, weight: .bold)).foregroundColor(.white)
+                }
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") { dismiss() }.foregroundColor(.white.opacity(0.7))
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") { save() }
+                        .fontWeight(.semibold)
+                        .disabled(!canSave)
+                }
+            }
+        }
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { focusedIndex = 0 }
+        }
+
+            if showSaveConfirmation {
+                SaveConfirmationView(contentType: .journal) {
+                    dismiss()
+                }
+                .transition(.scale.combined(with: .opacity))
+                .zIndex(1)
+            }
+        }
+    }
+
+    private func save() {
+        let lines = trimmed
+        guard lines.allSatisfy({ !$0.isEmpty }) else { return }
+        let context = PersistenceController.shared.container.viewContext
+        let entry = JournalEntry(context: context)
+        entry.text = "Grateful for:\n" + lines.enumerated()
+            .map { "\($0.offset + 1). \($0.element)" }
+            .joined(separator: "\n")
+        // Same tag as the journal sheet, so it shows up in Create Your Own.
+        entry.category = DeclarationCategory.myOwn.rawValue
+        Task {
+            do {
+                try await JournalRepository(context: context).create(entry)
+                AnalyticsService.shared.track("gratitude_entry_saved", parameters: [
+                    "char_count": lines.reduce(0) { $0 + $1.count },
+                    "source": "checklist"
+                ])
+            } catch {
+                context.performAndWait { context.delete(entry) }
+            }
+        }
+        PremiumHaptics.affirmationCompleted()
+        focusedIndex = nil
+        onSaved()
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
+            showSaveConfirmation = true
         }
     }
 }
