@@ -164,6 +164,16 @@ final class DeclarationViewModel: ObservableObject {
                 self?.updateFavoritesFromCoreData(coreDataFavorites)
             }
             .store(in: &cancellables)
+
+        // The weekly For You set is written from these on the server, so it
+        // needs the current list. Debounced inside ForYouService, and a no-op
+        // while weeklyForYouEnabled is off.
+        unifiedFavoritesManager.$declarationFavorites
+            .receive(on: DispatchQueue.main)
+            .sink { favorites in
+                ForYouService.shared.favoritesChanged(favorites)
+            }
+            .store(in: &cancellables)
         
         // Clean up duplicates on startup if using CoreDataAPIService
         if let coreDataService = service as? CoreDataAPIService {
@@ -283,6 +293,25 @@ final class DeclarationViewModel: ObservableObject {
     
     
     // MARK: - Favorites
+
+    /// Favorites a declaration that is not in the current feed, such as one
+    /// from the weekly For You set, which `favorite(declaration:)` cannot
+    /// reach because it looks the declaration up in `declarations`.
+    func setFavorite(_ declaration: Declaration, isFavorite: Bool) {
+        var updated = declaration
+        updated.isFavorite = isFavorite
+        unifiedFavoritesManager.setDeclarationFavorite(updated)
+        ForYouService.shared.recordFavorite(declaration.text, isFavorite: isFavorite)
+        if isFavorite {
+            PremiumHaptics.favoriteAdded()
+        } else {
+            PremiumHaptics.favoriteRemoved()
+        }
+    }
+
+    func isFavorite(text: String) -> Bool {
+        favorites.contains { $0.text == text }
+    }
     
     func favorite(declaration: Declaration) {
         print("\n💖 ========== FAVORITE DEBUG ==========")
@@ -300,6 +329,7 @@ final class DeclarationViewModel: ObservableObject {
         
         let wasFavorite = declarations[indexOf].isFavorite ?? false
         declarations[indexOf].isFavorite = !wasFavorite
+        ForYouService.shared.recordFavorite(declaration.text, isFavorite: !wasFavorite)
         print("💖 Was favorite: \(wasFavorite) → Now: \(!wasFavorite)")
         
         // Save to Core Data for CloudKit sync (non-myOwn declarations)

@@ -9,4 +9,5 @@ module.exports = {
   ...require('./standTogether'),
   ...require('./emailCapture'),
   ...require('./categoryDevotional'),
+  ...require('./weeklyForYou'),
 };

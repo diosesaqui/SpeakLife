@@ -398,5 +398,13 @@ service cloud.firestore {
     match /standInvites/{code}    { allow read, write: if false; }
     match /standNudges/{uid}      { allow read, write: if false; }
     match /accountMerges/{ticket} { allow read, write: if false; }
+
+    // ─── Weekly For You ────────────────────────────────────────────────
+    // Favorites, push tokens and written sets, keyed by RevenueCat app user
+    // id. The app reaches them only through the syncForYouFavorites and
+    // getWeeklyForYou functions. Denied explicitly, and recursively, so the
+    // weeks subcollection is covered too.
+    match /forYou/{appUserId=**}  { allow read, write: if false; }
+    match /verseCache/{reference} { allow read, write: if false; }
   }
 }
