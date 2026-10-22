@@ -24,6 +24,7 @@ const { defineSecret } = require('firebase-functions/params');
 const { getApps, initializeApp } = require('firebase-admin/app');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const Anthropic = require('@anthropic-ai/sdk');
+const { isPremiumViaRevenueCat } = require('./lib/revenueCat');
 
 // prayerWallNotifications.js also calls initializeApp() at module load. When both
 // are pulled in via index.js, guard against double-init.
@@ -41,7 +42,6 @@ const MAX_TOKENS = 600;
 const FREE_MESSAGE_LIMIT = 3;   // non-premium users get this many lifetime, then paywall
 const WINDOW = 8;               // rolling window: last 8 messages (~4 exchanges)
 const MAX_CHARS = 2000;         // per-message hard truncation (anti-abuse, bounds tokens)
-const PREMIUM_ENTITLEMENT = 'premium';
 
 // The on-topic biblical-counselor prompt. Cached server-side so repeat reads are
 // ~10% of input cost. The strict topic guardrail keeps the model on faith/life
@@ -105,34 +105,6 @@ After your reply, on its very last line and nothing after it, repeat the declara
 - The marker does not count toward the reply's word limit. Never shorten the answer to make room for it.
 - The marker line is stripped before the person ever sees it, so it is never part of what you write to them. It exists so the app can offer to save the declaration and speak it back to them every day.
 - Omit the marker entirely when you did not give a declaration. Never emit it on an understanding question, and never on a crisis reply.`;
-
-// ─── RevenueCat entitlement check (server-side, authoritative when reachable) ─
-// Returns true/false when RC gives a definitive answer, or null when RC is
-// unreachable/misconfigured (bad key, outage) so the caller can fall back to the
-// client's premium claim instead of wrongly locking a paying user out.
-async function isPremiumViaRevenueCat(appUserId, secretKey) {
-  try {
-    const resp = await fetch(
-      `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(appUserId)}`,
-      { headers: { Authorization: `Bearer ${secretKey}` } }
-    );
-    if (!resp.ok) {
-      console.warn(`RC lookup ${resp.status} for ${appUserId} — falling back to client claim`);
-      return null;
-    }
-    const data = await resp.json();
-    const ent = data && data.subscriber && data.subscriber.entitlements
-      ? data.subscriber.entitlements[PREMIUM_ENTITLEMENT]
-      : null;
-    if (!ent) return false;
-    // No expiry → lifetime/non-expiring. Otherwise active if expiry is future.
-    if (!ent.expires_date) return true;
-    return new Date(ent.expires_date).getTime() > Date.now();
-  } catch (err) {
-    console.error('RC check failed:', err.message);
-    return null;
-  }
-}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // bibleChat — POST { appUserId, messages:[{role,content}], isPremiumClaim? }

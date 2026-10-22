@@ -35,6 +35,14 @@ struct DevotionalView: View {
                 UserDefaults.standard.set(current + 1, forKey: "totalVersesRead")
                 StreakIntegrationManager.notifyDevotionalCompleted()
             }
+            .task {
+                await viewModel.loadCategoryDevotional(isPremium: isPremiumReader)
+            }
+            .sheet(isPresented: $viewModel.categoryNeedsPaywall) {
+                OptimizedSubscriptionView() {
+                    viewModel.categoryNeedsPaywall = false
+                }
+            }
 //            .onAppear {
 //                // Track devotional view for metrics
 //                ListenerMetricsService.shared.trackListen(
@@ -109,6 +117,7 @@ struct DevotionalView: View {
                         }
                     
                         dateLabel
+                        categoryPicker
                         HStack {
                             Spacer()
                             AppLogo(height: 90)
@@ -116,11 +125,17 @@ struct DevotionalView: View {
                         }
                         .dsAppear(0)
 
-                        titleLabel
-                        
-                        bookLabel
-                        
-                        devotionText
+                        if viewModel.isGeneratingCategory {
+                            generatingState
+                        } else if viewModel.categoryFailed {
+                            failedState
+                        } else {
+                            titleLabel
+
+                            bookLabel
+
+                            devotionText
+                        }
                         
                         HStack {
                             Spacer()
@@ -280,15 +295,17 @@ struct DevotionalView: View {
     
     var navigateDevotionalStack: some View {
         HStack {
-            backDevotionalButton
-            
-            Spacer()
-                .frame(width: 25)
-            
-            forwardDevotionalButton
-            
-            Spacer()
-                .frame(width: 25)
+            if viewModel.selectedCategory == nil {
+                backDevotionalButton
+
+                Spacer()
+                    .frame(width: 25)
+
+                forwardDevotionalButton
+
+                Spacer()
+                    .frame(width: 25)
+            }
             
             shareButton
             
@@ -297,6 +314,88 @@ struct DevotionalView: View {
     }
     
     
+    // MARK: - Category devotionals
+
+    private var isPremiumReader: Bool {
+        subscriptionStore.isPremium || subscriptionStore.isInDevotionalPremium
+    }
+
+    /// "Daily" plus every life category. The pick is remembered, so each day
+    /// opens on a fresh devotional written for that category.
+    private var categoryPicker: some View {
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    categoryChip(title: "Daily", category: nil)
+                    ForEach(DevotionalViewModel.devotionalCategories) { category in
+                        categoryChip(title: category.name, category: category)
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+            .onAppear {
+                if let selected = viewModel.selectedCategory {
+                    proxy.scrollTo(selected.rawValue, anchor: .center)
+                }
+            }
+        }
+    }
+
+    private func categoryChip(title: String, category: DeclarationCategory?) -> some View {
+        let isSelected = viewModel.selectedCategory == category
+        return Button {
+            guard !isSelected else { return }
+            Task {
+                await viewModel.selectCategory(category, isPremium: isPremiumReader)
+                withAnimation { scrollToTop = true }
+            }
+        } label: {
+            Text(title)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(isSelected ? Color.black : Color.white)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
+                .background(
+                    Capsule().fill(isSelected ? Color.white : Color.white.opacity(0.15))
+                )
+        }
+        .buttonStyle(.plain)
+        .disabled(viewModel.isGeneratingCategory)
+        .id(category?.rawValue ?? "daily")
+    }
+
+    private var generatingState: some View {
+        VStack(spacing: 14) {
+            ProgressView()
+                .tint(.white)
+            Text("Writing today's devotional on \(viewModel.selectedCategory?.name ?? "your topic")...")
+                .font(.system(size: 16, weight: .medium))
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.white.opacity(0.85))
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 60)
+    }
+
+    private var failedState: some View {
+        VStack(spacing: 14) {
+            Text("We couldn't load today's devotional. Check your connection and try again.")
+                .font(.system(size: 16, weight: .medium))
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.white.opacity(0.85))
+            Button("Try again") {
+                Task { await viewModel.loadCategoryDevotional(isPremium: isPremiumReader) }
+            }
+            .font(.system(size: 15, weight: .semibold))
+            .foregroundStyle(.black)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 10)
+            .background(Capsule().fill(Color.white))
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 60)
+    }
+
     private func shareSpeakLife()  {
         DispatchQueue.main.async {
             if let scene = UIApplication.shared.connectedScenes
