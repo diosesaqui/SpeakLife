@@ -194,3 +194,124 @@ final class DevotionalServiceClient: DevotionalService {
         }
     }
 }
+
+// MARK: - Category devotionals (AI)
+//
+// A fresh devotional every day in the category the user picked, written by
+// the `generateCategoryDevotional` Cloud Function in the same shape as
+// devotionals.json (title, "<verse> - Ref", body ending in a prayer). The
+// function stores one per user, per category, per local day, so asking again
+// the same day returns the same devotional at no cost. The device keeps today's
+// copies too, so reopening the screen does not touch the network.
+
+enum CategoryDevotionalResult {
+    /// remainingFree is nil for premium readers and for cached copies.
+    case devotional(Devotional, remainingFree: Int?)
+    case needsPaywall
+}
+
+enum CategoryDevotionalError: Error { case network, server, empty }
+
+final class CategoryDevotionalService {
+    static let shared = CategoryDevotionalService()
+
+    private static let cloudEndpoint = URL(string: "https://us-central1-speaklife-3e5c4.cloudfunctions.net/generateCategoryDevotional")!
+    private static let emulatorEndpoint = URL(string: "http://127.0.0.1:5001/speaklife-3e5c4/us-central1/generateCategoryDevotional")!
+
+    private var endpoint: URL {
+        BibleChatLocal.usesEmulator ? Self.emulatorEndpoint : Self.cloudEndpoint
+    }
+
+    private let session: URLSession
+    private let defaults: UserDefaults
+    private let cacheKey = "categoryDevotionalCache"
+
+    init(session: URLSession = .shared, defaults: UserDefaults = .standard) {
+        self.session = session
+        self.defaults = defaults
+    }
+
+    /// The device's own calendar day, so "today" rolls over at the user's
+    /// midnight rather than the server's.
+    static func localDateString(_ date: Date = Date()) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: date)
+    }
+
+    func todaysDevotional(for category: DeclarationCategory, isPremium: Bool) async throws -> CategoryDevotionalResult {
+        let localDate = Self.localDateString()
+        let key = "\(localDate)_\(category.rawValue)"
+        if let cached = cache()[key] {
+            return .devotional(cached, remainingFree: nil)
+        }
+
+        var request = URLRequest(url: endpoint)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        // Generation takes a while on the first open of the day.
+        request.timeoutInterval = 90
+        request.httpBody = try JSONSerialization.data(withJSONObject: [
+            "appUserId": RevenueCatManager.shared.appUserID,
+            "category": category.rawValue,
+            "localDate": localDate,
+            "isPremiumClaim": isPremium
+        ])
+
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await session.data(for: request)
+        } catch {
+            throw CategoryDevotionalError.network
+        }
+        guard let http = response as? HTTPURLResponse else { throw CategoryDevotionalError.network }
+        guard http.statusCode == 200 else {
+            AnalyticsService.shared.track("category_devotional_http_error", parameters: ["status": http.statusCode])
+            throw CategoryDevotionalError.server
+        }
+
+        let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] ?? [:]
+        if json["needsPaywall"] as? Bool == true {
+            return .needsPaywall
+        }
+        guard let raw = json["devotional"] as? [String: Any],
+              let title = raw["title"] as? String, !title.isEmpty,
+              let text = raw["devotionalText"] as? String, !text.isEmpty else {
+            throw CategoryDevotionalError.empty
+        }
+        let devotional = Devotional(date: Date(),
+                                    title: title,
+                                    devotionalText: text,
+                                    books: raw["books"] as? String ?? "")
+        store(devotional, forKey: key, today: localDate)
+        return .devotional(devotional, remainingFree: (json["remainingFree"] as? NSNumber)?.intValue)
+    }
+
+    /// Whether today's devotional for this category is already on the device.
+    func hasToday(_ category: DeclarationCategory) -> Bool {
+        cache()["\(Self.localDateString())_\(category.rawValue)"] != nil
+    }
+
+    // MARK: Today's cache
+
+    private func cache() -> [String: Devotional] {
+        guard let data = defaults.data(forKey: cacheKey),
+              let decoded = try? JSONDecoder().decode([String: Devotional].self, from: data) else {
+            return [:]
+        }
+        return decoded
+    }
+
+    /// Keeps only today's entries, so the cache never grows past one
+    /// devotional per category.
+    private func store(_ devotional: Devotional, forKey key: String, today: String) {
+        var entries = cache().filter { $0.key.hasPrefix(today) }
+        entries[key] = devotional
+        if let data = try? JSONEncoder().encode(entries) {
+            defaults.set(data, forKey: cacheKey)
+        }
+    }
+}

@@ -8,4 +8,5 @@ module.exports = {
   ...require('./personalMessage'),
   ...require('./standTogether'),
   ...require('./emailCapture'),
+  ...require('./categoryDevotional'),
 };
