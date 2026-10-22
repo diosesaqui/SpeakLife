@@ -120,6 +120,7 @@ struct ProfileView: View {
                 List {
                     Section(header: Text("Premium".uppercased()).font(.caption)) {
                         subscriptionRow
+                        giveRow
                         redeemCodeRow
                     }
 
@@ -154,7 +155,6 @@ struct ProfileView: View {
                     
                     
                     Section(header: Text("SUPPORT").font(.caption)) {
-                        giveRow
                         emailRow
                         shareRow
                         reviewRow
