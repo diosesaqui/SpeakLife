@@ -2,131 +2,77 @@
 //  ChecklistNotificationSettings.swift
 //  SpeakLife
 //
-//  Settings view for daily checklist notifications
+//  Settings view for the evening check-in push
 //
 
 import SwiftUI
 
+/// On/off and time for the one evening push. `EnhancedStreakViewModel`
+/// owns the push itself and reschedules it whenever these @AppStorage keys
+/// change (it watches UserDefaults), so this view only writes the settings.
+///
+/// The old "Morning Motivation" row is gone: no notification ever read
+/// `morningReminderEnabled`, so it was a switch wired to nothing.
 struct ChecklistNotificationSettings: View {
     @EnvironmentObject var appState: AppState
     @Binding var showConfirmation: Bool
-    
+
     var body: some View {
-        VStack(spacing: 20) {
-            // Section Header
-            HStack {
-                VStack(alignment: .leading, spacing: DS.Spacing.xxs) {
-                    Text("Daily Checklist Reminders")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                    
-                    Text("Smart notifications for your spiritual journey")
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.7))
-                }
-                Spacer()
-                
-                Toggle("", isOn: $appState.checklistNotificationsEnabled)
-                    .toggleStyle(SwitchToggleStyle(tint: Constants.SLBlue))
-                    .onChange(of: appState.checklistNotificationsEnabled) { _ in
-                        triggerConfirmation()
-                    }
+        VStack(alignment: .leading, spacing: DS.Spacing.sm) {
+            Toggle(isOn: $appState.eveningCheckInEnabled) {
+                Text("Evening Check-in")
+                    .font(.headline)
+                    .foregroundColor(.white)
             }
-            
-            if appState.checklistNotificationsEnabled {
-                VStack(spacing: DS.Spacing.md) {
-                    Divider()
-                        .background(Color.white.opacity(0.2))
-                    
-                    // Morning Reminder Settings
-                    VStack(spacing: DS.Spacing.sm) {
-                        HStack {
-                            Text("🌅 Morning Motivation")
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                                .foregroundColor(.white)
-                            Spacer()
-                            Toggle("", isOn: $appState.morningReminderEnabled)
-                                .toggleStyle(SwitchToggleStyle(tint: Constants.SLBlue))
-                                .onChange(of: appState.morningReminderEnabled) { _ in
-                                    triggerConfirmation()
-                                }
-                        }
-                        
-                        if appState.morningReminderEnabled {
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text("Time:")
-                                    .font(.caption)
-                                    .foregroundColor(.white.opacity(0.8))
-                                
-                                TimePickerCompact(
-                                    hour: $appState.morningReminderHour,
-                                    minute: $appState.morningReminderMinute,
-                                    onChange: triggerConfirmation
-                                )
-                            }
-                        }
-                    }
-                    .padding(.horizontal, DS.Spacing.xs)
-                    
-                    // Evening Check-in Settings
-                    VStack(spacing: DS.Spacing.sm) {
-                        HStack {
-                            Text("🌙 Evening Check-in")
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                                .foregroundColor(.white)
-                            Spacer()
-                            Toggle("", isOn: $appState.eveningCheckInEnabled)
-                                .toggleStyle(SwitchToggleStyle(tint: Constants.SLBlue))
-                                .onChange(of: appState.eveningCheckInEnabled) { _ in
-                                    triggerConfirmation()
-                                }
-                        }
-                        
-                        if appState.eveningCheckInEnabled {
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text("Time:")
-                                    .font(.caption)
-                                    .foregroundColor(.white.opacity(0.8))
-                                
-                                TimePickerCompact(
-                                    hour: $appState.eveningCheckInHour,
-                                    minute: $appState.eveningCheckInMinute,
-                                    onChange: triggerConfirmation
-                                )
-                            }
-                        }
-                    }
-                    .padding(.horizontal, DS.Spacing.xs)
+            .toggleStyle(SwitchToggleStyle(tint: Constants.DAMidBlue))
+            .onChange(of: appState.eveningCheckInEnabled) { enabled in
+                // The evening push also requires the old master checklist
+                // switch, which has no UI. Turning this on must actually
+                // turn the push on.
+                if enabled { appState.checklistNotificationsEnabled = true }
+                AnalyticsService.shared.track("evening_checkin_toggled", parameters: ["enabled": enabled])
+                triggerConfirmation()
+            }
+
+            Text("One push each evening. If today's burst isn't done yet, a reminder before your streak breaks. Once it's done, a call-out for your next unfinished task.")
+                .font(.subheadline)
+                .foregroundColor(.white.opacity(0.7))
+                .fixedSize(horizontal: false, vertical: true)
+
+            if appState.eveningCheckInEnabled {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Time:")
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.8))
+
+                    TimePickerCompact(
+                        hour: $appState.eveningCheckInHour,
+                        minute: $appState.eveningCheckInMinute,
+                        onChange: triggerConfirmation
+                    )
                 }
+                .padding(.top, DS.Spacing.xs)
             }
         }
         .padding()
         .background(
             RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
-                .fill(.ultraThinMaterial)
-                .overlay(
-                    RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
-                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                )
+                .fill(Color.white.opacity(0.05))
+                .background(.ultraThinMaterial)
+                .dsShadow(DS.Elevation.low)
         )
-        .dsShadow(DS.Elevation.low)
     }
-    
+
     private func triggerConfirmation() {
         withAnimation {
             showConfirmation = true
         }
-        
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             withAnimation {
                 showConfirmation = false
             }
         }
-        
-        // Schedule notifications with new settings
-        NotificationManager.shared.scheduleChecklistNotifications()
     }
 }
 
