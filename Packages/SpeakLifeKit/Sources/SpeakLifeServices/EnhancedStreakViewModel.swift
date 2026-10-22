@@ -174,6 +174,17 @@ public final class EnhancedStreakViewModel: ObservableObject {
             name: ProgressSyncStore.dataDidChange,
             object: nil
         )
+        // The evening check-in toggle and time live in UserDefaults (AppState's
+        // @AppStorage, and iCloud-merged by SyncedSettingsStore). Watching the
+        // store catches both a change in Settings and one arriving from the
+        // user's other device.
+        eveningCheckInSettingsSnapshot = Self.eveningCheckInSettings(in: userDefaults)
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleUserDefaultsChanged),
+            name: UserDefaults.didChangeNotification,
+            object: nil
+        )
     }
 
     // MARK: - iCloud Sync Healing
@@ -1131,9 +1142,12 @@ public final class EnhancedStreakViewModel: ObservableObject {
             reconcileWithSyncedProgress()
             checkForNewBadges()
 
-            // Schedule evening notification for the new day with current progress
-            scheduleEveningCheckIn()
         }
+
+        // Every activation, not just a new day: the push is one-off for
+        // today, so this is what keeps tomorrow's existing and its streak
+        // count current.
+        scheduleEveningCheckIn()
 
         // Fix 4: Show banner if a streak freeze was used — either while the
         // app was away, or by the rollover immediately above. Deliberately
@@ -1343,6 +1357,102 @@ public final class EnhancedStreakViewModel: ObservableObject {
     /// `swift test` because the executable has no bundle identifier.
     public static var cancelLegacyDailyNotifications: (_ identifiers: [String]) -> Void = { _ in }
 
+    // MARK: Evening check-in settings
+
+    /// UserDefaults keys behind Settings → Reminders → Evening Check-in
+    /// (AppState's @AppStorage). Read here directly because this package
+    /// cannot see AppState.
+    public enum EveningCheckInKeys {
+        public static let enabled = "eveningCheckInEnabled"
+        public static let hour = "eveningCheckInHour"
+        public static let minute = "eveningCheckInMinute"
+        /// The master "Daily Checklist Reminders" switch the evening row sits under.
+        public static let checklistEnabled = "checklistNotificationsEnabled"
+    }
+
+    /// 9pm: late enough to catch a user who let the day get away, and half an
+    /// hour ahead of the nightly 9:30pm bedtime-audio push so the two never
+    /// land in the same minute.
+    public static let defaultEveningCheckInHour = 21
+    public static let defaultEveningCheckInMinute = 0
+
+    /// Days without a completed burst before the comeback nudge goes out.
+    public static let lapsedStreakNudgeDays = 3
+
+    struct EveningCheckInSettings: Equatable {
+        var enabled: Bool
+        var hour: Int
+        var minute: Int
+    }
+
+    private var eveningCheckInSettingsSnapshot: EveningCheckInSettings?
+
+    static func eveningCheckInSettings(in defaults: UserDefaults) -> EveningCheckInSettings {
+        // An unset key means the user never touched the switch: on by default.
+        let enabled = (defaults.object(forKey: EveningCheckInKeys.enabled) as? Bool ?? true)
+            && (defaults.object(forKey: EveningCheckInKeys.checklistEnabled) as? Bool ?? true)
+        let hour = defaults.object(forKey: EveningCheckInKeys.hour) as? Int ?? defaultEveningCheckInHour
+        let minute = defaults.object(forKey: EveningCheckInKeys.minute) as? Int ?? defaultEveningCheckInMinute
+        return EveningCheckInSettings(enabled: enabled,
+                                      hour: min(max(hour, 0), 23),
+                                      minute: min(max(minute, 0), 59))
+    }
+
+    /// When today's streak-at-risk push should fire, or nil when it should
+    /// not fire today at all: the user switched it off, or today's chosen
+    /// time has already gone by.
+    static func eveningCheckInFireDate(now: Date = Date(),
+                                       defaults: UserDefaults = .standard,
+                                       calendar: Calendar = .current) -> Date? {
+        eveningSlot(onDayOf: now, after: now, defaults: defaults, calendar: calendar)
+    }
+
+    /// When the comeback nudge should fire: the evening check-in time on the
+    /// third day after the last completed burst, or nil when switched off,
+    /// when the user has never completed one, or when that evening has gone by.
+    static func lapsedStreakNudgeFireDate(lastCompleted: Date?,
+                                          now: Date = Date(),
+                                          defaults: UserDefaults = .standard,
+                                          calendar: Calendar = .current) -> Date? {
+        guard let lastCompleted,
+              let day = calendar.date(byAdding: .day, value: lapsedStreakNudgeDays,
+                                      to: calendar.startOfDay(for: lastCompleted)) else { return nil }
+        return eveningSlot(onDayOf: day, after: now, defaults: defaults, calendar: calendar)
+    }
+
+    private static func eveningSlot(onDayOf day: Date, after now: Date,
+                                    defaults: UserDefaults, calendar: Calendar) -> Date? {
+        let settings = eveningCheckInSettings(in: defaults)
+        guard settings.enabled,
+              let fireDate = calendar.date(bySettingHour: settings.hour, minute: settings.minute,
+                                           second: 0, of: day),
+              fireDate > now else { return nil }
+        return fireDate
+    }
+
+    @objc private func handleUserDefaultsChanged(_ notification: Notification) {
+        // Fires on every defaults write, including this view model's own
+        // saves, so bail unless the evening check-in settings really moved.
+        let settings = Self.eveningCheckInSettings(in: userDefaults)
+        guard settings != eveningCheckInSettingsSnapshot else { return }
+        eveningCheckInSettingsSnapshot = settings
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { [weak self] in self?.scheduleEveningCheckIn() }
+            return
+        }
+        scheduleEveningCheckIn()
+    }
+
+    /// Schedules today's one-off evening push (streak at risk, or once the
+    /// burst is done, the next unfinished task) and the 3-day comeback nudge,
+    /// or withdraws them.
+    ///
+    /// One-off, not repeating, so the streak number in it is always the one
+    /// read here. A daily repeat kept firing "Your N-day streak ends tonight"
+    /// with the N from the last time the app was opened, long after the
+    /// streak itself had broken. Called on launch, every activation, every
+    /// day rollover, every completion and every settings change, so an
+    /// opened app always holds a push for today with the current count.
     public func scheduleEveningCheckIn() {
         // Cancel all old daily system notifications (no longer sent daily)
         Self.cancelLegacyDailyNotifications(["FallbackEveningNotification",
@@ -1353,12 +1463,30 @@ public final class EnhancedStreakViewModel: ObservableObject {
         // Only send at-risk when user has an active streak AND hasn't done their burst yet.
         let burstDone = todayChecklist.isStreakEarned
 
-        if !burstDone && streakStats.currentStreak >= 1 {
+        // One push in the evening slot, never two: the streak warning while
+        // the burst is open, then a call-out for the next unfinished task.
+        let fireDate = Self.eveningCheckInFireDate(defaults: userDefaults)
+        if !burstDone && streakStats.currentStreak >= 1, let fireDate {
+            Self.notifications.cancelEveningTaskNudge()
             Self.notifications.scheduleStreakAtRiskNotification(
-                currentStreak: streakStats.currentStreak
+                currentStreak: streakStats.currentStreak,
+                at: fireDate
             )
+        } else if let fireDate, let nudge = EveningTaskNudge.next(for: todayChecklist) {
+            Self.notifications.cancelStreakAtRiskNotification()
+            Self.notifications.scheduleEveningTaskNudge(nudge, at: fireDate)
         } else {
             Self.notifications.cancelStreakAtRiskNotification()
+            Self.notifications.cancelEveningTaskNudge()
+        }
+
+        // Queued ahead on every open, so it still reaches a user who never
+        // comes back; each completed burst moves it three days on.
+        if let fireDate = Self.lapsedStreakNudgeFireDate(lastCompleted: streakStats.lastCompletedDate,
+                                                         defaults: userDefaults) {
+            Self.notifications.scheduleLapsedStreakNudge(at: fireDate)
+        } else {
+            Self.notifications.cancelLapsedStreakNudge()
         }
     }
 

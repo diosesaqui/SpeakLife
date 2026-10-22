@@ -7,7 +7,11 @@
 //  Lifecycle (install-anchored, one-time):
 //      D1 8am, D2 6pm, D3 9am, D4 9am, D7 8am, D14 8am, D30 9am
 //  Streak:
-//      streak_at_risk daily 6:30pm (replaces old 9pm; 9pm is too late for action)
+//      streak_at_risk one-off today at the evening check-in time (9pm default,
+//          user-set in Reminders), only while a streak is live and today unearned
+//      evening_task_nudge same slot once the burst is done: names the next
+//          unfinished task (audio, journal, devotional...) and what it gives
+//      lapsed_streak_d3 one-off, evening of day 3 with no completed burst
 //      streak_break next morning 9am (replaces old +2h; comeback > guilt)
 //  Lapsed:
 //      lapsed_d5, lapsed_d10 — soft re-engagement based on no app open
@@ -134,11 +138,13 @@ final class LifecycleNotificationService {
 
     // MARK: - Streak At-Risk Notification
 
-    /// Schedule a daily 6:30pm notification reminding the user their streak is on the line.
-    /// 6:30pm is intentional: late enough that the user has had a workday, early enough that
-    /// there's still a meaningful evening window to come back. 9pm (the old time) lands when
-    /// people are winding down with phones face-down.
-    func scheduleStreakAtRiskNotification(currentStreak: Int) {
+    /// Schedule today's one-off "streak ends tonight" push at `fireDate` (the
+    /// user's evening check-in time, 6:30pm by default; see
+    /// EnhancedStreakViewModel.scheduleEveningCheckIn). Deliberately not a
+    /// daily repeat: a repeat carried the streak count from the last app open
+    /// and kept firing it after the streak had broken. The view model
+    /// re-schedules on every activation and day rollover instead.
+    func scheduleStreakAtRiskNotification(currentStreak: Int, at fireDate: Date) {
         // Cancel first to avoid duplicates
         center.removePendingNotificationRequests(withIdentifiers: ["streak_at_risk"])
 
@@ -153,10 +159,8 @@ final class LifecycleNotificationService {
             content.sound = .default
             content.userInfo = ["notificationType": "streakAtRisk"]
 
-            var components = DateComponents()
-            components.hour = 18
-            components.minute = 30
-            let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: true)
+            let components = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: fireDate)
+            let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
             let request = UNNotificationRequest(identifier: "streak_at_risk", content: content, trigger: trigger)
             self?.center.add(request, withCompletionHandler: nil)
         }
@@ -164,6 +168,69 @@ final class LifecycleNotificationService {
 
     func cancelStreakAtRiskNotification() {
         center.removePendingNotificationRequests(withIdentifiers: ["streak_at_risk"])
+    }
+
+    // MARK: - Evening Task Nudge
+
+    /// Today's evening push once the streak is safe: the next unfinished task
+    /// and its payoff. Rescheduled on every task completion, so it always
+    /// names something still open, and withdrawn when the list is done.
+    func scheduleEveningTaskNudge(_ nudge: EveningTaskNudge, at fireDate: Date) {
+        center.removePendingNotificationRequests(withIdentifiers: ["evening_task_nudge"])
+
+        center.getNotificationSettings { [weak self] settings in
+            guard settings.authorizationStatus == .authorized else { return }
+
+            let content = UNMutableNotificationContent()
+            content.title = nudge.title
+            content.body = nudge.body
+            content.sound = .default
+            var info: [String: Any] = ["lifecycle_id": "evening_task_nudge",
+                                       "taskId": nudge.taskId,
+                                       "action": "evening_task_nudge"]
+            if let deepLink = nudge.deepLink { info["deepLink"] = deepLink }
+            if let audioId = nudge.audioId { info["audioId"] = audioId }
+            content.userInfo = info
+
+            let components = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: fireDate)
+            let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+            let request = UNNotificationRequest(identifier: "evening_task_nudge", content: content, trigger: trigger)
+            self?.center.add(request, withCompletionHandler: nil)
+        }
+    }
+
+    func cancelEveningTaskNudge() {
+        center.removePendingNotificationRequests(withIdentifiers: ["evening_task_nudge"])
+    }
+
+    // MARK: - Lapsed Streak Nudge
+
+    /// One comeback push on the evening of the third day without a completed
+    /// burst. Queued ahead on every app open (see
+    /// EnhancedStreakViewModel.scheduleEveningCheckIn) so it reaches a user who
+    /// never reopens; every completed burst pushes it three days further out.
+    /// Carries no streak count, so it cannot go stale.
+    func scheduleLapsedStreakNudge(at fireDate: Date) {
+        center.removePendingNotificationRequests(withIdentifiers: ["lapsed_streak_d3"])
+
+        center.getNotificationSettings { [weak self] settings in
+            guard settings.authorizationStatus == .authorized else { return }
+
+            let content = UNMutableNotificationContent()
+            content.title = "Three days quiet. Tonight is a fresh start."
+            content.body = "One minute is all it takes. Open SpeakLife, speak one declaration, and start a new streak tonight."
+            content.sound = .default
+            content.userInfo = ["lifecycle_id": "lapsed_streak_d3", "deepLink": "declarations"]
+
+            let components = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: fireDate)
+            let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+            let request = UNNotificationRequest(identifier: "lapsed_streak_d3", content: content, trigger: trigger)
+            self?.center.add(request, withCompletionHandler: nil)
+        }
+    }
+
+    func cancelLapsedStreakNudge() {
+        center.removePendingNotificationRequests(withIdentifiers: ["lapsed_streak_d3"])
     }
 
     // MARK: - Streak Milestones
