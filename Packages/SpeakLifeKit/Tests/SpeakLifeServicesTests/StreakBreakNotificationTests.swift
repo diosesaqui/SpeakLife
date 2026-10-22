@@ -31,8 +31,10 @@ import SpeakLifePersistence
 /// back — and order against the sync heal is the whole point here.
 final class StreakNotificationSpy: StreakNotifying {
     enum Call: Equatable {
-        case scheduleAtRisk(Int)
+        case scheduleAtRisk(Int, at: Date)
         case cancelAtRisk
+        case scheduleLapsedNudge(at: Date)
+        case cancelLapsedNudge
         case scheduleBreak(previousStreak: Int)
         case cancelBreak
         case scheduleMilestone(current: Int, previous: Int)
@@ -50,6 +52,34 @@ final class StreakNotificationSpy: StreakNotifying {
         return Self.isScheduleBreak(last)
     }
 
+    /// The at-risk push as the notification centre holds it after every call
+    /// so far: its fire date, or nil when none is pending.
+    var pendingAtRiskFireDate: Date? {
+        for call in calls.reversed() {
+            switch call {
+            case .scheduleAtRisk(_, let fireDate): return fireDate
+            case .cancelAtRisk: return nil
+            default: continue
+            }
+        }
+        return nil
+    }
+
+    var pendingLapsedNudgeFireDate: Date? {
+        for call in calls.reversed() {
+            switch call {
+            case .scheduleLapsedNudge(let fireDate): return fireDate
+            case .cancelLapsedNudge: return nil
+            default: continue
+            }
+        }
+        return nil
+    }
+
+    var atRiskWasEverScheduled: Bool {
+        calls.contains { if case .scheduleAtRisk = $0 { return true } else { return false } }
+    }
+
     var scheduledBreakStreaks: [Int] {
         calls.compactMap { call -> Int? in
             if case .scheduleBreak(let previousStreak) = call { return previousStreak }
@@ -62,8 +92,12 @@ final class StreakNotificationSpy: StreakNotifying {
         return false
     }
 
-    func scheduleStreakAtRiskNotification(currentStreak: Int) { calls.append(.scheduleAtRisk(currentStreak)) }
+    func scheduleStreakAtRiskNotification(currentStreak: Int, at fireDate: Date) {
+        calls.append(.scheduleAtRisk(currentStreak, at: fireDate))
+    }
     func cancelStreakAtRiskNotification() { calls.append(.cancelAtRisk) }
+    func scheduleLapsedStreakNudge(at fireDate: Date) { calls.append(.scheduleLapsedNudge(at: fireDate)) }
+    func cancelLapsedStreakNudge() { calls.append(.cancelLapsedNudge) }
     func scheduleStreakBreakNotification(previousStreak: Int) { calls.append(.scheduleBreak(previousStreak: previousStreak)) }
     func cancelStreakBreakNotification() { calls.append(.cancelBreak) }
     @discardableResult
@@ -82,7 +116,11 @@ final class StreakBreakNotificationTests: XCTestCase {
 
     private var scratchKeys: [String] {
         ["dailyChecklist", "streakStats", "currentStreak",
-         "streakFreezeWasUsed", "streakFreezeBannerShownFor"]
+         "streakFreezeWasUsed", "streakFreezeBannerShownFor",
+         EnhancedStreakViewModel.EveningCheckInKeys.enabled,
+         EnhancedStreakViewModel.EveningCheckInKeys.hour,
+         EnhancedStreakViewModel.EveningCheckInKeys.minute,
+         EnhancedStreakViewModel.EveningCheckInKeys.checklistEnabled]
     }
 
     override func setUp() {
@@ -240,5 +278,208 @@ final class StreakBreakNotificationTests: XCTestCase {
         XCTAssertTrue(spy.scheduledBreakStreaks.isEmpty)
         XCTAssertTrue(spy.calls.contains(.cancelBreak))
         XCTAssertFalse(spy.breakNoticeIsLive)
+    }
+
+    // MARK: - Evening check-in (streak at risk)
+
+    private typealias Keys = EnhancedStreakViewModel.EveningCheckInKeys
+
+    /// A live streak with today not yet earned: the case the evening push is for.
+    private func seedStreakAtRisk(_ streak: Int = 4) throws {
+        try seedDevice(streak: streak, lastCompletedDaysAgo: 1)
+        BurstCompletionTracker.shared.completions = completions(streak, endingDaysAgo: 1)
+    }
+
+    /// The latest time today that is still ahead of now, so the push has a
+    /// window to land in. Skips in the last minutes before midnight.
+    private func lateTonight() throws -> (hour: Int, minute: Int) {
+        let now = Date()
+        let comps = cal.dateComponents([.hour, .minute], from: now)
+        if comps.hour == 23 && (comps.minute ?? 0) >= 58 {
+            throw XCTSkip("too close to midnight for a later time today")
+        }
+        return (23, 59)
+    }
+
+    func testEveningCheckInOffSchedulesNothingAndWithdrawsThePush() throws {
+        try seedStreakAtRisk()
+        UserDefaults.standard.set(false, forKey: Keys.enabled)
+
+        _ = EnhancedStreakViewModel()
+
+        XCTAssertFalse(spy.atRiskWasEverScheduled,
+            "The user switched the evening check-in off")
+        XCTAssertTrue(spy.calls.contains(.cancelAtRisk),
+            "A push queued before the switch was flipped must come down too")
+        XCTAssertNil(spy.pendingAtRiskFireDate)
+    }
+
+    func testMasterChecklistRemindersOffAlsoSilencesTheEveningPush() throws {
+        try seedStreakAtRisk()
+        UserDefaults.standard.set(false, forKey: Keys.checklistEnabled)
+
+        _ = EnhancedStreakViewModel()
+
+        XCTAssertFalse(spy.atRiskWasEverScheduled)
+        XCTAssertNil(spy.pendingAtRiskFireDate)
+    }
+
+    func testTurningEveningCheckInOffInSettingsWithdrawsThePendingPush() throws {
+        let time = try lateTonight()
+        try seedStreakAtRisk()
+        UserDefaults.standard.set(time.hour, forKey: Keys.hour)
+        UserDefaults.standard.set(time.minute, forKey: Keys.minute)
+
+        let viewModel = EnhancedStreakViewModel()
+        XCTAssertNotNil(spy.pendingAtRiskFireDate, "precondition: tonight's push is queued")
+
+        UserDefaults.standard.set(false, forKey: Keys.enabled)
+
+        XCTAssertNil(spy.pendingAtRiskFireDate,
+            "Flipping the toggle must withdraw the push without waiting for the next launch")
+        withExtendedLifetime(viewModel) {}
+    }
+
+    func testCustomEveningTimeIsUsedForTodaysOneOffPush() throws {
+        let time = try lateTonight()
+        try seedStreakAtRisk(4)
+        UserDefaults.standard.set(time.hour, forKey: Keys.hour)
+        UserDefaults.standard.set(time.minute, forKey: Keys.minute)
+
+        _ = EnhancedStreakViewModel()
+
+        let expected = cal.date(bySettingHour: time.hour, minute: time.minute, second: 0, of: Date())!
+        XCTAssertEqual(spy.pendingAtRiskFireDate, expected,
+            "Fires today at the user's chosen time, not a hard-coded default")
+        guard case .scheduleAtRisk(let streak, _)? = spy.calls.last(where: {
+            if case .scheduleAtRisk = $0 { return true } else { return false }
+        }) else { return XCTFail("no at-risk push scheduled") }
+        XCTAssertEqual(streak, 4, "Carries the streak as it stands right now")
+    }
+
+    func testChangingTheTimeInSettingsReschedulesAtTheNewTime() throws {
+        let time = try lateTonight()
+        try seedStreakAtRisk()
+        UserDefaults.standard.set(time.hour, forKey: Keys.hour)
+        UserDefaults.standard.set(time.minute - 1, forKey: Keys.minute)
+
+        let viewModel = EnhancedStreakViewModel()
+        UserDefaults.standard.set(time.minute, forKey: Keys.minute)
+
+        XCTAssertEqual(spy.pendingAtRiskFireDate,
+                       cal.date(bySettingHour: time.hour, minute: time.minute, second: 0, of: Date())!)
+        withExtendedLifetime(viewModel) {}
+    }
+
+    func testCompletingTheBurstWithdrawsTheEveningPush() throws {
+        let time = try lateTonight()
+        try seedStreakAtRisk()
+        UserDefaults.standard.set(time.hour, forKey: Keys.hour)
+        UserDefaults.standard.set(time.minute, forKey: Keys.minute)
+
+        let viewModel = EnhancedStreakViewModel()
+        XCTAssertNotNil(spy.pendingAtRiskFireDate, "precondition: tonight's push is queued")
+
+        viewModel.completeTask(taskId: "complete_daily_burst")
+
+        XCTAssertNil(spy.pendingAtRiskFireDate,
+            "The streak is safe for today, so 'ends tonight' would be a lie")
+    }
+
+    // MARK: Fire date
+
+    private func scratchDefaults() -> UserDefaults {
+        let name = "EveningCheckInTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: name)!
+        addTeardownBlock { defaults.removePersistentDomain(forName: name) }
+        return defaults
+    }
+
+    private func today(_ hour: Int, _ minute: Int) -> Date {
+        cal.date(bySettingHour: hour, minute: minute, second: 0, of: Date())!
+    }
+
+    func testFireDateDefaultsToNinePMWhenNoTimeIsSet() {
+        let fire = EnhancedStreakViewModel.eveningCheckInFireDate(now: today(9, 0),
+                                                                  defaults: scratchDefaults())
+        XCTAssertEqual(fire, today(21, 0))
+    }
+
+    func testFireDateUsesTheChosenTime() {
+        let defaults = scratchDefaults()
+        defaults.set(20, forKey: Keys.hour)
+        defaults.set(15, forKey: Keys.minute)
+        XCTAssertEqual(EnhancedStreakViewModel.eveningCheckInFireDate(now: today(9, 0), defaults: defaults),
+                       today(20, 15))
+    }
+
+    func testNoFireDateOnceTodaysTimeHasPassed() {
+        XCTAssertNil(EnhancedStreakViewModel.eveningCheckInFireDate(now: today(21, 30),
+                                                                    defaults: scratchDefaults()),
+            "Skip today rather than roll to tomorrow: tomorrow's push is scheduled on "
+            + "tomorrow's open, with tomorrow's streak count")
+    }
+
+    func testNoFireDateWhenSwitchedOff() {
+        let defaults = scratchDefaults()
+        defaults.set(false, forKey: Keys.enabled)
+        XCTAssertNil(EnhancedStreakViewModel.eveningCheckInFireDate(now: today(9, 0), defaults: defaults))
+    }
+
+    // MARK: - Lapsed streak nudge (3 days with no burst)
+
+    private func day(_ offset: Int, _ hour: Int, _ minute: Int) -> Date {
+        cal.date(bySettingHour: hour, minute: minute, second: 0,
+                 of: cal.date(byAdding: .day, value: offset, to: Date())!)!
+    }
+
+    func testLapsedNudgeFiresOnTheEveningOfTheThirdDayWithoutABurst() {
+        let fire = EnhancedStreakViewModel.lapsedStreakNudgeFireDate(lastCompleted: day(0, 8, 0),
+                                                                     now: day(0, 12, 0),
+                                                                     defaults: scratchDefaults())
+        XCTAssertEqual(fire, day(3, 21, 0))
+    }
+
+    func testLapsedNudgeUsesTheChosenEveningTime() {
+        let defaults = scratchDefaults()
+        defaults.set(19, forKey: Keys.hour)
+        defaults.set(45, forKey: Keys.minute)
+        let fire = EnhancedStreakViewModel.lapsedStreakNudgeFireDate(lastCompleted: day(-1, 8, 0),
+                                                                     now: day(0, 12, 0),
+                                                                     defaults: defaults)
+        XCTAssertEqual(fire, day(2, 19, 45))
+    }
+
+    func testNoLapsedNudgeOnceItsEveningHasPassedOrWhenOff() {
+        XCTAssertNil(EnhancedStreakViewModel.lapsedStreakNudgeFireDate(lastCompleted: day(-4, 8, 0),
+                                                                       now: day(0, 12, 0),
+                                                                       defaults: scratchDefaults()),
+            "One push on day 3, not a nightly nag after it")
+        XCTAssertNil(EnhancedStreakViewModel.lapsedStreakNudgeFireDate(lastCompleted: nil,
+                                                                       defaults: scratchDefaults()),
+            "Never completed a burst: the install-day lifecycle pushes cover them")
+        let off = scratchDefaults()
+        off.set(false, forKey: Keys.enabled)
+        XCTAssertNil(EnhancedStreakViewModel.lapsedStreakNudgeFireDate(lastCompleted: day(0, 8, 0),
+                                                                       defaults: off))
+    }
+
+    func testLaunchQueuesTheLapsedNudgeThreeDaysAfterTheLastBurst() throws {
+        try seedStreakAtRisk()
+
+        _ = EnhancedStreakViewModel()
+
+        XCTAssertEqual(spy.pendingLapsedNudgeFireDate, day(2, 21, 0),
+            "Last burst was yesterday, so the third quiet day is two days from now")
+    }
+
+    func testCompletingABurstPushesTheLapsedNudgeOut() throws {
+        try seedStreakAtRisk()
+        let viewModel = EnhancedStreakViewModel()
+
+        viewModel.completeTask(taskId: "complete_daily_burst")
+
+        XCTAssertEqual(spy.pendingLapsedNudgeFireDate, day(3, 21, 0),
+            "Today's burst restarts the three-day clock")
     }
 }

@@ -207,7 +207,9 @@ final class AppState: ObservableObject {
     @AppStorage("eveningCheckInEnabled") var eveningCheckInEnabled = true
     @AppStorage("morningReminderHour") var morningReminderHour = 8
     @AppStorage("morningReminderMinute") var morningReminderMinute = 0
-    @AppStorage("eveningCheckInHour") var eveningCheckInHour = 19
+    // Matches EnhancedStreakViewModel.defaultEveningCheckInHour/Minute, which
+    // is what the streak-at-risk push uses while these keys are unset.
+    @AppStorage("eveningCheckInHour") var eveningCheckInHour = 21
     @AppStorage("eveningCheckInMinute") var eveningCheckInMinute = 0
     
     init() {
