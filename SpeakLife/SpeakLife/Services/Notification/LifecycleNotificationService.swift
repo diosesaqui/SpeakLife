@@ -11,6 +11,8 @@
 //      streak_break next morning 9am (replaces old +2h; comeback > guilt)
 //  Lapsed:
 //      lapsed_d5, lapsed_d10 — soft re-engagement based on no app open
+//  Dormant ladder (paying subscribers, 10% holdout):
+//      dormant_d7, d14, d30, d60 (annual only) — see the extension at the end
 //  Bedtime audio:
 //      bedtime_audio nightly 9:30pm (one repeating slot), rewritten on every app open
 //
@@ -93,6 +95,8 @@ final class LifecycleNotificationService {
         center.removePendingNotificationRequests(withIdentifiers: ["lapsed_d5", "lapsed_d10"])
         // Re-schedule lapsed detection
         scheduleLapsedDetection()
+        // Paying subscribers: re-arm the 7/14/30/60-day ladder from today.
+        rescheduleDormantLadder()
     }
 
     // MARK: - Schedule All Lifecycle Notifications
@@ -291,8 +295,8 @@ final class LifecycleNotificationService {
             guard settings.authorizationStatus == .authorized else { return }
             self?.scheduleImmediate(
                 id: "lapsed_d5",
-                title: "Your mind is waiting for you 🙏",
-                body: "You haven't declared in a few days. The enemy loves silence. Come back and speak life over yourself today.",
+                title: "Your declarations are waiting 🙏",
+                body: "Speak life over today. Three minutes, out loud, is enough.",
                 delayHours: 5 * 24
             )
         }
@@ -635,5 +639,175 @@ extension LifecycleNotificationService {
             let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: true)
             self.center.add(UNNotificationRequest(identifier: Self.bedtimeID, content: content, trigger: trigger))
         }
+    }
+}
+
+// MARK: - Dormant Ladder (paying subscribers)
+//
+// 44% of paying subscribers who use the app had not opened it in 7+ days
+// (Oct 2026), and annual subscribers who turned off auto-renew averaged
+// 0.4 app days in their last month: they drift away quietly, then switch
+// renewal off as housekeeping. The repeating burst and bedtime pushes keep
+// sending the same line every day; this adds four different, personal
+// messages at the 7 / 14 / 30 / 60-day marks, timed for the moments that
+// get opened (the morning burst and the 9pm-midnight window).
+//
+// Scheduled on every open and every subscription update, from that moment,
+// and cleared on the next open, so a step only fires on genuine absence.
+// Paying subscribers only (not trials, not free users, who keep lapsed_d5).
+//
+// Controlled test: a stable 10% of installs (Remote Config
+// `dormantLadderHoldoutPct`) never get the ladder. `dormant_ladder_group`
+// on the person says which side they are on, so renewal and return rates
+// compare ladder against holdout instead of reading opens alone.
+extension LifecycleNotificationService {
+
+    static let dormantIDs = ["dormant_d7", "dormant_d14", "dormant_d30", "dormant_d60"]
+
+    private static let dormantPayingKey = "dormant_ladder_paying"
+    private static let dormantAnnualKey = "dormant_ladder_annual"
+    private static let dormantEnabledKey = "dormant_ladder_enabled"
+    private static let dormantHoldoutKey = "dormant_ladder_holdout_pct"
+    private static let dormantBucketKey = "dormant_ladder_bucket"
+    private static let dormantGroupKey = "dormant_ladder_group"
+
+    /// Stable 0..<100 per install, drawn once. Below the holdout percentage
+    /// means holdout.
+    private static var dormantBucket: Int {
+        let defaults = UserDefaults.standard
+        if let stored = defaults.object(forKey: dormantBucketKey) as? Int { return stored }
+        let bucket = Int.random(in: 0..<100)
+        defaults.set(bucket, forKey: dormantBucketKey)
+        return bucket
+    }
+
+    /// Remote Config side. Called whenever config applies.
+    func updateDormantLadderConfig(enabled: Bool, holdoutPercent: Int) {
+        let defaults = UserDefaults.standard
+        defaults.set(enabled, forKey: Self.dormantEnabledKey)
+        defaults.set(min(max(holdoutPercent, 0), 100), forKey: Self.dormantHoldoutKey)
+        rescheduleDormantLadder()
+    }
+
+    /// RevenueCat side. Called on every customer-info update.
+    func updateDormantLadderSubscriber(paying: Bool, annual: Bool) {
+        let defaults = UserDefaults.standard
+        defaults.set(paying, forKey: Self.dormantPayingKey)
+        defaults.set(annual, forKey: Self.dormantAnnualKey)
+        rescheduleDormantLadder()
+    }
+
+    /// Clears the ladder and, for an eligible paying subscriber outside the
+    /// holdout, schedules it again from now. Uses the last known subscription
+    /// state, so a warm foreground with no fresh RevenueCat update still
+    /// re-arms it.
+    func rescheduleDormantLadder() {
+        center.removePendingNotificationRequests(withIdentifiers: Self.dormantIDs)
+        let defaults = UserDefaults.standard
+        guard defaults.bool(forKey: Self.dormantEnabledKey),
+              defaults.bool(forKey: Self.dormantPayingKey) else { return }
+
+        let holdoutPct = defaults.object(forKey: Self.dormantHoldoutKey) as? Int ?? 10
+        let group = Self.dormantBucket < holdoutPct ? "holdout" : "ladder"
+        if defaults.string(forKey: Self.dormantGroupKey) != group {
+            defaults.set(group, forKey: Self.dormantGroupKey)
+            AnalyticsService.shared.setUserProperty("dormant_ladder_group", value: group)
+            AnalyticsService.shared.track("dormant_ladder_assigned", parameters: [
+                "group": group,
+                "holdout_pct": holdoutPct
+            ])
+        }
+        guard group == "ladder" else { return }
+
+        let annual = defaults.bool(forKey: Self.dormantAnnualKey)
+        let bestStreak = defaults.integer(forKey: "growth_max_streak")
+        center.getNotificationSettings { [weak self] settings in
+            guard let self = self, settings.authorizationStatus == .authorized else { return }
+            // iOS keeps only the 64 soonest pending requests and drops the
+            // rest without telling anyone, and the ladder's are the furthest
+            // out, so they would be the ones lost. The content batch already
+            // budgets ~61 of 64 (NotificationManager.daysAhead), so schedule
+            // only what fits, nearest step first.
+            self.center.getPendingNotificationRequests { pending in
+                let room = max(0, Self.pendingLimit - pending.count)
+                let steps = Self.dormantSteps(annual: annual, bestStreak: bestStreak)
+                let scheduled = Array(steps.prefix(room))
+                scheduled.forEach(self.scheduleDormantStep)
+                AnalyticsService.shared.setUserProperty("dormant_ladder_steps", value: scheduled.count)
+            }
+        }
+    }
+
+    private static let pendingLimit = 64
+
+    private struct DormantStep {
+        let id: String
+        let days: Int
+        let hour: Int
+        let minute: Int
+        let title: String
+        let body: String
+        let userInfo: [String: Any]
+    }
+
+    private static func dormantSteps(annual: Bool, bestStreak: Int) -> [DormantStep] {
+        // `notification_type` keeps opens distinct from the regular burst and
+        // bedtime pushes; `action` / `deepLink` reuse their routing.
+        var steps = [
+            DormantStep(
+                id: "dormant_d7", days: 7, hour: 8, minute: 0,
+                title: "Your 7 declarations are ready ☀️",
+                body: "Speak them over today before anything else does. Three minutes, out loud.",
+                userInfo: ["notification_type": "dormant_d7",
+                           "action": "daily_declaration_burst"]),
+            DormantStep(
+                id: "dormant_d14", days: 14, hour: 20, minute: 30,
+                title: "Tonight's audio is ready 🎧",
+                body: "Let His Word be the last thing you hear today. Press play and rest in it.",
+                userInfo: ["notification_type": "dormant_d14",
+                           "deepLink": "audio",
+                           "audioId": bedtimeEpisode(isPremium: true, category: nil).audioId]),
+            bestStreak >= 2
+                ? DormantStep(
+                    id: "dormant_d30", days: 30, hour: 21, minute: 0,
+                    title: "Your best was \(bestStreak) days in a row 🔥",
+                    body: "Day 1 of the next one starts tonight. Seven declarations, out loud.",
+                    userInfo: ["notification_type": "dormant_d30",
+                               "action": "daily_declaration_burst"])
+                : DormantStep(
+                    id: "dormant_d30", days: 30, hour: 21, minute: 0,
+                    title: "Your declarations are right where you left them",
+                    body: "Pick up tonight. Seven declarations, out loud, is all it takes.",
+                    userInfo: ["notification_type": "dormant_d30",
+                               "action": "daily_declaration_burst"]),
+        ]
+        if annual {
+            steps.append(DormantStep(
+                id: "dormant_d60", days: 60, hour: 19, minute: 0,
+                title: "Everything in your plan is still yours",
+                body: "Daily declarations, Scripture audio for sleep and Ask the Bible. Pick one tonight.",
+                userInfo: ["notification_type": "dormant_d60",
+                           "deepLink": "declarations"]))
+        }
+        return steps
+    }
+
+    private func scheduleDormantStep(_ step: DormantStep) {
+        let content = UNMutableNotificationContent()
+        content.title = step.title
+        content.body = step.body
+        content.sound = .default
+        content.userInfo = step.userInfo
+
+        let calendar = Calendar.current
+        guard let day = calendar.date(byAdding: .day, value: step.days, to: Date()),
+              let fire = calendar.date(bySettingHour: step.hour, minute: step.minute, second: 0, of: day)
+        else { return }
+        let comps = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: fire)
+        center.add(UNNotificationRequest(
+            identifier: step.id,
+            content: content,
+            trigger: UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)
+        ))
     }
 }
