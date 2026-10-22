@@ -205,7 +205,8 @@ final class DevotionalServiceClient: DevotionalService {
 // copies too, so reopening the screen does not touch the network.
 
 enum CategoryDevotionalResult {
-    case devotional(Devotional)
+    /// remainingFree is nil for premium readers and for cached copies.
+    case devotional(Devotional, remainingFree: Int?)
     case needsPaywall
 }
 
@@ -244,7 +245,7 @@ final class CategoryDevotionalService {
         let localDate = Self.localDateString()
         let key = "\(localDate)_\(category.rawValue)"
         if let cached = cache()[key] {
-            return .devotional(cached)
+            return .devotional(cached, remainingFree: nil)
         }
 
         var request = URLRequest(url: endpoint)
@@ -286,7 +287,12 @@ final class CategoryDevotionalService {
                                     devotionalText: text,
                                     books: raw["books"] as? String ?? "")
         store(devotional, forKey: key, today: localDate)
-        return .devotional(devotional)
+        return .devotional(devotional, remainingFree: (json["remainingFree"] as? NSNumber)?.intValue)
+    }
+
+    /// Whether today's devotional for this category is already on the device.
+    func hasToday(_ category: DeclarationCategory) -> Bool {
+        cache()["\(Self.localDateString())_\(category.rawValue)"] != nil
     }
 
     // MARK: Today's cache
