@@ -844,8 +844,10 @@ enum OnboardingAngles {
                 eyebrow: "THE REAL QUESTION",
                 title: "It was never\nif they work.",
                 body: "They always work. The only question left is whether you'll trust them, and put them to work, over your own life.",
-                verse: "For no matter how many promises God has made, they are 'Yes' in Christ.",
-                reference: "2 Corinthians 1:20",
+                // Mark 11:24 is Jesus naming the variable this screen asks about:
+                // believe you have received it, and it is yours.
+                verse: "Whatever you ask for in prayer, believe that you have received it, and it will be yours.",
+                reference: "Mark 11:24",
                 analyticsEvent: "promise_scene_shown",
                 analyticsParameters: ["scene": "question"]
             ),

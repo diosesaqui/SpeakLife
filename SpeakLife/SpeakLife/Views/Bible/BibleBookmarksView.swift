@@ -104,7 +104,8 @@ struct BookmarkCard: View {
             VStack(alignment: .leading, spacing: DS.Spacing.sm) {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("\(bookmark.bookName) \(bookmark.chapter):\(bookmark.verseNumber)")
+                        // NLT quotes must carry the translation's name.
+                        Text("\(bookmark.bookName) \(bookmark.chapter):\(bookmark.verseNumber)" + (NLTConfig.isNLT(bookmark.version) ? " (NLT)" : ""))
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(Constants.DAMidBlue)
                         

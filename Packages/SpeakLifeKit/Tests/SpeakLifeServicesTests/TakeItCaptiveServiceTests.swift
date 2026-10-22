@@ -1064,6 +1064,18 @@ final class ThoughtCounterLibraryTests: XCTestCase {
         XCTAssertNil(ThoughtCounterLibrary.counter(for: "I feel like a fraud", in: library))
     }
 
+    /// Jesus-voice lines say "I" and "My" as Jesus, so they pass the
+    /// first-person check. Handed to the reader to speak, they would put
+    /// Jesus' words about Himself in the reader's mouth.
+    func testJesusVoiceLinesAreNeverServed() {
+        let library = [
+            line("I took your fear to the cross, and your mind is at rest in Me.", .anxiety,
+                 book: "Jesus")
+        ]
+        XCTAssertTrue(ThoughtCounterLibrary.speakable(library).isEmpty)
+        XCTAssertNil(ThoughtCounterLibrary.counter(for: "I can't stop worrying", in: library))
+    }
+
     /// A sentence the tables cannot place at all returns nil rather than
     /// guessing, so the caller falls back to the bank instead of serving a
     /// confident wrong answer.

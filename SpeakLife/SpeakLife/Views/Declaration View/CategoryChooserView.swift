@@ -204,6 +204,17 @@ struct CategoryChooserView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top) // Ensures proper layout
     }
     
+    /// Reminders follow a category switch — see
+    /// NotificationManager.shouldFollowFeedCategoryChange. Re-tapping the
+    /// current category is not a switch, so it never collapses topics the
+    /// user curated in Settings. The bedtime audio push picks its episode
+    /// from the feed category too, so it is requeued alongside.
+    private func reminders(follow category: DeclarationCategory, from previous: DeclarationCategory) {
+        guard category != previous else { return }
+        NotificationManager.shared.followFeedCategoryChange(to: category)
+        LifecycleNotificationService.shared.scheduleBedtimeAudio(isPremium: subscriptionStore.isPremium)
+    }
+
     private func bibleBookList(geometry: GeometryProxy) -> some View {
         Section(header: Text("Bible Book Affirmation's").font(Font.custom("AppleSDGothicNeo-Regular", size: 18))) {
             LazyVGrid(columns: twoColumnGrid, spacing: 16) {
@@ -216,11 +227,10 @@ struct CategoryChooserView: View {
                                 // Track category change for paywall triggers
                                 PaywallTriggerManager.shared.trackCategoryChange()
                                 
+                                let previous = viewModel.selectedCategory
                                 viewModel.choose(category) { success in
                                     if success {
-                                        // Reminders follow the pick — see
-                                        // NotificationManager.shouldAdoptFeedCategory.
-                                        NotificationManager.shared.adoptFeedCategoryAsTopicIfNeeded(category)
+                                        reminders(follow: category, from: previous)
                                         AnalyticsService.shared.track(Event.categoryChooserTapped, parameters: ["category": category.rawValue])
                                         self.presentationMode.wrappedValue.dismiss()
                                     }
@@ -247,11 +257,10 @@ struct CategoryChooserView: View {
                                 // Track category change for paywall triggers
                                 PaywallTriggerManager.shared.trackCategoryChange()
                                 
+                                let previous = viewModel.selectedCategory
                                 viewModel.choose(category) { success in
                                     if success {
-                                        // Reminders follow the pick — see
-                                        // NotificationManager.shouldAdoptFeedCategory.
-                                        NotificationManager.shared.adoptFeedCategoryAsTopicIfNeeded(category)
+                                        reminders(follow: category, from: previous)
                                         AnalyticsService.shared.track(Event.categoryChooserTapped, parameters: ["category": category.rawValue])
                                         self.presentationMode.wrappedValue.dismiss()
                                     }
@@ -279,11 +288,10 @@ struct CategoryChooserView: View {
                                 // Track category change for paywall triggers
                                 PaywallTriggerManager.shared.trackCategoryChange()
                                 
+                                let previous = viewModel.selectedCategory
                                 viewModel.choose(category) { success in
                                     if success {
-                                        // Reminders follow the pick — see
-                                        // NotificationManager.shouldAdoptFeedCategory.
-                                        NotificationManager.shared.adoptFeedCategoryAsTopicIfNeeded(category)
+                                        reminders(follow: category, from: previous)
                                         // Was `declaration_category`, splitting this
                                         // dimension across two keys so 69% of the
                                         // event read as having no category at all.

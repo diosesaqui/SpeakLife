@@ -24,6 +24,8 @@ Every declaration must be spoken in the first person. Use **I / me / my / mine**
 
 Exception: references to what God does toward the speaker are fine ("God knows the plans He has for *me*").
 
+Exception: entries with `"book": "Jesus"` are deliberately in Jesus' voice, spoken to the reader ("I took your sickness to the cross, and your body is healed."). Their `bibleVerseText` holds the red-letter words of Jesus they stand on. Do not convert them to first person. Every other rule still applies to them.
+
 ### 2. Present / Active Tense
 Declarations are spoken NOW — they are not memories or future wishes.
 - ✅ "I walk through fire without being burned."
@@ -160,6 +162,15 @@ Every declaration must be understood instantly, the first time, by anyone. This 
 (This is the copy the Xcode target bundles, per `DEVELOPMENT_ASSET_PATHS` and the
 project's Resources build phase. Edit THIS file. Do not recreate the old
 single-nested `SpeakLife/Preview Content/...` copy, which the build never used.)
+
+After editing it, copy it over the package test copy or CI fails on drift:
+`cp "SpeakLife/SpeakLife/Preview Content/AffirmationData/declarationsv10.json" Packages/SpeakLifeKit/Tests/SpeakLifeCoreTests/Resources/declarationsv10.json`
+
+## Development Branch
+Start a new branch for each session, named `claude/<short-topic>` (for example
+`claude/paywall-price-per-day`), cut from the latest `main`. Push there and open
+the PR from it. Never reuse an earlier session's branch, and never commit
+straight to `main`.
 
 ## Analytics
 

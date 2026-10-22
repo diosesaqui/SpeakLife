@@ -344,8 +344,12 @@ struct SpeakLifeApp: App {
                 // trialist crosses the 24h mark; RevenueCat updates cover the rest
                 // (see SubscriptionStore.applyCustomerInfo).
                 Task { await QualifiedTrialTracker.shared.evaluate() }
+                // Trial week: count today and clear today's "haven't opened" nudge.
+                TrialExperienceService.shared.onAppOpenDuringTrial()
                 GrowthMetrics.shared.trackDayStarted(
-                    currentStreak: enhancedStreakViewModel.streakStats.currentStreak
+                    currentStreak: enhancedStreakViewModel.streakStats.currentStreak,
+                    longestStreak: enhancedStreakViewModel.streakStats.longestStreak,
+                    totalDaysCompleted: enhancedStreakViewModel.streakStats.totalDaysCompleted
                 )
 
                 // Set up app state references
@@ -543,6 +547,23 @@ struct SpeakLifeApp: App {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
                         ReferralPresentation.shared.autoEntry = .push
                     }
+                }
+                return
+            case "offer":
+                // Discount push: open the offer screen, unless they subscribed
+                // after the push went out. Product and campaign ride the data.
+                // On a cold launch isPremium can still be false until
+                // RevenueCat answers; PushOfferView closes itself when it flips.
+                let route = PushOfferRoute(userInfo: content.userInfo) ?? PushOfferRoute()
+                let present = PushOfferRule.shouldPresent(isPremium: subscriptionStore.isPremium)
+                AnalyticsService.shared.track("offer_push_opened", parameters: [
+                    "product_id": route.productId,
+                    "campaign": route.campaign,
+                    "is_premium": subscriptionStore.isPremium,
+                    "presented": present
+                ])
+                if present {
+                    appState.pushOffer = route
                 }
                 return
             case "bibleChat":

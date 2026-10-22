@@ -11,7 +11,6 @@ import SwiftUI
 protocol BiblePresenterProtocol {
     func formatBookForDisplay(_ book: BibleBook) -> BookDisplayModel
     func formatChapterForDisplay(_ chapter: BibleChapter, highlights: [BibleHighlight], bookmarks: [BibleBookmark]) -> ChapterDisplayModel
-    func formatSearchResults(_ results: BibleSearchResponse, searchTerm: String) -> [SearchResultDisplayModel]
     func formatVerseReference(book: String, chapter: Int, verse: Int) -> String
     func formatBooksByTestament(_ books: [BibleBook]) -> [TestamentSection]
     func formatReadingHistory(_ history: [(book: String, chapter: Int, date: Date)], books: [BibleBook]) -> [ReadingHistoryDisplayModel]
@@ -53,16 +52,6 @@ struct VerseDisplayModel: Identifiable {
     let isBookmarked: Bool
     let highlightColor: Color?
     let reference: String
-}
-
-struct SearchResultDisplayModel: Identifiable {
-    let id: String
-    let bookName: String
-    let chapter: Int
-    let verseNumber: Int
-    let text: AttributedString
-    let reference: String
-    let bookAbbrev: String
 }
 
 struct TestamentSection: Identifiable {
@@ -155,22 +144,6 @@ final class BiblePresenter: BiblePresenterProtocol {
             totalVerses: chapter.chapter.verses,
             version: chapter.book.version
         )
-    }
-    
-    func formatSearchResults(_ results: BibleSearchResponse, searchTerm: String) -> [SearchResultDisplayModel] {
-        return results.verses.map { verse in
-            let highlightedText = highlightSearchTerm(in: verse.text, searchTerm: searchTerm)
-            
-            return SearchResultDisplayModel(
-                id: "\(verse.book.abbrev.en)_\(verse.chapter)_\(verse.number)",
-                bookName: verse.book.name,
-                chapter: verse.chapter,
-                verseNumber: verse.number,
-                text: highlightedText,
-                reference: "\(verse.book.name) \(verse.chapter):\(verse.number)",
-                bookAbbrev: verse.book.abbrev.en
-            )
-        }
     }
     
     func formatVerseReference(book: String, chapter: Int, verse: Int) -> String {
@@ -335,27 +308,6 @@ final class BiblePresenter: BiblePresenterProtocol {
         case .purple:
             return Color.purple.opacity(0.3)
         }
-    }
-    
-    private func highlightSearchTerm(in text: String, searchTerm: String) -> AttributedString {
-        var attributedString = AttributedString(text)
-        let searchTermLowercased = searchTerm.lowercased()
-        let textLowercased = text.lowercased()
-        
-        var searchRange = textLowercased.startIndex..<textLowercased.endIndex
-        while let range = textLowercased.range(of: searchTermLowercased, options: .caseInsensitive, range: searchRange) {
-            // Convert the String range to the AttributedString's index range
-            if let attributedRange = Range(
-                NSRange(range, in: text),
-                in: attributedString
-            ) {
-                attributedString[attributedRange].backgroundColor = Color.yellow.opacity(0.3)
-                attributedString[attributedRange].font = .body.bold()
-            }
-            searchRange = range.upperBound..<textLowercased.endIndex
-        }
-        
-        return attributedString
     }
     
     private func getTotalChapters(for bookAbbrev: String) -> Int {

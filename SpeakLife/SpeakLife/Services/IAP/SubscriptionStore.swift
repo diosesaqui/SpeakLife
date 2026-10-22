@@ -201,6 +201,67 @@ final class SubscriptionStore: ObservableObject {
     /// the app from a push is briefly treated as free.
     @Published private(set) var entitlementsResolved = false
 
+    /// When the user's premium (trial or paid) ended, or nil if it never
+    /// did or is in Apple's billing retry. From RevenueCat.
+    @Published private(set) var premiumLapsedAt: Date?
+    /// The lapsed entitlement's last period was the free trial: they never paid.
+    @Published private(set) var lapsedFromTrial = false
+
+    /// Store product behind the active premium entitlement, its next renewal
+    /// (or end) date, and whether auto-renew is still on. From RevenueCat.
+    @Published private(set) var activePremiumProductID: String?
+    @Published private(set) var premiumPeriodEndsAt: Date?
+    @Published private(set) var premiumWillRenew = false
+
+    /// True when the active paid plan bills monthly. Read from the StoreKit
+    /// product's period, so a Remote Config repointed monthly SKU still counts.
+    var activePlanIsMonthly: Bool {
+        guard let id = activePremiumProductID else { return false }
+        if let product = subscriptions.first(where: { $0.id == id }) {
+            return product.subscription?.subscriptionPeriod.unit == .month
+        }
+        return id == resolvedMonthlyID
+    }
+
+    /// The yearly plan to offer a monthly subscriber, priced per month against
+    /// what they pay now. Nil unless they are a paying monthly subscriber and
+    /// both products are loaded.
+    var monthlyToAnnualOffer: MonthlyToAnnualOffer? {
+        guard isPremium, !isInTrial, activePlanIsMonthly,
+              let annual = currentOfferedPremium,
+              annual.subscription?.subscriptionPeriod.unit == .year,
+              let id = activePremiumProductID,
+              let monthly = subscriptions.first(where: { $0.id == id }) ?? currentOfferedPremiumMonthly
+        else { return nil }
+        return MonthlyToAnnualOffer(monthly: monthly, annual: annual)
+    }
+
+    /// Whether the pre-renewal monthly-to-yearly sheet is due: Remote Config
+    /// `monthlyAnnualOffer` is on and the current month ends within
+    /// `monthlyAnnualOfferDays`. Once per billing period is enforced by the
+    /// presenter, which records the period it was shown for.
+    @MainActor
+    var monthlyAnnualOfferDue: Bool {
+        guard monthlyAnnualOffer, entitlementsResolved, monthlyToAnnualOffer != nil,
+              let endsAt = premiumPeriodEndsAt else { return false }
+        let days = endsAt.timeIntervalSinceNow / 86_400
+        return days > 0 && days <= Double(monthlyAnnualOfferDays)
+    }
+
+    /// Whether the lapsed-user wall replaces the app. Waits for RevenueCat so a
+    /// subscriber is never walled on the launch-time `isPremium = false`, and
+    /// exempts anyone with access from another source (Stand Pass, devotional).
+    /// Only lapses on or after `lapsedWallSince` count, so switching the wall
+    /// on never locks out people who have used the free app for months.
+    @MainActor
+    var showsLapsedWall: Bool {
+        guard hardLapsedPaywall,
+              entitlementsResolved,
+              let lapsedAt = premiumLapsedAt,
+              lapsedAt >= lapsedWallSince else { return false }
+        return !isInDevotionalPremium && !hasFullAccess
+    }
+
     /// Storm paywall button copy test: "" / "free_week" → "Start my free week",
     /// "try_free" → "Try it free". Remote Config `stormCtaCopy`.
     @Published var stormCtaCopy: String = ""
@@ -419,14 +480,30 @@ final class SubscriptionStore: ObservableObject {
 
     // MARK: - High Conversion Paywall Flag
     @Published var useHighConversionPaywall = false
-    // Soft-onboarding-paywall switch. RC key kept as "showPayWhatYouCanLink" for
-    // back-compat with the existing Remote Config setup. When true, the
-    // onboarding paywall stays soft: it shows the close button and, on dismiss,
-    // the one-time welcome-offer discount. When false, onboarding callsites
-    // (isHardPaywall: true) render a hard wall (no X, and therefore no exit
-    // discount). NOTE: this no longer controls the visible "pay what you can"
-    // link — that moved to showPayWhatYouCanCTA below.
-    @Published var showPayWhatYouCanLink = true
+    // Hard-onboarding-paywall switch (RC key "hardOnboardingPaywall"). When
+    // true, onboarding callsites (isHardPaywall: true) render a hard wall: no X,
+    // and therefore no exit discount. When false, the onboarding paywall stays
+    // soft: close button plus the one-time welcome-offer discount on dismiss.
+    // Starts false (soft) until the first fetch lands, and reads false if the
+    // key is missing from the console.
+    @Published var hardOnboardingPaywall = false
+    // Lapsed-user wall (RC key "hardLapsedPaywall"). When true, an onboarded
+    // user whose premium trial or subscription has ended sees LapsedPaywallView
+    // in place of the app until they resubscribe. Unset reads false, so it
+    // ships dormant.
+    @Published var hardLapsedPaywall = false
+    // Earliest lapse the wall applies to (RC key "lapsedWallSince",
+    // yyyy-MM-dd). Unset or unreadable falls back to the day the onboarding
+    // wall went hard, so older lapsers are never swept up by surprise.
+    static let defaultLapsedWallSince = "2026-09-28"
+    @Published var lapsedWallSince: Date = SubscriptionStore.parseDay(SubscriptionStore.defaultLapsedWallSince) ?? .distantFuture
+    // Monthly-to-yearly offer before a monthly subscriber's renewal (RC key
+    // "monthlyAnnualOffer", default off) and how many days ahead of the
+    // renewal it appears (RC key "monthlyAnnualOfferDays", default 5).
+    // Monthly churns about a third of subscribers every cycle; yearly costs
+    // them roughly a third as much per month.
+    @Published var monthlyAnnualOffer = false
+    @Published var monthlyAnnualOfferDays = 5
     // Gates ONLY the "Can't afford full price? Pay what you can →" CTA link,
     // independent of the soft/hard wall and the welcome offer. Default OFF: the
     // link stays hidden everywhere until Remote Config sets showPayWhatYouCanCTA.
@@ -765,8 +842,23 @@ final class SubscriptionStore: ObservableObject {
 
         // High Conversion Paywall Flag
         useHighConversionPaywall = remoteConfig["useHighConversionPaywall"].boolValue
-        showPayWhatYouCanLink = remoteConfig["showPayWhatYouCanLink"].boolValue
+        hardOnboardingPaywall = remoteConfig["hardOnboardingPaywall"].boolValue
         showPayWhatYouCanCTA = remoteConfig["showPayWhatYouCanCTA"].boolValue
+        hardLapsedPaywall = remoteConfig["hardLapsedPaywall"].boolValue
+        lapsedWallSince = Self.parseDay(remoteConfig["lapsedWallSince"].stringValue.trimmingCharacters(in: .whitespacesAndNewlines))
+            ?? Self.parseDay(Self.defaultLapsedWallSince)
+            ?? .distantFuture
+        monthlyAnnualOffer = remoteConfig["monthlyAnnualOffer"].boolValue
+        // Trial-week habit layer: on unless the console turns it off (an
+        // unset key reads on), with a stable holdout, default 10%.
+        let trialHabit = remoteConfig["trialHabit"]
+        let trialHoldout = remoteConfig["trialHabitHoldoutPct"]
+        TrialExperienceService.updateHabitConfig(
+            enabled: trialHabit.source == .static ? true : trialHabit.boolValue,
+            holdoutPercent: trialHoldout.source == .static ? 10 : trialHoldout.numberValue.intValue
+        )
+        let offerDays = remoteConfig["monthlyAnnualOfferDays"].numberValue.intValue
+        monthlyAnnualOfferDays = offerDays > 0 ? offerDays : 5
 
         // Clean Paywall Layout A/B Test (unset key resolves false — ships dormant)
         useCleanPaywallVariant = remoteConfig["useCleanPaywallVariant"].boolValue
@@ -783,6 +875,9 @@ final class SubscriptionStore: ObservableObject {
 
         // Anthropic API key from Remote Config
         AnthropicConfig.apiKey = remoteConfig["anthropic_api_key"].stringValue
+
+        // NLT API key from Remote Config (unset keeps NLT out of the Bible reader)
+        NLTConfig.apiKey = remoteConfig["nlt_api_key"].stringValue
         
         // Sync to UserDefaults for TaskLibrary access
         UserDefaults.standard.set(enableAIFeatures, forKey: "enableAIFeatures")
@@ -905,6 +1000,20 @@ final class SubscriptionStore: ObservableObject {
         isPremium          = premiumActive
         isInTrial          = premiumActive && RevenueCatManager.shared.isPremiumInTrial(info)
         isInDevotionalPremium = devotionalActive
+        let lapsed         = RevenueCatManager.shared.lapsedPremiumEntitlement(info)
+        // No expiration date on an inactive entitlement means a refund or
+        // revocation; date it to now so the cutoff still applies.
+        premiumLapsedAt    = lapsed.map { $0.expirationDate ?? Date() }
+        lapsedFromTrial    = lapsed?.periodType == .trial
+        let activeEntitlement = RevenueCatManager.shared.activePremiumEntitlement(info)
+        activePremiumProductID = activeEntitlement?.productIdentifier
+        premiumPeriodEndsAt = activeEntitlement?.expirationDate
+        premiumWillRenew   = activeEntitlement?.willRenew ?? false
+        // A trialist who turned off auto-renew has decided: stop the
+        // trial-week nudges and card.
+        if isInTrial && activeEntitlement?.willRenew == false {
+            TrialExperienceService.shared.onTrialAutoRenewOff()
+        }
         premiumOriginalPurchaseDate = premiumActive
             ? RevenueCatManager.shared.premiumOriginalPurchaseDate(info)
             : nil
@@ -1057,8 +1166,16 @@ final class SubscriptionStore: ObservableObject {
 
     /// `purchase` with the reason it did not complete. Throws only for real
     /// failures (network, store, misconfiguration), which the caller surfaces.
-    func purchaseOutcome(_ product: Product, paywallName: String = "unknown") async throws -> PurchaseOutcome {
-        let priceValue   = NSDecimalNumber(decimal: product.price).doubleValue
+    /// - Parameter winBackOffer: an Apple win-back offer to apply (iOS 18+).
+    ///   A paid offer changes what the buyer is charged, so it is the price
+    ///   reported. A free-period offer is a trial: reported at the renewal
+    ///   price like any other trial, with its own length for the trial pushes.
+    func purchaseOutcome(_ product: Product,
+                         paywallName: String = "unknown",
+                         winBackOffer: WinBackOffer? = nil) async throws -> PurchaseOutcome {
+        let winBackTrialDays = winBackOffer.flatMap { Self.freeTrialDays(of: $0.discount) }
+        let chargedPrice = winBackTrialDays == nil ? (winBackOffer?.discount.price ?? product.price) : product.price
+        let priceValue   = NSDecimalNumber(decimal: chargedPrice).doubleValue
         // Product has *some* intro offer configured in App Store Connect — but
         // that does NOT mean THIS user gets one. Returning subscribers who
         // already consumed the trial slot on this subscription group pay full
@@ -1078,19 +1195,21 @@ final class SubscriptionStore: ObservableObject {
         // True iff this specific purchase actually enters a trial period.
         // Used to gate the Facebook StartTrial event, the analytics is_trial
         // flag, and the D2/D3 trial-ending push scheduling.
-        let willStartTrial = hasFreeTrialIntroOffer && isEligibleForIntroOffer
+        let willStartTrial = (hasFreeTrialIntroOffer && isEligibleForIntroOffer) || winBackTrialDays != nil
+        let trialDays = winBackTrialDays ?? TrialExperienceService.introTrialDays(for: product)
         let currency     = product.priceFormatStyle.currencyCode ?? "USD"
 
         let attempt: [String: Any] = [
             "product_id": product.id,
             "paywall_name": paywallName,
             "trial_eligible": willStartTrial,
-            "variant": onboardingVariantName
+            "variant": onboardingVariantName,
+            "win_back": winBackOffer != nil
         ]
         // NOTE: Do NOT fire conversion analytics before RC confirms — RC validates the receipt.
         let result: RevenueCatManager.StorePurchaseResult
         do {
-            result = try await RevenueCatManager.shared.purchase(storeProduct: product) {
+            result = try await RevenueCatManager.shared.purchase(storeProduct: product, winBackOffer: winBackOffer) {
                 // The sheet is about to open. Paired with purchase_cancelled
                 // this is the Apple-sheet completion rate, the funnel's
                 // biggest leak.
@@ -1143,7 +1262,8 @@ final class SubscriptionStore: ObservableObject {
                     AppEvents.ParameterName("product_id"): product.id as NSString,
                     AppEvents.ParameterName("currency"): currency as NSString,
                     AppEvents.ParameterName("paywall_name"): paywallName as NSString,
-                    AppEvents.ParameterName("predicted_value"): priceValue as NSNumber
+                    AppEvents.ParameterName("predicted_value"): priceValue as NSNumber,
+                    .appVersion: AnalyticsContext.shared.appVersion as NSString
                 ]
             )
             // Single source of truth for trial_started (paywalls must NOT fire
@@ -1171,10 +1291,12 @@ final class SubscriptionStore: ObservableObject {
                 parameters: [
                     AppEvents.ParameterName("product_id"): product.id as NSString,
                     AppEvents.ParameterName("currency"): currency as NSString,
-                    AppEvents.ParameterName("paywall_name"): paywallName as NSString
+                    AppEvents.ParameterName("paywall_name"): paywallName as NSString,
+                    .appVersion: AnalyticsContext.shared.appVersion as NSString
                 ]
             )
-            AppEvents.shared.logPurchase(amount: priceValue, currency: currency)
+            AppEvents.shared.logPurchase(amount: priceValue, currency: currency,
+                                         parameters: [.appVersion: AnalyticsContext.shared.appVersion as NSString])
             Event.trackTikTokPremiumPurchase(value: priceValue, currency: currency)
         }
 
@@ -1194,7 +1316,8 @@ final class SubscriptionStore: ObservableObject {
             "currency": currency,
             "paywall_name": paywallName,
             "is_trial": willStartTrial,
-            "variant": onboardingVariantName
+            "variant": onboardingVariantName,
+            "win_back": winBackOffer != nil
         ])
 
         // Plan dimensions only. Revenue is RevenueCat's: it reports amounts in
@@ -1206,7 +1329,7 @@ final class SubscriptionStore: ObservableObject {
             GrowthMetrics.shared.recordTrialStarted(
                 productId: product.id,
                 plan: planLabel(for: product),
-                trialDays: TrialExperienceService.introTrialDays(for: product) ?? 0
+                trialDays: trialDays ?? 0
             )
         } else {
             GrowthMetrics.shared.recordPurchaseDimensions(
@@ -1226,7 +1349,7 @@ final class SubscriptionStore: ObservableObject {
         // Config pointed the paywall at — never a hardcoded 3 days.
         if willStartTrial {
             TrialExperienceService.shared.onTrialStarted(
-                lengthInDays: TrialExperienceService.introTrialDays(for: product)
+                lengthInDays: trialDays
             )
         } else if TrialExperienceService.shared.isTrialActive {
             // Trial-active user just bought a paid product → mark converted so
@@ -1245,6 +1368,31 @@ final class SubscriptionStore: ObservableObject {
     }
 
     // MARK: - Helpers
+
+    /// A yyyy-MM-dd Remote Config day as the start of that day, UTC.
+    static func parseDay(_ string: String) -> Date? {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.date(from: string)
+    }
+
+    /// Length in days of a free-period discount (e.g. a "first month free"
+    /// win-back offer), or nil when the discount charges something.
+    static func freeTrialDays(of discount: StoreProductDiscount) -> Int? {
+        guard discount.paymentMode == .freeTrial else { return nil }
+        let period = discount.subscriptionPeriod
+        let unitDays: Int
+        switch period.unit {
+        case .day: unitDays = 1
+        case .week: unitDays = 7
+        case .month: unitDays = 30
+        case .year: unitDays = 365
+        @unknown default: unitDays = 1
+        }
+        return unitDays * period.value * max(discount.numberOfPeriods, 1)
+    }
 
     /// Plan label derived from the product's subscription period so conversion
     /// events report annual/monthly/weekly correctly regardless of which

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C0070000000000000001BBBB /* GiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0070000000000000001AAAA /* GiveView.swift */; };
 		TIC00SVC000000000000004B /* TakeThoughtCaptiveIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00SVC000000000000004A /* TakeThoughtCaptiveIntent.swift */; };
 		TIC00VW0000000000000001B /* TakeItCaptiveFlowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00VW0000000000000001A /* TakeItCaptiveFlowView.swift */; };
 		TIC00VW0000000000000003B /* ReplaceDeclarationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00VW0000000000000003A /* ReplaceDeclarationView.swift */; };
@@ -94,7 +95,6 @@
 		45567D5E2F29CA5D00382072 /* BibleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45567D5C2F29CA5D00382072 /* BibleView.swift */; };
 		45567D5F2F29CA5D00382072 /* BibleBookmarksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45567D592F29CA5D00382072 /* BibleBookmarksView.swift */; };
 		45567D602F29CA5D00382072 /* BibleReaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45567D5A2F29CA5D00382072 /* BibleReaderView.swift */; };
-		45567D612F29CA5D00382072 /* BibleSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45567D5B2F29CA5D00382072 /* BibleSearchView.swift */; };
 		45567D632F29CD0D00382072 /* TimerStreakDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45567D622F29CD0D00382072 /* TimerStreakDetailView.swift */; };
 		45567D652F29CE7700382072 /* BibleAuthenticationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45567D642F29CE7700382072 /* BibleAuthenticationView.swift */; };
 		45567D672F29DB9F00382072 /* DailyVerseDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45567D662F29DB9F00382072 /* DailyVerseDetailView.swift */; };
@@ -216,6 +216,7 @@
 		45F3E7642EB43B8A002B1F4E /* DeclarationAnimationSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F3E7622EB43B8A002B1F4E /* DeclarationAnimationSettings.swift */; };
 		45F6D87E2F2AD75200C0B98D /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 45F6D87D2F2AD75200C0B98D /* FirebaseAuth */; };
 		45F6D8902F2AF3D700C0B98D /* HelloAOBibleAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F6D88F2F2AF3D700C0B98D /* HelloAOBibleAPIService.swift */; };
+		4E17A0C22F9A3B7D00D1F0A1 /* NLTBibleAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E17A0C12F9A3B7D00D1F0A1 /* NLTBibleAPIService.swift */; };
 		45F6D8922F2AF45900C0B98D /* ClearBibleCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F6D8912F2AF45900C0B98D /* ClearBibleCache.swift */; };
 		45F6D8942F2AF46900C0B98D /* BibleNetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F6D8932F2AF46900C0B98D /* BibleNetworkMonitor.swift */; };
 		45F6D8962F2AFCE700C0B98D /* HelloAOBibleAPIServiceTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F6D8952F2AFCE700C0B98D /* HelloAOBibleAPIServiceTest.swift */; };
@@ -391,6 +392,9 @@
 		STANDB000000000000000003 /* StandDiscovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = STAND0000000000000000003 /* StandDiscovery.swift */; };
 		OFFERB000000000000000001 /* WelcomeOfferPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = OFFER0000000000000000001 /* WelcomeOfferPresenter.swift */; };
 		OFFERB000000000000000002 /* PersonalDeclarationPrompt.swift in Sources */ = {isa = PBXBuildFile; fileRef = OFFER0000000000000000002 /* PersonalDeclarationPrompt.swift */; };
+		OFFERB000000000000000003 /* LapsedPaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = OFFER0000000000000000003 /* LapsedPaywallView.swift */; };
+		OFFERB000000000000000004 /* MonthlyToAnnualOfferView.swift in Sources */ = {isa = PBXBuildFile; fileRef = OFFER0000000000000000004 /* MonthlyToAnnualOfferView.swift */; };
+		OFFERB000000000000000005 /* PushOfferView.swift in Sources */ = {isa = PBXBuildFile; fileRef = OFFER0000000000000000005 /* PushOfferView.swift */; };
 		STANDB000000000000000004 /* StandInviteCardRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = STAND0000000000000000004 /* StandInviteCardRenderer.swift */; };
 		STANDB000000000000000005 /* StandInviteSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = STAND0000000000000000005 /* StandInviteSheet.swift */; };
 		STANDB000000000000000006 /* StandJoinView.swift in Sources */ = {isa = PBXBuildFile; fileRef = STAND0000000000000000006 /* StandJoinView.swift */; };
@@ -448,6 +452,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		C0070000000000000001AAAA /* GiveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GiveView.swift; sourceTree = "<group>"; };
 		TIC00SVC000000000000004A /* TakeThoughtCaptiveIntent.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TakeThoughtCaptiveIntent.swift; sourceTree = "<group>"; };
 		TIC00VW0000000000000001A /* TakeItCaptiveFlowView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TakeItCaptiveFlowView.swift; sourceTree = "<group>"; };
 		TIC00VW0000000000000003A /* ReplaceDeclarationView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReplaceDeclarationView.swift; sourceTree = "<group>"; };
@@ -530,7 +535,6 @@
 		45567D572F29CA2700382072 /* BibleViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleViewModel.swift; sourceTree = "<group>"; };
 		45567D592F29CA5D00382072 /* BibleBookmarksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleBookmarksView.swift; sourceTree = "<group>"; };
 		45567D5A2F29CA5D00382072 /* BibleReaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleReaderView.swift; sourceTree = "<group>"; };
-		45567D5B2F29CA5D00382072 /* BibleSearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleSearchView.swift; sourceTree = "<group>"; };
 		45567D5C2F29CA5D00382072 /* BibleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleView.swift; sourceTree = "<group>"; };
 		45567D622F29CD0D00382072 /* TimerStreakDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerStreakDetailView.swift; sourceTree = "<group>"; };
 		45567D642F29CE7700382072 /* BibleAuthenticationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleAuthenticationView.swift; sourceTree = "<group>"; };
@@ -648,6 +652,7 @@
 		45F3E7612EB43B8A002B1F4E /* AnimatedDeclarationText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimatedDeclarationText.swift; sourceTree = "<group>"; };
 		45F3E7622EB43B8A002B1F4E /* DeclarationAnimationSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeclarationAnimationSettings.swift; sourceTree = "<group>"; };
 		45F6D88F2F2AF3D700C0B98D /* HelloAOBibleAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelloAOBibleAPIService.swift; sourceTree = "<group>"; };
+		4E17A0C12F9A3B7D00D1F0A1 /* NLTBibleAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NLTBibleAPIService.swift; sourceTree = "<group>"; };
 		45F6D8912F2AF45900C0B98D /* ClearBibleCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClearBibleCache.swift; sourceTree = "<group>"; };
 		45F6D8932F2AF46900C0B98D /* BibleNetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BibleNetworkMonitor.swift; sourceTree = "<group>"; };
 		45F6D8952F2AFCE700C0B98D /* HelloAOBibleAPIServiceTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelloAOBibleAPIServiceTest.swift; sourceTree = "<group>"; };
@@ -818,6 +823,9 @@
 		STAND0000000000000000003 /* StandDiscovery.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StandDiscovery.swift; sourceTree = "<group>"; };
 		OFFER0000000000000000001 /* WelcomeOfferPresenter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WelcomeOfferPresenter.swift; sourceTree = "<group>"; };
 		OFFER0000000000000000002 /* PersonalDeclarationPrompt.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PersonalDeclarationPrompt.swift; sourceTree = "<group>"; };
+		OFFER0000000000000000003 /* LapsedPaywallView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LapsedPaywallView.swift; sourceTree = "<group>"; };
+		OFFER0000000000000000004 /* MonthlyToAnnualOfferView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MonthlyToAnnualOfferView.swift; sourceTree = "<group>"; };
+		OFFER0000000000000000005 /* PushOfferView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PushOfferView.swift; sourceTree = "<group>"; };
 		STAND0000000000000000004 /* StandInviteCardRenderer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StandInviteCardRenderer.swift; sourceTree = "<group>"; };
 		STAND0000000000000000005 /* StandInviteSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StandInviteSheet.swift; sourceTree = "<group>"; };
 		STAND0000000000000000006 /* StandJoinView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StandJoinView.swift; sourceTree = "<group>"; };
@@ -1041,7 +1049,6 @@
 				45567D642F29CE7700382072 /* BibleAuthenticationView.swift */,
 				45567D592F29CA5D00382072 /* BibleBookmarksView.swift */,
 				45567D5A2F29CA5D00382072 /* BibleReaderView.swift */,
-				45567D5B2F29CA5D00382072 /* BibleSearchView.swift */,
 				45567D5C2F29CA5D00382072 /* BibleView.swift */,
 				BCC8A7100000000000000004 /* BibleChatView.swift */,
 				BCC8A7100000000000000005 /* BibleChatAnswerView.swift */,
@@ -1522,6 +1529,7 @@
 				45C15A792F3084F7006171F5 /* WldehBibleAPIService.swift */,
 				45567D4E2F29C9C500382072 /* BibleAPIService.swift */,
 				45F6D88F2F2AF3D700C0B98D /* HelloAOBibleAPIService.swift */,
+				4E17A0C12F9A3B7D00D1F0A1 /* NLTBibleAPIService.swift */,
 				45C15A8F2F357857006171F5 /* LazyJSONLoader.swift */,
 				7AA8707128DACC8300134ADB /* LocalAPIClient.swift */,
 				7ABA50CA29E63178002699F1 /* PrayerServiceClient.swift */,
@@ -1692,6 +1700,7 @@
 				7AA870A728DACCB700134ADB /* SettingsRow.swift */,
 				4590BF9D2BCA4F1A00CF4F54 /* FeatureView.swift */,
 				C0060000000000000006AAAA /* PayWhatYouCanView.swift */,
+				C0070000000000000001AAAA /* GiveView.swift */,
 			);
 			path = SettingViews;
 			sourceTree = "<group>";
@@ -1899,6 +1908,9 @@
 			children = (
 				OFFER0000000000000000001 /* WelcomeOfferPresenter.swift */,
 				OFFER0000000000000000002 /* PersonalDeclarationPrompt.swift */,
+				OFFER0000000000000000003 /* LapsedPaywallView.swift */,
+				OFFER0000000000000000004 /* MonthlyToAnnualOfferView.swift */,
+				OFFER0000000000000000005 /* PushOfferView.swift */,
 			);
 			name = Offer;
 			path = Offer;
@@ -2170,6 +2182,9 @@
 				STANDB000000000000000003 /* StandDiscovery.swift in Sources */,
 				OFFERB000000000000000001 /* WelcomeOfferPresenter.swift in Sources */,
 				OFFERB000000000000000002 /* PersonalDeclarationPrompt.swift in Sources */,
+				OFFERB000000000000000003 /* LapsedPaywallView.swift in Sources */,
+				OFFERB000000000000000004 /* MonthlyToAnnualOfferView.swift in Sources */,
+				OFFERB000000000000000005 /* PushOfferView.swift in Sources */,
 				STANDB000000000000000004 /* StandInviteCardRenderer.swift in Sources */,
 				STANDB000000000000000005 /* StandInviteSheet.swift in Sources */,
 				STANDB000000000000000006 /* StandJoinView.swift in Sources */,
@@ -2235,7 +2250,6 @@
 				45567D5E2F29CA5D00382072 /* BibleView.swift in Sources */,
 				45567D5F2F29CA5D00382072 /* BibleBookmarksView.swift in Sources */,
 				45567D602F29CA5D00382072 /* BibleReaderView.swift in Sources */,
-				45567D612F29CA5D00382072 /* BibleSearchView.swift in Sources */,
 				7AA870C928DACCB700134ADB /* ThemeChooserView.swift in Sources */,
 				7AA8708228DACC8300134ADB /* InAppPurchases.swift in Sources */,
 				7AA870DE28DACCB700134ADB /* TimeNotificationStepper.swift in Sources */,
@@ -2296,6 +2310,7 @@
 				7AA8706D28DACC4E00134ADB /* Reminder.swift in Sources */,
 				45CF271C2B4E530300BC8968 /* ImprovementScene.swift in Sources */,
 				45F6D8902F2AF3D700C0B98D /* HelloAOBibleAPIService.swift in Sources */,
+				4E17A0C22F9A3B7D00D1F0A1 /* NLTBibleAPIService.swift in Sources */,
 				4548078C2E3F3E6500B8C71B /* BadgeTestView.swift in Sources */,
 				4597E1EB2E3FEC72009D6C66 /* AudioAnalytics.swift in Sources */,
 				8D9D24C8C66A40D5AF502D31 /* AudioProgressStore.swift in Sources */,
@@ -2438,6 +2453,7 @@
 				4597E1F02E412346009D6C66 /* ChecklistNotificationSettings.swift in Sources */,
 				7AF18C8829FF8CEE005A6E31 /* TipsView.swift in Sources */,
 				4575C9402E45AA00007C14F3 /* OptimizedSubscriptionView.swift in Sources */,
+				C0070000000000000001BBBB /* GiveView.swift in Sources */,
 				452F6AE22E87CDD400A27856 /* AIIntelligenceService.swift in Sources */,
 				458510D72B15935100230EE5 /* HideTabModifier.swift in Sources */,
 				45C15A902F357857006171F5 /* LazyJSONLoader.swift in Sources */,
@@ -2715,7 +2731,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SpeakLife/SpeakLife.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1015;
+				CURRENT_PROJECT_VERSION = 1018;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"SpeakLife/Preview Content\"";
 				DEVELOPMENT_TEAM = G7398P2856;
@@ -2736,7 +2752,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.68;
+				MARKETING_VERSION = 4.71;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -2758,7 +2774,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SpeakLife/SpeakLife.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1015;
+				CURRENT_PROJECT_VERSION = 1018;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_ASSET_PATHS = "\"SpeakLife/Preview Content\"";
 				DEVELOPMENT_TEAM = G7398P2856;
@@ -2779,7 +2795,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 4.68;
+				MARKETING_VERSION = 4.71;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -2800,7 +2816,7 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CODE_SIGN_ENTITLEMENTS = PromisesWidget/PromisesWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1015;
+				CURRENT_PROJECT_VERSION = 1018;
 				DEVELOPMENT_TEAM = G7398P2856;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = PromisesWidget/Info.plist;
@@ -2812,7 +2828,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 4.68;
+				MARKETING_VERSION = 4.71;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife.PromisesWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -2830,7 +2846,7 @@
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CODE_SIGN_ENTITLEMENTS = PromisesWidget/PromisesWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1015;
+				CURRENT_PROJECT_VERSION = 1018;
 				DEVELOPMENT_TEAM = G7398P2856;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = PromisesWidget/Info.plist;
@@ -2842,7 +2858,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 4.68;
+				MARKETING_VERSION = 4.71;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Franchiz.SpeakLife.PromisesWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;

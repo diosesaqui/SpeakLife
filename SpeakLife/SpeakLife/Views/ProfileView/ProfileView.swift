@@ -125,7 +125,14 @@ struct ProfileView: View {
                         // decides for itself whether it shows (spec §9.2).
                         ReferralProfileRows(subscriptionStore: subscriptionStore,
                                             appState: appState)
-                        //bookLink
+                    }
+
+                    // Rides the `hardOnboardingPaywall` Remote Config switch,
+                    // like the paywall's per-day pricing: hidden while it is off.
+                    if subscriptionStore.hardOnboardingPaywall {
+                        Section(header: Text("Book".uppercased()).font(.caption)) {
+                            bookLink
+                        }
                     }
                     
                     
@@ -151,7 +158,7 @@ struct ProfileView: View {
                     
                     
                     Section(header: Text("SUPPORT").font(.caption)) {
-    
+                        giveRow
                         emailRow
                         shareRow
                         reviewRow
@@ -251,6 +258,20 @@ struct ProfileView: View {
             }
         }
         .foregroundColor(.white)
+    }
+
+    @MainActor
+    private var giveRow: some View {
+        HStack {
+            Image(systemName: "heart.fill")
+                .foregroundColor(Constants.DAMidBlue)
+            NavigationLink(destination: LazyView(GiveView())) {
+                HStack {
+                    Text("Give to SpeakLife", comment: "give row")
+                    Spacer()
+                }
+            }
+        }
     }
 
     @MainActor
@@ -950,15 +971,26 @@ struct ProfileView: View {
         }
     
     @MainActor
-    private var bookLink: some  View {
+    private var bookLink: some View {
         HStack {
-            Image(systemName:"book.fill")
+            Image(systemName: "book.fill")
                 .foregroundColor(Constants.DAMidBlue)
-            Link(destination: URL(string: "https://books.apple.com/us/book/100-days-of-power-declarations/id1616288315")!, label: {
-                Text("100 Days of Power Declarations", comment: "")
+            Link(destination: APP.Product.bookURL) {
+                HStack {
+                    Text("100 Days of Power Declarations", comment: "Book row title")
+                    Spacer()
+                    Image(systemName: "arrow.up.right")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                }
+            }
+            .foregroundColor(.white)
+            .simultaneousGesture(TapGesture().onEnded {
+                AnalyticsService.shared.track("Profile_Book_Tapped")
             })
         }
     }
+
     private var copyrightView: some  View {
         Text("Scripture quotations marked (NLT) are taken from the Holy Bible, New Living Translation, copyright ©1996, 2004, 2015 by Tyndale House Foundation. Used by permission of Tyndale House Publishers, Carol Stream, Illinois 60188. All rights reserved.")
     }

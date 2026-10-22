@@ -105,6 +105,10 @@ struct HomeView: View {
     @State private var isPresented = false
     @State var showSubscription = false
     @State private var showTriggeredPaywall = false
+    @State private var showMonthlyAnnualOffer = false
+    /// The billing-period end the monthly-to-yearly sheet was last shown for,
+    /// so it appears at most once per month however often the app opens.
+    @AppStorage("monthlyAnnualOfferShownForPeriod") private var monthlyAnnualOfferShownForPeriod: Double = 0
     @StateObject private var paywallTrigger = PaywallTriggerManager.shared
     @State private var showDeclarationPrompt = false
     @AppStorage("hasCreatedFirstDeclaration") private var hasCreatedFirstDeclaration = false
@@ -129,6 +133,13 @@ struct HomeView: View {
         Group {
             if isShowingLanding {
                 LandingView()
+            // Lapsed-user wall: replaces the whole app (and every sheet hung
+            // off it) until the user resubscribes or restores. Dormant unless
+            // Remote Config `hardLapsedPaywall` is on. When a purchase lands,
+            // isPremium flips and this branch falls through to the app.
+            } else if appState.isOnboarded && !appState.debugReplayOnboarding && !StormDebugReview.isActive && subscriptionStore.showsLapsedWall {
+                LapsedPaywallView()
+                    .environmentObject(subscriptionStore)
             // `debugReplayOnboarding` forces the onboarding branch for a tester
             // who is already onboarded. It is never true on an App Store build.
             } else if appState.isOnboarded && !appState.debugReplayOnboarding && !StormDebugReview.isActive {
@@ -214,6 +225,20 @@ struct HomeView: View {
 //                                .environmentObject(declarationStore)
 //                                .environmentObject(subscriptionStore)
 //                            }
+                            .sheet(isPresented: $showMonthlyAnnualOffer) {
+                                MonthlyToAnnualOfferView { showMonthlyAnnualOffer = false }
+                                    .environmentObject(subscriptionStore)
+                                    .presentationDetents([.large])
+                            }
+                            // RevenueCat answers after the first frame, so the
+                            // renewal date is not known on appear. Re-check once
+                            // it lands and whenever the app comes forward.
+                            .onChange(of: subscriptionStore.premiumPeriodEndsAt) { _ in
+                                checkMonthlyAnnualOffer()
+                            }
+                            .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+                                checkMonthlyAnnualOffer()
+                            }
                             .onReceive(NotificationCenter.default.publisher(for: .devotionalVersionUpdated)) { notification in
                                 if let version = notification.userInfo?["version"] as? Int {
                                     // Received devotional version update notification
@@ -427,6 +452,13 @@ struct HomeView: View {
                     }
                 }
             }
+            // Driven by a `deepLink == "offer"` notification tap. Attached at
+            // the same level as the message reader so it presents during the
+            // launch window too.
+            .sheet(item: $appState.pushOffer) { route in
+                PushOfferView(route: route)
+                    .environmentObject(subscriptionStore)
+            }
             // The Inbox, reached from the reader CTA above (must be a separate
             // presentation so it can appear after the reader sheet dismisses).
             .sheet(isPresented: $showSpeakLifeMessages) {
@@ -530,6 +562,19 @@ struct HomeView: View {
             "experiment": "onboarding_variant",
             "variant": variant
         ])
+    }
+
+    /// Shows the monthly-to-yearly sheet when the current month ends within
+    /// the configured window, once per billing period, and never on top of
+    /// another paywall.
+    private func checkMonthlyAnnualOffer() {
+        guard subscriptionStore.monthlyAnnualOfferDue,
+              let endsAt = subscriptionStore.premiumPeriodEndsAt,
+              endsAt.timeIntervalSince1970 != monthlyAnnualOfferShownForPeriod,
+              !showMonthlyAnnualOffer, !showSubscription, !showTriggeredPaywall
+        else { return }
+        monthlyAnnualOfferShownForPeriod = endsAt.timeIntervalSince1970
+        showMonthlyAnnualOffer = true
     }
 
     private func finishOnboarding() {

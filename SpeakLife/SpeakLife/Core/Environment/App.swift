@@ -27,6 +27,8 @@ struct APP {
             "https://www.instagram.com/speaklife.affirmationsapp"
         }
         
+        static let bookURL = URL(string: "https://books.apple.com/us/book/100-days-of-power-declarations/id1616288315")!
+
         static var googleAdUnitBannerID: String {
             "ca-app-pub-4361689433807539/7209066019"
         }
