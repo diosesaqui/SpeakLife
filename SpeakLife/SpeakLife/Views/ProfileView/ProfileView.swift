@@ -134,8 +134,8 @@ struct ProfileView: View {
                     
                     
                     Section(header: Text("Yours").font(.caption)) {
+                        howToUseRow
                         createYourOwnRow
-                       // howToUseRow
                         streakStatsRow
                       //  dailyBurstStatsRow
                             quizRow
