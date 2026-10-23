@@ -58,6 +58,10 @@ final class AnalyticsContext {
     private let installDate: Date
     private let lock = NSLock()
     private var subscriptionStatus: AnalyticsSubscriptionStatus = .free
+    /// What was last sent as the `subscription_status` user property this
+    /// launch. Nil until the first report, so a user who stays free still gets
+    /// tagged `free`. Firebase push audiences target on that tag.
+    private var reportedStatus: AnalyticsSubscriptionStatus?
 
     // `days_since_install` only changes at midnight, so it is cached rather
     // than recomputed through Calendar on every single event.
@@ -122,13 +126,17 @@ final class AnalyticsContext {
     /// which is the source of truth, so every subsequent event is segmented by
     /// free / trial / premium without any call site passing it.
     ///
-    /// Returns silently when nothing changed, so this is cheap to call often.
+    /// Always reports the first status of a launch, then returns silently when
+    /// nothing changed, so this is cheap to call often. Comparing against the
+    /// `.free` default instead meant a user who never subscribed was never
+    /// tagged at all.
     func updateSubscription(isPremium: Bool, isInTrial: Bool) {
         let status: AnalyticsSubscriptionStatus = isInTrial ? .trial : (isPremium ? .premium : .free)
 
         lock.lock()
-        let changed = subscriptionStatus != status
+        let changed = reportedStatus != status
         subscriptionStatus = status
+        reportedStatus = status
         lock.unlock()
 
         guard changed else { return }
