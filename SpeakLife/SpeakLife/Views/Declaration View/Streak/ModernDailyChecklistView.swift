@@ -508,28 +508,39 @@ struct ModernDailyChecklistView: View {
         return name.isEmpty ? base : "\(base), \(name)"
     }
 
-    private var motivationalText: String {
-        let hour = Calendar.current.component(.hour, from: Date())
-        let completed = viewModel.todayChecklist.completedTasksCount
-        let total = viewModel.todayChecklist.tasks.count
-        let streakEarned = viewModel.todayChecklist.isStreakEarned
-
-        if completed == total {
-            return "All ground taken today. 🎉 You went above and beyond."
-        } else if streakEarned {
-            return "Today's ground is yours. 🔥 Bonus below for extra growth."
-        } else if completed > 0 {
-            return "Great start. Speak your declarations and take more ground 💪"
-        } else {
-            switch hour {
-            case 5..<12:  return "Speak today's declarations and take more ground 🌅"
-            case 12..<17: return "Speak today's declarations and take more ground 🔥"
-            case 17..<21: return "Speak today's declarations and take more ground 🔥"
-            default:      return "Speak today's declarations and take more ground 🙏"
-            }
-        }
+    /// The first unfinished task, by the same rule the NEXT UP card uses
+    /// (`StructuredDayView.nextTask`), so the progress tile and the card always
+    /// point at the same thing.
+    private var nextTask: DailyTask? {
+        viewModel.todayChecklist.tasks.first { !$0.isCompleted }
     }
-    
+
+    /// One short line on where the day stands. The next step itself is the
+    /// bold line under it.
+    private var progressStatus: String {
+        let checklist = viewModel.todayChecklist
+        if nextTask == nil { return "All ground taken today. 🎉" }
+        if checklist.isStreakEarned { return "Streak safe for today. 🔥" }
+        if checklist.completedTasksCount > 0 { return "Good start. Keep going." }
+        return "Your day starts here."
+    }
+
+    /// Whether tapping the tile can open the next task. Rows with no screen of
+    /// their own are left alone, because opening them would tick them off.
+    private var canOpenNextTask: Bool {
+        guard let next = nextTask else { return false }
+        return next.navigationDestination != .none
+    }
+
+    private func openNextTaskFromProgressTile() {
+        guard let next = nextTask, canOpenNextTask else { return }
+        AnalyticsService.shared.track("progress_tile_next_tapped", parameters: [
+            "task_id": next.id,
+            "completed_tasks": viewModel.todayChecklist.completedTasksCount
+        ])
+        handleTaskNavigation(next)
+    }
+
     var body: some View {
         ZStack {
             VStack(spacing: 0) {
@@ -610,24 +621,43 @@ struct ModernDailyChecklistView: View {
 
                     // Hero progress panel: the day's focal point. A gradient ring
                     // paired with the progress-aware nudge, floated on glass.
-                    HStack(spacing: DS.Spacing.md) {
-                        DSProgressRing(
-                            completed: viewModel.todayChecklist.completedTasksCount,
-                            total: viewModel.todayChecklist.tasks.count
-                        )
-                        VStack(alignment: .leading, spacing: DS.Spacing.xxs) {
-                            Text("TODAY'S PROGRESS")
-                                .font(.system(size: 11, weight: .bold))
-                                .tracking(1.4)
-                                .foregroundColor(DS.Palette.gold.opacity(0.9))
-                            Text(motivationalText)
-                                .font(.subheadline)
-                                .foregroundColor(.white.opacity(0.9))
-                                .fixedSize(horizontal: false, vertical: true)
+                    // Names the next step and opens it on tap, so the tile
+                    // answers "what do I do now" instead of only "how far".
+                    Button(action: openNextTaskFromProgressTile) {
+                        HStack(spacing: DS.Spacing.md) {
+                            DSProgressRing(
+                                completed: viewModel.todayChecklist.completedTasksCount,
+                                total: viewModel.todayChecklist.tasks.count
+                            )
+                            VStack(alignment: .leading, spacing: DS.Spacing.xxs) {
+                                Text("TODAY'S PROGRESS")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .tracking(1.4)
+                                    .foregroundColor(DS.Palette.gold.opacity(0.9))
+                                Text(progressStatus)
+                                    .font(.subheadline)
+                                    .foregroundColor(.white.opacity(0.75))
+                                    .fixedSize(horizontal: false, vertical: true)
+                                if let next = nextTask {
+                                    Text("Next: \(next.title)")
+                                        .font(.system(size: 16, weight: .bold))
+                                        .foregroundColor(.white)
+                                        .multilineTextAlignment(.leading)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                            }
+                            Spacer(minLength: 0)
+                            if canOpenNextTask {
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .foregroundColor(.white.opacity(0.6))
+                            }
                         }
-                        Spacer(minLength: 0)
+                        .padding(DS.Spacing.md)
+                        .contentShape(Rectangle())
                     }
-                    .padding(DS.Spacing.md)
+                    .buttonStyle(.plain)
+                    .accessibilityHint(canOpenNextTask ? "Opens the next task" : "")
                     .dsGlass(cornerRadius: DS.Radius.lg, strokeOpacity: 0.16, elevation: DS.Elevation.medium)
                 }
                 .padding(.horizontal, 20)

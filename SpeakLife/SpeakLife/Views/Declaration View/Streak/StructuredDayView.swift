@@ -207,8 +207,8 @@ struct NextUpTaskCard: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
                 Text("NEXT UP")
-                    .font(.system(size: 10, weight: .bold)).tracking(1.5)
-                    .foregroundColor(DS.Palette.gold.opacity(0.9))
+                    .font(.system(size: 14, weight: .heavy)).tracking(1.6)
+                    .foregroundColor(DS.Palette.gold)
                 if task.isCampaignRefreshed { CampaignBadge() }
                 Spacer()
                 Text("\(task.estimatedMinutes) min")
@@ -480,8 +480,8 @@ struct StructuredDayView: View {
                 if !upcomingTasks.isEmpty {
                     VStack(spacing: 6) {
                         HStack {
-                            Text("UP NEXT").font(.system(size: 10, weight: .bold)).tracking(1.5)
-                                .foregroundColor(DS.Palette.gold.opacity(0.9))
+                            Text("UP NEXT").font(.system(size: 14, weight: .heavy)).tracking(1.6)
+                                .foregroundColor(DS.Palette.gold)
                             Spacer()
                         }.padding(.horizontal, 4)
                         ForEach(upcomingTasks) { UpcomingTaskRow(task: $0, onNavigate: onNavigate) }
@@ -493,8 +493,8 @@ struct StructuredDayView: View {
                 if !completedTasks.isEmpty {
                     VStack(spacing: 6) {
                         HStack {
-                            Text("COMPLETED").font(.system(size: 10, weight: .bold)).tracking(1.5)
-                                .foregroundColor(DS.Palette.gold.opacity(0.9))
+                            Text("COMPLETED").font(.system(size: 14, weight: .heavy)).tracking(1.6)
+                                .foregroundColor(DS.Palette.gold)
                             Spacer()
                         }.padding(.horizontal, 4)
                         ForEach(completedTasks) { task in

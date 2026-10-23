@@ -11,8 +11,8 @@ struct WhatsNewBottomSheet: View {
     @Binding var isPresented: Bool
     let version: String
     let features = [
-        "Read the Bible in the New Living Translation (NLT)",
-        "Invite a friend to stand with you in your Daily Burst"
+        "Write down 3 things you're grateful for, every day",
+        "Today shows your next step, one tap away"
     ]
 
     var body: some View {
