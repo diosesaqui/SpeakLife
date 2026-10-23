@@ -206,7 +206,7 @@ struct NextUpTaskCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
-                Text("NEXT UP")
+                Text("YOUR NEXT STEP")
                     .font(.system(size: 14, weight: .heavy)).tracking(1.6)
                     .foregroundColor(DS.Palette.gold)
                 if task.isCampaignRefreshed { CampaignBadge() }
@@ -480,7 +480,7 @@ struct StructuredDayView: View {
                 if !upcomingTasks.isEmpty {
                     VStack(spacing: 6) {
                         HStack {
-                            Text("UP NEXT").font(.system(size: 14, weight: .heavy)).tracking(1.6)
+                            Text("LATER TODAY").font(.system(size: 14, weight: .heavy)).tracking(1.6)
                                 .foregroundColor(DS.Palette.gold)
                             Spacer()
                         }.padding(.horizontal, 4)
