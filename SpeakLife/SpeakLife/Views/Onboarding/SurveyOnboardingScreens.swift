@@ -1088,7 +1088,11 @@ struct SurveyCommitmentHoldScreen: View {
 
     private enum CommitmentPhase { case idle, holding, complete }
 
-    private let holdDuration: Double = 4.0
+    // Was 4.0. A four-second hold is long enough that people lift off early,
+    // watch the ring reset, and leave: 181 saw this screen over 14 days in
+    // Oct 2026 and 148 sealed it, the largest single loss in the quiz arm.
+    // 1.5s still reads as a deliberate act, not a tap.
+    private let holdDuration: Double = 1.5
 
     private let declarationText = "I will show up daily.\nI will open my mouth and declare God's Word\nover my life — every single day.\n\nI will not settle. I will not retreat.\nI will take more ground tomorrow than I took today.\n\nThe enemy will not steal another day from me.\nHealth. Peace. Joy. Purpose. Abundance.\nAll of it belongs to me in Christ — and I am taking it.\n\nHoly Spirit, use SpeakLife to make Your Word\nthe first thing I speak every morning\nand the last thing standing over my life."
 

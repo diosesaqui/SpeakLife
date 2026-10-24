@@ -502,6 +502,13 @@ final class SubscriptionStore: ObservableObject {
     // testimonial wall. Only the `closer` arm reads this.
     @Published var closerPledgeEnabled = true
 
+    // MARK: - Onboarding Resume Flag
+    // When true, a person who quit an angle onboarding (promises, warfare,
+    // outcomes, ...) and reopens the app restarts at the feature screen rather
+    // than the storm screen and narrative scenes they already saw. Defaults
+    // true (registered in AppDelegate's Remote Config defaults).
+    @Published var onboardingResumeEnabled = true
+
     // MARK: - Forced Update Gate
     // Non-nil means this build is below the minimum version Remote Config
     // publishes, and `ForceUpdateGate` puts the blocking update screen up. nil —
@@ -793,6 +800,7 @@ final class SubscriptionStore: ObservableObject {
         focusedFirstRunEnabled = flagValue(FirstRunFocusRule.flagKey)
         onboardingRatingEnabled = flagValue("onboardingRatingEnabled")
         closerPledgeEnabled = flagValue("closerPledgeEnabled")
+        onboardingResumeEnabled = flagValue("onboardingResumeEnabled")
         emailCaptureEnabled = flagValue("emailCaptureEnabled")
 
         evaluateForcedUpdate()
