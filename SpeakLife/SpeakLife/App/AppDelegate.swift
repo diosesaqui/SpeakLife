@@ -310,6 +310,11 @@ final class AppDelegate: NSObject, MessagingDelegate {
             // "I'm In" pledge inside the closer onboarding arm ships on; flip to
             // false in Remote Config to run the arm's no-pledge cell.
             "closerPledgeEnabled": true as NSNumber,
+            // Returning to an unfinished angle onboarding ships on: someone who
+            // already saw the opening screens restarts at the feature screen
+            // instead of the storm screen. Flip to false in Remote Config to
+            // send everyone back to screen one again.
+            "onboardingResumeEnabled": true as NSNumber,
             // Pre-paywall email ask ships on; flip to false in Remote Config to
             // skip the email step in every onboarding flow. It sits one screen
             // before a hard paywall, so this is the switch to reach for if trial
