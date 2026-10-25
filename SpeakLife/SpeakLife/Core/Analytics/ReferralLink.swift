@@ -31,14 +31,31 @@ enum ReferralLink {
         case declarationCard = "declaration_card"
         case dailyBurst = "daily_burst"
         case devotional = "devotional"
+        case profileInvite = "profile_invite"
+        case favorite = "favorite"
+        case tracker = "tracker"
+        case audioFavorite = "audio_favorite"
+        case bibleVerse = "bible_verse"
+        case dailyVerse = "daily_verse"
+        case bibleChat = "bible_chat"
+        case standCompletion = "stand_completion"
+        case speakOver = "speak_over"
+        case yearInReview = "year_in_review"
     }
 
     static let host = "speaklife.app.link"
 
+    /// Query key carrying the sharer's anonymous analytics id. Branch hands it
+    /// back as link data on the recipient's first session.
+    static let referrerKey = "sl_ref"
+
     /// - Parameters:
     ///   - feature: the surface the share came from.
     ///   - campaign: optional finer label, such as the declaration category.
-    static func url(_ feature: Feature, campaign: String? = nil) -> URL {
+    ///   - extra: link data for the recipient's app, such as what to open.
+    ///     Branch passes unknown keys through on the first session.
+    static func url(_ feature: Feature, campaign: String? = nil,
+                    extra: [URLQueryItem] = []) -> URL {
         var components = URLComponents()
         components.scheme = "https"
         components.host = host
@@ -55,8 +72,9 @@ enum ReferralLink {
         // through as link data, so a later "who brought whom" report (and a
         // reward for the sharer) can be built without changing the link.
         if let referrer = AnalyticsService.shared.postHogDistinctId, !referrer.isEmpty {
-            items.append(URLQueryItem(name: "sl_ref", value: referrer))
+            items.append(URLQueryItem(name: referrerKey, value: referrer))
         }
+        items.append(contentsOf: extra)
         components.queryItems = items
 
         // Every part above is a fixed, valid component, so this cannot be nil.
