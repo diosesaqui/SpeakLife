@@ -55,7 +55,7 @@ async function getFcmToken(deviceId) {
 
 // ─── Helper: send a single-device FCM message ────────────────────────────────
 
-async function sendToDevice(fcmToken, title, body) {
+async function sendToDevice(fcmToken, title, body, data = {}) {
   if (!fcmToken) {
     console.log('sendToDevice: no token, skipping');
     return;
@@ -63,6 +63,7 @@ async function sendToDevice(fcmToken, title, body) {
   const message = {
     notification: { title, body },
     token: fcmToken,
+    data,  // routing keys for the app (strings only)
     apns: {
       payload: { aps: { sound: 'default', badge: 1 } },
     },
@@ -150,7 +151,12 @@ exports.onPrayerCountIncremented = onDocumentUpdated(
       ? `${peoplePhrase} stood with you on this testimony.`
       : `${peoplePhrase} ${newCount === 1 ? 'is' : 'are'} standing with you in prayer.`;
 
-    await sendToDevice(fcmToken, title, body);
+    // notificationType routes the tap into the Warrior Room.
+    await sendToDevice(fcmToken, title, body, {
+      notificationType: 'prayerWall',
+      postId: event.params.postId,
+      isTestimony: String(isTestimony),
+    });
 
     // Persist the milestones we've now notified for so re-crossings don't
     // re-fire. arrayUnion is safe under concurrent writes.
@@ -244,7 +250,11 @@ exports.onPrayerAnswered = onDocumentUpdated(
     const title = 'Praise God! 🙌';
     const body  = 'Mark your answered prayer as a testimony — share what He did.';
 
-    await sendToDevice(fcmToken, title, body);
+    await sendToDevice(fcmToken, title, body, {
+      notificationType: 'prayerWall',
+      postId: event.params.postId,
+      isTestimony: 'true',
+    });
   }
 );
 

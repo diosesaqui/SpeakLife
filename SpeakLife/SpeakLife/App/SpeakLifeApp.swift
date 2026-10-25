@@ -509,8 +509,23 @@ struct SpeakLifeApp: App {
             return
         }
 
-        if notifType == "prayerWall" ||
-           notifType == "streakAtRisk" ||
+        // Warrior Room pushes open the room on tap. Foreground arrival never
+        // reaches here (NotificationHandler keeps those banner-only), so this
+        // cannot pull the user away from what they are doing.
+        if notifType == "prayerWall" {
+            if subscriptionStore.enableAIFeatures || BibleChatLocal.isDebug {
+                appState.showWarriorRoom = true
+            } else {
+                tabViewModel.selectedTab = 4  // Warrior Room is the tab here
+            }
+            AnalyticsService.shared.track("warrior_room_push_opened", parameters: [
+                "post_id": content.userInfo["postId"] as? String ?? "none",
+                "is_testimony": content.userInfo["isTestimony"] as? String ?? "unknown"
+            ])
+            return
+        }
+
+        if notifType == "streakAtRisk" ||
            notifType == "streakComplete" {
             return
         }

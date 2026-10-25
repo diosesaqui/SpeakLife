@@ -132,6 +132,11 @@ final class NotificationHandler: NSObject, ObservableObject, UNUserNotificationC
         // didReceive), not pop up unsolicited over whatever they're doing.
         // Audio pushes are the same, and more so: routing one on arrival would
         // start playing an episode over whatever the user is doing.
+        // Warrior Room pushes are the same: the room opens on tap only.
+        if content.userInfo["notificationType"] as? String == "prayerWall" {
+            completionHandler([.banner, .sound])
+            return
+        }
         if let deepLink = content.userInfo["deepLink"] as? String,
            PushOfferRule.bannerOnlyDeepLinks.contains(deepLink) {
             completionHandler([.banner, .sound])
