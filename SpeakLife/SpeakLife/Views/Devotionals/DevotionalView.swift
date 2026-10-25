@@ -161,7 +161,7 @@ struct DevotionalView: View {
                     .foregroundColor(.white)
                     
                     .sheet(isPresented: $share) {
-                        ShareSheet(activityItems: [viewModel.devotionalText as String,  URL(string: "\(APP.Product.urlID)")! as URL])
+                        ShareSheet(activityItems: [devotionalShareText])
                     }
                 }
                // .padding([.top], 40)
@@ -302,6 +302,18 @@ struct DevotionalView: View {
         }
     }
     
+    /// Title, the devotional, then a tracked link. Read when the sheet opens,
+    /// so it is today's text, and still a clean invite if the text is empty.
+    private var devotionalShareText: String {
+        let link = ReferralLink.url(.devotional).absoluteString
+        let body = [viewModel.title, viewModel.devotionalText]
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .joined(separator: "\n\n")
+        let invite = "I read this on SpeakLife today. Read with me:\n\(link)"
+        return body.isEmpty ? invite : "\(body)\n\n\(invite)"
+    }
+
     private var shareButton: some View {
         Button {
             share.toggle()
@@ -526,7 +538,7 @@ struct DevotionalView: View {
                 as? UIWindowScene {
                 let url = ReferralLink.url(.devotional)
                 
-                let activityVC = UIActivityViewController(activityItems: ["Check out Speak Life - Bible Verses app that'll transform your life!", url], applicationActivities: nil)
+                let activityVC = UIActivityViewController(activityItems: ["This app helps me speak God's Word over my life every day. Try it with me:\n\(url.absoluteString)"], applicationActivities: nil)
                 let window = scene.windows.first
                 window?.rootViewController?.present(activityVC, animated: true)
             }

@@ -208,4 +208,88 @@ final class AcquisitionAttributionTests: XCTestCase {
         // Must never be mistaken for a stand invite.
         XCTAssertNil(StandLink.code(from: url))
     }
+
+    // MARK: - Referrer: who shared the link behind an install
+
+    /// What Branch hands back on the install session from a shared link.
+    private func shareInstallParams(referrer: Any? = "sharer-123") -> [String: Any] {
+        var params: [String: Any] = [
+            "+clicked_branch_link": true,
+            "+is_first_session": true,
+            "~channel": "share",
+            "~feature": "favorite"
+        ]
+        if let referrer { params[ReferralLink.referrerKey] = referrer }
+        return params
+    }
+
+    private func freshDefaults() -> UserDefaults {
+        let name = "ReferralTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: name)!
+        addTeardownBlock { UserDefaults().removePersistentDomain(forName: name) }
+        return defaults
+    }
+
+    func testReferrerIsReadFromSlRef() {
+        let referral = BranchAttribution.referral(from: shareInstallParams(), ownDistinctId: "me")
+        XCTAssertEqual(referral, BranchAttribution.Referral(referrer: "sharer-123", feature: "favorite"))
+    }
+
+    func testNoReferrerWhenSlRefIsAbsentOrUnusable() {
+        XCTAssertNil(BranchAttribution.referral(from: shareInstallParams(referrer: nil), ownDistinctId: "me"))
+        XCTAssertNil(BranchAttribution.referral(from: shareInstallParams(referrer: "   "), ownDistinctId: "me"))
+        XCTAssertNil(BranchAttribution.referral(from: shareInstallParams(referrer: 42), ownDistinctId: "me"))
+        XCTAssertNil(BranchAttribution.referral(
+            from: shareInstallParams(referrer: String(repeating: "x", count: 129)), ownDistinctId: "me"))
+    }
+
+    func testReferrerNeedsAClickedInstallSession() {
+        var notClicked = shareInstallParams()
+        notClicked["+clicked_branch_link"] = false
+        XCTAssertNil(BranchAttribution.referral(from: notClicked, ownDistinctId: "me"))
+
+        // An existing user opening a friend's link was not brought in by it.
+        var notFirst = shareInstallParams()
+        notFirst["+is_first_session"] = false
+        XCTAssertNil(BranchAttribution.referral(from: notFirst, ownDistinctId: "me"))
+
+        var missingFirst = shareInstallParams()
+        missingFirst.removeValue(forKey: "+is_first_session")
+        XCTAssertNil(BranchAttribution.referral(from: missingFirst, ownDistinctId: "me"))
+    }
+
+    func testOwnLinkIsNotAReferral() {
+        XCTAssertNil(BranchAttribution.referral(from: shareInstallParams(), ownDistinctId: "sharer-123"))
+    }
+
+    func testReferrerIsTrimmedAndBlankFeatureDropped() {
+        var params = shareInstallParams(referrer: "  sharer-123\n")
+        params["~feature"] = "  "
+        XCTAssertEqual(BranchAttribution.referral(from: params, ownDistinctId: nil),
+                       BranchAttribution.Referral(referrer: "sharer-123", feature: nil))
+    }
+
+    func testReferredByIsStoredOnce() {
+        let defaults = freshDefaults()
+        let first = BranchAttribution.recordReferral(from: shareInstallParams(), defaults: defaults, ownDistinctId: "me")
+        XCTAssertEqual(first?.referrer, "sharer-123")
+        XCTAssertEqual(defaults.string(forKey: BranchAttribution.referredByDefaultsKey), "sharer-123")
+    }
+
+    func testReferredByIsNeverOverwritten() {
+        let defaults = freshDefaults()
+        BranchAttribution.recordReferral(from: shareInstallParams(), defaults: defaults, ownDistinctId: "me")
+
+        let second = BranchAttribution.recordReferral(
+            from: shareInstallParams(referrer: "someone-else"), defaults: defaults, ownDistinctId: "me")
+        XCTAssertNil(second)
+        XCTAssertEqual(defaults.string(forKey: BranchAttribution.referredByDefaultsKey), "sharer-123")
+    }
+
+    func testNothingIsStoredWithoutSlRef() {
+        let defaults = freshDefaults()
+        XCTAssertNil(BranchAttribution.recordReferral(
+            from: shareInstallParams(referrer: nil), defaults: defaults, ownDistinctId: "me"))
+        XCTAssertNil(defaults.string(forKey: BranchAttribution.referredByDefaultsKey))
+    }
 }

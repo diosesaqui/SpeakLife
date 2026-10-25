@@ -134,7 +134,9 @@ struct DailyVerseDetailView: View {
     }
     
     private func shareVerse() {
-        shareText = "\"\(verse.text)\"\n\n\(verse.book.name) \(verse.chapter):\(verse.number)\n\nShared from SpeakLife"
+        let link = ReferralLink.url(.dailyVerse).absoluteString
+        shareText = "\u{201C}\(verse.text)\u{201D}\n\(verse.book.name) \(verse.chapter):\(verse.number)"
+            + "\n\nMy verse for today. Start your mornings in God's Word with me:\n\(link)"
         showShareSheet = true
     }
     

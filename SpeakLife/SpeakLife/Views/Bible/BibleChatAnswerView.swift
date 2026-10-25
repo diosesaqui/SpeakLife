@@ -248,11 +248,14 @@ struct BibleChatAnswerView: View {
         if !topic.verses.isEmpty {
             lines.append("")
             for verse in topic.verses {
-                lines.append("\u{201C}\(verse.text)\u{201D} \u{2014} \(verse.reference)")
+                lines.append("\u{201C}\(verse.text)\u{201D} (\(verse.reference))")
             }
         }
+        // Copy uses this text too: a pasted answer leaves the app just like a
+        // shared one, so it carries the same tracked link.
         lines.append("")
-        lines.append("via SpeakLife")
+        lines.append("I found this on SpeakLife. Bring your own questions to God's Word:")
+        lines.append(ReferralLink.url(.bibleChat, campaign: topic.id).absoluteString)
         return lines.joined(separator: "\n")
     }
 

@@ -42,7 +42,18 @@ struct TrackerView: View {
         }
         .sheet(isPresented: $shareSheetShowing) {
                 
-                ShareSheet(activityItems: ["I've spent \(timeTracker.totalTimeValue) renewing my mind with SpeakLife!", APP.Product.urlID])
+                ShareSheet(activityItems: [shareText])
         }
+    }
+
+    /// Falls back to a line with no number before any time is counted, so the
+    /// share never says "I've spent 0 minutes".
+    private var shareText: String {
+        let link = ReferralLink.url(.tracker).absoluteString
+        let time = timeTracker.totalTimeValue.trimmingCharacters(in: .whitespaces)
+        if time.isEmpty || time == "0 minutes" {
+            return "I'm speaking God's Word over my life every day with SpeakLife. Join me:\n\(link)"
+        }
+        return "I've spent \(time) speaking God's Word over my life with SpeakLife. Join me:\n\(link)"
     }
 }

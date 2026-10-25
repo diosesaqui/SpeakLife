@@ -80,10 +80,25 @@ struct ContentRow: View {
                 .clipShape(Circle())
         }
         .sheet(isPresented: $showShareSheet) {
-            ShareSheet(activityItems: ["\(declaration.text) \nSpeakLife App:", APP.Product.urlID])
+            ShareSheet(activityItems: [shareText])
         }
     }
     
+    /// The declaration, its verse, a line to say it together, and a tracked
+    /// link. Jesus-voice entries carry "Jesus" as their book, which is not a
+    /// reference, so it is left off.
+    private var shareText: String {
+        let link = ReferralLink.url(.favorite, campaign: declaration.category.rawValue).absoluteString
+        var text = declaration.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !text.isEmpty,
+           let book = declaration.book?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !book.isEmpty, book != "Jesus" {
+            text += "\n\(book)"
+        }
+        let invite = "Speak this one out loud with me:\n\(link)"
+        return text.isEmpty ? invite : "\(text)\n\n\(invite)"
+    }
+
     @ViewBuilder
     private var contextMenuContent: some View {
         Button(action: share) {

@@ -62,7 +62,12 @@ struct ProfileView: View {
     @State private var showCommunity = false
     @State private var showStands = false
     @ObservedObject private var standService = StandService.shared
-    let url = URL(string:APP.Product.urlID)
+    /// Built when the sheet opens, not with the view, so the link carries the
+    /// sharer's analytics id even if it was not ready at first render.
+    private var shareInviteText: String {
+        "This app helps me speak God's Word over my life every day. Try it with me:\n"
+            + ReferralLink.url(.profileInvite).absoluteString
+    }
     
     
     @ViewBuilder
@@ -169,7 +174,7 @@ struct ProfileView: View {
                     }
                     
                     .sheet(isPresented: $showShareSheet, content: {
-                        ShareSheet(activityItems: ["Check out SpeakLife - Bible Affirmations app that'll transform your life!", url as Any])
+                        ShareSheet(activityItems: [shareInviteText])
                     })
 
                     Section(header: Text("Other".uppercased()).font(.caption)) {

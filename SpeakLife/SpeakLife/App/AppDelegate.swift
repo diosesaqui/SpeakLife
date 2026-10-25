@@ -783,6 +783,10 @@ enum BranchAttribution {
             SubscriptionStore.handleIncomingURL(url, source: "ad")
         }
 
+        // Credit the person whose share brought this install. Before the
+        // channel guard below so a sharer is credited even if that guard grows.
+        recordReferral(from: params)
+
         // Only a real link click is an attribution. See `attribution(from:)`.
         guard let attribution = attribution(from: params) else { return }
         AcquisitionAttribution.shared.record(
@@ -866,11 +870,16 @@ enum BranchAttribution {
 
     /// `+clicked_branch_link` arrives as a Bool from the SDK, but as an
     /// NSNumber or a string when it has crossed a JSON or Objective-C boundary.
-    /// Anything unreadable counts as no click.
+    /// Anything unreadable counts as no click. `+is_first_session` is read
+    /// the same way.
     static func clickedBranchLink(_ params: [String: Any]) -> Bool {
-        switch params["+clicked_branch_link"] {
-        case let flag as Bool:
-            return flag
+        flag(params["+clicked_branch_link"])
+    }
+
+    private static func flag(_ value: Any?) -> Bool {
+        switch value {
+        case let bool as Bool:
+            return bool
         case let number as NSNumber:
             return number.boolValue
         case let text as String:
@@ -878,6 +887,61 @@ enum BranchAttribution {
         default:
             return false
         }
+    }
+
+    // MARK: - Referrer
+    //
+    // Every share carries the sharer's anonymous id as `sl_ref` (see
+    // `ReferralLink`). Reading it back on the recipient's install is what turns
+    // "an install came from a share" into "this person brought that person",
+    // which a future sharer reward needs.
+
+    /// Person property naming the sharer. Set once per person, never replaced.
+    static let referredByProperty = "referred_by"
+
+    /// AnalyticsService has no set-once call, so this flag is what keeps
+    /// `referred_by` first touch only.
+    static let referredByDefaultsKey = "referralReferredBy"
+
+    struct Referral: Equatable {
+        let referrer: String
+        let feature: String?
+    }
+
+    /// The sharer behind this session, or nil when it should not be credited.
+    ///
+    /// Only an install counts: an existing user tapping a friend's link has a
+    /// clicked session too, but was not brought in by it. Branch marks the
+    /// install session with `+is_first_session`. A referrer equal to this
+    /// person's own id is a self-share and is ignored.
+    static func referral(from params: [String: Any], ownDistinctId: String?) -> Referral? {
+        guard clickedBranchLink(params), flag(params["+is_first_session"]) else { return nil }
+        guard let raw = params[ReferralLink.referrerKey] as? String else { return nil }
+        let referrer = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        // A PostHog id is a UUID. Anything far longer is not one, and a
+        // hand-edited link must not write an essay onto a person.
+        guard !referrer.isEmpty, referrer.count <= 128, referrer != ownDistinctId else { return nil }
+
+        let feature = (params["~feature"] as? String)?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return Referral(referrer: referrer, feature: (feature?.isEmpty ?? true) ? nil : feature)
+    }
+
+    /// Records the referral at most once per install. Returns what was
+    /// recorded, or nil when nothing was.
+    @discardableResult
+    static func recordReferral(from params: [String: Any],
+                               defaults: UserDefaults = .standard,
+                               ownDistinctId: String? = AnalyticsService.shared.postHogDistinctId) -> Referral? {
+        guard defaults.string(forKey: referredByDefaultsKey) == nil,
+              let referral = referral(from: params, ownDistinctId: ownDistinctId) else { return nil }
+        defaults.set(referral.referrer, forKey: referredByDefaultsKey)
+
+        AnalyticsService.shared.setUserProperty(referredByProperty, value: referral.referrer)
+        var parameters: [String: Any] = [referredByProperty: referral.referrer]
+        if let feature = referral.feature { parameters["feature"] = feature }
+        AnalyticsService.shared.track("referral_install_attributed", parameters: parameters)
+        return referral
     }
 }
 
