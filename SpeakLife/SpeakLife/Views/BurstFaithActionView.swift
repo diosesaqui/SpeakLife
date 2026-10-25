@@ -18,6 +18,10 @@
 //      against, and there is no shame path — declining is a plain button, not a
 //      confession.
 //
+//  The primary act here is sending the burst to someone who needs it. Passing
+//  the promises on is itself the act of faith, so a completed send is what
+//  records the commitment; a cancelled share sheet leaves the user here.
+//
 
 import SwiftUI
 
@@ -25,7 +29,12 @@ struct BurstFaithActionView: View {
 
     let theme: DeclarationCategory
     let action: FaithAction
-    let onCommit: () -> Void
+    /// True while the cards are being drawn. Shows the progress state and
+    /// disables the button, so a second tap cannot start a second share.
+    var isPreparingShare: Bool = false
+    /// Sends the burst. The presenter records the commitment once the share
+    /// sheet reports a completed share.
+    let onSend: () -> Void
     let onSkip: () -> Void
 
     @State private var appeared = false
@@ -149,14 +158,25 @@ struct BurstFaithActionView: View {
 
     private func buttons(width: CGFloat) -> some View {
         VStack(spacing: DS.Spacing.sm) {
-            Button(action: onCommit) {
+            Button(action: onSend) {
                 HStack(spacing: DS.Spacing.xs) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 18, weight: .bold))
-                    Text("I'm doing this today")
-                        .font(.system(size: 17, weight: .semibold))
+                    if isPreparingShare {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .controlSize(.small)
+                        Text("Preparing your cards…")
+                            .font(.system(size: 17, weight: .semibold))
+                    } else {
+                        Image(systemName: "paperplane.fill")
+                            .font(.system(size: 17, weight: .bold))
+                        Text("Send this burst to a friend in need")
+                            .font(.system(size: 17, weight: .semibold))
+                    }
                 }
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
                 .foregroundColor(.white)
+                .padding(.horizontal, DS.Spacing.md)
                 .frame(width: width * 0.85, height: 54)
                 .background(
                     RoundedRectangle(cornerRadius: 27)
@@ -164,8 +184,11 @@ struct BurstFaithActionView: View {
                 )
                 .shadow(color: Color(red: 1.0, green: 0.34, blue: 0.13).opacity(0.35),
                         radius: 10, x: 0, y: 5)
+                .animation(DS.Motion.quick, value: isPreparingShare)
             }
-            .buttonStyle(.dsPressable(feel: .tapSolid, haptics: false))
+            .buttonStyle(.dsPressable(feel: .tapSolid))
+            .disabled(isPreparingShare)
+            .accessibilityLabel(isPreparingShare ? "Preparing your cards" : "Send this burst to a friend in need")
 
             Button(action: onSkip) {
                 Text("Not today")
@@ -174,7 +197,37 @@ struct BurstFaithActionView: View {
                     .frame(width: width * 0.85, height: 44)
             }
             .buttonStyle(.dsPressable(feel: .tapLight))
+            .disabled(isPreparingShare)
         }
         .opacity(appeared ? 1 : 0)
     }
+}
+
+#Preview("Send this burst") {
+    ZStack {
+        LinearGradient(colors: [Color(red: 0.08, green: 0.05, blue: 0.20), .black],
+                       startPoint: .top, endPoint: .bottom)
+            .ignoresSafeArea()
+        BurstFaithActionView(
+            theme: .faith,
+            action: FaithActionCatalog.action(for: .faith),
+            onSend: {},
+            onSkip: {}
+        )
+    }
+    .preferredColorScheme(.dark)
+}
+
+#Preview("Preparing cards") {
+    ZStack {
+        Color.black.ignoresSafeArea()
+        BurstFaithActionView(
+            theme: .health,
+            action: FaithActionCatalog.action(for: .health),
+            isPreparingShare: true,
+            onSend: {},
+            onSkip: {}
+        )
+    }
+    .preferredColorScheme(.dark)
 }

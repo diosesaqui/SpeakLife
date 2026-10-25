@@ -120,6 +120,9 @@ struct DeclarationContentView: View {
     @State private var rotationAngle: Double = 0
     @State private var buttonVisibilities: [Bool] = [false, false]
     @State private var numberOfItems: Int = 2
+    /// "Share today's word": shown once a day after the fifth declaration
+    /// (see `FeedShareNudgePolicy`), then hidden on its own after a few seconds.
+    @State private var showShareNudge = false
     
     
     
@@ -235,6 +238,11 @@ struct DeclarationContentView: View {
                 }
                 lastAllowedTab = newIndex
                 isMenuExpanded = false
+                // The chip belongs to the card it was offered on.
+                if showShareNudge {
+                    withAnimation(DS.Motion.quick) { showShareNudge = false }
+                }
+                if isNewCard { considerShareNudge() }
                 askForReview()
                 let declaration = viewModel.declarations[newIndex]
                 viewModel.setCurrent(declaration)
@@ -336,6 +344,23 @@ struct DeclarationContentView: View {
         VStack {
             
             Spacer()
+            if isShareNudgeVisible(on: declaration) {
+                ShareNudgeChip(
+                    onShare: { shareNudgeTapped(declaration: declaration) },
+                    onDismiss: {
+                        withAnimation(DS.Motion.quick) { showShareNudge = false }
+                    }
+                )
+                .padding(.bottom, DS.Spacing.sm)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .task {
+                    // Restarts if an overlay hid it, so it always gets its
+                    // full few seconds on screen before leaving by itself.
+                    try? await Task.sleep(nanoseconds: 6_000_000_000)
+                    guard !Task.isCancelled else { return }
+                    withAnimation(DS.Motion.smooth) { showShareNudge = false }
+                }
+            }
             intentStackButtons(declaration: declaration)
                 .opacity(appState.showScreenshotLabel ? 0 : 1)
             VStack {
@@ -507,17 +532,49 @@ struct DeclarationContentView: View {
     
     /// The speaker's own theme photo, so the card looks like their app.
     private var shareBackground: UIImage? {
-        if themeViewModel.showUserSelectedImage, let selected = themeViewModel.selectedImage {
-            return selected
-        }
-        return UIImage(named: themeViewModel.selectedTheme.backgroundImageString)
+        DeclarationStoryCard.background(for: themeViewModel)
     }
 
-    /// The text that travels with the card: a line to say and a tracked link,
-    /// so an install that comes from this share is counted as a referral.
-    private func shareMessage(for declaration: Declaration) -> String {
+    // MARK: - Share nudge
+
+    /// Only on the card showing, and never over the share menu, the favorite
+    /// heart, the screenshot label or a sheet.
+    private func isShareNudgeVisible(on declaration: Declaration) -> Bool {
+        guard showShareNudge,
+              !isMenuExpanded, !isFavorite, !appState.showScreenshotLabel,
+              !showShareSheet, !showStormFreeLimit,
+              viewModel.declarations.indices.contains(viewModel.selectedTab) else { return false }
+        return viewModel.declarations[viewModel.selectedTab].id == declaration.id
+    }
+
+    private func considerShareNudge() {
+        let policy = FeedShareNudgePolicy(defaults: .standard)
+        guard policy.recordDeclarationReached(installDate: AnalyticsContext.shared.userInstallDate) else { return }
+
+        AnalyticsService.shared.track("share_prompt_shown", parameters: [
+            "surface": "feed_nudge"
+        ])
+        // A beat after the swipe, so it slides in on a page that has settled.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            withAnimation(DS.Motion.smooth) { showShareNudge = true }
+        }
+    }
+
+    private func shareNudgeTapped(declaration: Declaration) {
+        AnalyticsService.shared.track("share_prompt_tapped", parameters: [
+            "surface": "feed_nudge",
+            "category": declaration.category.rawValue
+        ])
+        withAnimation(DS.Motion.quick) { showShareNudge = false }
+        shareTapped(declaration: declaration)
+    }
+
+    /// The text that travels with the card: a line to say, plus a tracked link
+    /// when it goes to a messaging app, so an install that comes from this
+    /// share is counted as a referral. Posts and saved images get the words only.
+    private func shareMessage(for declaration: Declaration) -> ReferralShareText {
         let link = ReferralLink.url(.declarationCard, campaign: declaration.category.rawValue)
-        return "Speak this one out loud with me 🙏\n\(link.absoluteString)"
+        return ReferralShareText("Speak this one out loud with me 🙏", link: link)
     }
 
     private func createScreenshotImage(completion: @escaping (UIImage?) -> Void) {

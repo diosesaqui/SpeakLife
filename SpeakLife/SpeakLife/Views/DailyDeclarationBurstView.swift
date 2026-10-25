@@ -52,6 +52,13 @@ struct DailyDeclarationBurstView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     
     @StateObject private var burstTracker = BurstCompletionTracker.shared
+    /// The one path a burst is shared through: every line as a story card.
+    /// Both the eighth slat and the completion screen use it, so they share
+    /// one in-flight guard.
+    @StateObject private var burstShare = BurstShareController()
+    /// Completed sends this session, so the completion screen can offer
+    /// "another friend" once the first one has gone.
+    @State private var burstSendCount = 0
     @State private var currentDeclarationIndex = 0
     @State private var showCompletionView = false
     /// Distinct days this user has completed a Burst, read once the completion
@@ -172,7 +179,15 @@ struct DailyDeclarationBurstView: View {
                     BurstFaithActionView(
                         theme: burstTheme,
                         action: action,
-                        onCommit: { commitToAction(action) },
+                        isPreparingShare: burstShare.isPreparing,
+                        onSend: {
+                            // Sending the promises on is the act of faith, so a
+                            // completed send commits it and moves on. A cancel
+                            // leaves the user here to send or skip.
+                            sendBurst(surface: "burst_complete") { completed in
+                                if completed { commitToAction(action) }
+                            }
+                        },
                         onSkip: { skipAction(action) }
                     )
                 } else if !showCompletionView {
@@ -743,33 +758,39 @@ struct DailyDeclarationBurstView: View {
                 Spacer()
                 
                 VStack(spacing: DS.Spacing.md) {
-                    // Share Victory Button
-                    Button(action: shareVictory) {
+                    // The same seven-card send as the eighth slat, for someone
+                    // who skipped it there or wants to send it to one more.
+                    Button(action: { sendBurst(surface: "burst_completion_screen") { _ in } }) {
                         HStack(spacing: 10) {
-                            Image(systemName: "square.and.arrow.up")
-                                .font(.system(size: 17, weight: .semibold))
-                            Text("Share Your Victory")
-                                .font(.system(size: 17, weight: .semibold))
+                            if burstShare.isPreparing {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    .controlSize(.small)
+                                Text("Preparing your cards…")
+                                    .font(.system(size: 17, weight: .semibold))
+                            } else {
+                                Image(systemName: "paperplane.fill")
+                                    .font(.system(size: 17, weight: .semibold))
+                                Text(burstSendCount > 0 ? "Send it to another friend" : "Send this burst to a friend")
+                                    .font(.system(size: 17, weight: .semibold))
+                            }
                         }
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                         .foregroundColor(.white)
                         .frame(width: geometry.size.width * 0.85, height: 50)
                         .background(
                             ZStack {
                                 RoundedRectangle(cornerRadius: 25)
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [Color.purple.opacity(0.8), Color.blue.opacity(0.8)],
-                                            startPoint: .leading,
-                                            endPoint: .trailing
-                                        )
-                                    )
-                                
+                                    .fill(Color.white.opacity(0.10))
+
                                 RoundedRectangle(cornerRadius: 25)
-                                    .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                    .stroke(DS.Palette.gold.opacity(0.6), lineWidth: 1)
                             }
                         )
-                        .shadow(color: .purple.opacity(0.3), radius: 10, x: 0, y: 5)
                     }
+                    .buttonStyle(.dsPressable(feel: .tapSolid))
+                    .disabled(burstShare.isPreparing || morningDeclarations.isEmpty)
                     .scaleEffect(shareButtonOpacity)
                     .opacity(shareButtonOpacity)
                     
@@ -955,46 +976,26 @@ struct DailyDeclarationBurstView: View {
         }
     }
     
-    private func shareVictory() {
-        // Haptic feedback
-        Juice.play(.tapLight)
-
-        let message = "I just completed my Daily Victory Burst on SpeakLife! 🔥\n\n✅ \(morningDeclarations.count) Declarations Spoken\n🔥 \(streakViewModel.displayStreak) Day Streak\n💪 \(burstTracker.currentStrengthScore)% Spiritual Strength\n\nJoin me in speaking life daily!\n\(ReferralLink.url(.dailyBurst).absoluteString)"
-        
-        // Get the active window scene
-        guard let windowScene = UIApplication.shared.connectedScenes
-            .first(where: { $0.activationState == .foregroundActive || $0.activationState == .foregroundInactive }) as? UIWindowScene,
-              let rootViewController = windowScene.windows.first?.rootViewController else {
-            print("Could not find root view controller for sharing")
-            return
-        }
-        
-        // Find the topmost view controller
-        var topController = rootViewController
-        while let presentedController = topController.presentedViewController {
-            topController = presentedController
-        }
-        
-        let activityVC = UIActivityViewController(
-            activityItems: [message],
-            applicationActivities: nil
-        )
-        
-        // For iPad
-        if let popover = activityVC.popoverPresentationController {
-            popover.sourceView = topController.view
-            popover.sourceRect = CGRect(x: topController.view.bounds.midX, y: topController.view.bounds.midY, width: 0, height: 0)
-            popover.permittedArrowDirections = []
-        }
-        
-        topController.present(activityVC, animated: true)
-        
-        AnalyticsService.shared.track("daily_burst_shared", parameters: [
-            "streak": streakViewModel.displayStreak,
-            "strength_score": burstTracker.currentStrengthScore
+    /// Sends every line of this burst as a story card, in order, with an
+    /// invitation and a tracked link. `completion` gets true only for a share
+    /// the system reports as completed.
+    private func sendBurst(surface: String, completion: @escaping (Bool) -> Void) {
+        guard !burstShare.isPreparing, !morningDeclarations.isEmpty else { return }
+        AnalyticsService.shared.track("share_prompt_tapped", parameters: [
+            "surface": surface,
+            "card_count": morningDeclarations.count
         ])
+        burstShare.share(
+            lines: morningDeclarations,
+            theme: burstTheme,
+            background: DeclarationStoryCard.background(for: themeViewModel),
+            surface: surface
+        ) { completed in
+            if completed { burstSendCount += 1 }
+            completion(completed)
+        }
     }
-    
+
     // MARK: - Actions
     
     /// The mode picked on the intro, before there is a card to speak.
@@ -1118,6 +1119,12 @@ struct DailyDeclarationBurstView: View {
         AnalyticsService.shared.track("daily_burst_action_shown", parameters: [
             "theme": theme.rawValue,
             "action": action.headline
+        ])
+        // The eighth slat leads with the send, so this is the burst's share
+        // prompt being shown.
+        AnalyticsService.shared.track("share_prompt_shown", parameters: [
+            "surface": "burst_complete",
+            "card_count": morningDeclarations.count
         ])
 
         withAnimation(DS.Motion.smooth) {
