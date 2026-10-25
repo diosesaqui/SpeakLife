@@ -30,9 +30,14 @@ final class DevotionalViewModel: ObservableObject, Sendable {
 
     // MARK: Category devotionals
 
-    /// The category the user reads in every day. Empty means the shared
-    /// calendar devotional from devotionals.json, which is how everyone starts.
+    /// The category picked for today. Empty means the shared calendar
+    /// devotional from devotionals.json, which is how every day starts.
     @AppStorage("devotionalCategory") var selectedCategoryRaw = ""
+    /// The local day (yyyy-MM-dd) the category was picked. A pick lasts one
+    /// day: tomorrow opens on the general devotional, and the reader picks a
+    /// topic again if they want one. Without this, yesterday's pick made the
+    /// widget start writing a new category devotional every morning.
+    @AppStorage("devotionalCategoryDate") private var selectedCategoryDate = ""
     /// Up to three categories picked from the More sheet, newest first,
     /// comma-separated. Top categories never go in here; they always show.
     @AppStorage("devotionalRecentCategories") private var recentCategoriesRaw = ""
@@ -59,8 +64,34 @@ final class DevotionalViewModel: ObservableObject, Sendable {
             && displayedCategoryDate == CategoryDevotionalService.localDateString()
     }
 
+    /// Today's pick, or nil. A pick from an earlier day counts as no pick, so
+    /// nothing reads a stale category even before it is cleared.
     var selectedCategory: DeclarationCategory? {
-        DeclarationCategory(rawValue: selectedCategoryRaw)
+        guard selectedCategoryDate == CategoryDevotionalService.localDateString() else { return nil }
+        return DeclarationCategory(rawValue: selectedCategoryRaw)
+    }
+
+    /// Saves the pick for today.
+    private func setSelectedCategory(_ category: DeclarationCategory) {
+        selectedCategoryRaw = category.rawValue
+        selectedCategoryDate = CategoryDevotionalService.localDateString()
+    }
+
+    /// Clears a pick left over from an earlier day and puts today's general
+    /// devotional on screen. Covers an app that stayed alive overnight still
+    /// showing yesterday's category devotional.
+    @MainActor
+    func expireStaleCategoryIfNeeded() {
+        guard !selectedCategoryRaw.isEmpty, selectedCategory == nil else { return }
+        let wasShowingCategory = displayedCategory != nil
+        selectedCategoryRaw = ""
+        selectedCategoryDate = ""
+        categoryFailed = false
+        displayedCategory = nil
+        displayedCategoryDate = nil
+        guard wasShowingCategory else { return }
+        devotionValue = 0
+        Task { await fetchDevotionalFor(value: 0) }
     }
 
     /// A category is picked but its devotional is not on screen yet.
@@ -266,7 +297,7 @@ final class DevotionalViewModel: ObservableObject, Sendable {
             ])
             return
         }
-        selectedCategoryRaw = category.rawValue
+        setSelectedCategory(category)
         devotionValue = 0
         rememberRecent(category)
         await loadCategoryDevotional(isPremium: isPremium, userInitiated: true)
@@ -276,6 +307,7 @@ final class DevotionalViewModel: ObservableObject, Sendable {
     @MainActor
     func showCalendarDevotional() {
         selectedCategoryRaw = ""
+        selectedCategoryDate = ""
         categoryFailed = false
         devotionValue = 0
         displayedCategory = nil
@@ -296,11 +328,11 @@ final class DevotionalViewModel: ObservableObject, Sendable {
         let requested = paywallCategory
         paywallCategory = nil
         if isPremium, let requested {
-            selectedCategoryRaw = requested.rawValue
+            setSelectedCategory(requested)
             rememberRecent(requested)
             await loadCategoryDevotional(isPremium: true, userInitiated: true)
-        } else if let displayedCategory {
-            selectedCategoryRaw = displayedCategory.rawValue
+        } else if let displayedCategory, isShowingToday(displayedCategory) {
+            setSelectedCategory(displayedCategory)
         } else {
             showCalendarDevotional()
         }
@@ -313,6 +345,7 @@ final class DevotionalViewModel: ObservableObject, Sendable {
     /// back to Daily quietly instead.
     @MainActor
     func loadCategoryDevotional(isPremium: Bool, userInitiated: Bool = false) async {
+        expireStaleCategoryIfNeeded()
         guard let category = selectedCategory else { return }
         if isShowingToday(category) && !userInitiated { return }
         guard !isGeneratingCategory else { return }
