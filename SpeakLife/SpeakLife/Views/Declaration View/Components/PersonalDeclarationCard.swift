@@ -17,6 +17,9 @@ private enum SpeakState {
 }
 
 private let kMatchThreshold = 0.65
+/// Seconds of heard voice per word for the follow-along cursor. Speech runs
+/// near 2.5 words a second, and the meter only counts the loud part of each.
+private let kVoicedSecondsPerWord = 0.3
 
 // MARK: - PersonalDeclarationCard
 
@@ -71,9 +74,36 @@ struct PersonalDeclarationCard: View {
     // Animations
     @State private var successScale: CGFloat = 0.3
     @State private var successOpacity: Double = 0
-    @State private var ringScale: [CGFloat] = [1, 1, 1]
-    @State private var ringOpacity: [Double] = [0.5, 0.35, 0.2]
     @State private var cardAppear = false
+
+    /// Matched words shown in gold. Filled one by one after transcription so
+    /// the user watches what was caught land before the result appears.
+    @State private var revealedIndices: Set<Int> = []
+    @State private var isRevealing = false
+    /// True from the "done" tap until the result shows. Bridges the gap before
+    /// the verifier flips `isTranscribing`, so the panel never flickers.
+    @State private var isChecking = false
+
+    private let gold = Color(red: 1, green: 0.82, blue: 0.28)
+    private let green = Color(red: 0.3, green: 0.9, blue: 0.55)
+    private let recordRed = Color(red: 0.85, green: 0.22, blue: 0.22)
+
+    /// From tap to result: the mic is live, the words are being checked, or
+    /// the caught words are landing.
+    private var isListeningPhase: Bool {
+        speakState == .recording || isChecking
+    }
+
+    /// How far the voice has carried through the declaration.
+    private var followIndex: Int {
+        min(displayWords.count, Int(verifier.voicedSeconds / kVoicedSecondsPerWord))
+    }
+
+    /// Newest mic level, 0...1. Drives the button glow.
+    private var liveLevel: CGFloat {
+        guard speakState == .recording, let last = verifier.levels.last else { return 0 }
+        return CGFloat(last)
+    }
 
     private var dayCount: Int { progress.dayCount }
 
@@ -140,8 +170,10 @@ struct PersonalDeclarationCard: View {
                         // ── Declaration text (highlights as user speaks) ─
                         HighlightedDeclarationText(
                             displayWords: displayWords,
-                            matchedIndices: verifier.matchedIndices,
-                            isRecording: speakState == .recording
+                            matchedIndices: revealedIndices,
+                            isRecording: isListeningPhase,
+                            followIndex: (speakState == .recording || (isChecking && !isRevealing))
+                                ? followIndex : nil
                         )
                         .padding(.horizontal, 24)
                         .padding(.bottom, 24)
@@ -189,27 +221,20 @@ struct PersonalDeclarationCard: View {
                     // Primary: Speak It / Recording / Success
                     speakButton
 
-                    // Secondary: Breakthrough
-                    Button(action: onBreakthrough) {
-                        HStack(spacing: 6) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .font(.system(size: 15, weight: .semibold))
-                            Text("It Came to Pass")
-                                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    // Secondary slot: live listening feedback while speaking,
+                    // otherwise the breakthrough button. Same height, so the
+                    // layout never jumps.
+                    ZStack {
+                        if isListeningPhase {
+                            listeningPanel
+                                .transition(.opacity.combined(with: .scale(scale: 0.96)))
+                        } else {
+                            breakthroughButton
+                                .transition(.opacity)
                         }
-                        .foregroundColor(Color(red: 0.3, green: 0.9, blue: 0.55))
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 52)
-                        .background(
-                            RoundedRectangle(cornerRadius: 16)
-                                .fill(Color(red: 0.3, green: 0.9, blue: 0.55).opacity(0.12))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 16)
-                                        .strokeBorder(Color(red: 0.3, green: 0.9, blue: 0.55).opacity(0.3), lineWidth: 1)
-                                )
-                        )
                     }
-                    .padding(.horizontal, 24)
+                    .frame(height: 52)
+                    .animation(DS.Motion.smooth, value: isListeningPhase)
                 }
                 .padding(.bottom, 36)
                 .background(
@@ -368,31 +393,102 @@ struct PersonalDeclarationCard: View {
         .animation(.easeInOut(duration: 0.3), value: todaySpeakCount)
     }
 
+    // MARK: - Breakthrough Button
+
+    private var breakthroughButton: some View {
+        Button(action: onBreakthrough) {
+            HStack(spacing: 6) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 15, weight: .semibold))
+                Text("It Came to Pass")
+                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+            }
+            .foregroundColor(Color(red: 0.3, green: 0.9, blue: 0.55))
+            .frame(maxWidth: .infinity)
+            .frame(height: 52)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color(red: 0.3, green: 0.9, blue: 0.55).opacity(0.12))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .strokeBorder(Color(red: 0.3, green: 0.9, blue: 0.55).opacity(0.3), lineWidth: 1)
+                    )
+            )
+        }
+        .padding(.horizontal, 24)
+    }
+
+    // MARK: - Listening Panel
+    //
+    // Proof the phone hears them: a status line that reacts to their voice and
+    // a waveform that moves with it. Purely a mirror. The transcript alone
+    // decides whether the declaration was spoken.
+
+    private var listeningStatus: (text: String, color: Color) {
+        if isRevealing {
+            let caught = revealedIndices.count
+            return ("Caught \(caught) of \(displayWords.count) words", gold)
+        }
+        if isChecking { return ("Checking your words…", gold) }
+        if verifier.isVoiceActive { return ("I hear you. Keep going", green) }
+        if verifier.hasHeardSpeech || verifier.voicedSeconds > 0 {
+            return ("Listening… tap when you're done", .white)
+        }
+        return ("Listening… speak it out loud", .white)
+    }
+
+    private var listeningPanel: some View {
+        let status = listeningStatus
+        return VStack(spacing: 6) {
+            HStack(spacing: 7) {
+                Circle()
+                    .fill(status.color)
+                    .frame(width: 7, height: 7)
+                    .shadow(color: status.color.opacity(0.8), radius: verifier.isVoiceActive ? 5 : 0)
+                    .scaleEffect(verifier.isVoiceActive ? 1.3 : 1.0)
+                Text(status.text)
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .foregroundColor(status.color.opacity(0.9))
+                    .contentTransition(.opacity)
+                    .lineLimit(1)
+            }
+            .animation(.easeOut(duration: 0.18), value: verifier.isVoiceActive)
+            .animation(.easeOut(duration: 0.2), value: status.text)
+            .accessibilityElement(children: .combine)
+
+            GuardWaveform(
+                levels: verifier.levels,
+                tint: verifier.isVoiceActive ? green : gold,
+                isSettled: speakState != .recording,
+                maxBarHeight: 30
+            )
+            .frame(height: 30)
+            .accessibilityHidden(true)
+        }
+        .padding(.horizontal, 24)
+    }
+
     // MARK: - Speak Button
 
     @ViewBuilder
     private var speakButton: some View {
         ZStack {
-            // Pulse rings during recording
-            if speakState == .recording {
-                ForEach(0..<3, id: \.self) { i in
-                    Circle()
-                        .strokeBorder(Color(red: 0.98, green: 0.36, blue: 0.35).opacity(ringOpacity[i]), lineWidth: 1.5)
-                        .frame(width: CGFloat(72 + i * 28), height: CGFloat(72 + i * 28))
-                        .scaleEffect(ringScale[i])
-                }
-            }
-
             Button(action: handleSpeakTap) {
                 HStack(spacing: 10) {
-                    if verifier.isTranscribing {
+                    if isChecking {
                         ProgressView().tint(.white).scaleEffect(0.85)
-                        Text("Analyzing...")
+                        Text("Checking...")
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                    } else if speakState == .recording {
+                        Image(systemName: "waveform")
+                            .font(.system(size: 18, weight: .semibold))
+                            .symbolEffect(.variableColor.iterative, isActive: verifier.isVoiceActive)
+                        Text("Tap When Done")
                             .font(.system(size: 18, weight: .bold, design: .rounded))
                     } else {
-                        Image(systemName: speakState == .recording ? "stop.fill" : "mic.fill")
+                        Image(systemName: "mic.fill")
                             .font(.system(size: 18, weight: .semibold))
-                        Text(speakState == .recording ? "Tap to Finish" : "Speak It")
+                        Text("Speak It")
                             .font(.system(size: 18, weight: .bold, design: .rounded))
                     }
                 }
@@ -402,7 +498,7 @@ struct PersonalDeclarationCard: View {
                 .background(
                     Group {
                         if speakState == .recording {
-                            RoundedRectangle(cornerRadius: 18).fill(Color(red: 0.85, green: 0.22, blue: 0.22))
+                            RoundedRectangle(cornerRadius: 18).fill(recordRed)
                         } else {
                             RoundedRectangle(cornerRadius: 18)
                                 .fill(LinearGradient(
@@ -412,14 +508,23 @@ struct PersonalDeclarationCard: View {
                         }
                     }
                 )
+                // While recording the glow breathes with the voice, so the
+                // button itself shows the mic is catching every word.
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18)
+                        .strokeBorder(Color.white.opacity(0.15 + Double(liveLevel) * 0.5), lineWidth: 1.5)
+                        .opacity(speakState == .recording ? 1 : 0)
+                )
                 .shadow(color: speakState == .recording
-                    ? Color(red: 0.85, green: 0.22, blue: 0.22).opacity(0.4)
+                    ? recordRed.opacity(0.35 + Double(liveLevel) * 0.45)
                     : Color(red: 0.38, green: 0.35, blue: 0.95).opacity(0.4),
-                    radius: 12, x: 0, y: 6)
-                .scaleEffect(speakState == .recording ? 0.97 : 1.0)
+                    radius: speakState == .recording ? 10 + liveLevel * 22 : 12, x: 0, y: 6)
+                .scaleEffect(speakState == .recording ? 0.97 + liveLevel * 0.04 : 1.0)
                 .animation(DS.Motion.quick, value: speakState)
+                .animation(.easeOut(duration: 0.1), value: liveLevel)
             }
             .padding(.horizontal, DS.Spacing.lg)
+            .disabled(isChecking)
         }
         .frame(height: 80)
     }
@@ -518,6 +623,7 @@ struct PersonalDeclarationCard: View {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
                         speakState = .idle
                         successScale = 0.3
+                        revealedIndices = []
                         verifier.prepare(declarationText: declaration.declarationText)
                     }
                 } label: {
@@ -552,8 +658,9 @@ struct PersonalDeclarationCard: View {
         Task {
             do {
                 try await verifier.startRecording()
+                revealedIndices = []
                 withAnimation(DS.Motion.smooth) { speakState = .recording }
-                startPulseAnimation()
+                Juice.play(.tapSolid)
                 autoStopTimer = Timer.scheduledTimer(withTimeInterval: 90, repeats: false) { _ in
                     DispatchQueue.main.async { finishRecording() }
                 }
@@ -577,18 +684,44 @@ struct PersonalDeclarationCard: View {
     }
 
     private func finishRecording() {
+        // The 90s auto-stop can race a tap. Only the first one counts.
+        guard speakState == .recording else { return }
         autoStopTimer?.invalidate()
         autoStopTimer = nil
-        withAnimation { speakState = .idle } // stop pulse rings while transcribing
+        Juice.play(.tapLight)
+        isChecking = true
+        withAnimation { speakState = .idle }
         Task {
             let pct = await verifier.stopAndTranscribe()
             lastMatchPct = pct
+            await revealMatchedWords(verifier.matchedIndices)
+            isChecking = false
             if pct >= kMatchThreshold {
                 showSuccess()
             } else {
                 showTryAgain()
             }
         }
+    }
+
+    /// Lights the caught words gold one at a time, in reading order, so the
+    /// user sees exactly what was heard before the result appears.
+    @MainActor
+    private func revealMatchedWords(_ indices: Set<Int>) async {
+        let ordered = indices.sorted()
+        guard !ordered.isEmpty else { return }
+        isRevealing = true
+        // Whole sweep stays under ~0.9s however long the declaration is.
+        let step = min(0.07, 0.9 / Double(ordered.count))
+        for index in ordered {
+            withAnimation(.easeOut(duration: 0.18)) {
+                _ = revealedIndices.insert(index)
+            }
+            try? await Task.sleep(nanoseconds: UInt64(step * 1_000_000_000))
+        }
+        // Let the last word land before the overlay covers it.
+        try? await Task.sleep(nanoseconds: 350_000_000)
+        isRevealing = false
     }
 
     private func showSuccess() {
@@ -654,18 +787,6 @@ struct PersonalDeclarationCard: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             speakState = .idle
             successScale = 0.3
-        }
-    }
-
-    private func startPulseAnimation() {
-        let delays: [Double] = [0, 0.15, 0.3]
-        for i in 0..<3 {
-            withAnimation(
-                .easeInOut(duration: 0.8).repeatForever(autoreverses: true).delay(delays[i])
-            ) {
-                ringScale[i] = 1.12
-                ringOpacity[i] = 0.08
-            }
         }
     }
 }

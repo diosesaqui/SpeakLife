@@ -472,6 +472,9 @@ struct GuardWaveform: View {
     let levels: [Float]
     let tint: Color
     let isSettled: Bool
+    /// Tallest a bar grows at full volume. Defaulted so existing callers keep
+    /// their look; smaller slots pass their own height.
+    var maxBarHeight: CGFloat = 56
 
     private let barCount = 28
 
@@ -496,7 +499,7 @@ struct GuardWaveform: View {
         let offset = barCount - index
         guard offset <= levels.count else { return 4 }
         let level = levels[levels.count - offset]
-        let scaled: CGFloat = CGFloat(level) * 56
+        let scaled: CGFloat = CGFloat(level) * maxBarHeight
         return scaled < 4 ? 4 : scaled
     }
 }

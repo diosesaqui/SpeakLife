@@ -41,6 +41,12 @@ final class DeclarationVerificationService: ObservableObject {
     /// True once speech has been detected at all this run. Lets a caller tell
     /// "hasn't started" apart from "has finished".
     @Published private(set) var hasHeardSpeech = false
+    /// True while the mic is hearing a voice right now. Held briefly after the
+    /// last loud sample so the gaps between words don't make it flicker.
+    @Published private(set) var isVoiceActive = false
+    /// Total seconds of voice heard this run. Paces the follow-along cursor on
+    /// the declaration text. Display only: it never decides a match.
+    @Published private(set) var voicedSeconds: TimeInterval = 0
 
     // MARK: - Private
 
@@ -54,6 +60,7 @@ final class DeclarationVerificationService: ObservableObject {
     private var ambientSamples: [Float] = []
     private var listeningSince: Date?
     private var resolvedThreshold: Float?
+    private var lastVoiceAt: Date?
 
     /// Endpointing tunables. These only decide WHEN to stop listening — whether
     /// the declaration was actually spoken is settled by the transcript, not by
@@ -63,6 +70,7 @@ final class DeclarationVerificationService: ObservableObject {
     private let minimumSpeechThreshold: Float = 0.22
     private let speechMarginOverAmbient: Float = 0.16
     private let maxRecordingSeconds: TimeInterval = 30
+    private let voiceHoldSeconds: TimeInterval = 0.25
 
     private var recordingURL: URL {
         FileManager.default.temporaryDirectory.appendingPathComponent("declaration_verify.m4a")
@@ -147,11 +155,18 @@ final class DeclarationVerificationService: ObservableObject {
         ambientSamples = []
         resolvedThreshold = nil
         listeningSince = Date()
+        isVoiceActive = false
+        voicedSeconds = 0
+        lastVoiceAt = nil
 
-        guard autoStopAfterSilence != nil else { return }
+        // Metering always runs so every caller can show live voice feedback.
+        // Only the auto-stop below is opt-in: `sampleLevel` never endpoints
+        // without `autoStopSilence`.
         meterTimer = Timer.scheduledTimer(withTimeInterval: meterInterval, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in self?.sampleLevel() }
         }
+
+        guard autoStopAfterSilence != nil else { return }
         maxDurationTimer = Timer.scheduledTimer(withTimeInterval: maxRecordingSeconds, repeats: false) { [weak self] _ in
             Task { @MainActor [weak self] in self?.endpoint() }
         }
@@ -176,10 +191,15 @@ final class DeclarationVerificationService: ObservableObject {
         // quiet room doesn't set the bar below its own hiss.
         if let listeningSince, Date().timeIntervalSince(listeningSince) < ambientWindow {
             ambientSamples.append(normalized)
+            // Many people start talking the instant they tap. Show that we
+            // hear them using a fixed bar until the room has been learned.
+            trackVoice(normalized >= minimumSpeechThreshold + speechMarginOverAmbient)
             return
         }
 
-        if normalized >= resolveThreshold() {
+        let voiced = normalized >= resolveThreshold()
+        trackVoice(voiced)
+        if voiced {
             hasHeardSpeech = true
             silenceSince = nil
             return
@@ -191,6 +211,17 @@ final class DeclarationVerificationService: ObservableObject {
         let since = silenceSince ?? Date()
         silenceSince = since
         if Date().timeIntervalSince(since) >= autoStopSilence { endpoint() }
+    }
+
+    /// Feeds the live "I hear you" signal. Display only.
+    private func trackVoice(_ voiced: Bool) {
+        let now = Date()
+        if voiced {
+            lastVoiceAt = now
+            voicedSeconds += meterInterval
+        }
+        let active = lastVoiceAt.map { now.timeIntervalSince($0) < voiceHoldSeconds } ?? false
+        if active != isVoiceActive { isVoiceActive = active }
     }
 
     /// Median, not mean, so one slammed door during the ambient window cannot
@@ -232,6 +263,7 @@ final class DeclarationVerificationService: ObservableObject {
     private func stopMetering() {
         meterTimer?.invalidate(); meterTimer = nil
         maxDurationTimer?.invalidate(); maxDurationTimer = nil
+        isVoiceActive = false
     }
 
     /// Aborts any in-flight recording without transcribing. Called when the card
@@ -269,7 +301,10 @@ final class DeclarationVerificationService: ObservableObject {
         isTranscribing = true
         defer { isTranscribing = false }
 
-        let pct = await transcribeRecording()
+        let (pct, indices) = await transcribeRecording()
+        // Set here, on the main actor, before returning, so the caller can
+        // read `matchedIndices` straight after this call returns.
+        matchedIndices = indices
         matchPercentage = pct
         discardRecording()
         return pct
@@ -277,9 +312,9 @@ final class DeclarationVerificationService: ObservableObject {
 
     // MARK: - Transcription
 
-    private func transcribeRecording() async -> Double {
-        guard FileManager.default.fileExists(atPath: recordingURL.path) else { return 0 }
-        guard let recognizer = recognizer, recognizer.isAvailable else { return 0 }
+    private func transcribeRecording() async -> (Double, Set<Int>) {
+        guard FileManager.default.fileExists(atPath: recordingURL.path) else { return (0, []) }
+        guard let recognizer = recognizer, recognizer.isAvailable else { return (0, []) }
 
         let request = SFSpeechURLRecognitionRequest(url: recordingURL)
         request.shouldReportPartialResults = false
@@ -305,7 +340,7 @@ final class DeclarationVerificationService: ObservableObject {
             var resumed = false
             var task: SFSpeechRecognitionTask?
 
-            func finish(_ value: Double) {
+            func finish(_ value: (Double, Set<Int>)) {
                 lock.lock()
                 let already = resumed
                 resumed = true
@@ -315,17 +350,13 @@ final class DeclarationVerificationService: ObservableObject {
                 continuation.resume(returning: value)
             }
 
-            task = recognizer.recognitionTask(with: request) { [weak self] result, error in
+            task = recognizer.recognitionTask(with: request) { result, error in
                 if let final = result, final.isFinal {
                     let transcription = final.bestTranscription.formattedString
-                    let (pct, indices) = Self.computeMatch(transcription: transcription,
-                                                           declarationWords: capturedWords)
-                    Task { @MainActor [weak self] in
-                        self?.matchedIndices = indices
-                    }
-                    finish(pct)
+                    finish(Self.computeMatch(transcription: transcription,
+                                             declarationWords: capturedWords))
                 } else if error != nil {
-                    finish(0)
+                    finish((0, []))
                 }
                 // Non-final, no error → partial callback; wait for final or timeout.
             }
@@ -333,7 +364,7 @@ final class DeclarationVerificationService: ObservableObject {
             // Safety net: if the recognizer never returns a final result and never
             // errors, resolve as a miss after 8s rather than leaving the UI frozen.
             DispatchQueue.main.asyncAfter(deadline: .now() + 8) {
-                finish(0)
+                finish((0, []))
             }
         }
     }

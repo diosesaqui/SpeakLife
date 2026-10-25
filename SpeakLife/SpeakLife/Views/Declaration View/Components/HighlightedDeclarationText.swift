@@ -20,6 +20,10 @@ struct HighlightedDeclarationText: View {
     /// smaller above the declaration — and an outer `.font` cannot do it,
     /// because the sizes below are set on the runs themselves.
     var fontSize: CGFloat = 26
+    /// Follow-along cursor while recording: words before this index read as
+    /// "being spoken" (bright white), the rest stay dim. Paced by voice, not
+    /// by the transcript, so it never turns a word gold. Nil turns it off.
+    var followIndex: Int? = nil
 
     var body: some View {
         Text(attributed)
@@ -27,6 +31,7 @@ struct HighlightedDeclarationText: View {
             .lineSpacing(6)
             .multilineTextAlignment(.leading)
             .animation(.easeInOut(duration: 0.12), value: matchedIndices)
+            .animation(.easeOut(duration: 0.2), value: followIndex)
     }
 
     private var attributed: AttributedString {
@@ -37,6 +42,9 @@ struct HighlightedDeclarationText: View {
                 // Spoken — gold highlight
                 attr.foregroundColor = Color(red: 1.0, green: 0.82, blue: 0.28)
                 attr.font = .system(size: fontSize, weight: .bold, design: .rounded)
+            } else if isRecording, let followIndex, i < followIndex {
+                // Voice has carried past this word — bright, but not yet confirmed
+                attr.foregroundColor = Color.white.opacity(0.95)
             } else if isRecording {
                 // Not yet spoken — dimmed while mic is active
                 attr.foregroundColor = Color.white.opacity(0.3)
