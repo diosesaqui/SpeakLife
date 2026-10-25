@@ -27,7 +27,8 @@ import UIKit
 enum ReferralLink {
 
     /// What was shared. Becomes Branch's `feature`, so installs break down by
-    /// surface in Branch and in `acquisition_source`.
+    /// surface in Branch, and is recorded as `acquisition_creative` on referral
+    /// installs (`acquisition_source` is the channel, "share", for all of them).
     enum Feature: String {
         case declarationCard = "declaration_card"
         case dailyBurst = "daily_burst"
