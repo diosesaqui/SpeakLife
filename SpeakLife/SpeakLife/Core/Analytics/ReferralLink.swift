@@ -153,7 +153,8 @@ final class ReferralShareText: NSObject, UIActivityItemSource {
         // reaches a person is worth more than one that clutters a post.
         guard let activityType else { return true }
         switch activityType {
-        case .message, .mail:
+        // AirDrop goes to one person nearby, the same as a message.
+        case .message, .mail, .airDrop:
             return true
         // Copied text is almost always pasted into a chat.
         case .copyToPasteboard:
