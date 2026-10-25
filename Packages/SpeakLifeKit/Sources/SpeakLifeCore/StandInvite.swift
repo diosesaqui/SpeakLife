@@ -20,19 +20,36 @@ import Foundation
 /// Marriage"), so the invite says what is being stood FOR.
 public enum StandInviteCopy {
 
-    /// "peace", "my marriage", "God's promise". For the sender's own voice:
-    /// "I'm standing on God's word for my marriage."
-    public static func firstPerson(_ theme: DeclarationCategory) -> String {
-        sentenceCase(theme.enforcementTitle)
+    /// The message sent with the invite, above the link and the code.
+    public static func ask(_ theme: DeclarationCategory) -> String {
+        "Will you stand with me this week? For 7 days I'm speaking God's Word over \(firstPerson(theme)). Join me."
     }
 
-    /// "peace", "your marriage", "God's promise". For lines addressed to the
-    /// sender: "They'll see you're standing for your marriage." Without the
-    /// swap a dozen possessive titles read "you're standing for my marriage".
+    /// The serif line on the invite card.
+    public static func cardHeadline(_ theme: DeclarationCategory) -> String {
+        "I'm speaking God's Word over \(firstPerson(theme)) this week."
+    }
+
+    /// "peace", "my marriage", "my walk with God". For the sender's own voice:
+    /// "I'm speaking God's Word over my marriage."
+    public static func firstPerson(_ theme: DeclarationCategory) -> String {
+        switch theme {
+        // Its title is "God's Promise", which reads "God's Word over God's
+        // promise" in the ask. The promise is a family, so the line says so.
+        case .fertility: return "the family God promised me"
+        default:         return sentenceCase(theme.enforcementTitle)
+        }
+    }
+
+    /// "peace", "your marriage", "the family God promised you". For lines
+    /// addressed to the sender: "They'll see you're standing for your
+    /// marriage." Without the swap a dozen possessive titles read "you're
+    /// standing for my marriage".
     public static func secondPerson(_ theme: DeclarationCategory) -> String {
-        let phrase = firstPerson(theme)
-        guard phrase.hasPrefix("my ") else { return phrase }
-        return "your " + String(phrase.dropFirst(3))
+        var phrase = firstPerson(theme)
+        if phrase.hasPrefix("my ") { phrase = "your " + String(phrase.dropFirst(3)) }
+        if phrase.hasSuffix(" me") { phrase = String(phrase.dropLast(3)) + " you" }
+        return phrase
     }
 
     /// Lowercases every word except the name of God, so "My Walk With God"
@@ -81,11 +98,19 @@ public enum StandCodeInput {
                 return String(clean(String(tail)).prefix(length))
             }
         }
-        // A pasted sentence: the one word that is a whole valid code.
+        // A pasted sentence: the word that is a whole valid code. Ordinary
+        // words can pass too ("strength" is eight letters, all in the
+        // alphabet), so a dashed word wins, since that is how the code is
+        // written in the message, and otherwise the LAST valid one, since the
+        // code line comes after the ask.
         let words = raw.split(whereSeparator: { $0.isWhitespace })
-        if words.count > 1,
-           let word = words.map({ clean(String($0)) }).first(where: isComplete) {
-            return word
+        if words.count > 1 {
+            if let dashed = words.first(where: { $0.contains("-") && isComplete(clean(String($0))) }) {
+                return clean(String(dashed))
+            }
+            if let last = words.map({ clean(String($0)) }).last(where: isComplete) {
+                return last
+            }
         }
         return String(clean(raw).prefix(length))
     }
@@ -131,6 +156,19 @@ public enum StandInvitePromptRule {
         !runKey.isEmpty
             && window.contains(completedDays)
             && !promptedRuns.contains(runKey)
+    }
+
+    /// The list to start from the first time the per-run key is read.
+    ///
+    /// Somebody mid-campaign when they update was very likely asked on day 1
+    /// under the old lifetime budget, and the new key starts empty, so without
+    /// this they would be asked again on day 2 or 3 of the same week. If the
+    /// old build had asked (`legacyPrompted`) and this run is already past day
+    /// 1, the run is treated as asked. A run still on day 1 starts clean.
+    public static func migrated(legacyPrompted: Bool, runKey: String,
+                                completedDays: Int) -> [String] {
+        guard legacyPrompted, completedDays > 1, !runKey.isEmpty else { return [] }
+        return [runKey]
     }
 
     /// `promptedRuns` with `runKey` added, oldest dropped past `memory`.

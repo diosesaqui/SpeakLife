@@ -215,8 +215,12 @@ free and does more than any of this.
 
 #### What to watch, and when to revisit
 
-Compare `stand_invite_shared` (sender tapped share) against
-`stand_invite_opened` and `stand_joined`. Shared far exceeding opened is this
+Compare invites actually sent, `stand_invite_share_completed` with
+`completed = true` and `sent = true` (any activity except Copy or Save Image),
+against `stand_invite_opened` and `stand_joined`. Do not use
+`stand_invite_share_opened` for this: since the share sheet opens by itself
+after "Invite someone", it fires on nearly every stand. `stand_invite_shared`
+still counts real taps on "Send the invite" only. Shared far exceeding opened is this
 problem, and it is the number that says whether the work below is worth doing.
 
 Revisit if that gap stays wide once 4.65 has real adoption, or if support hears

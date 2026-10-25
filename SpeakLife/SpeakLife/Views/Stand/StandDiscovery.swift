@@ -41,16 +41,37 @@ enum StandDiscovery {
     /// new campaign, never twice for the same one. See `StandInvitePromptRule`.
     private static let promptedRunsKey = "standInvitePromptedRuns"
 
+    /// What the old lifetime budget wrote. Read only by the one-time migration
+    /// below, never written again.
+    private static let legacyCountKey = "standInvitePromptCount"
+    private static let legacyDayKey = "standInvitePromptedForDay"
+
     private static var promptedRuns: [String] {
         UserDefaults.standard.stringArray(forKey: promptedRunsKey) ?? []
+    }
+
+    /// Seeds the per-run list the first time it is read, so somebody the old
+    /// build already asked this week is not asked again on day 2 or 3. See
+    /// `StandInvitePromptRule.migrated`. Writing the key, even empty, is what
+    /// makes it run once.
+    private static func migrateIfNeeded(run runKey: String, completedDays: Int) {
+        let defaults = UserDefaults.standard
+        guard defaults.object(forKey: promptedRunsKey) == nil else { return }
+        let legacyPrompted = defaults.integer(forKey: legacyCountKey) > 0
+            || defaults.integer(forKey: legacyDayKey) != 0
+        let seeded = StandInvitePromptRule.migrated(legacyPrompted: legacyPrompted,
+                                                    runKey: runKey,
+                                                    completedDays: completedDays)
+        defaults.set(seeded, forKey: promptedRunsKey)
     }
 
     /// True on day 1 of a run that has not been asked yet (days 2 and 3 only
     /// as the fallback described on `StandInvitePromptRule.window`).
     static func shouldPrompt(for enforcement: Enforcement, run runKey: String,
                              completedDays: Int) -> Bool {
-        guard FeatureFlag.standTogetherEnabled,
-              StandInvitePromptRule.shouldPrompt(runKey: runKey,
+        guard FeatureFlag.standTogetherEnabled else { return false }
+        migrateIfNeeded(run: runKey, completedDays: completedDays)
+        guard StandInvitePromptRule.shouldPrompt(runKey: runKey,
                                                  completedDays: completedDays,
                                                  promptedRuns: promptedRuns) else { return false }
         // Somebody is already standing with them on this campaign, usually
@@ -368,13 +389,21 @@ struct StandCodeEntryLink: View {
 
     /// Analytics only: where the link was tapped.
     let source: String
+    /// Hide once the user is in an active stand. On Today it would otherwise
+    /// sit under the pair-streak row forever; My Stands keeps it regardless.
+    var hidesWhenInStand = false
 
+    @ObservedObject private var service = StandService.shared
     @State private var showJoin = false
     /// Re-applied to the sheet, so a joined room can open a Burst.
     @Environment(\.standBurst) private var standBurst
 
+    private var isHidden: Bool {
+        hidesWhenInStand && service.rooms.contains { $0.status == .active }
+    }
+
     var body: some View {
-        if FeatureFlag.standTogetherEnabled {
+        if FeatureFlag.standTogetherEnabled, !isHidden {
             Button {
                 Juice.play(.tapLight)
                 AnalyticsService.shared.track("stand_code_entry_opened", parameters: [
@@ -440,6 +469,8 @@ struct StandInvitePromptSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var showInvite = false
+    /// Set by the invite sheet once an invite actually went out.
+    @State private var inviteSent = false
 
     var body: some View {
         ZStack {
@@ -462,7 +493,7 @@ struct StandInvitePromptSheet: View {
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    Text("Seven days of God's word, spoken together. They can start when they're ready.")
+                    Text("Seven days of God's Word, spoken together. They can start when they're ready.")
                         .font(DS.Typography.body)
                         .foregroundColor(DS.Palette.textSecondary)
                         .multilineTextAlignment(.center)
@@ -499,11 +530,17 @@ struct StandInvitePromptSheet: View {
         // `.large` too, so the larger accessibility text sizes never clip the
         // button off the bottom of a half-height sheet.
         .presentationDetents([.medium, .large])
-        .sheet(isPresented: $showInvite) {
+        // After a send, closing the invite closes this ask too: the question
+        // has been answered. After a cancel it stays, so they can try again or
+        // choose "Maybe later".
+        .sheet(isPresented: $showInvite, onDismiss: {
+            if inviteSent { dismiss() }
+        }) {
             // "Invite someone" was the decision, so the share sheet opens by
             // itself once the invite is ready instead of asking for a second
             // tap on "Send the invite".
-            StandInviteSheet(source: .newStand(enforcement), autoShare: true)
+            StandInviteSheet(source: .newStand(enforcement), autoShare: true,
+                             onSent: { inviteSent = true })
         }
         .onAppear {
             AnalyticsService.shared.track("stand_invite_prompted", parameters: [

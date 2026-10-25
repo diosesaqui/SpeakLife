@@ -92,7 +92,9 @@ struct EnforcementCard: View {
             // Outside the eligibility gate on purpose. The person most likely
             // to need it is a new install whose invite link did not open, and
             // the card itself hides until the foundation week is done.
-            StandCodeEntryLink(source: "today")
+            // Hidden once they are in an active stand: by then they have found
+            // the feature, and My Stands keeps its own link.
+            StandCodeEntryLink(source: "today", hidesWhenInStand: true)
         }
     }
 

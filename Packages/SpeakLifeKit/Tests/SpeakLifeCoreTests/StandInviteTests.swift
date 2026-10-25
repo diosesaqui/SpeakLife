@@ -17,15 +17,39 @@ final class StandInviteTests: XCTestCase {
     func testFirstPersonLowercasesButKeepsGod() {
         XCTAssertEqual(StandInviteCopy.firstPerson(.anxiety), "peace")
         XCTAssertEqual(StandInviteCopy.firstPerson(.marriage), "my marriage")
-        XCTAssertEqual(StandInviteCopy.firstPerson(.fertility), "God's promise")
         XCTAssertEqual(StandInviteCopy.firstPerson(.spiritualGrowth), "my walk with God")
         XCTAssertEqual(StandInviteCopy.firstPerson(.mentalHealth), "a sound mind")
+    }
+
+    /// "God's Promise" would read "God's Word over God's promise".
+    func testFertilityNamesTheFamilyPromised() {
+        XCTAssertEqual(StandInviteCopy.firstPerson(.fertility), "the family God promised me")
+        XCTAssertEqual(StandInviteCopy.secondPerson(.fertility), "the family God promised you")
+        XCTAssertEqual(StandInviteCopy.cardHeadline(.fertility),
+                       "I'm speaking God's Word over the family God promised me this week.")
     }
 
     func testSecondPersonSwapsThePossessive() {
         XCTAssertEqual(StandInviteCopy.secondPerson(.marriage), "your marriage")
         XCTAssertEqual(StandInviteCopy.secondPerson(.newSeason), "your new season")
         XCTAssertEqual(StandInviteCopy.secondPerson(.health), "healing")
+    }
+
+    func testAskAndHeadlineWording() {
+        XCTAssertEqual(StandInviteCopy.ask(.marriage),
+                       "Will you stand with me this week? For 7 days I'm speaking God's Word over my marriage. Join me.")
+        XCTAssertEqual(StandInviteCopy.cardHeadline(.anxiety),
+                       "I'm speaking God's Word over peace this week.")
+    }
+
+    /// No theme may say "God's Word over God's …", or leave "me" in a line
+    /// addressed to the sender.
+    func testEveryThemeReadsCleanlyAfterGodsWordOver() {
+        for theme in DeclarationCategory.allCases {
+            XCTAssertFalse(StandInviteCopy.firstPerson(theme).hasPrefix("God"), "\(theme)")
+            XCTAssertFalse(StandInviteCopy.secondPerson(theme).hasSuffix(" me"), "\(theme)")
+            XCTAssertTrue(StandInviteCopy.ask(theme).contains("God's Word over "), "\(theme)")
+        }
     }
 
     /// Every theme must produce a usable, dash-free phrase in both voices.
@@ -71,6 +95,17 @@ final class StandInviteTests: XCTestCase {
         XCTAssertEqual(StandCodeInput.display("Use code WXYZ-6789 in SpeakLife."), "WXYZ-6789")
     }
 
+    /// "strength" is eight letters, all in the code alphabet. Pasting the
+    /// hard-times invite without its link must still find the real code.
+    func testPasteWithoutTheLinkSkipsWordsThatLookLikeCodes() {
+        let message = StandInviteCopy.ask(.hardtimes)
+            + "\n\nLink won't open? Use code WXYZ-6789 in SpeakLife."
+        XCTAssertTrue(message.contains("strength"))
+        XCTAssertEqual(StandCodeInput.display(message), "WXYZ-6789")
+        // Undashed, the last valid word wins, since the code comes last.
+        XCTAssertEqual(StandCodeInput.display("speaking over strength code WXYZ6789"), "WXYZ-6789")
+    }
+
     // MARK: - Day-1 ask
 
     func testAsksOnDayOneOfANewRun() {
@@ -106,6 +141,28 @@ final class StandInviteTests: XCTestCase {
         XCTAssertTrue(StandInvitePromptRule.shouldPrompt(runKey: "r", completedDays: 2, promptedRuns: []))
         XCTAssertTrue(StandInvitePromptRule.shouldPrompt(runKey: "r", completedDays: 3, promptedRuns: []))
         XCTAssertFalse(StandInvitePromptRule.shouldPrompt(runKey: "r", completedDays: 4, promptedRuns: []))
+    }
+
+    /// Somebody the old build already asked, partway through a week, is not
+    /// asked again on day 2 or 3 of it.
+    func testMigrationSeedsARunAlreadyPastDayOne() {
+        let seeded = StandInvitePromptRule.migrated(legacyPrompted: true, runKey: "peace|1",
+                                                    completedDays: 2)
+        XCTAssertEqual(seeded, ["peace|1"])
+        XCTAssertFalse(StandInvitePromptRule.shouldPrompt(runKey: "peace|1", completedDays: 2,
+                                                          promptedRuns: seeded))
+        // The next campaign is still asked.
+        XCTAssertTrue(StandInvitePromptRule.shouldPrompt(runKey: "peace|2", completedDays: 1,
+                                                         promptedRuns: seeded))
+    }
+
+    func testMigrationLeavesDayOneAndUnaskedUsersClean() {
+        XCTAssertEqual(StandInvitePromptRule.migrated(legacyPrompted: true, runKey: "r",
+                                                      completedDays: 1), [])
+        XCTAssertEqual(StandInvitePromptRule.migrated(legacyPrompted: false, runKey: "r",
+                                                      completedDays: 3), [])
+        XCTAssertEqual(StandInvitePromptRule.migrated(legacyPrompted: true, runKey: "",
+                                                      completedDays: 3), [])
     }
 
     func testEmptyRunKeyNeverAsks() {

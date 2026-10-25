@@ -30,7 +30,8 @@ struct StandJoinView: View {
     @State private var typed = ""
     /// The code field opens focused when there is no prefilled code: typing it
     /// is the only reason to be on this screen.
-    @FocusState private var codeFocused: Bool
+    @FocusState private var focus: Field?
+    private enum Field: Hashable { case code, name }
     /// `stand_invite_opened` fires once a typed code is actually submitted, not
     /// when the screen opens. The entry point is always on Today now, and
     /// counting curious taps as opened invites would inflate the funnel.
@@ -116,7 +117,7 @@ struct StandJoinView: View {
         }
         .onAppear {
             if prefilledCode.isEmpty {
-                codeFocused = true
+                focus = .code
             } else {
                 AnalyticsService.shared.track("stand_invite_opened", parameters: [
                     "source": "link",
@@ -157,7 +158,8 @@ struct StandJoinView: View {
                 .autocorrectionDisabled()
                 .keyboardType(.asciiCapable)
                 .submitLabel(.next)
-                .focused($codeFocused)
+                .focused($focus, equals: .code)
+                .onSubmit { focus = .name }
                 // Formats as they type and cleans up whatever they paste: the
                 // code with or without its dash, the link, or the whole
                 // message it arrived in. Idempotent, so assigning back does
@@ -183,6 +185,15 @@ struct StandJoinView: View {
                 .foregroundColor(DS.Palette.textSecondary)
             TextField("First name", text: $name)
                 .autocorrectionDisabled()
+                .textContentType(.givenName)
+                .submitLabel(.join)
+                .focused($focus, equals: .name)
+                // Return joins, the same as the button, and only when the
+                // button would. Otherwise it simply closes the keyboard.
+                .onSubmit {
+                    guard canSubmit else { return }
+                    Task { await attemptJoin() }
+                }
                 .font(DS.Typography.body)
                 .foregroundColor(DS.Palette.textPrimary)
                 .padding(DS.Spacing.sm)

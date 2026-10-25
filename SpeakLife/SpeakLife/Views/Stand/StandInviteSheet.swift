@@ -56,15 +56,22 @@ struct StandInviteSheet: View {
     /// is where 43 of 56 people stopped. Callers that open this to show the
     /// card first leave it off.
     let autoShare: Bool
+    /// Called once an invite actually goes out (see `countsAsSent`). The
+    /// day-1 ask uses it to close itself behind this sheet, so Done after a
+    /// send does not land the user back on "Who needs this with you?".
+    let onSent: (() -> Void)?
 
-    init(source: StandInviteSource, autoShare: Bool = false) {
+    init(source: StandInviteSource, autoShare: Bool = false,
+         onSent: (() -> Void)? = nil) {
         self.source = source
         self.autoShare = autoShare
+        self.onSent = onSent
     }
     /// Convenience for the callers that already hold a room.
     init(room: StandRoom, autoShare: Bool = false) {
         self.source = .room(room)
         self.autoShare = autoShare
+        self.onSent = nil
     }
 
     @State private var roomId: String?
@@ -99,8 +106,7 @@ struct StandInviteSheet: View {
     /// Short on purpose. It sits under the card in a text thread, and the
     /// first line is what shows in the notification preview.
     private var shareText: String {
-        let ask = "Will you stand with me this week? For 7 days I'm standing on God's word for \(StandInviteCopy.firstPerson(enforcement.theme)), and I'd love you with me."
-        var parts = [ask]
+        var parts = [StandInviteCopy.ask(enforcement.theme)]
         if !link.isEmpty { parts.append(link) }
         if code != nil { parts.append("Link won't open? Use code \(formattedCode) in SpeakLife.") }
         return parts.joined(separator: "\n\n")
@@ -151,10 +157,22 @@ struct StandInviteSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }.foregroundColor(DS.Palette.gold)
+                    Button("Done") {
+                        // Spends the automatic share first. Inside its 650ms
+                        // wait the `.task` is not cancelled until the dismissal
+                        // finishes, so it could otherwise fire mid-dismiss.
+                        didAutoShare = true
+                        dismiss()
+                    }
+                    .foregroundColor(DS.Palette.gold)
                 }
             }
-            .sheet(isPresented: $showShareSheet) {
+            // The binding is cleared here, in `onDismiss`, and never from the
+            // activity controller's completion. That completion runs while
+            // UIKit is already dismissing the controller, and writing the
+            // binding there as well asks SwiftUI to dismiss a second time,
+            // which can take a parent sheet down with it.
+            .sheet(isPresented: $showShareSheet, onDismiss: { showShareSheet = false }) {
                 StandActivitySheet(items: shareItems) { activity, completed in
                     shareFinished(activity: activity, completed: completed)
                 }
@@ -277,31 +295,67 @@ struct StandInviteSheet: View {
 
     // MARK: - Sharing
 
-    /// `stand_invite_shared` keeps meaning "the share sheet opened", now with a
-    /// `trigger`, so the old tap-only numbers stay comparable by filtering on
-    /// `trigger = tap`. Whether anything was actually sent is
-    /// `stand_invite_share_completed`.
+    /// Three events, because auto-share changed what "opened" means:
+    ///
+    /// - `stand_invite_share_opened` (`trigger`: tap or auto) every time the
+    ///   share sheet comes up.
+    /// - `stand_invite_shared` ONLY on a real tap of "Send the invite", so it
+    ///   keeps its old meaning. Firing it on the automatic open would meet the
+    ///   plan's shared/created target by construction.
+    /// - `stand_invite_share_completed` when the sheet closes. The real "sent"
+    ///   signal is `completed = true` with `sent = true` (not Copy, not Save).
     private func presentShare(trigger: String) {
-        guard code != nil, !showShareSheet else { return }
-        AnalyticsService.shared.track("stand_invite_shared", parameters: [
+        guard code != nil else { return }
+        AnalyticsService.shared.track("stand_invite_share_opened", parameters: [
             "room_id": roomId ?? "",
-            "channel": "share_sheet",
-            "has_image": shareImage != nil,
             "trigger": trigger,
+            "has_image": shareImage != nil,
         ])
-        showShareSheet = true
+        if trigger == "tap" {
+            AnalyticsService.shared.track("stand_invite_shared", parameters: [
+                "room_id": roomId ?? "",
+                "channel": "share_sheet",
+                "has_image": shareImage != nil,
+            ])
+        }
+        guard showShareSheet else {
+            showShareSheet = true
+            return
+        }
+        // Still true with nothing on screen (the only state in which this
+        // button can be tapped while it is true). Reset, then present once the
+        // reset has been applied, so a stuck binding can never block a send.
+        showShareSheet = false
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 350_000_000)
+            showShareSheet = true
+        }
     }
 
+    /// Copying the text or saving the image completes the share sheet but
+    /// reaches nobody, so neither flips the screen to "on its way".
+    static func countsAsSent(activity: String?, completed: Bool) -> Bool {
+        guard completed else { return false }
+        let notSent: Set<String> = [
+            UIActivity.ActivityType.copyToPasteboard.rawValue,
+            UIActivity.ActivityType.saveToCameraRoll.rawValue,
+        ]
+        return !notSent.contains(activity ?? "")
+    }
+
+    /// Reports only. The binding is cleared by the sheet's `onDismiss`.
     private func shareFinished(activity: String?, completed: Bool) {
-        showShareSheet = false
+        let sent = Self.countsAsSent(activity: activity, completed: completed)
         AnalyticsService.shared.track("stand_invite_share_completed", parameters: [
             "room_id": roomId ?? "",
             "completed": completed,
+            "sent": sent,
             "activity": activity ?? "none",
         ])
-        if completed {
+        if sent {
             hasSent = true
             Juice.play(.success)
+            onSent?()
         }
     }
 
@@ -367,7 +421,7 @@ struct StandInviteSheet: View {
             }
             code = resolved
             shareImage = StandInviteCardRenderer.render(
-                headline: "I'm standing on God's word for \(StandInviteCopy.firstPerson(enforcement.theme)) this week.",
+                headline: StandInviteCopy.cardHeadline(enforcement.theme),
                 title: enforcement.displayTitle,
                 code: Self.formatted(resolved)
             )
@@ -621,7 +675,7 @@ private struct StandActivitySheet: UIViewControllerRepresentable {
         Gradients().speakLifeCYOCell.ignoresSafeArea()
         StandInviteReadyView(
             card: StandInviteCardRenderer.render(
-                headline: "I'm standing on God's word for peace this week.",
+                headline: StandInviteCopy.cardHeadline(.anxiety),
                 title: "Enforcing Peace",
                 code: "ABCD-2345"),
             privacyLine: "They'll see you're standing for peace.",
@@ -638,10 +692,10 @@ private struct StandActivitySheet: UIViewControllerRepresentable {
         Gradients().speakLifeCYOCell.ignoresSafeArea()
         StandInviteReadyView(
             card: StandInviteCardRenderer.render(
-                headline: "I'm standing on God's word for my walk with God this week.",
-                title: "Enforcing My Walk With God",
+                headline: StandInviteCopy.cardHeadline(.fertility),
+                title: "Enforcing God's Promise",
                 code: "WXYZ-6789"),
-            privacyLine: "They'll see you're standing for your walk with God.",
+            privacyLine: "They'll see you're standing for \(StandInviteCopy.secondPerson(.fertility)).",
             formattedCode: "WXYZ-6789",
             recipientNote: "",
             hasSent: true,
