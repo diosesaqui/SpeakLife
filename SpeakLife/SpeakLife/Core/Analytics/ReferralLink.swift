@@ -27,7 +27,8 @@ import UIKit
 enum ReferralLink {
 
     /// What was shared. Becomes Branch's `feature`, so installs break down by
-    /// surface in Branch and in `acquisition_source`.
+    /// surface in Branch, and is recorded as `acquisition_creative` on referral
+    /// installs (`acquisition_source` is the channel, "share", for all of them).
     enum Feature: String {
         case declarationCard = "declaration_card"
         case dailyBurst = "daily_burst"
@@ -152,7 +153,8 @@ final class ReferralShareText: NSObject, UIActivityItemSource {
         // reaches a person is worth more than one that clutters a post.
         guard let activityType else { return true }
         switch activityType {
-        case .message, .mail:
+        // AirDrop goes to one person nearby, the same as a message.
+        case .message, .mail, .airDrop:
             return true
         // Copied text is almost always pasted into a chat.
         case .copyToPasteboard:
