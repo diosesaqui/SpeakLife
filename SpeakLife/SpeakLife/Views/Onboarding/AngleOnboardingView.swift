@@ -61,6 +61,17 @@ struct AngleOnboardingView: View {
     @State private var quizV2Snapshot: Bool? = nil
     private var quizV2: Bool { quizV2Snapshot ?? subscriptionStore.useQuizV2 }
 
+    /// Set once this install has seen the opening screen of an angle arm.
+    /// `isOnboarded` stays false for anyone who quit before the paywall, so
+    /// every reopen used to restart them on the storm screen they had already
+    /// left once. Most of them left again on sight (48 of 76 storm viewers
+    /// over three days in Oct 2026 were these returners).
+    @AppStorage("angleOnboardingHookSeen") private var hookSeenBefore = false
+    /// Decided once per launch, so a view rebuilt mid-run does not suddenly
+    /// jump a first-time viewer past the screen they are reading.
+    private static var resumeDecisionThisLaunch: Bool? = nil
+    @State private var resumeChecked = false
+
     private var steps: [AngleStep] { angle.steps }
     private var currentStep: AngleStep { steps[min(stepIndex, steps.count - 1)] }
 
@@ -78,12 +89,16 @@ struct AngleOnboardingView: View {
         ZStack(alignment: .top) {
             backgroundView
 
-            currentStepView
-                .transition(.asymmetric(
-                    insertion: .opacity.combined(with: .offset(x: 0, y: 24)),
-                    removal: .opacity.combined(with: .offset(x: 0, y: -16))
-                ))
-                .id(stepIndex)
+            // Held back until the resume check has picked the starting step,
+            // so a returning person never sees a frame of the storm screen.
+            if resumeChecked {
+                currentStepView
+                    .transition(.asymmetric(
+                        insertion: .opacity.combined(with: .offset(x: 0, y: 24)),
+                        removal: .opacity.combined(with: .offset(x: 0, y: -16))
+                    ))
+                    .id(stepIndex)
+            }
 
             if isValueScreen {
                 VStack {
@@ -106,12 +121,42 @@ struct AngleOnboardingView: View {
         .onAppear {
             if quizV2Snapshot == nil { quizV2Snapshot = subscriptionStore.useQuizV2 }
             AnalyticsService.shared.track("\(angle.flow)_onboarding_started")
+            resumeIfReturning()
             logStepViewed()
         }
         // `advance()` writes the index of the step it actually lands on, having
         // already jumped the skipped ones, so observing the index logs exactly
         // the screens that were displayed.
         .onChange(of: stepIndex) { _, _ in logStepViewed() }
+    }
+
+    /// A returning person who never finished skips the storm screen and the
+    /// narrative scenes. They land on the feature screen (`.experience`) when
+    /// the arm has one, since it is the only pre-paywall description of Bible
+    /// Chat, else on the burden picker. Both sit before every step that reads
+    /// a quiz answer, so nothing downstream depends on answers lost when the
+    /// app was closed. `onboardingSegment` is persisted on leaving the picker,
+    /// so it also catches installs that got that far before this build.
+    private func resumeIfReturning() {
+        defer { resumeChecked = true }
+        let returning = Self.resumeDecisionThisLaunch
+            ?? (hookSeenBefore || !appState.onboardingSegment.isEmpty)
+        Self.resumeDecisionThisLaunch = returning
+        hookSeenBefore = true
+
+        guard returning,
+              stepIndex == 0,
+              subscriptionStore.onboardingResumeEnabled,
+              !appState.debugReplayOnboarding,
+              let resumeIndex = steps.firstIndex(of: .experience) ?? steps.firstIndex(of: .picker),
+              resumeIndex > 0 else { return }
+        stepIndex = resumeIndex
+        AnalyticsService.shared.track("onboarding_resumed", parameters: [
+            "variant": subscriptionStore.onboardingVariantName,
+            "flow": angle.flow,
+            "resumed_at": steps[resumeIndex].funnelStepName,
+            "skipped_steps": resumeIndex
+        ])
     }
 
     private func logStepViewed() {
