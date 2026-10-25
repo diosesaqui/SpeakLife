@@ -48,6 +48,16 @@ final class DevotionalViewModel: ObservableObject, Sendable {
     /// The category whose devotional is on screen (nil = calendar). Kept apart
     /// from the selection so the page never shows one topic under another's chip.
     @Published private(set) var displayedCategory: DeclarationCategory?
+    /// The local day the on-screen category devotional was written for. This
+    /// view model lives as long as the app, so without it a suspended app
+    /// would keep showing yesterday's devotional the next morning.
+    private var displayedCategoryDate: String?
+
+    /// The devotional on screen is today's for this category.
+    private func isShowingToday(_ category: DeclarationCategory) -> Bool {
+        displayedCategory == category
+            && displayedCategoryDate == CategoryDevotionalService.localDateString()
+    }
 
     var selectedCategory: DeclarationCategory? {
         DeclarationCategory(rawValue: selectedCategoryRaw)
@@ -55,7 +65,8 @@ final class DevotionalViewModel: ObservableObject, Sendable {
 
     /// A category is picked but its devotional is not on screen yet.
     var isAwaitingCategory: Bool {
-        selectedCategory != nil && displayedCategory != selectedCategory && !categoryFailed
+        guard let selectedCategory else { return false }
+        return !isShowingToday(selectedCategory) && !categoryFailed
     }
 
     /// Life-situation categories the Cloud Function accepts, in More-sheet
@@ -268,6 +279,7 @@ final class DevotionalViewModel: ObservableObject, Sendable {
         categoryFailed = false
         devotionValue = 0
         displayedCategory = nil
+        displayedCategoryDate = nil
         if let calendarDevotional {
             devotional = calendarDevotional
         } else {
@@ -302,7 +314,7 @@ final class DevotionalViewModel: ObservableObject, Sendable {
     @MainActor
     func loadCategoryDevotional(isPremium: Bool, userInitiated: Bool = false) async {
         guard let category = selectedCategory else { return }
-        if displayedCategory == category && !userInitiated { return }
+        if isShowingToday(category) && !userInitiated { return }
         guard !isGeneratingCategory else { return }
         isGeneratingCategory = true
         categoryFailed = false
@@ -316,6 +328,7 @@ final class DevotionalViewModel: ObservableObject, Sendable {
                 guard selectedCategory == category else { return }
                 devotional = generated
                 displayedCategory = category
+                displayedCategoryDate = CategoryDevotionalService.localDateString()
                 AnalyticsService.shared.track("category_devotional_loaded", parameters: [
                     "category": category.rawValue,
                     "devotional_title": generated.title
