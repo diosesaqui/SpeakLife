@@ -5,7 +5,9 @@
 //  The story card offered where the feeling is, instead of behind a share icon:
 //
 //   - The Daily Burst ends with "Send this burst to a friend in need": all of
-//     its declarations as story cards, in order, in one share.
+//     its declarations as story cards, in order, in one share. The finish
+//     screen then shows the same cards in a carousel, to send again or to
+//     share one at a time. The cards are rendered once per burst.
 //   - The declaration feed shows a quiet "Share today's word" chip once a day,
 //     after the fifth declaration.
 //
@@ -51,46 +53,117 @@ enum BurstShareContent {
     }
 }
 
+// MARK: - Burst cards
+
+/// One rendered burst card.
+///
+/// The full 1080x1920 image lives only on disk as a JPEG, which is what gets
+/// shared. In memory there is just a half-size thumbnail for the carousel, so
+/// seven cards cost a few megabytes instead of fifty.
+struct BurstCard: Identifiable, Equatable {
+    /// 1-based position in the burst, also the carousel id.
+    let number: Int
+    let thumbnail: UIImage
+    let file: URL
+
+    var id: Int { number }
+
+    /// The full card, read back from disk for a share that needs an image
+    /// rather than a file (Instagram Stories).
+    func fullImage() -> UIImage? {
+        UIImage(contentsOfFile: file.path)
+    }
+}
+
 // MARK: - Burst share controller
 
-/// Renders a burst as story cards and hands them to the share sheet.
+/// Renders a burst's cards once and shares them.
 ///
-/// Owned by `DailyDeclarationBurstView` so the eighth slat and the completion
-/// screen share through one path and one in-flight guard.
+/// Owned by `DailyDeclarationBurstView` and started when the eighth slat
+/// appears, so the cards are usually ready by the time anyone taps. The
+/// eighth slat's send, the finish screen's carousel and its share buttons all
+/// read the same cards and go through one in-flight guard.
 @MainActor
 final class BurstShareController: ObservableObject {
 
-    /// True from the tap until the share sheet is on screen. Drives the
-    /// button's progress state and blocks a second tap.
+    /// Cards rendered so far, in order. Grows one at a time so the carousel
+    /// can show the first card while the rest are still drawing.
+    @Published private(set) var cards: [BurstCard] = []
+    /// How many cards this burst will have once rendering is done.
+    @Published private(set) var expectedCount = 0
+    @Published private(set) var isRenderingDone = false
+    /// True from a share tap until the share sheet is on screen. Drives the
+    /// buttons' progress state and blocks a second tap.
     @Published private(set) var isPreparing = false
 
-    /// - Parameters:
-    ///   - lines: the burst's slats, in the order spoken.
-    ///   - theme: the burst's theme, the link's campaign.
-    ///   - background: the speaker's theme photo, or nil for the gradient.
-    ///   - surface: where the tap came from, for analytics.
-    ///   - completion: true when the share sheet reports a completed share.
-    func share(lines: [BurstDeclaration],
-               theme: DeclarationCategory,
-               background: UIImage?,
-               surface: String,
-               completion: @escaping (Bool) -> Void) {
+    private var renderTask: Task<Void, Never>?
+    private var theme: DeclarationCategory = .faith
+
+    /// Carousel size: half the card, which is sharp at about 60% of a 3x
+    /// phone's width.
+    static let thumbnailSize = CGSize(width: 540, height: 960)
+
+    /// Starts rendering this burst's cards. Safe to call more than once: only
+    /// the first call renders.
+    func prepare(lines: [BurstDeclaration], theme: DeclarationCategory, background: UIImage?) {
+        guard renderTask == nil else { return }
+        self.theme = theme
+        let declarations = BurstShareContent.declarations(from: lines)
+        expectedCount = declarations.count
+
+        renderTask = Task { @MainActor [weak self] in
+            let directory = FileManager.default.temporaryDirectory
+                .appendingPathComponent("BurstCards", isDirectory: true)
+            // The last burst's cards go first, so an old card can never ride along.
+            try? FileManager.default.removeItem(at: directory)
+            try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+
+            let total = declarations.count
+            for (offset, declaration) in declarations.enumerated() {
+                // A real pause, not just a yield: the run loop has to turn for
+                // the celebration and the spinners to keep moving between
+                // full-size renders.
+                try? await Task.sleep(nanoseconds: 10_000_000)
+                guard let self, !Task.isCancelled else { return }
+
+                let position = DeclarationStoryCard.Position(number: offset + 1, total: total)
+                guard let image = DeclarationStoryCard.render(declaration: declaration,
+                                                              background: background,
+                                                              position: position),
+                      // JPEG at 0.9 keeps seven full cards light enough for
+                      // Messages; PNG would be several times larger.
+                      let data = image.jpegData(compressionQuality: 0.9) else { continue }
+                // Numbered so the order survives any app that sorts by name.
+                let file = directory.appendingPathComponent("SpeakLife-\(offset + 1)-of-\(total).jpg")
+                guard (try? data.write(to: file, options: .atomic)) != nil else { continue }
+
+                let thumbnail = Self.downscale(image, to: Self.thumbnailSize)
+                self.cards.append(BurstCard(number: offset + 1, thumbnail: thumbnail, file: file))
+            }
+            self?.isRenderingDone = true
+        }
+    }
+
+    /// Shares every card, in order, with the invitation and tracked link.
+    ///
+    /// - Parameter completion: true when the share sheet reports a completed share.
+    func shareAll(surface: String, completion: @escaping (Bool) -> Void) {
         guard !isPreparing else { return }
         isPreparing = true
-
-        let declarations = BurstShareContent.declarations(from: lines)
         AnalyticsService.shared.track("burst_share_tapped", parameters: [
             "theme": theme.rawValue,
-            "card_count": declarations.count,
+            "card_count": expectedCount,
             "surface": surface
         ])
 
+        let theme = self.theme
         Task { @MainActor in
-            // A real pause, not just a yield: the main run loop has to turn
-            // for the button's progress state to draw before the first render.
+            // Let the button's progress state draw, then wait for any cards
+            // still rendering.
             try? await Task.sleep(nanoseconds: 50_000_000)
+            await self.renderTask?.value
 
-            let files = await Self.renderCards(declarations, background: background)
+            let files = self.cards.map(\.file)
             let link = ReferralLink.url(.dailyBurst, campaign: theme.rawValue)
             let message = ReferralShareText(BurstShareContent.message(cardCount: files.count), link: link)
 
@@ -106,17 +179,9 @@ final class BurstShareController: ObservableObject {
                     "surface": surface
                 ])
                 if completed {
-                    AnalyticsService.shared.trackShare(
-                        contentType: "daily_burst",
-                        contentId: theme.rawValue,
-                        shareMethod: activityType?.rawValue ?? "share_sheet",
-                        metadata: ["card_count": files.count, "surface": surface]
-                    )
-                    UserDefaults.standard.set(
-                        UserDefaults.standard.integer(forKey: "totalSocialShares") + 1,
-                        forKey: "totalSocialShares"
-                    )
-                    StreakIntegrationManager.notifyAffirmationShared()
+                    Self.recordCompletedShare(contentId: theme.rawValue,
+                                              method: activityType?.rawValue ?? "share_sheet",
+                                              metadata: ["card_count": files.count, "surface": surface])
                 }
                 completion(completed)
             }
@@ -125,35 +190,67 @@ final class BurstShareController: ObservableObject {
         }
     }
 
-    /// One JPEG file per card, numbered so their order survives any app that
-    /// sorts attachments by name. JPEG at 0.9 keeps seven full-size cards
-    /// light enough for Messages; PNG would be several times larger.
-    private static func renderCards(_ declarations: [Declaration],
-                                    background: UIImage?) async -> [URL] {
-        let directory = FileManager.default.temporaryDirectory
-            .appendingPathComponent("BurstCards", isDirectory: true)
-        // Last share's cards go first, so an old card can never ride along.
-        try? FileManager.default.removeItem(at: directory)
-        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    /// How one card leaves the finish screen.
+    enum SingleShareMethod: String {
+        case shareSheet = "share_sheet"
+        case instagramStories = "instagram_stories"
+    }
 
-        var files: [URL] = []
-        let total = declarations.count
-        for (offset, declaration) in declarations.enumerated() {
-            let position = DeclarationStoryCard.Position(number: offset + 1, total: total)
-            if let image = DeclarationStoryCard.render(declaration: declaration,
-                                                       background: background,
-                                                       position: position),
-               let data = image.jpegData(compressionQuality: 0.9) {
-                let file = directory.appendingPathComponent("SpeakLife-\(offset + 1)-of-\(total).jpg")
-                if (try? data.write(to: file, options: .atomic)) != nil {
-                    files.append(file)
-                }
+    /// Shares the one card the user is looking at.
+    func shareCard(_ card: BurstCard, method: SingleShareMethod) {
+        guard !isPreparing else { return }
+        let theme = self.theme
+        AnalyticsService.shared.track("burst_card_shared", parameters: [
+            "index": card.number,
+            "method": method.rawValue,
+            "theme": theme.rawValue
+        ])
+
+        switch method {
+        case .instagramStories:
+            // The Stories pasteboard carries only the image, so no text.
+            guard let image = card.fullImage() else { return }
+            shareToInstagramStories(image: image)
+            Self.recordCompletedShare(contentId: theme.rawValue, method: method.rawValue,
+                                      metadata: ["card_index": card.number])
+        case .shareSheet:
+            let link = ReferralLink.url(.dailyBurst, campaign: theme.rawValue)
+            let message = ReferralShareText("Speak this one out loud with me 🙏", link: link)
+            _ = Self.present(items: [card.file, message]) { activityType, completed in
+                guard completed else { return }
+                Self.recordCompletedShare(contentId: theme.rawValue,
+                                          method: activityType?.rawValue ?? "share_sheet",
+                                          metadata: ["card_index": card.number])
             }
-            // Each card is a full 1080x1920 render. Pause between them so the
-            // run loop turns: the spinner keeps moving and touches still land.
-            try? await Task.sleep(nanoseconds: 10_000_000)
         }
-        return files
+    }
+
+    // MARK: Helpers
+
+    /// Same bookkeeping as the feed's share, so badges and the share measure
+    /// count a burst share like any other.
+    private static func recordCompletedShare(contentId: String, method: String,
+                                             metadata: [String: Any]) {
+        AnalyticsService.shared.trackShare(
+            contentType: "daily_burst",
+            contentId: contentId,
+            shareMethod: method,
+            metadata: metadata
+        )
+        UserDefaults.standard.set(
+            UserDefaults.standard.integer(forKey: "totalSocialShares") + 1,
+            forKey: "totalSocialShares"
+        )
+        StreakIntegrationManager.notifyAffirmationShared()
+    }
+
+    private static func downscale(_ image: UIImage, to size: CGSize) -> UIImage {
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        format.opaque = true
+        return UIGraphicsImageRenderer(size: size, format: format).image { _ in
+            image.draw(in: CGRect(origin: .zero, size: size))
+        }
     }
 
     /// Presents the system share sheet over whatever is on top. False when
@@ -187,6 +284,232 @@ final class BurstShareController: ObservableObject {
         top.present(controller, animated: true)
         return true
     }
+}
+
+// MARK: - Finish screen cards
+
+/// The burst's cards on the finish screen: a paged carousel with the
+/// neighbours peeking in, page dots, "Send these to a friend" and "Share this
+/// one".
+///
+/// Cards arrive one by one, so every slot not yet rendered is a shimmering
+/// placeholder of the same size: the carousel never jumps and is never blank.
+struct BurstCardsSection: View {
+
+    @ObservedObject var controller: BurstShareController
+    /// Width of the space the carousel spans, usually the screen.
+    let width: CGFloat
+    let onSendAll: () -> Void
+
+    @State private var centered: Int? = 1
+    /// Every card that has been centred, for `burst_cards_viewed`.
+    @State private var seen: Set<Int> = [1]
+
+    private var cardWidth: CGFloat { min(width * 0.6, 300) }
+    private var cardHeight: CGFloat { cardWidth * 16 / 9 }
+    /// One slot per card to come while rendering. Once rendering is done, only
+    /// the cards that actually rendered, so a failed card never leaves a
+    /// placeholder shimmering forever.
+    private var slotNumbers: [Int] {
+        if controller.isRenderingDone {
+            return controller.cards.map(\.number)
+        }
+        return Array(1...max(controller.expectedCount, 1))
+    }
+    private var slotCount: Int { slotNumbers.count }
+
+    private var centeredCard: BurstCard? {
+        controller.cards.first { $0.number == (centered ?? 1) }
+    }
+
+    var body: some View {
+        VStack(spacing: DS.Spacing.md) {
+            carousel
+            pageDots
+            buttons
+        }
+        .onChange(of: centered) { _, newValue in
+            guard let newValue else { return }
+            Juice.play(.tapLight)
+            seen.insert(newValue)
+        }
+        .onDisappear {
+            AnalyticsService.shared.track("burst_cards_viewed", parameters: [
+                "cards_seen": seen.count,
+                "card_count": slotCount
+            ])
+        }
+    }
+
+    private var carousel: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            LazyHStack(spacing: DS.Spacing.md) {
+                ForEach(slotNumbers, id: \.self) { number in
+                    slot(number)
+                        .frame(width: cardWidth, height: cardHeight)
+                        .scrollTransition(axis: .horizontal) { content, phase in
+                            content
+                                .scaleEffect(phase.isIdentity ? 1 : 0.9)
+                                .opacity(phase.isIdentity ? 1 : 0.65)
+                        }
+                        .id(number)
+                }
+            }
+            .scrollTargetLayout()
+        }
+        .contentMargins(.horizontal, max((width - cardWidth) / 2, 0), for: .scrollContent)
+        .scrollTargetBehavior(.viewAligned)
+        .scrollPosition(id: $centered)
+        .frame(height: cardHeight + 24)
+    }
+
+    @ViewBuilder
+    private func slot(_ number: Int) -> some View {
+        let shape = RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
+        if let card = controller.cards.first(where: { $0.number == number }) {
+            Image(uiImage: card.thumbnail)
+                .resizable()
+                .scaledToFill()
+                .clipShape(shape)
+                .overlay(shape.stroke(Color.white.opacity(0.18), lineWidth: 1))
+                .shadow(color: .black.opacity(0.45), radius: 14, y: 8)
+                .accessibilityLabel("Card \(number) of \(slotCount)")
+                .transition(.opacity)
+        } else {
+            ShimmerPlaceholder(shape: shape)
+                .accessibilityLabel("Preparing card \(number)")
+        }
+    }
+
+    private var pageDots: some View {
+        HStack(spacing: 6) {
+            ForEach(slotNumbers, id: \.self) { number in
+                Capsule()
+                    .fill(number == (centered ?? 1) ? DS.Palette.gold : Color.white.opacity(0.3))
+                    .frame(width: number == (centered ?? 1) ? 16 : 6, height: 6)
+            }
+        }
+        .animation(DS.Motion.quick, value: centered)
+        .accessibilityHidden(true)
+    }
+
+    private var buttons: some View {
+        VStack(spacing: DS.Spacing.xs) {
+            Button(action: onSendAll) {
+                HStack(spacing: DS.Spacing.xs) {
+                    if controller.isPreparing {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .controlSize(.small)
+                        Text("Preparing your cards…")
+                    } else {
+                        Image(systemName: "paperplane.fill")
+                        Text("Send these to a friend")
+                    }
+                }
+                .font(.system(size: 17, weight: .semibold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .foregroundColor(.white)
+                .frame(maxWidth: 360)
+                .frame(height: 52)
+                .background(RoundedRectangle(cornerRadius: 26).fill(DS.Gradient.ember))
+                .shadow(color: Color(red: 1.0, green: 0.34, blue: 0.13).opacity(0.35), radius: 10, y: 5)
+            }
+            .buttonStyle(.dsPressable(feel: .tapSolid))
+            .disabled(controller.isPreparing || slotCount == 0)
+
+            Menu {
+                Button {
+                    if let card = centeredCard { controller.shareCard(card, method: .instagramStories) }
+                } label: {
+                    Label("Instagram Stories", systemImage: "camera.circle")
+                }
+                Button {
+                    if let card = centeredCard { controller.shareCard(card, method: .shareSheet) }
+                } label: {
+                    Label("Other apps", systemImage: "square.and.arrow.up")
+                }
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "square.and.arrow.up")
+                    Text("Share this one")
+                }
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(DS.Palette.gold)
+                .frame(height: 44)
+                .padding(.horizontal, DS.Spacing.lg)
+                .contentShape(Rectangle())
+            }
+            // Only once the card in the middle is actually drawn.
+            .disabled(centeredCard == nil || controller.isPreparing)
+            .opacity(centeredCard == nil ? 0.5 : 1)
+        }
+        .padding(.horizontal, DS.Spacing.lg)
+    }
+}
+
+/// A card-shaped placeholder with a slow light sweep, shown while a card renders.
+private struct ShimmerPlaceholder: View {
+
+    let shape: RoundedRectangle
+    @State private var sweep = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        shape
+            .fill(Color.white.opacity(0.08))
+            .overlay(
+                GeometryReader { proxy in
+                    LinearGradient(colors: [.clear, Color.white.opacity(0.14), .clear],
+                                   startPoint: .leading, endPoint: .trailing)
+                        .frame(width: proxy.size.width * 0.6)
+                        .offset(x: sweep ? proxy.size.width : -proxy.size.width * 0.6)
+                }
+                .clipShape(shape)
+            )
+            .overlay(shape.stroke(Color.white.opacity(0.12), lineWidth: 1))
+            .onAppear {
+                guard !reduceMotion else { return }
+                withAnimation(.linear(duration: 1.4).repeatForever(autoreverses: false)) {
+                    sweep = true
+                }
+            }
+    }
+}
+
+/// Renders real cards into the carousel, the way the finish screen does.
+private struct BurstCardsSectionPreview: View {
+
+    @StateObject private var controller = BurstShareController()
+
+    var body: some View {
+        GeometryReader { proxy in
+            ZStack {
+                LinearGradient(colors: [Color(red: 0.08, green: 0.05, blue: 0.20), .black],
+                               startPoint: .top, endPoint: .bottom)
+                    .ignoresSafeArea()
+                ScrollView {
+                    VStack(spacing: DS.Spacing.lg) {
+                        Text("Truth Spoken!")
+                            .font(.system(size: 30, weight: .black))
+                            .foregroundColor(.white)
+                        BurstCardsSection(controller: controller, width: proxy.size.width, onSendAll: {})
+                    }
+                    .padding(.top, 60)
+                }
+            }
+        }
+        .preferredColorScheme(.dark)
+        .onAppear {
+            controller.prepare(lines: BurstSessionBuilder.fallback,
+                               theme: .faith, background: nil)
+        }
+    }
+}
+
+#Preview("Burst finish cards") {
+    BurstCardsSectionPreview()
 }
 
 // MARK: - Feed nudge policy
