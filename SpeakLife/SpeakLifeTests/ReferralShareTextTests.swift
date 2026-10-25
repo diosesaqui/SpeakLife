@@ -18,6 +18,7 @@ final class ReferralShareTextTests: XCTestCase {
         let messaging: [UIActivity.ActivityType] = [
             .message,
             .mail,
+            .airDrop,
             .copyToPasteboard,
             UIActivity.ActivityType("net.whatsapp.WhatsApp.ShareExtension"),
             UIActivity.ActivityType("com.facebook.Messenger.ShareExtension"),
@@ -56,5 +57,15 @@ final class ReferralShareTextTests: XCTestCase {
     func testEmptyWords() {
         XCTAssertEqual(ReferralShareText.message(text: "  ", link: link, for: .message), link.absoluteString)
         XCTAssertNil(ReferralShareText.message(text: "", link: link, for: .saveToCameraRoll))
+    }
+
+    /// A "+" in link data must survive Branch, which reads a bare "+" as a space.
+    func testPlusIsPercentEncodedInLinkData() {
+        let url = ReferralLink.url(.speakOver, extra: [URLQueryItem(name: "so_t", value: "Grace + peace")])
+        XCTAssertTrue(url.absoluteString.contains("Grace%20+%20peace") == false)
+        XCTAssertTrue(url.absoluteString.contains("%2B"))
+        let parsed = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+            .queryItems?.first { $0.name == "so_t" }?.value
+        XCTAssertEqual(parsed, "Grace + peace")
     }
 }
