@@ -56,6 +56,8 @@
 		45C0A1112F2A0B0100A27856 /* AnalyticsContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C0A1102F2A0B0100A27856 /* AnalyticsContext.swift */; };
 		45C0A1212F2A0B0100A27856 /* GrowthMetrics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C0A1202F2A0B0100A27856 /* GrowthMetrics.swift */; };
 		45C0A1232F2A0B0100A27856 /* AcquisitionAttribution.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C0A1222F2A0B0100A27856 /* AcquisitionAttribution.swift */; };
+		SHAREB000000000000000001 /* ReferralLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = SHARE0000000000000000001 /* ReferralLink.swift */; };
+		SHAREB000000000000000002 /* DeclarationStoryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = SHARE0000000000000000002 /* DeclarationStoryCard.swift */; };
 		452F6AD32E87CD3F00A27856 /* EnhancedAnalyticsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 452F6ACE2E87CD3F00A27856 /* EnhancedAnalyticsService.swift */; };
 		452F6AD42E87CD3F00A27856 /* RecommendationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 452F6AD12E87CD3F00A27856 /* RecommendationEngine.swift */; };
 		452F6AD52E87CD3F00A27856 /* MLTaskLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 452F6AD02E87CD3F00A27856 /* MLTaskLibrary.swift */; };
@@ -486,6 +488,8 @@
 		45C0A1102F2A0B0100A27856 /* AnalyticsContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyticsContext.swift; sourceTree = "<group>"; };
 		45C0A1202F2A0B0100A27856 /* GrowthMetrics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrowthMetrics.swift; sourceTree = "<group>"; };
 		45C0A1222F2A0B0100A27856 /* AcquisitionAttribution.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcquisitionAttribution.swift; sourceTree = "<group>"; };
+		SHARE0000000000000000001 /* ReferralLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReferralLink.swift; sourceTree = "<group>"; };
+		SHARE0000000000000000002 /* DeclarationStoryCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeclarationStoryCard.swift; sourceTree = "<group>"; };
 		452F6ACB2E87CD3F00A27856 /* AINotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AINotificationService.swift; sourceTree = "<group>"; };
 		452F6ACC2E87CD3F00A27856 /* ContentCategorizationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentCategorizationService.swift; sourceTree = "<group>"; };
 		452F6ACD2E87CD3F00A27856 /* CreateMLTrainingPipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateMLTrainingPipeline.swift; sourceTree = "<group>"; };
@@ -1378,6 +1382,7 @@
 				45C0A1102F2A0B0100A27856 /* AnalyticsContext.swift */,
 				45C0A1202F2A0B0100A27856 /* GrowthMetrics.swift */,
 				45C0A1222F2A0B0100A27856 /* AcquisitionAttribution.swift */,
+				SHARE0000000000000000001 /* ReferralLink.swift */,
 				452F6AC92E87BA8200A27856 /* AnalyticsService.swift */,
 				7A92E31A2993882F00FBF2AE /* Events.swift */,
 			);
@@ -1635,6 +1640,7 @@
 				45F3E7612EB43B8A002B1F4E /* AnimatedDeclarationText.swift */,
 				45F3E7622EB43B8A002B1F4E /* DeclarationAnimationSettings.swift */,
 				7AA8709F28DACCB700134ADB /* DeclarationContentView.swift */,
+				SHARE0000000000000000002 /* DeclarationStoryCard.swift */,
 				7AA8709D28DACCB700134ADB /* QuoteLabel.swift */,
 				7AA8709E28DACCB700134ADB /* HeartView.swift */,
 				453A831D2C9BF18500398ECE /* DeclarationMenuButton.swift */,
@@ -2369,6 +2375,8 @@
 				45C0A1112F2A0B0100A27856 /* AnalyticsContext.swift in Sources */,
 				45C0A1212F2A0B0100A27856 /* GrowthMetrics.swift in Sources */,
 				45C0A1232F2A0B0100A27856 /* AcquisitionAttribution.swift in Sources */,
+				SHAREB000000000000000001 /* ReferralLink.swift in Sources */,
+				SHAREB000000000000000002 /* DeclarationStoryCard.swift in Sources */,
 				454807542E3F049400B8C71B /* DailyChecklistView.swift in Sources */,
 				7AF46FC52A41326100A45C01 /* AbbasLoveView.swift in Sources */,
 				453A831E2C9BF18500398ECE /* DeclarationMenuButton.swift in Sources */,

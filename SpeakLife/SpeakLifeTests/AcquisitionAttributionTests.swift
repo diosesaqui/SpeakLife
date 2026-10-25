@@ -175,4 +175,37 @@ final class AcquisitionAttributionTests: XCTestCase {
         XCTAssertEqual(GrowthMetrics.resolvedPlan(productId: "SpeakLife1Wk5", plan: nil), "weekly")
         XCTAssertEqual(GrowthMetrics.resolvedPlan(productId: "SpeakLifeLifetime", plan: "unknown"), "lifetime")
     }
+
+    // MARK: - Share links count as referrals
+
+    /// What Branch hands back when someone installs from a shared declaration
+    /// card. If this stops reading as `referral`, every share-driven install
+    /// silently falls back into `owned_deeplink` again.
+    func testShareLinkClickIsAReferral() {
+        let attribution = BranchAttribution.attribution(from: [
+            "+clicked_branch_link": true,
+            "~channel": "share",
+            "~feature": "declaration_card",
+            "~campaign": "faith"
+        ])
+        XCTAssertEqual(attribution?.channel, .referral)
+        XCTAssertEqual(attribution?.source, "share")
+        XCTAssertEqual(attribution?.campaign, "faith")
+    }
+
+    func testReferralLinkCarriesShareChannelOnTheRootPath() {
+        let url = ReferralLink.url(.declarationCard, campaign: "faith")
+        let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+        func value(_ name: String) -> String? { items.first { $0.name == name }?.value }
+
+        XCTAssertEqual(url.host, ReferralLink.host)
+        // Root path: shipped builds claim every path on this host, and the
+        // root is the one they open cleanly.
+        XCTAssertEqual(url.path, "/")
+        XCTAssertEqual(value("channel"), "share")
+        XCTAssertEqual(value("feature"), "declaration_card")
+        XCTAssertEqual(value("campaign"), "faith")
+        // Must never be mistaken for a stand invite.
+        XCTAssertNil(StandLink.code(from: url))
+    }
 }

@@ -185,7 +185,11 @@ struct DeclarationContentView: View {
                         image = nil
                     } content: {
                         if let image = image {
-                            ShareSheet(activityItems: [image])
+                            // Every page carries this sheet, so read the page
+                            // actually showing rather than this closure's own.
+                            let shown = viewModel.declarations.indices.contains(viewModel.selectedTab)
+                                ? viewModel.declarations[viewModel.selectedTab] : declaration
+                            ShareSheet(activityItems: [image, shareMessage(for: shown)])
                         }
                     }
                 }
@@ -483,13 +487,39 @@ struct DeclarationContentView: View {
     }
     
     func setImage(completion: @escaping () -> Void) {
-        // Create a snapshot view specifically for screenshots
+        // The story card first. The old screen snapshot stays only as a
+        // fallback for the rare case the renderer returns nothing.
+        if viewModel.declarations.indices.contains(viewModel.selectedTab),
+           let card = DeclarationStoryCard.render(
+               declaration: viewModel.declarations[viewModel.selectedTab],
+               background: shareBackground
+           ) {
+            self.image = card
+            completion()
+            return
+        }
+
         createScreenshotImage { capturedImage in
             self.image = capturedImage
             completion()
         }
     }
     
+    /// The speaker's own theme photo, so the card looks like their app.
+    private var shareBackground: UIImage? {
+        if themeViewModel.showUserSelectedImage, let selected = themeViewModel.selectedImage {
+            return selected
+        }
+        return UIImage(named: themeViewModel.selectedTheme.backgroundImageString)
+    }
+
+    /// The text that travels with the card: a line to say and a tracked link,
+    /// so an install that comes from this share is counted as a referral.
+    private func shareMessage(for declaration: Declaration) -> String {
+        let link = ReferralLink.url(.declarationCard, campaign: declaration.category.rawValue)
+        return "Speak this one out loud with me 🙏\n\(link.absoluteString)"
+    }
+
     private func createScreenshotImage(completion: @escaping (UIImage?) -> Void) {
         guard !viewModel.declarations.isEmpty,
               viewModel.selectedTab < viewModel.declarations.count else { 
@@ -586,10 +616,16 @@ struct DeclarationContentView: View {
             self.showShareSheet = true
         }
 
+        trackDeclarationShare(declaration, method: "story_card")
+    }
+
+    /// One place for the share event, so both buttons report the same shape.
+    /// `share_method` was "screenshot" before the story card replaced it.
+    private func trackDeclarationShare(_ declaration: Declaration, method: String) {
         AnalyticsService.shared.trackShare(
             contentType: "declaration",
             contentId: declaration.id,
-            shareMethod: "screenshot",
+            shareMethod: method,
             metadata: [
                 "declaration_text": declaration.text.prefix(100),
                 "category": declaration.category.rawValue,
@@ -669,12 +705,13 @@ struct DeclarationContentView: View {
                 
                 Menu {
                     Button("Instagram Stories") {
-                        // Create screenshot without affecting UI
+                        viewModel.setCurrent(declaration)
                         setImage() {
                             if let image = prepareShareItems().first {
                                 shareToInstagramStories(image: image)
                             }
                         }
+                        trackDeclarationShare(declaration, method: "instagram_stories")
                     }
                     Button("Other Apps") {
                         shareTapped(declaration: declaration)
@@ -794,8 +831,24 @@ class ImageSaver: NSObject {
 }
 
 func shareToInstagramStories(image: UIImage) {
+    // Straight into Instagram's story editor with the card as the background.
+    // Needs the Meta app id (Info.plist `FacebookAppID`) as source_application
+    // and `instagram-stories` in LSApplicationQueriesSchemes; both are present.
+    if let appID = Bundle.main.object(forInfoDictionaryKey: "FacebookAppID") as? String,
+       let url = URL(string: "instagram-stories://share?source_application=\(appID)"),
+       UIApplication.shared.canOpenURL(url),
+       let data = image.pngData() {
+        UIPasteboard.general.setItems(
+            [["com.instagram.sharedSticker.backgroundImage": data]],
+            options: [.expirationDate: Date().addingTimeInterval(5 * 60)]
+        )
+        UIApplication.shared.open(url)
+        return
+    }
+
+    // Instagram missing or the API refused: save to Photos and point the way.
     let _ = PHPhotoLibrary.shared()
-    
+
     PHPhotoLibrary.requestAuthorization { status in
         DispatchQueue.main.async {
             switch status {

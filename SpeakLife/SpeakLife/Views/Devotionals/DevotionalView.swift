@@ -521,7 +521,7 @@ struct DevotionalView: View {
             if let scene = UIApplication.shared.connectedScenes
                 .first(where: { $0.activationState == .foregroundActive })
                 as? UIWindowScene {
-                let url = URL(string: "\(APP.Product.urlID)")!
+                let url = ReferralLink.url(.devotional)
                 
                 let activityVC = UIActivityViewController(activityItems: ["Check out Speak Life - Bible Verses app that'll transform your life!", url], applicationActivities: nil)
                 let window = scene.windows.first

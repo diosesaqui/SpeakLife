@@ -959,7 +959,7 @@ struct DailyDeclarationBurstView: View {
         // Haptic feedback
         Juice.play(.tapLight)
 
-        let message = "I just completed my Daily Victory Burst on SpeakLife! 🔥\n\n✅ \(morningDeclarations.count) Declarations Spoken\n🔥 \(streakViewModel.displayStreak) Day Streak\n💪 \(burstTracker.currentStrengthScore)% Spiritual Strength\n\nJoin me in speaking life daily!"
+        let message = "I just completed my Daily Victory Burst on SpeakLife! 🔥\n\n✅ \(morningDeclarations.count) Declarations Spoken\n🔥 \(streakViewModel.displayStreak) Day Streak\n💪 \(burstTracker.currentStrengthScore)% Spiritual Strength\n\nJoin me in speaking life daily!\n\(ReferralLink.url(.dailyBurst).absoluteString)"
         
         // Get the active window scene
         guard let windowScene = UIApplication.shared.connectedScenes
