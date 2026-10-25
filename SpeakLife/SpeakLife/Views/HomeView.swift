@@ -118,7 +118,9 @@ struct HomeView: View {
     @State private var showStreakCelebration = false
     @State private var celebrationStreakCount = 0
     @State private var anniversaryMilestone: PremiumAnniversaryMilestone?
-    @State private var yearInReviewStats: YearInReviewStats?
+    /// Every way into the Year in Review goes through this, and the one
+    /// fullScreenCover below shows what it holds.
+    @ObservedObject private var yearInReview = YearInReviewCoordinator.shared
     // The Inbox, presented from the remote-message reader's
     // "See All SpeakLife Messages" CTA.
     @State private var showSpeakLifeMessages = false
@@ -177,7 +179,10 @@ struct HomeView: View {
                               //  checkForDeclarationPrompt()
                             }
                             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
-                               
+                                // A recap blocked last time (paywall, another
+                                // launch cover) gets another chance here.
+                                checkForYearInReview()
+
                                 Task {
                                     // Always fetch remote config when coming from background
                                     await subscriptionStore.fetchRemoteConfig()
@@ -331,15 +336,27 @@ struct HomeView: View {
                                     .environmentObject(subscriptionStore)
                                     .environmentObject(appState)
                             }
-                            .fullScreenCover(item: $yearInReviewStats) { stats in
+                            .fullScreenCover(item: $yearInReview.presentation) { presentation in
                                 // Snapshot premium status into the view so a
                                 // late StoreKit hydration can't mutate the
                                 // slide list mid-presentation.
                                 YearInReviewView(
-                                    stats: stats,
-                                    includesPremiumExtras: subscriptionStore.isPremium
+                                    stats: presentation.stats,
+                                    includesPremiumExtras: subscriptionStore.isPremium,
+                                    source: presentation.source
                                 )
                                 .environmentObject(subscriptionStore)
+                            }
+                            // A tapped recap push (NotificationHandler) while
+                            // the app is running; cold launches are picked up
+                            // by checkForYearInReview on appear.
+                            .onChange(of: yearInReview.pendingPush) { _, pending in
+                                if pending { presentPendingYearInReviewPush() }
+                            }
+                            // A launch cover was in the way of a recap push:
+                            // try again the moment it closes.
+                            .onChange(of: showDailyStructuredDayOnLaunch) { _, showing in
+                                if !showing { presentPendingYearInReviewPush() }
                             }
 
                 } else {
@@ -991,46 +1008,71 @@ struct HomeView: View {
        }
     }
 
-    /// Surfaces the Year in Review between Dec 15 and Jan 15. Auto-launches
-    /// on cold start once per recap year. From Dec 15 → Dec 31 the recap is
-    /// for the in-progress current year (Spotify Wrapped pattern); from
-    /// Jan 1 → Jan 15 it's for the year that just closed.
+    /// Auto-launches the Year in Review once per recap year, from Dec 1 to
+    /// Jan 15 (`YearInReviewStats.recapYear`): in December it recaps the year
+    /// in progress, in January the year that just closed. The rules live in
+    /// `YearInReviewEligibility`; this only supplies what is on screen.
     ///
-    /// Everyone with meaningful activity gets the core recap; premium
-    /// subscribers see an additional Strength Level slide and a Premium
-    /// Warrior mark on the share card (handled inside YearInReviewView).
+    /// The year is marked seen by the recap's own `onAppear`, never here, so
+    /// a launch where the paywall or another cover got in the way does not
+    /// lose it. It is retried on the next foreground. The Today card and the
+    /// Profile row reopen it any time in the window.
     private func checkForYearInReview() {
+        yearInReview.refresh()
+        presentPendingYearInReviewPush()
+
         guard appState.isOnboarded else { return }
-        guard !showSubscription else { return }
-        guard yearInReviewStats == nil else { return }
+        guard yearInReview.presentation == nil, !yearInReview.pendingPush else { return }
+        guard let stats = yearInReview.entryStats else { return }
 
-        let calendar = Calendar.current
-        let now = Date()
-        let month = calendar.component(.month, from: now)
-        let day = calendar.component(.day, from: now)
-        let currentYear = calendar.component(.year, from: now)
-
-        let recapYear: Int
-        if month == 12 && day >= 15 {
-            recapYear = currentYear
-        } else if month == 1 && day <= 15 {
-            recapYear = currentYear - 1
-        } else {
-            return
-        }
-
-        let shownKey = "yearInReview_shown_\(recapYear)"
-        guard !UserDefaults.standard.bool(forKey: shownKey) else { return }
-
-        let stats = YearInReviewStats.build(for: recapYear)
-        guard stats.hasMeaningfulActivity else { return }
-
-        UserDefaults.standard.set(true, forKey: shownKey)
+        let eligible = YearInReviewEligibility.shouldAutoLaunch(
+            recapYear: stats.year,
+            daysActive: stats.daysActive,
+            alreadySeen: YearInReviewCoordinator.hasBeenSeen(year: stats.year),
+            anotherPresentationActive: isLaunchPresentationActive
+        )
+        guard eligible else { return }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            guard appState.isOnboarded && !showSubscription else { return }
-            yearInReviewStats = stats
+            // Re-check: the paywall or another launch cover may have come up
+            // during the delay. If so, wait for the next foreground.
+            guard appState.isOnboarded,
+                  !isLaunchPresentationActive,
+                  !YearInReviewCoordinator.hasBeenSeen(year: stats.year) else { return }
+            yearInReview.open(source: .auto)
         }
+    }
+
+    /// Opens the recap for a tapped `deepLink = yearInReview` push once
+    /// nothing else is on screen. If something is, the request waits for the
+    /// next foreground or for the launch cover to close.
+    private func presentPendingYearInReviewPush() {
+        guard yearInReview.pendingPush else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            guard yearInReview.pendingPush,
+                  appState.isOnboarded,
+                  !isShowingLanding,
+                  !isLaunchPresentationActive else { return }
+            yearInReview.clearPendingPush()
+            yearInReview.open(source: .push)
+        }
+    }
+
+    /// Anything already presented from this screen. SwiftUI shows one
+    /// presentation at a time, so the recap must not race these for the slot.
+    private var isLaunchPresentationActive: Bool {
+        yearInReview.presentation != nil
+            || showSubscription
+            || showTriggeredPaywall
+            || showMonthlyAnnualOffer
+            || showDailyStructuredDayOnLaunch
+            || anniversaryMilestone != nil
+            || showPDMigrationSheet
+            || isPresented
+            || subscriptionStore.showEmailCaptureAfterPurchase
+            || appState.remoteMessage != nil
+            || appState.pushOffer != nil
+            || appState.showWarriorRoom
     }
 
     /// Surfaces a one-time anniversary overlay for premium subscribers at 30,

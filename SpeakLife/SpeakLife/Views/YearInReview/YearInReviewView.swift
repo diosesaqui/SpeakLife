@@ -2,10 +2,15 @@
 //  YearInReviewView.swift
 //  SpeakLife
 //
-//  Year-end recap. Everyone with meaningful activity gets the core slides;
-//  premium subscribers get an additional Strength Level bonus slide and a
-//  Premium Warrior mark on the share card. Surfaced once per year between
-//  Dec 15 and Jan 15.
+//  Year-end recap. Everyone with activity gets the core slides; premium
+//  subscribers also get a Strength Level bonus slide and a Premium Warrior
+//  mark on their share cards. Open from Dec 1 to Jan 15 (see
+//  `YearInReviewStats.recapYear`), reached from the launch takeover, the
+//  Today card, Profile, or the December push (`YearInReviewCoordinator`).
+//
+//  Every slide after the cover can be posted. The card that leaves is a
+//  1080x1920 story image (`YearInReviewShareCard`), and the in-app slides use
+//  the same background and gold so what people see is what they share.
 //
 
 import SwiftUI
@@ -13,655 +18,751 @@ import UIKit
 
 struct YearInReviewView: View {
     let stats: YearInReviewStats
-    /// Snapshotted at construction time. The slide list and summary-card
-    /// chrome must not mutate while the recap is on screen — if we read
+    /// Snapshotted at construction time. The slide list and card chrome must
+    /// not change while the recap is on screen: if we read
     /// `subscriptionStore.isPremium` reactively, a late StoreKit hydration
-    /// can grow/shrink the slide array under a stale `pageIndex` and warp
-    /// the user to a different slide mid-recap.
+    /// could grow or shrink the slide array under a stale `pageIndex`.
     let includesPremiumExtras: Bool
+    var source: YearInReviewSource = .auto
 
-    @EnvironmentObject var subscriptionStore: SubscriptionStore
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    @State private var pageIndex: Int = 0
+    @State private var pageIndex = 0
     @State private var shareItem: ShareItem?
+    /// Slides whose hero has already counted up in this showing.
+    @State private var revealed: Set<YearInReviewSlide> = []
+    /// Slides already reported to analytics, so swiping back and forth does
+    /// not inflate `year_in_review_slide_viewed`.
+    @State private var viewedSlides: Set<YearInReviewSlide> = []
+    @State private var didAppear = false
 
-    /// Slide layout is dynamic so the premium-only Strength Level slide can
-    /// slot in between "Total Declarations" and "Summary" without breaking
-    /// share-button indexing.
-    private enum Slide: Hashable {
-        case cover, days, longestStreak, bestMonth, totals, strength, summary
+    private var slides: [YearInReviewSlide] {
+        stats.slides(includesPremiumExtras: includesPremiumExtras)
     }
 
-    private var slides: [Slide] {
-        var s: [Slide] = [.cover, .days, .longestStreak, .bestMonth, .totals]
-        if includesPremiumExtras { s.append(.strength) }
-        s.append(.summary)
-        return s
-    }
-
-    private var currentSlide: Slide { slides[safe: pageIndex] ?? .cover }
-    private var isFirstSlide: Bool { pageIndex == 0 }
-    private var isLastSlide: Bool { pageIndex == slides.count - 1 }
+    private var currentSlide: YearInReviewSlide { slides[safe: pageIndex] ?? .cover }
 
     var body: some View {
         ZStack {
-            backgroundLayer
+            GeometryReader { geo in
+                YearInReviewBackground(size: geo.size)
+            }
+            .ignoresSafeArea()
 
             TabView(selection: $pageIndex) {
                 ForEach(Array(slides.enumerated()), id: \.offset) { index, slide in
-                    slideView(for: slide).tag(index)
+                    page(for: slide)
+                        .tag(index)
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
-            .indexViewStyle(.page(backgroundDisplayMode: .never))
 
-            VStack {
+            VStack(spacing: 0) {
                 topBar
-                Spacer()
-                if !isLastSlide {
-                    pageDots
-                        .padding(.bottom, 28)
-                }
+                Spacer(minLength: 0)
+                bottomBar
+                    .padding(.horizontal, DS.Spacing.lg)
+                    .padding(.bottom, DS.Spacing.md)
             }
         }
         .preferredColorScheme(.dark)
         .sheet(item: $shareItem) { item in
             ShareSheet(activityItems: [item.image, item.text])
         }
+        .onAppear {
+            guard !didAppear else { return }
+            didAppear = true
+            // Marked here, once it is really on screen, so a presentation
+            // that was blocked never burns the year's auto-launch.
+            YearInReviewCoordinator.markSeen(year: stats.year)
+            AnalyticsService.shared.track("year_in_review_opened", parameters: [
+                "source": source.rawValue,
+                "year": stats.year,
+                "in_progress": stats.isInProgress,
+                "days_active": stats.daysActive,
+                "is_premium": includesPremiumExtras,
+                "slide_count": slides.count
+            ])
+            slideDidAppear(at: pageIndex)
+        }
+        .onChange(of: pageIndex) { _, newIndex in
+            slideDidAppear(at: newIndex)
+        }
+    }
+
+    // MARK: - Slide lifecycle
+
+    private func slideDidAppear(at index: Int) {
+        guard let slide = slides[safe: index] else { return }
+
+        if viewedSlides.insert(slide).inserted {
+            AnalyticsService.shared.track("year_in_review_slide_viewed", parameters: [
+                "slide": slide.rawValue,
+                "index": index,
+                "year": stats.year
+            ])
+        }
+
+        guard !revealed.contains(slide) else {
+            Juice.play(.tapLight)
+            return
+        }
+        if reduceMotion {
+            revealed.insert(slide)
+        } else {
+            withAnimation(.easeOut(duration: 1.3)) {
+                _ = revealed.insert(slide)
+            }
+        }
+        // A soft success as the number lands, the first time each slide shows.
+        if slide != .cover {
+            DispatchQueue.main.asyncAfter(deadline: .now() + (reduceMotion ? 0.05 : 1.0)) {
+                Juice.play(.success)
+            }
+        }
+    }
+
+    private func advance() {
+        guard pageIndex < slides.count - 1 else { return }
+        withAnimation(DS.Motion.smooth) { pageIndex += 1 }
+    }
+
+    // MARK: - Chrome
+
+    private var topBar: some View {
+        VStack(spacing: DS.Spacing.sm) {
+            HStack(spacing: 4) {
+                ForEach(slides.indices, id: \.self) { i in
+                    Capsule()
+                        .fill(i <= pageIndex ? YearInReviewPalette.label : Color.white.opacity(0.22))
+                        .frame(height: 3)
+                }
+            }
+            .animation(DS.Motion.smooth, value: pageIndex)
+            .accessibilityHidden(true)
+
+            HStack {
+                Spacer()
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.8))
+                        .frame(width: 34, height: 34)
+                        .background(Circle().fill(Color.white.opacity(0.12)))
+                }
+                .buttonStyle(.dsPressable(feel: .tapLight))
+                .accessibilityLabel("Close")
+            }
+        }
+        .padding(.horizontal, DS.Spacing.md)
+        .padding(.top, DS.Spacing.xs)
     }
 
     @ViewBuilder
-    private func slideView(for slide: Slide) -> some View {
-        switch slide {
-        case .cover:         coverSlide
-        case .days:          daysActiveSlide
-        case .longestStreak: longestStreakSlide
-        case .bestMonth:     bestMonthSlide
-        case .totals:        totalDeclarationsSlide
-        case .strength:      strengthLevelSlide
-        case .summary:       summarySlide
-        }
-    }
-
-    // MARK: - Layers
-
-    private var backgroundLayer: some View {
-        // Pin the background image to the geometry size — without an
-        // explicit frame after .scaledToFill(), the image overflows and
-        // grows the parent ZStack past screen width, which is what was
-        // pushing the summary card and Share button off both screen edges.
-        GeometryReader { geo in
-            ZStack {
-                Color.black.ignoresSafeArea()
-                Image(subscriptionStore.onboardingBGImage)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: geo.size.width, height: geo.size.height)
-                    .opacity(0.45)
-                    .clipped()
-                    .ignoresSafeArea()
-                LinearGradient(
-                    colors: [Color.black.opacity(0.7), Color.black.opacity(0.4), Color.black.opacity(0.85)],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .ignoresSafeArea()
-            }
-        }
-    }
-
-    private var topBar: some View {
-        HStack {
-            Button {
-                dismiss()
-            } label: {
-                Image(systemName: "xmark")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.7))
-                    .frame(width: 32, height: 32)
-                    .background(Circle().fill(Color.white.opacity(0.12)))
+    private var bottomBar: some View {
+        switch currentSlide {
+        case .cover:
+            Button(action: advance) {
+                HStack(spacing: DS.Spacing.xs) {
+                    Text(stats.isInProgress ? "See my year so far" : "See my year")
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14, weight: .bold))
+                }
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundColor(Color(red: 0.14, green: 0.09, blue: 0.02))
+                .frame(maxWidth: .infinity)
+                .frame(height: 54)
+                .background(Capsule().fill(YearInReviewPalette.heroGold))
+                .shadow(color: YearInReviewPalette.glow.opacity(0.35), radius: 16, y: 6)
             }
             .buttonStyle(.dsPressable(feel: .tapSolid))
-            Spacer()
-            if !isFirstSlide && !isLastSlide {
+        case .nextYear:
+            VStack(spacing: DS.Spacing.xs) {
+                shareRow(for: .nextYear)
                 Button {
-                    presentShare(of: currentShareableSlide(), text: shareText(for: currentSlide))
+                    dismiss()
                 } label: {
-                    Image(systemName: "square.and.arrow.up")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.8))
-                        .frame(width: 32, height: 32)
-                        .background(Circle().fill(Color.white.opacity(0.12)))
+                    Text("Done")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.white.opacity(0.65))
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 44)
                 }
-                .buttonStyle(.dsPressable(feel: .tapSolid))
+                .buttonStyle(.dsPressable(feel: .tapLight))
             }
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, 12)
-    }
-
-    private var pageDots: some View {
-        HStack(spacing: 6) {
-            ForEach(0..<slides.count, id: \.self) { i in
-                Capsule()
-                    .fill(i == pageIndex ? Color(hex: "FBBF24") : Color.white.opacity(0.25))
-                    .frame(width: i == pageIndex ? 18 : 6, height: 6)
-                    .animation(.easeInOut(duration: 0.2), value: pageIndex)
-            }
+        default:
+            shareRow(for: currentSlide)
         }
     }
 
-    // MARK: - Slides
-
-    private var coverSlide: some View {
-        VStack(spacing: DS.Spacing.lg) {
-            Spacer()
-            Image(systemName: "crown.fill")
-                .font(.system(size: 56, weight: .semibold))
-                .foregroundStyle(goldGradient)
-                .shadow(color: Color(hex: "FBBF24").opacity(0.4), radius: 20)
-            Text("YOUR YEAR OF STANDING")
-                .font(Font.custom("AppleSDGothicNeo-Bold", size: 16, relativeTo: .caption))
-                .tracking(3.5)
-                .foregroundColor(.white.opacity(0.75))
-            Text(String(stats.year))
-                .font(Font.custom("AppleSDGothicNeo-Bold", size: 110, relativeTo: .largeTitle))
-                .foregroundStyle(goldGradient)
-            Text("A look at how you stood this year.")
-                .font(Font.custom("AppleSDGothicNeo-Regular", size: 16, relativeTo: .body))
-                .foregroundColor(.white.opacity(0.7))
-                .italic()
-                .multilineTextAlignment(.center)
-            Spacer()
-            advanceHint("Swipe to begin")
-        }
-        .padding(.horizontal, 28)
-    }
-
-    private var daysActiveSlide: some View {
-        slideShell {
-            slideStat(
-                eyebrow: "You showed up",
-                number: "\(stats.daysActive)",
-                unit: stats.daysActive == 1 ? "day" : "days",
-                accent: "\(stats.percentOfYear)% of \(stats.year)",
-                verse: "You are like a tree planted by streams of water, which yields its fruit in season.",
-                verseRef: "Psalm 1:3"
-            )
-        }
-    }
-
-    private var longestStreakSlide: some View {
-        slideShell {
-            slideStat(
-                eyebrow: "Your longest unbroken stand",
-                number: "\(stats.longestStreakInYear)",
-                unit: stats.longestStreakInYear == 1 ? "day in a row" : "days in a row",
-                accent: stats.longestStreakInYear >= 7
-                    ? "You did not grow weary."
-                    : "Every stand counts.",
-                verse: "Stand firm. And after you have done everything, stand.",
-                verseRef: "Ephesians 6:13"
-            )
-        }
-    }
-
-    private var bestMonthSlide: some View {
-        slideShell {
-            if let best = stats.bestMonth {
-                VStack(spacing: 20) {
-                    eyebrow("Your strongest month")
-                    Text(best.name)
-                        .font(Font.custom("AppleSDGothicNeo-Bold", size: 64, relativeTo: .largeTitle))
-                        .foregroundStyle(goldGradient)
-                        .multilineTextAlignment(.center)
-                    Text("\(best.count) day\(best.count == 1 ? "" : "s") on the wall")
-                        .font(Font.custom("AppleSDGothicNeo-Regular", size: 17, relativeTo: .body))
-                        .foregroundColor(.white.opacity(0.85))
-                    Text("You stood when it mattered.")
-                        .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .caption))
-                        .foregroundColor(.white.opacity(0.6))
-                        .italic()
+    /// Instagram Stories first (the post people make in December), then the
+    /// system share sheet for everything else.
+    private func shareRow(for slide: YearInReviewSlide) -> some View {
+        HStack(spacing: DS.Spacing.sm) {
+            Button {
+                share(slide, method: .instagramStories)
+            } label: {
+                HStack(spacing: DS.Spacing.xs) {
+                    Image(systemName: "camera.fill")
+                    Text("Share to Stories")
                 }
-            } else {
-                slideStat(
-                    eyebrow: "Your strongest month",
-                    number: "—",
-                    unit: "",
-                    accent: "The year is just beginning.",
-                    verse: nil,
-                    verseRef: nil
-                )
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(Color(red: 0.14, green: 0.09, blue: 0.02))
+                .frame(maxWidth: .infinity)
+                .frame(height: 54)
+                .background(Capsule().fill(YearInReviewPalette.heroGold))
+                .shadow(color: YearInReviewPalette.glow.opacity(0.35), radius: 16, y: 6)
             }
-        }
-    }
+            .buttonStyle(.dsPressable(feel: .tapSolid))
+            .accessibilityLabel("Share to Instagram Stories")
 
-    private var totalDeclarationsSlide: some View {
-        slideShell {
-            slideStat(
-                eyebrow: "You spoke God's Word",
-                number: "\(stats.totalDeclarationsSpoken)",
-                unit: stats.totalDeclarationsSpoken == 1 ? "time" : "times",
-                accent: "Every word a stone of remembrance.",
-                verse: "The word of God is alive and active.",
-                verseRef: "Hebrews 4:12"
-            )
-        }
-    }
-
-    /// Premium-only bonus slide. Surfaces the highest spiritual-strength tier
-    /// the user reached during the year, using the level system that already
-    /// powers the BurstCompletionTracker UI.
-    private var strengthLevelSlide: some View {
-        slideShell {
-            VStack(spacing: 18) {
-                HStack(spacing: 6) {
-                    Image(systemName: "crown.fill")
-                        .font(.system(size: 11, weight: .semibold))
-                    Text("FOR YOU \u{2022} PREMIUM")
-                        .font(Font.custom("AppleSDGothicNeo-Bold", size: 11, relativeTo: .caption2))
-                        .tracking(2.0)
-                }
-                .foregroundColor(Color(hex: "FBBF24"))
-
-                eyebrow("Strength reached this year")
-
-                Image(systemName: stats.peakStrengthLevel.icon)
-                    .font(.system(size: 76, weight: .semibold))
-                    .foregroundStyle(goldGradient)
-                    .shadow(color: Color(hex: "FBBF24").opacity(0.4), radius: 18)
-                    .padding(.vertical, 4)
-
-                Text(stats.peakStrengthLevel.rawValue.uppercased())
-                    .font(Font.custom("AppleSDGothicNeo-Bold", size: 38, relativeTo: .largeTitle))
-                    .foregroundStyle(goldGradient)
-                    .tracking(2.0)
-
-                Text("Peak score \(stats.peakStrengthScore) of 100")
-                    .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .caption))
-                    .foregroundColor(.white.opacity(0.6))
-
-                Text(strengthLevelBlessing(stats.peakStrengthLevel))
-                    .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .caption))
-                    .foregroundColor(.white.opacity(0.75))
-                    .italic()
-                    .multilineTextAlignment(.center)
-                    .padding(.top, 6)
-                    .padding(.horizontal, DS.Spacing.sm)
+            Button {
+                share(slide, method: .shareSheet)
+            } label: {
+                Image(systemName: "square.and.arrow.up")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.white)
+                    .frame(width: 54, height: 54)
+                    .background(Circle().fill(Color.white.opacity(0.14)))
+                    .overlay(Circle().strokeBorder(Color.white.opacity(0.22), lineWidth: 1))
             }
+            .buttonStyle(.dsPressable(feel: .tapSolid))
+            .accessibilityLabel("More ways to share")
         }
     }
 
-    private func strengthLevelBlessing(_ level: BurstCompletionTracker.StrengthLevel) -> String {
-        switch level {
-        case .warrior:     return "You took up the shield. The fight has only begun."
-        case .champion:    return "You did not retreat. The medal is earned."
-        case .conqueror:   return "Crown set, ground taken. The land is yours."
-        case .victorious:  return "You walked through fire and came out shining."
-        case .unstoppable: return "What can stand against you? Nothing in His name."
+    // MARK: - Pages
+
+    @ViewBuilder
+    private func page(for slide: YearInReviewSlide) -> some View {
+        switch slide {
+        case .cover:   coverPage
+        case .summary: summaryPage
+        default:       statPage(slide)
         }
     }
 
-    private var summarySlide: some View {
-        // Width-propagation from parent containers wasn't working — the
-        // card's .frame(maxWidth: .infinity) kept escaping. Apply an
-        // explicit width to the card and button column based on the page
-        // bounds, then center both in a ZStack pinned to the page.
-        GeometryReader { geo in
-            let contentWidth = max(0, geo.size.width - 48)
-            ZStack {
-                Color.clear
+    private var coverPage: some View {
+        ZStack {
+            GoldDust(animate: !reduceMotion)
+
+            VStack(spacing: DS.Spacing.md) {
+                Spacer()
+                Image(systemName: "crown.fill")
+                    .font(.system(size: 50, weight: .semibold))
+                    .foregroundStyle(YearInReviewPalette.heroGold)
+                    .shadow(color: YearInReviewPalette.glow.opacity(0.5), radius: 22)
+
+                SlideEyebrow(text: "Your year of standing")
+
                 VStack(spacing: 0) {
-                    Spacer(minLength: 20)
-                    summaryCard
-                        .frame(width: contentWidth)
-                    Spacer()
-                    VStack(spacing: 10) {
-                        Button {
-                            presentShare(of: summaryCardForExport(), text: shareSummaryText)
-                        } label: {
-                            HStack(spacing: DS.Spacing.xs) {
-                                Image(systemName: "square.and.arrow.up")
-                                Text("Share Your Year")
-                            }
-                            .font(Font.custom("AppleSDGothicNeo-Bold", size: 16, relativeTo: .body))
-                            .foregroundColor(.white)
-                            .frame(width: contentWidth, height: 52)
-                            .background(
-                                LinearGradient(colors: [Color(hex: "F59E0B"), Color(hex: "B45309")],
-                                               startPoint: .leading, endPoint: .trailing)
-                            )
-                            .clipShape(RoundedRectangle(cornerRadius: 14))
-                        }
-                        .buttonStyle(.dsPressable(feel: .tapSolid))
-                        Button {
-                            dismiss()
-                        } label: {
-                            Text("Done")
-                                .font(Font.custom("AppleSDGothicNeo-Regular", size: 15, relativeTo: .body))
-                                .foregroundColor(.white.opacity(0.55))
-                                .frame(width: contentWidth, height: 44)
-                        }
-                        .buttonStyle(.dsPressable(feel: .tapSolid))
+                    Text(String(stats.year))
+                        .font(.system(size: 112, weight: .semibold, design: .serif))
+                        .foregroundStyle(YearInReviewPalette.heroGold)
+                        .shadow(color: YearInReviewPalette.glow.opacity(0.4), radius: 24)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
+                    if stats.isInProgress {
+                        Text("so far")
+                            .font(.system(size: 26, weight: .regular, design: .serif).italic())
+                            .foregroundStyle(YearInReviewPalette.label)
                     }
-                    .padding(.bottom, 28)
                 }
-                .padding(.top, 60) // clear the topBar's close button
+
+                Text(coverLine)
+                    .font(.system(size: 19, weight: .regular, design: .serif))
+                    .foregroundColor(.white.opacity(0.82))
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, DS.Spacing.xs)
+                Spacer()
+                Spacer().frame(height: 110)
+            }
+            .padding(.horizontal, DS.Spacing.xl)
+        }
+    }
+
+    private var coverLine: String {
+        if stats.daysActive < YearInReviewEligibility.autoLaunchMinimumDays {
+            return "Every day you showed up counts. Here it is."
+        }
+        return stats.isInProgress
+            ? "Every day you showed up mattered. Here is your year so far."
+            : "Every day you showed up mattered. Here is your \(String(stats.year))."
+    }
+
+    private func statPage(_ slide: YearInReviewSlide) -> some View {
+        let content = inAppContent(for: slide)
+        let isRevealed = revealed.contains(slide) || reduceMotion
+
+        return VStack(spacing: 0) {
+            Spacer(minLength: 0)
+
+            if slide == .strength {
+                premiumBadge
+                    .padding(.bottom, DS.Spacing.md)
+            }
+
+            SlideEyebrow(text: content.eyebrow)
+
+            if let symbol = content.symbol {
+                Image(systemName: symbol)
+                    .font(.system(size: 64, weight: .semibold))
+                    .foregroundStyle(YearInReviewPalette.heroGold)
+                    .shadow(color: YearInReviewPalette.glow.opacity(0.45), radius: 20)
+                    .padding(.top, DS.Spacing.lg)
+                    .scaleEffect(isRevealed ? 1 : 0.85)
+            }
+
+            hero(for: slide, content: content, isRevealed: isRevealed)
+                .padding(.top, content.heroStyle == .declaration ? DS.Spacing.lg : DS.Spacing.sm)
+
+            Group {
+                if let caption = content.caption {
+                    Text(caption)
+                        .font(.system(size: 21, weight: .medium, design: .serif))
+                        .foregroundColor(.white)
+                        .padding(.top, 6)
+                }
+                if let detail = content.detail {
+                    Text(detail)
+                        .font(.system(size: 15, weight: .regular))
+                        .foregroundColor(.white.opacity(0.68))
+                        .padding(.top, DS.Spacing.sm)
+                }
+                if let verse = content.verse {
+                    Capsule()
+                        .fill(YearInReviewPalette.label)
+                        .frame(width: 40, height: 2)
+                        .padding(.top, DS.Spacing.xl)
+                        .padding(.bottom, DS.Spacing.md)
+                    Text(verse)
+                        .font(.system(size: 16, weight: .regular, design: .serif).italic())
+                        .foregroundColor(.white.opacity(0.8))
+                        .lineSpacing(3)
+                    if let reference = content.reference {
+                        Text(reference.uppercased())
+                            .font(.system(size: 11, weight: .semibold))
+                            .tracking(3)
+                            .foregroundColor(YearInReviewPalette.label)
+                            .padding(.top, DS.Spacing.xs)
+                    }
+                }
+            }
+            .fixedSize(horizontal: false, vertical: true)
+            .opacity(isRevealed ? 1 : 0)
+            .offset(y: isRevealed ? 0 : 12)
+
+            Spacer(minLength: 0)
+        }
+        .multilineTextAlignment(.center)
+        .padding(.horizontal, DS.Spacing.xl)
+        .padding(.top, 70)
+        .padding(.bottom, 120)
+    }
+
+    @ViewBuilder
+    private func hero(for slide: YearInReviewSlide, content: YearInReviewCardContent,
+                      isRevealed: Bool) -> some View {
+        switch content.heroStyle {
+        case .number:
+            // Counts up from zero the first time the slide lands. The share
+            // card is rendered from `cardContent`, never from this, so the
+            // posted image always carries the final number.
+            Text(verbatim: "")
+                .modifier(CountUp(value: isRevealed ? Double(heroNumber(for: slide)) : 0))
+                .font(.system(size: 116, weight: .semibold, design: .serif).monospacedDigit())
+                .foregroundStyle(YearInReviewPalette.heroGold)
+                .shadow(color: YearInReviewPalette.glow.opacity(0.4), radius: 24)
+                .lineLimit(1)
+                .minimumScaleFactor(0.35)
+        case .word:
+            Text(content.hero)
+                .font(.system(size: 58, weight: .semibold, design: .serif))
+                .foregroundStyle(YearInReviewPalette.heroGold)
+                .shadow(color: YearInReviewPalette.glow.opacity(0.4), radius: 20)
+                .lineLimit(1)
+                .minimumScaleFactor(0.45)
+                .opacity(isRevealed ? 1 : 0)
+                .scaleEffect(isRevealed ? 1 : 0.92)
+        case .declaration:
+            Text(content.hero)
+                .font(.system(size: 31, weight: .medium, design: .serif))
+                .foregroundColor(.white)
+                .lineSpacing(4)
+                .fixedSize(horizontal: false, vertical: true)
+                .opacity(isRevealed ? 1 : 0)
+                .scaleEffect(isRevealed ? 1 : 0.96)
+        }
+    }
+
+    private var premiumBadge: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "crown.fill")
+                .font(.system(size: 10, weight: .semibold))
+            Text("PREMIUM BONUS")
+                .font(.system(size: 10, weight: .semibold))
+                .tracking(2)
+        }
+        .foregroundColor(YearInReviewPalette.label)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(
+            Capsule()
+                .fill(YearInReviewPalette.glow.opacity(0.14))
+                .overlay(Capsule().strokeBorder(YearInReviewPalette.label.opacity(0.45), lineWidth: 0.5))
+        )
+    }
+
+    /// The summary shows the exact card that will be posted, scaled to fit.
+    private var summaryPage: some View {
+        GeometryReader { geo in
+            let cardSize = YearInReviewShareCard.size
+            let availableWidth = max(1, geo.size.width - 2 * DS.Spacing.xl)
+            let availableHeight = max(1, geo.size.height - 80 - 150)
+            let scale = min(availableWidth / cardSize.width, availableHeight / cardSize.height)
+
+            VStack(spacing: DS.Spacing.sm) {
+                Spacer(minLength: 80)
+                SlideEyebrow(text: "Your year on one card")
+                YearInReviewSummaryCard(stats: stats, isPremium: includesPremiumExtras)
+                    .frame(width: cardSize.width, height: cardSize.height)
+                    .scaleEffect(scale)
+                    .frame(width: cardSize.width * scale, height: cardSize.height * scale)
+                    .clipShape(RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
+                            .strokeBorder(YearInReviewPalette.label.opacity(0.35), lineWidth: 1)
+                    )
+                    .shadow(color: .black.opacity(0.5), radius: 24, y: 12)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(stats.shareWords(for: .summary))
+                Spacer(minLength: 130)
             }
             .frame(width: geo.size.width, height: geo.size.height)
         }
     }
 
-    // MARK: - Reusable bits
+    // MARK: - Content
 
-    @ViewBuilder
-    private func slideShell<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
-        VStack {
-            Spacer()
-            content()
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, DS.Spacing.xl)
-            Spacer()
+    private func heroNumber(for slide: YearInReviewSlide) -> Int {
+        switch slide {
+        case .days:          return stats.daysActive
+        case .longestStreak: return stats.longestStreakInYear
+        case .totals:        return stats.totalDeclarationsSpoken
+        default:             return 0
         }
     }
 
-    private func eyebrow(_ text: String) -> some View {
-        Text(text.uppercased())
-            .font(Font.custom("AppleSDGothicNeo-Bold", size: 13, relativeTo: .caption))
-            .tracking(2.5)
-            .foregroundColor(DS.Palette.gold.opacity(0.9))
+    private func count(_ value: Int) -> String {
+        YearInReviewStats.formattedCount(value)
     }
 
-    @ViewBuilder
-    private func slideStat(eyebrow eyebrowText: String,
-                           number: String,
-                           unit: String,
-                           accent: String,
-                           verse: String?,
-                           verseRef: String?) -> some View {
-        VStack(spacing: 14) {
-            eyebrow(eyebrowText)
-            Text(number)
-                .font(Font.custom("AppleSDGothicNeo-Bold", size: 120, relativeTo: .largeTitle))
-                .foregroundStyle(goldGradient)
-                .minimumScaleFactor(0.4)
-                .lineLimit(1)
-            if !unit.isEmpty {
-                Text(unit)
-                    .font(Font.custom("AppleSDGothicNeo-Regular", size: 19, relativeTo: .title3))
-                    .foregroundColor(.white.opacity(0.85))
+    /// The in-app slide, spoken to the user.
+    private func inAppContent(for slide: YearInReviewSlide) -> YearInReviewCardContent {
+        let year = String(stats.year)
+        switch slide {
+        case .longestStreak:
+            let run = stats.longestStreakInYear
+            return YearInReviewCardContent(
+                eyebrow: "Your longest run",
+                hero: count(run),
+                caption: run == 1 ? "day standing strong" : "days in a row",
+                detail: run >= 7 ? "You did not give up." : "Every day you stood mattered.",
+                verse: "Let us not become weary in doing good, for at the proper time we will reap a harvest if we do not give up.",
+                reference: "Galatians 6:9"
+            )
+        case .bestMonth:
+            guard let best = stats.bestMonth else { return inAppContent(for: .days) }
+            return YearInReviewCardContent(
+                eyebrow: "Your strongest month",
+                hero: best.name,
+                heroStyle: .word,
+                caption: best.count == 1 ? "1 day in God's Word" : "\(count(best.count)) days in God's Word",
+                verse: "His compassions never fail. They are new every morning; great is your faithfulness.",
+                reference: "Lamentations 3:22-23"
+            )
+        case .totals:
+            let total = stats.totalDeclarationsSpoken
+            return YearInReviewCardContent(
+                eyebrow: "Spoken in your Daily Burst",
+                hero: count(total),
+                caption: total == 1 ? "declaration" : "declarations",
+                detail: "Not one of them came back empty.",
+                verse: "So is my word that goes out from my mouth: It will not return to me empty.",
+                reference: "Isaiah 55:11"
+            )
+        case .strength:
+            return YearInReviewCardContent(
+                eyebrow: "Strength you reached",
+                symbol: stats.peakStrengthLevel.icon,
+                hero: stats.peakStrengthLevel.rawValue.uppercased(),
+                heroStyle: .word,
+                caption: "Peak score \(stats.peakStrengthScore) of 100",
+                detail: strengthBlessing(stats.peakStrengthLevel)
+            )
+        case .nextYear:
+            return YearInReviewCardContent(
+                eyebrow: "Speak it over \(String(stats.nextYear))",
+                hero: stats.nextYearDeclaration,
+                heroStyle: .declaration,
+                detail: "Say it out loud.",
+                verse: "See, I am doing a new thing! Now it springs up.",
+                reference: "Isaiah 43:19"
+            )
+        case .days, .cover, .summary:
+            let days = stats.daysActive
+            let percent = stats.percentOfYear
+            let detail: String
+            if percent >= 1 {
+                detail = stats.isInProgress
+                    ? "That is \(percent)% of the year so far."
+                    : "That is \(percent)% of \(year)."
+            } else {
+                detail = "Every one of them mattered."
             }
-            Text(accent)
-                .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .caption))
-                .foregroundColor(.white.opacity(0.65))
-                .italic()
-                .padding(.top, DS.Spacing.xxs)
-
-            if let verse, let verseRef {
-                VStack(spacing: 6) {
-                    Text(verse)
-                        .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .caption))
-                        .foregroundColor(.white.opacity(0.78))
-                        .multilineTextAlignment(.center)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Text(verseRef)
-                        .font(Font.custom("AppleSDGothicNeo-Bold", size: 11, relativeTo: .caption2))
-                        .tracking(1.0)
-                        .foregroundColor(Color(hex: "FBBF24"))
-                }
-                .padding(.top, 26)
-                .padding(.horizontal, DS.Spacing.sm)
-            }
+            return YearInReviewCardContent(
+                eyebrow: "You showed up",
+                hero: count(days),
+                caption: days == 1 ? "day in God's Word" : "days in God's Word",
+                detail: detail,
+                verse: "That person is like a tree planted by streams of water, which yields its fruit in season.",
+                reference: "Psalm 1:3"
+            )
         }
     }
 
-    private func advanceHint(_ text: String) -> some View {
-        HStack(spacing: 6) {
-            Text(text)
-                .font(Font.custom("AppleSDGothicNeo-Regular", size: 13, relativeTo: .caption))
-            Image(systemName: "chevron.right")
-                .font(.system(size: 11, weight: .semibold))
+    /// The posted card, in the sharer's own voice.
+    private func cardContent(for slide: YearInReviewSlide) -> YearInReviewCardContent {
+        let eyebrow = stats.isInProgress
+            ? "MY \(String(stats.year)) SO FAR"
+            : "MY \(String(stats.year)) IN SPEAKLIFE"
+        switch slide {
+        case .longestStreak:
+            let run = stats.longestStreakInYear
+            return YearInReviewCardContent(
+                eyebrow: eyebrow,
+                hero: count(run),
+                caption: run == 1 ? "day standing on God's Word" : "days in a row standing on God's Word",
+                verse: "At the proper time we will reap a harvest if we do not give up.",
+                reference: "Galatians 6:9"
+            )
+        case .bestMonth:
+            guard let best = stats.bestMonth else { return cardContent(for: .days) }
+            return YearInReviewCardContent(
+                eyebrow: eyebrow,
+                hero: best.name,
+                heroStyle: .word,
+                caption: "was my strongest month in God's Word",
+                verse: "His compassions never fail. They are new every morning.",
+                reference: "Lamentations 3:22-23"
+            )
+        case .totals:
+            let total = stats.totalDeclarationsSpoken
+            return YearInReviewCardContent(
+                eyebrow: eyebrow,
+                hero: count(total),
+                caption: total == 1 ? "declaration I spoke in my Daily Burst" : "declarations I spoke in my Daily Burst",
+                verse: "My word that goes out from my mouth will not return to me empty.",
+                reference: "Isaiah 55:11"
+            )
+        case .strength:
+            return YearInReviewCardContent(
+                eyebrow: eyebrow,
+                symbol: stats.peakStrengthLevel.icon,
+                hero: stats.peakStrengthLevel.rawValue.uppercased(),
+                heroStyle: .word,
+                caption: "the strength I grew to in God's Word",
+                verse: "I can do all this through him who gives me strength.",
+                reference: "Philippians 4:13"
+            )
+        case .nextYear:
+            return YearInReviewCardContent(
+                eyebrow: "MY WORD FOR \(String(stats.nextYear))",
+                hero: stats.nextYearDeclaration,
+                heroStyle: .declaration,
+                verse: "See, I am doing a new thing! Now it springs up.",
+                reference: "Isaiah 43:19"
+            )
+        case .days, .cover, .summary:
+            let days = stats.daysActive
+            return YearInReviewCardContent(
+                eyebrow: eyebrow,
+                hero: count(days),
+                caption: days == 1 ? "day I spoke God's Word over my life" : "days I spoke God's Word over my life",
+                verse: "Like a tree planted by streams of water, which yields its fruit in season.",
+                reference: "Psalm 1:3"
+            )
         }
-        .foregroundColor(.white.opacity(0.55))
-        .padding(.bottom, 36)
     }
 
-    private var goldGradient: LinearGradient {
-        LinearGradient(
-            colors: [Color(hex: "FDE68A"), Color(hex: "FBBF24"), Color(hex: "F59E0B")],
-            startPoint: .top,
-            endPoint: .bottom
-        )
-    }
-
-    // MARK: - Summary card (also the shareable composite)
-
-    private var summaryCard: some View {
-        VStack(spacing: 18) {
-            VStack(spacing: 6) {
-                Image(systemName: "crown.fill")
-                    .font(.system(size: 26, weight: .semibold))
-                    .foregroundStyle(goldGradient)
-                Text("YOUR YEAR OF STANDING")
-                    .font(Font.custom("AppleSDGothicNeo-Bold", size: 12, relativeTo: .caption))
-                    .tracking(3.0)
-                    .foregroundColor(.white.opacity(0.7))
-                Text(String(stats.year))
-                    .font(Font.custom("AppleSDGothicNeo-Bold", size: 56, relativeTo: .largeTitle))
-                    .foregroundStyle(goldGradient)
-            }
-            .padding(.top, DS.Spacing.xs)
-
-            Divider().background(Color.white.opacity(0.15)).padding(.horizontal, DS.Spacing.lg)
-
-            VStack(spacing: 14) {
-                summaryRow(label: "Days you stood",        value: "\(stats.daysActive)")
-                summaryRow(label: "Longest unbroken run",  value: "\(stats.longestStreakInYear) days")
-                if let best = stats.bestMonth {
-                    summaryRow(label: "Strongest month",   value: best.name)
-                }
-                summaryRow(label: "Words declared",        value: "\(stats.totalDeclarationsSpoken)")
-                if includesPremiumExtras {
-                    summaryRow(label: "Strength reached",  value: stats.peakStrengthLevel.rawValue)
-                }
-            }
-            .padding(.horizontal, 22)
-
-            if includesPremiumExtras {
-                HStack(spacing: 5) {
-                    Image(systemName: "crown.fill")
-                        .font(.system(size: 10, weight: .semibold))
-                    Text("PREMIUM WARRIOR")
-                        .font(Font.custom("AppleSDGothicNeo-Bold", size: 10, relativeTo: .caption2))
-                        .tracking(2.0)
-                }
-                .foregroundColor(Color(hex: "FBBF24"))
-                .padding(.horizontal, 10)
-                .padding(.vertical, DS.Spacing.xxs)
-                .background(
-                    Capsule()
-                        .fill(Color(hex: "FBBF24").opacity(0.14))
-                        .overlay(Capsule().stroke(Color(hex: "FBBF24").opacity(0.45), lineWidth: 0.5))
-                )
-                .padding(.top, DS.Spacing.xs)
-            }
-
-            Text("SpeakLife")
-                .font(Font.custom("AppleSDGothicNeo-Bold", size: 11, relativeTo: .caption2))
-                .tracking(2.5)
-                .foregroundColor(.white.opacity(0.45))
-                .padding(.top, 6)
-                .padding(.bottom, 10)
-        }
-        .padding(.vertical, DS.Spacing.xs)
-        .frame(maxWidth: .infinity)
-        .background(
-            RoundedRectangle(cornerRadius: 22)
-                .fill(Color.white.opacity(0.06))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 22)
-                        .strokeBorder(
-                            LinearGradient(
-                                colors: [Color(hex: "FBBF24").opacity(0.55), Color(hex: "F59E0B").opacity(0.2)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1
-                        )
-                )
-        )
-    }
-
-    private func summaryRow(label: String, value: String) -> some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text(label)
-                .font(Font.custom("AppleSDGothicNeo-Regular", size: 14, relativeTo: .body))
-                .foregroundColor(.white.opacity(0.7))
-            Spacer()
-            Text(value)
-                .font(Font.custom("AppleSDGothicNeo-Bold", size: 17, relativeTo: .body))
-                .foregroundColor(.white)
+    private func strengthBlessing(_ level: BurstCompletionTracker.StrengthLevel) -> String {
+        switch level {
+        case .warrior:     return "You picked up the shield. Keep standing."
+        case .champion:    return "You held your ground, and it shows."
+        case .conqueror:   return "You took new ground this year."
+        case .victorious:  return "You came through the fire shining."
+        case .unstoppable: return "Nothing can stand against you in His name."
         }
     }
 
     // MARK: - Sharing
 
-    /// The per-slide visual we render for share. Same content as the slide,
-    /// inside a fixed-width card with a solid background so it looks good
-    /// pasted into Stories / iMessage where the wall background isn't there.
-    @ViewBuilder
-    private func currentShareableSlide() -> some View {
-        ShareCardWrapper {
-            switch currentSlide {
-            case .days: slideStat(
-                eyebrow: "Days I stood in \(stats.year)",
-                number: "\(stats.daysActive)",
-                unit: stats.daysActive == 1 ? "day" : "days",
-                accent: "\(stats.percentOfYear)% of the year",
-                verse: nil, verseRef: nil
-            )
-            case .longestStreak: slideStat(
-                eyebrow: "My longest stand in \(stats.year)",
-                number: "\(stats.longestStreakInYear)",
-                unit: stats.longestStreakInYear == 1 ? "day in a row" : "days in a row",
-                accent: "I did not grow weary.",
-                verse: nil, verseRef: nil
-            )
-            case .bestMonth:
-                if let best = stats.bestMonth {
-                    VStack(spacing: DS.Spacing.sm) {
-                        eyebrow("My strongest month in \(stats.year)")
-                        Text(best.name)
-                            .font(Font.custom("AppleSDGothicNeo-Bold", size: 54, relativeTo: .largeTitle))
-                            .foregroundStyle(goldGradient)
-                        Text("\(best.count) day\(best.count == 1 ? "" : "s") on the wall")
-                            .font(Font.custom("AppleSDGothicNeo-Regular", size: 16, relativeTo: .body))
-                            .foregroundColor(.white.opacity(0.85))
-                    }
-                } else {
-                    EmptyView()
-                }
-            case .totals: slideStat(
-                eyebrow: "Words I declared in \(stats.year)",
-                number: "\(stats.totalDeclarationsSpoken)",
-                unit: stats.totalDeclarationsSpoken == 1 ? "time" : "times",
-                accent: "Every word a stone of remembrance.",
-                verse: nil, verseRef: nil
-            )
-            case .strength:
-                VStack(spacing: 14) {
-                    eyebrow("My strength reached in \(stats.year)")
-                    Image(systemName: stats.peakStrengthLevel.icon)
-                        .font(.system(size: 70, weight: .semibold))
-                        .foregroundStyle(goldGradient)
-                    Text(stats.peakStrengthLevel.rawValue.uppercased())
-                        .font(Font.custom("AppleSDGothicNeo-Bold", size: 40, relativeTo: .largeTitle))
-                        .foregroundStyle(goldGradient)
-                        .tracking(2.0)
-                }
-            case .cover, .summary: EmptyView()
-            }
-        }
+    private enum ShareMethod: String {
+        case shareSheet = "share_sheet"
+        case instagramStories = "instagram_stories"
     }
 
     @ViewBuilder
-    private func summaryCardForExport() -> some View {
-        ShareCardWrapper {
-            summaryCard
-                .padding(.horizontal, 0)
-        }
-    }
-
-    private func shareText(for slide: Slide) -> String {
+    private func shareCard(for slide: YearInReviewSlide) -> some View {
         switch slide {
-        case .days:          return "I stood in God's Word \(stats.daysActive) days this year. #SpeakLife"
-        case .longestStreak: return "My longest unbroken stand in \(stats.year): \(stats.longestStreakInYear) days. #SpeakLife"
-        case .bestMonth:
-            if let best = stats.bestMonth { return "\(best.name) was my strongest month in \(stats.year). #SpeakLife" }
-            return "My year of standing. #SpeakLife"
-        case .totals:        return "I spoke God's Word \(stats.totalDeclarationsSpoken) times this year. #SpeakLife"
-        case .strength:      return "I reached \(stats.peakStrengthLevel.rawValue) in \(stats.year). #SpeakLife"
-        case .cover, .summary: return "My year of standing. #SpeakLife"
+        case .cover, .summary:
+            YearInReviewSummaryCard(stats: stats, isPremium: includesPremiumExtras)
+        default:
+            YearInReviewStatCard(content: cardContent(for: slide), isPremium: includesPremiumExtras)
         }
-    }
-
-    private var shareSummaryText: String {
-        let base = "My Year of Standing — \(stats.year). \(stats.daysActive) days, longest run \(stats.longestStreakInYear), \(stats.totalDeclarationsSpoken) declarations."
-        if includesPremiumExtras {
-            return "\(base) Strength reached: \(stats.peakStrengthLevel.rawValue). #SpeakLife"
-        }
-        return "\(base) #SpeakLife"
     }
 
     @MainActor
-    private func presentShare<V: View>(of view: V, text: String) {
-        let renderer = ImageRenderer(content: view)
-        renderer.scale = UIScreen.main.scale
-        renderer.proposedSize = ProposedViewSize(width: 1080, height: 1920)
-        guard let image = renderer.uiImage else { return }
-        shareItem = ShareItem(image: image, text: text)
+    private func share(_ slide: YearInReviewSlide, method: ShareMethod) {
+        guard let image = YearInReviewShareCard.render(shareCard(for: slide)) else { return }
+
+        AnalyticsService.shared.track("year_in_review_shared", parameters: [
+            "slide": slide.rawValue,
+            "method": method.rawValue,
+            "year": stats.year,
+            "in_progress": stats.isInProgress
+        ])
+
+        switch method {
+        case .shareSheet:
+            // The tracked link rides only when the share goes to a chat;
+            // ReferralShareText leaves it off posts and saved images.
+            let link = ReferralLink.url(.yearInReview, campaign: String(stats.year))
+            shareItem = ShareItem(image: image,
+                                  text: ReferralShareText(stats.shareWords(for: slide), link: link))
+        case .instagramStories:
+            shareToInstagramStories(image: image)
+        }
     }
 }
 
-// MARK: - Share helpers
+// MARK: - Pieces
 
 private struct ShareItem: Identifiable {
     let id = UUID()
     let image: UIImage
-    let text: String
+    let text: ReferralShareText
 }
 
-/// Fixed-frame, dark-background wrapper used when rendering a slide to image.
-/// Forces a portrait 9:16 aspect so the result looks right pasted into Stories.
-private struct ShareCardWrapper<Content: View>: View {
-    @ViewBuilder var content: Content
+/// Gold tracked label with fading hairlines, the in-app twin of the card's.
+private struct SlideEyebrow: View {
+    let text: String
 
     var body: some View {
-        ZStack {
-            LinearGradient(
-                colors: [Color(hex: "0B0B14"), Color(hex: "1A1330"), Color(hex: "0B0B14")],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            VStack {
-                Spacer()
-                content
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 40)
-                Spacer()
-                HStack(spacing: 6) {
-                    Image(systemName: "crown.fill")
-                        .font(.system(size: 10, weight: .semibold))
-                    Text("SPEAKLIFE")
-                        .font(Font.custom("AppleSDGothicNeo-Bold", size: 11, relativeTo: .caption2))
-                        .tracking(2.5)
-                }
-                .foregroundColor(Color(hex: "FBBF24"))
-                .padding(.bottom, 56)
-            }
+        HStack(spacing: DS.Spacing.sm) {
+            LinearGradient(colors: [.clear, YearInReviewPalette.label], startPoint: .leading, endPoint: .trailing)
+                .frame(width: 28, height: 1)
+            Text(text.uppercased())
+                .font(.system(size: 12, weight: .semibold))
+                .tracking(3.5)
+                .foregroundColor(YearInReviewPalette.label)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            LinearGradient(colors: [YearInReviewPalette.label, .clear], startPoint: .leading, endPoint: .trailing)
+                .frame(width: 28, height: 1)
         }
-        .frame(width: 1080, height: 1920)
     }
 }
 
+/// Draws a whole number that SwiftUI can animate between values, which is
+/// what makes the hero count up. It ignores the view it modifies.
+private struct CountUp: ViewModifier, Animatable {
+    var value: Double
+
+    var animatableData: Double {
+        get { value }
+        set { value = newValue }
+    }
+
+    func body(content: Content) -> some View {
+        Text(verbatim: YearInReviewStats.formattedCount(Int(value.rounded())))
+    }
+}
+
+/// A few motes of gold drifting on the cover. Plain circles on a repeating
+/// animation: no timers, no Canvas loop. Still when Reduce Motion is on.
+private struct GoldDust: View {
+    let animate: Bool
+    @State private var drifting = false
+
+    private struct Mote {
+        let x: Double
+        let y: Double
+        let size: Double
+        let travel: Double
+        let duration: Double
+        let delay: Double
+        let opacity: Double
+    }
+
+    /// Fixed, evenly scattered positions so the cover looks the same each time.
+    private static let motes: [Mote] = (0..<14).map { i in
+        let n = Double(i)
+        return Mote(
+            x: (n * 0.618 + 0.11).truncatingRemainder(dividingBy: 1),
+            y: (n * 0.377 + 0.18).truncatingRemainder(dividingBy: 1),
+            size: 3 + Double(i % 4) * 1.6,
+            travel: 26 + Double(i % 5) * 10,
+            duration: 4.5 + Double(i % 4) * 1.3,
+            delay: Double(i % 7) * 0.35,
+            opacity: 0.25 + Double(i % 3) * 0.15
+        )
+    }
+
+    var body: some View {
+        GeometryReader { geo in
+            ZStack {
+                ForEach(Self.motes.indices, id: \.self) { i in
+                    let mote = Self.motes[i]
+                    Circle()
+                        .fill(YearInReviewPalette.glow)
+                        .frame(width: mote.size, height: mote.size)
+                        .blur(radius: mote.size * 0.3)
+                        .opacity(drifting ? mote.opacity : mote.opacity * 0.4)
+                        .position(x: geo.size.width * mote.x,
+                                  y: geo.size.height * mote.y - (drifting ? mote.travel : 0))
+                        .animation(
+                            animate
+                                ? .easeInOut(duration: mote.duration)
+                                    .repeatForever(autoreverses: true)
+                                    .delay(mote.delay)
+                                : nil,
+                            value: drifting
+                        )
+                }
+            }
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+        .onAppear {
+            if animate { drifting = true }
+        }
+    }
+}
+
+// MARK: - Previews
+
+#if DEBUG
+#Preview("Recap, premium") {
+    YearInReviewView(stats: .sample(), includesPremiumExtras: true, source: .todayCard)
+}
+
+#Preview("Recap, one day") {
+    YearInReviewView(stats: .sample(daysActive: 1, totals: 0, bestMonth: (name: "March", count: 1)),
+                     includesPremiumExtras: false)
+}
+#endif
