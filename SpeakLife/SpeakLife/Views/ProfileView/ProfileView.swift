@@ -63,10 +63,11 @@ struct ProfileView: View {
     @State private var showStands = false
     @ObservedObject private var standService = StandService.shared
     /// Built when the sheet opens, not with the view, so the link carries the
-    /// sharer's analytics id even if it was not ready at first render.
-    private var shareInviteText: String {
-        "This app helps me speak God's Word over my life every day. Try it with me:\n"
-            + ReferralLink.url(.profileInvite).absoluteString
+    /// sharer's analytics id even if it was not ready at first render. The
+    /// link is added only for messaging apps (see `ReferralShareText`).
+    private var shareInvite: ReferralShareText {
+        ReferralShareText("This app helps me speak God's Word over my life every day. Try it with me.",
+                          link: ReferralLink.url(.profileInvite))
     }
     
     
@@ -174,7 +175,7 @@ struct ProfileView: View {
                     }
                     
                     .sheet(isPresented: $showShareSheet, content: {
-                        ShareSheet(activityItems: [shareInviteText])
+                        ShareSheet(activityItems: [shareInvite])
                     })
 
                     Section(header: Text("Other".uppercased()).font(.caption)) {

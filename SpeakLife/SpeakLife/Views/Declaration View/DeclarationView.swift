@@ -569,8 +569,9 @@ struct DeclarationView: View {
             if let scene = UIApplication.shared.connectedScenes
                 .first(where: { $0.activationState == .foregroundActive })
                 as? UIWindowScene {
-                let invite = "This app helps me speak God's Word over my life every day. Try it with me:\n"
-                    + ReferralLink.url(.profileInvite).absoluteString
+                let invite = ReferralShareText(
+                    "This app helps me speak God's Word over my life every day. Try it with me.",
+                    link: ReferralLink.url(.profileInvite))
                 let activityVC = UIActivityViewController(activityItems: [invite], applicationActivities: nil)
                 let window = scene.windows.first
                 window?.rootViewController?.present(activityVC, animated: true)

@@ -526,9 +526,11 @@ final class BibleViewModel: ObservableObject {
     
     // MARK: - Sharing
     func shareVerse(_ verse: VerseDisplayModel) {
-        let link = ReferralLink.url(.bibleVerse).absoluteString
-        let shareText = "\u{201C}\(verse.text)\u{201D}\n\(verse.reference) (\(selectedVersion.uppercased()))"
-            + "\n\nRead the Bible with me on SpeakLife:\n\(link)"
+        // The tracked link is added only for messaging apps.
+        let shareText = ReferralShareText(
+            "\u{201C}\(verse.text)\u{201D}\n\(verse.reference) (\(selectedVersion.uppercased()))"
+                + "\n\nRead the Bible with me on SpeakLife.",
+            link: ReferralLink.url(.bibleVerse))
 
         let activityController = UIActivityViewController(
             activityItems: [shareText],

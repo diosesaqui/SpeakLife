@@ -302,16 +302,17 @@ struct DevotionalView: View {
         }
     }
     
-    /// Title, the devotional, then a tracked link. Read when the sheet opens,
-    /// so it is today's text, and still a clean invite if the text is empty.
-    private var devotionalShareText: String {
-        let link = ReferralLink.url(.devotional).absoluteString
+    /// Title, the devotional, then an invite. Read when the sheet opens, so it
+    /// is today's text, and still a clean invite if the text is empty. The
+    /// tracked link is added only for messaging apps.
+    private var devotionalShareText: ReferralShareText {
         let body = [viewModel.title, viewModel.devotionalText]
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
             .joined(separator: "\n\n")
-        let invite = "I read this on SpeakLife today. Read with me:\n\(link)"
-        return body.isEmpty ? invite : "\(body)\n\n\(invite)"
+        let invite = "I read this on SpeakLife today. Read with me."
+        return ReferralShareText(body.isEmpty ? invite : "\(body)\n\n\(invite)",
+                                 link: ReferralLink.url(.devotional))
     }
 
     private var shareButton: some View {
@@ -538,7 +539,10 @@ struct DevotionalView: View {
                 as? UIWindowScene {
                 let url = ReferralLink.url(.devotional)
                 
-                let activityVC = UIActivityViewController(activityItems: ["This app helps me speak God's Word over my life every day. Try it with me:\n\(url.absoluteString)"], applicationActivities: nil)
+                let invite = ReferralShareText(
+                    "This app helps me speak God's Word over my life every day. Try it with me.",
+                    link: url)
+                let activityVC = UIActivityViewController(activityItems: [invite], applicationActivities: nil)
                 let window = scene.windows.first
                 window?.rootViewController?.present(activityVC, animated: true)
             }

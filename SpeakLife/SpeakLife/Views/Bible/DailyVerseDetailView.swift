@@ -11,7 +11,7 @@ struct DailyVerseDetailView: View {
     let verse: RandomVerse
     @Environment(\.dismiss) var dismiss
     @State private var showShareSheet = false
-    @State private var shareText = ""
+    @State private var shareText: ReferralShareText?
     
     var body: some View {
         NavigationView {
@@ -127,16 +127,20 @@ struct DailyVerseDetailView: View {
                 }
             }
             .sheet(isPresented: $showShareSheet) {
-                ShareSheet(activityItems: [shareText])
+                if let shareText {
+                    ShareSheet(activityItems: [shareText])
+                }
             }
         }
         .navigationViewStyle(.stack)
     }
     
     private func shareVerse() {
-        let link = ReferralLink.url(.dailyVerse).absoluteString
-        shareText = "\u{201C}\(verse.text)\u{201D}\n\(verse.book.name) \(verse.chapter):\(verse.number)"
-            + "\n\nMy verse for today. Start your mornings in God's Word with me:\n\(link)"
+        // The tracked link is added only for messaging apps.
+        shareText = ReferralShareText(
+            "\u{201C}\(verse.text)\u{201D}\n\(verse.book.name) \(verse.chapter):\(verse.number)"
+                + "\n\nMy verse for today. Start your mornings in God's Word with me.",
+            link: ReferralLink.url(.dailyVerse))
         showShareSheet = true
     }
     

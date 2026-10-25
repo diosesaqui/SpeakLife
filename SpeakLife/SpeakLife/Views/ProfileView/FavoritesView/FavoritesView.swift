@@ -84,19 +84,19 @@ struct ContentRow: View {
         }
     }
     
-    /// The declaration, its verse, a line to say it together, and a tracked
-    /// link. Jesus-voice entries carry "Jesus" as their book, which is not a
-    /// reference, so it is left off.
-    private var shareText: String {
-        let link = ReferralLink.url(.favorite, campaign: declaration.category.rawValue).absoluteString
+    /// The declaration, its verse and a line to say it together. The tracked
+    /// link is added only for messaging apps. Jesus-voice entries carry
+    /// "Jesus" as their book, which is not a reference, so it is left off.
+    private var shareText: ReferralShareText {
+        let link = ReferralLink.url(.favorite, campaign: declaration.category.rawValue)
         var text = declaration.text.trimmingCharacters(in: .whitespacesAndNewlines)
         if !text.isEmpty,
            let book = declaration.book?.trimmingCharacters(in: .whitespacesAndNewlines),
            !book.isEmpty, book != "Jesus" {
             text += "\n\(book)"
         }
-        let invite = "Speak this one out loud with me:\n\(link)"
-        return text.isEmpty ? invite : "\(text)\n\n\(invite)"
+        let invite = "Speak this one out loud with me."
+        return ReferralShareText(text.isEmpty ? invite : "\(text)\n\n\(invite)", link: link)
     }
 
     @ViewBuilder

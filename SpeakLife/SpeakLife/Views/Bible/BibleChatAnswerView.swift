@@ -16,6 +16,7 @@ struct BibleChatAnswerView: View {
     @State private var headerVisible = false
     @State private var answerVisible = false
     @State private var reflectionVisible = false
+    @State private var showShareSheet = false
 
     var body: some View {
         ZStack {
@@ -208,12 +209,24 @@ struct BibleChatAnswerView: View {
 
     private var actionRow: some View {
         HStack(spacing: DS.Spacing.sm) {
-            ShareLink(item: shareText) {
+            // The app's ShareSheet, not SwiftUI's ShareLink: only an activity
+            // item source can leave the link off posts and keep it in messages.
+            Button {
+                Juice.play(.tapLight)
+                showShareSheet = true
+            } label: {
                 actionLabel(systemImage: "square.and.arrow.up", title: "Share")
             }
+            .sheet(isPresented: $showShareSheet) {
+                ShareSheet(activityItems: [shareItem])
+            }
             Button {
+                // A copy is almost always pasted into a chat, so it carries
+                // the link, the same rule `ReferralShareText` applies.
+                let item = shareItem
                 let pasteboard = UIPasteboard.general
-                pasteboard.string = shareText
+                pasteboard.string = ReferralShareText.message(
+                    text: item.text, link: item.link, for: .copyToPasteboard)
                 Juice.play(.success)
                 AnalyticsService.shared.trackContentInteraction(
                     contentType: "bible_chat_topic",
@@ -243,7 +256,11 @@ struct BibleChatAnswerView: View {
         )
     }
 
-    private var shareText: String {
+    private var shareItem: ReferralShareText {
+        ReferralShareText(shareWords, link: ReferralLink.url(.bibleChat, campaign: topic.id))
+    }
+
+    private var shareWords: String {
         var lines = [topic.title, "", topic.answer]
         if !topic.verses.isEmpty {
             lines.append("")
@@ -251,11 +268,8 @@ struct BibleChatAnswerView: View {
                 lines.append("\u{201C}\(verse.text)\u{201D} (\(verse.reference))")
             }
         }
-        // Copy uses this text too: a pasted answer leaves the app just like a
-        // shared one, so it carries the same tracked link.
         lines.append("")
-        lines.append("I found this on SpeakLife. Bring your own questions to God's Word:")
-        lines.append(ReferralLink.url(.bibleChat, campaign: topic.id).absoluteString)
+        lines.append("I found this on SpeakLife. Bring your own questions to God's Word.")
         return lines.joined(separator: "\n")
     }
 

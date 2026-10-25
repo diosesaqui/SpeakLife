@@ -47,13 +47,13 @@ struct TrackerView: View {
     }
 
     /// Falls back to a line with no number before any time is counted, so the
-    /// share never says "I've spent 0 minutes".
-    private var shareText: String {
-        let link = ReferralLink.url(.tracker).absoluteString
+    /// share never says "I've spent 0 minutes". The tracked link is added
+    /// only for messaging apps.
+    private var shareText: ReferralShareText {
         let time = timeTracker.totalTimeValue.trimmingCharacters(in: .whitespaces)
-        if time.isEmpty || time == "0 minutes" {
-            return "I'm speaking God's Word over my life every day with SpeakLife. Join me:\n\(link)"
-        }
-        return "I've spent \(time) speaking God's Word over my life with SpeakLife. Join me:\n\(link)"
+        let words = (time.isEmpty || time == "0 minutes")
+            ? "I'm speaking God's Word over my life every day with SpeakLife. Join me."
+            : "I've spent \(time) speaking God's Word over my life with SpeakLife. Join me."
+        return ReferralShareText(words, link: ReferralLink.url(.tracker))
     }
 }
