@@ -774,6 +774,15 @@ enum BranchAttribution {
                 "source": "deferred"
             ])
         }
+        // Speak it over someone: a declaration a friend sent. Queued like the
+        // Stand code and shown only after onboarding. Branch also calls back
+        // for an installed open of the same link, which `onOpenURL` already
+        // queued; the inbox ignores that duplicate.
+        if let gift = SpeakOverLink.parse(branchParams: params) {
+            let isFirstSession = params["+is_first_session"] as? Bool ?? false
+            SpeakOverInbox.deliver(gift, source: isFirstSession ? .deferred : .link)
+        }
+
         // Prefer an explicit `ob` key set on the Branch link's deep-link data;
         // otherwise recover it from the referring link URL.
         if let ob = params["ob"] as? String {

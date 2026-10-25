@@ -101,6 +101,8 @@ struct DeclarationContentView: View {
     @ObservedObject var viewModel: DeclarationViewModel
     @State private var isFavorite: Bool = false
     @State private var showShareSheet = false
+    /// The declaration being sent with "Send to someone".
+    @State private var speakOverDeclaration: Declaration?
     @State private var image: UIImage?
     @State private var showAnimation = false
     @State private var isCapturingScreenshot = false
@@ -704,6 +706,9 @@ struct DeclarationContentView: View {
         HStack(spacing: DS.Spacing.lg) {
                 
                 Menu {
+                    Button("Send to someone") {
+                        speakOverDeclaration = declaration
+                    }
                     Button("Instagram Stories") {
                         viewModel.setCurrent(declaration)
                         setImage() {
@@ -747,6 +752,14 @@ struct DeclarationContentView: View {
                 
         }
         .foregroundColor(.white)
+        // Every page carries these buttons, so only the page whose declaration
+        // is being sent presents the sheet.
+        .sheet(item: Binding(
+            get: { speakOverDeclaration?.id == declaration.id ? speakOverDeclaration : nil },
+            set: { speakOverDeclaration = $0 }
+        )) { item in
+            SpeakOverSheet(declaration: item, background: shareBackground)
+        }
     }
     
     private func affirm(_ declaration: Declaration, isAffirmation: Bool) {

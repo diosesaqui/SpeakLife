@@ -148,6 +148,10 @@ struct SpeakLifeApp: App {
                     // deferred link resolved during didFinishLaunching cannot
                     // land on top of onboarding.
                     .standRedemption(appState: appState)
+                    // Opens a declaration a friend sent ("Speak it over
+                    // someone"). Same rules as the Stand code: never over
+                    // onboarding, never over another open screen.
+                    .speakOverPresentation(appState: appState, themeViewModel: themeStore)
                     // Presents the shared day-7 celebration and opens the room a
                     // stand push points at. Both were previously set by code that
                     // nothing read.
@@ -198,6 +202,12 @@ struct SpeakLifeApp: App {
                             AnalyticsService.shared.track("stand_invite_opened", parameters: [
                                 "source": "universal_link"
                             ])
+                        }
+                        // A declaration a friend sent. Queued, never presented
+                        // from here, so it waits for onboarding and for any
+                        // screen already open.
+                        if let gift = SpeakOverLink.parse(url) {
+                            SpeakOverInbox.deliver(gift, source: .link)
                         }
                         SubscriptionStore.handleIncomingURL(url, source: "deeplink")
                         // Same link, read for channel rather than for the arm:
