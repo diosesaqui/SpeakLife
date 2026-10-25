@@ -252,6 +252,13 @@ scheme the page's own button fires.
 
 ### The note on the invite sheet
 
+> **Retired (2026-10-25).** The founder took this note off the send screen:
+> old builds are now a small share of users, and 43 of 56 people who opened the
+> sheet never tapped Send. The default of `standInviteRecipientNote` is now
+> empty. The key is still read, so setting it in Remote Config brings back a
+> quiet line under the button without a build. The history below is why it
+> existed.
+
 `StandInviteSheet` carries a line, above the share button, telling the SENDER to
 ask their recipient to update first. That is not belt-and-braces, it is the only
 warning anybody in the chain can receive: a recipient on an old build gets no

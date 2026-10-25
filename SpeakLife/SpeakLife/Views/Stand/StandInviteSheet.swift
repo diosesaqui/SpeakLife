@@ -50,10 +50,22 @@ enum StandInviteSource {
 struct StandInviteSheet: View {
 
     let source: StandInviteSource
+    /// Open the system share sheet by itself, once, as soon as the invite is
+    /// ready. Only for callers whose button already said "Invite someone": the
+    /// tap was the decision, so asking for a second tap on "Send the invite"
+    /// is where 43 of 56 people stopped. Callers that open this to show the
+    /// card first leave it off.
+    let autoShare: Bool
 
-    init(source: StandInviteSource) { self.source = source }
+    init(source: StandInviteSource, autoShare: Bool = false) {
+        self.source = source
+        self.autoShare = autoShare
+    }
     /// Convenience for the callers that already hold a room.
-    init(room: StandRoom) { self.source = .room(room) }
+    init(room: StandRoom, autoShare: Bool = false) {
+        self.source = .room(room)
+        self.autoShare = autoShare
+    }
 
     @State private var roomId: String?
     @State private var code: String?
@@ -61,6 +73,12 @@ struct StandInviteSheet: View {
     @State private var isWorking = true
     @State private var showShareSheet = false
     @State private var failureShown: InviteFailure?
+    /// Set the moment the automatic share sheet is presented, and never
+    /// cleared. It is what keeps a re-render, a Try again, or dismissing the
+    /// share sheet from opening it a second time.
+    @State private var didAutoShare = false
+    /// At least one share finished with the user actually sending.
+    @State private var hasSent = false
     @Environment(\.dismiss) private var dismiss
 
     private var enforcement: Enforcement { source.enforcement }
@@ -75,16 +93,23 @@ struct StandInviteSheet: View {
         return url.absoluteString
     }
 
-    /// The message body. The link and the typed code both appear, because the
-    /// two install paths need different things.
+    /// The message body: a personal ask, the link, and the code as the
+    /// fallback for anyone Branch's deferred matching misses.
+    ///
+    /// Short on purpose. It sits under the card in a text thread, and the
+    /// first line is what shows in the notification preview.
     private var shareText: String {
-        """
-        I'm speaking God's word over \(enforcement.theme.name.lowercased()) for 7 days. Stand with me.
+        let ask = "Will you stand with me this week? For 7 days I'm standing on God's word for \(StandInviteCopy.firstPerson(enforcement.theme)), and I'd love you with me."
+        var parts = [ask]
+        if !link.isEmpty { parts.append(link) }
+        if code != nil { parts.append("Link won't open? Use code \(formattedCode) in SpeakLife.") }
+        return parts.joined(separator: "\n\n")
+    }
 
-        \(link)
-
-        (or open SpeakLife and enter code \(formattedCode))
-        """
+    /// Said before the link is sent, not after. The theme is visible to
+    /// everyone invited, and that can be a private thing.
+    private var privacyLine: String {
+        "They'll see you're standing for \(StandInviteCopy.secondPerson(enforcement.theme))."
     }
 
     private var formattedCode: String {
@@ -106,23 +131,37 @@ struct StandInviteSheet: View {
         NavigationStack {
             ZStack {
                 Gradients().speakLifeCYOCell.ignoresSafeArea()
-                VStack(spacing: DS.Spacing.lg) {
-                    if isWorking {
-                        working
-                    } else if let failureShown {
-                        failureView(failureShown)
-                    } else {
-                        ready
-                    }
+                if isWorking {
+                    working
+                } else if let failureShown {
+                    failureView(failureShown)
+                        .padding(DS.Spacing.md)
+                } else {
+                    StandInviteReadyView(
+                        card: shareImage,
+                        privacyLine: privacyLine,
+                        formattedCode: formattedCode,
+                        recipientNote: recipientNote,
+                        hasSent: hasSent,
+                        onSend: { presentShare(trigger: "tap") }
+                    )
+                    .task { await autoShareIfNeeded() }
                 }
-                .padding(DS.Spacing.md)
             }
-            .navigationTitle("Invite someone")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }.foregroundColor(DS.Palette.gold)
                 }
+            }
+            .sheet(isPresented: $showShareSheet) {
+                StandActivitySheet(items: shareItems) { activity, completed in
+                    shareFinished(activity: activity, completed: completed)
+                }
+                // Half height first, like the system share sheet, so the card
+                // stays in view behind it.
+                .presentationDetents([.medium, .large])
+                .ignoresSafeArea()
             }
         }
         .task { await prepare() }
@@ -141,128 +180,30 @@ struct StandInviteSheet: View {
         }
     }
 
-    private var ready: some View {
-        VStack(spacing: DS.Spacing.lg) {
-            if let shareImage {
-                Image(uiImage: shareImage)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxHeight: 320)
-                    .clipShape(RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous))
-                    .shadow(color: DS.Elevation.medium.color,
-                            radius: DS.Elevation.medium.radius,
-                            x: DS.Elevation.medium.x, y: DS.Elevation.medium.y)
-            }
-
-            // Said before the link is sent, not after. The theme is visible to
-            // everyone invited, and that can be a private thing.
-            Text("Everyone you invite will see you're standing for \(enforcement.theme.name.lowercased()).")
-                .font(DS.Typography.caption)
-                .foregroundColor(DS.Palette.textSecondary)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-
-            if !recipientNote.isEmpty {
-                recipientNoteRow
-            }
-
-            Button {
-                AnalyticsService.shared.track("stand_invite_shared", parameters: [
-                    "room_id": roomId ?? "",
-                    "channel": "share_sheet",
-                    "has_image": shareImage != nil,
-                ])
-                showShareSheet = true
-            } label: {
-                Label("Send the invite", systemImage: "square.and.arrow.up")
-                    .font(.system(size: 17, weight: .semibold, design: .rounded))
-                    .foregroundColor(.black)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, DS.Spacing.sm)
-                    .background(Capsule().fill(DS.Palette.gold))
-            }
-            .sheet(isPresented: $showShareSheet) {
-                ShareSheet(activityItems: shareItems)
-            }
-
-            codeRow
-        }
-    }
-
-    /// Told to the SENDER, before they share, because nobody else can be told.
+    /// RETIRED, BUT STILL REMOTE. This was a boxed warning above the send
+    /// button: "If they already have SpeakLife, ask them to update to 4.65 or
+    /// later. Older versions can't open the invite."
     ///
-    /// A recipient who already has SpeakLife on a build older than the one that
-    /// ships Stand gets nothing when they tap the link: their app claims
-    /// `speaklife.app.link`, opens, finds no route for `/stand/…`, and stops.
-    /// It cannot show them an error, and it has no code-entry screen either,
-    /// because both ship in the build they do not have. See
-    /// docs/STAND_TOGETHER_HANDOFF.md, Step 2d.
+    /// It existed because builds 4.59 to 4.64 claim `speaklife.app.link` but
+    /// cannot route `/stand/…`, so a recipient on one of them taps the link,
+    /// the app opens, and nothing happens (docs/STAND_TOGETHER_HANDOFF.md,
+    /// Step 2d). The sender was the only person in the chain who could be
+    /// told.
     ///
-    /// So the only person in the whole chain who can be warned is the one
-    /// standing here holding the share sheet.
+    /// It came out because it cost more than it saved. Those builds are now a
+    /// small share of users, and the warning sat on the one button this screen
+    /// exists for: 43 of the 56 people who opened this sheet in its last 30
+    /// days never tapped Send. A recipient on an old build can still update and
+    /// re-tap the same link, since codes live 14 days and `joinStand` treats
+    /// `alreadyMember` as success.
     ///
-    /// 4.65 is the floor because that is the build Stand ships in. Everything
-    /// from 4.59 to 4.64 claims `speaklife.app.link` without being able to
-    /// route `/stand/…`, which is the whole failure; 4.58 and earlier do not
-    /// claim it and so fall through to Safari and the App Store correctly.
-    ///
-    /// REMOTE, AND EMPTY TURNS IT OFF. This is a migration notice, not a
-    /// permanent part of the screen — once old builds have aged out it is
-    /// clutter on the most important button in the feature. Clearing
-    /// `standInviteRecipientNote` in Remote Config removes it without a build,
-    /// and the same key is how the version gets bumped if the floor ever moves.
+    /// The default is empty, so nothing renders. The key is still read, so if
+    /// the old-build share ever climbs again, setting
+    /// `standInviteRecipientNote` in Remote Config brings back a quiet line
+    /// under the button without a build.
     private var recipientNote: String {
-        DefaultFeatureFlags.shared.string(
-            "standInviteRecipientNote",
-            default: "If they already have SpeakLife, ask them to update to 4.65 or later. Older versions can't open the invite."
-        )
-    }
-
-    private var recipientNoteRow: some View {
-        HStack(alignment: .top, spacing: DS.Spacing.xs) {
-            Image(systemName: "arrow.down.circle")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(DS.Palette.gold.opacity(0.8))
-            Text(recipientNote)
-                .font(DS.Typography.caption)
-                .foregroundColor(DS.Palette.textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(DS.Spacing.sm)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
-                .fill(Color.white.opacity(0.06))
-        )
-    }
-
-    private var codeRow: some View {
-        VStack(spacing: DS.Spacing.xs) {
-            Text("OR GIVE THEM THIS CODE")
-                .font(.system(size: 10, weight: .bold))
-                .tracking(1.2)
-                .foregroundColor(DS.Palette.textSecondary)
-
-            Button {
-                UIPasteboard.general.string = formattedCode
-                PremiumHaptics.success()
-            } label: {
-                Text(formattedCode)
-                    .font(.system(size: 26, weight: .bold, design: .monospaced))
-                    .tracking(2)
-                    .foregroundColor(DS.Palette.textPrimary)
-                    .padding(.horizontal, DS.Spacing.md)
-                    .padding(.vertical, DS.Spacing.sm)
-                    .background(RoundedRectangle(cornerRadius: DS.Radius.md,
-                                                 style: .continuous)
-                        .fill(DS.Palette.surface))
-            }
-            .accessibilityLabel("Invite code \(formattedCode). Tap to copy.")
-
-            Text("Expires in 14 days.")
-                .font(.system(size: 11))
-                .foregroundColor(DS.Palette.textSecondary.opacity(0.7))
-        }
+        DefaultFeatureFlags.shared.string("standInviteRecipientNote", default: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     /// User copy on top, the underlying reason underneath in small type.
@@ -293,14 +234,16 @@ struct StandInviteSheet: View {
                     .textSelection(.enabled)
             }
 
-            Button("Try again") {
+            Button {
                 Task { await prepare() }
+            } label: {
+                Text("Try again")
+                    .font(.system(size: 17, weight: .semibold, design: .rounded))
+                    .foregroundColor(.black)
+                    .frame(maxWidth: .infinity, minHeight: 52)
+                    .background(Capsule().fill(DS.Palette.gold))
             }
-            .font(.system(size: 17, weight: .semibold, design: .rounded))
-            .foregroundColor(.black)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, DS.Spacing.sm)
-            .background(Capsule().fill(DS.Palette.gold))
+            .buttonStyle(.dsPressable())
             .padding(.top, DS.Spacing.xs)
         }
         .padding(.horizontal, DS.Spacing.sm)
@@ -332,6 +275,57 @@ struct StandInviteSheet: View {
         return items
     }
 
+    // MARK: - Sharing
+
+    /// `stand_invite_shared` keeps meaning "the share sheet opened", now with a
+    /// `trigger`, so the old tap-only numbers stay comparable by filtering on
+    /// `trigger = tap`. Whether anything was actually sent is
+    /// `stand_invite_share_completed`.
+    private func presentShare(trigger: String) {
+        guard code != nil, !showShareSheet else { return }
+        AnalyticsService.shared.track("stand_invite_shared", parameters: [
+            "room_id": roomId ?? "",
+            "channel": "share_sheet",
+            "has_image": shareImage != nil,
+            "trigger": trigger,
+        ])
+        showShareSheet = true
+    }
+
+    private func shareFinished(activity: String?, completed: Bool) {
+        showShareSheet = false
+        AnalyticsService.shared.track("stand_invite_share_completed", parameters: [
+            "room_id": roomId ?? "",
+            "completed": completed,
+            "activity": activity ?? "none",
+        ])
+        if completed {
+            hasSent = true
+            Juice.play(.success)
+        }
+    }
+
+    /// Opens the share sheet once, by itself, when this sheet was opened from
+    /// an "Invite someone" tap.
+    ///
+    /// ⚠️ THE DELAY IS LOAD-BEARING. This screen is itself a sheet, and when
+    /// the room and code are already cached the ready state appears while that
+    /// sheet is still sliding up. SwiftUI drops a sheet presented during
+    /// another presentation's animation ("Attempt to present … which is
+    /// already presenting"), and the flag below would then be spent on a sheet
+    /// that never showed. Waiting just past the system sheet animation lets the
+    /// presentation settle first. `.task` is cancelled if the user closes this
+    /// screen during the wait, so nothing opens over a sheet that is gone.
+    @MainActor
+    private func autoShareIfNeeded() async {
+        guard autoShare, !didAutoShare else { return }
+        try? await Task.sleep(nanoseconds: 650_000_000)
+        guard !Task.isCancelled, !didAutoShare, !showShareSheet,
+              !isWorking, failureShown == nil, code != nil else { return }
+        didAutoShare = true
+        presentShare(trigger: "auto")
+    }
+
     // MARK: - Work
 
     /// Codes already minted this session, by room.
@@ -343,17 +337,21 @@ struct StandInviteSheet: View {
     @MainActor
     private static var codesByRoom: [String: String] = [:]
 
+    /// `stand_invite_sheet_ready` and `stand_invite_sheet_failed` split the
+    /// gap between `stand_created` and `stand_invite_shared` into "the invite
+    /// never loaded" and "it loaded and they chose not to send".
     @MainActor
     private func prepare() async {
         isWorking = true
         failureShown = nil
         do {
-            let id: String
+            let resolvedRoom: (id: String, isNew: Bool)
             do {
-                id = try await resolveRoomId()
+                resolvedRoom = try await resolveRoom()
             } catch {
                 throw InviteFailure.creating(error)
             }
+            let id = resolvedRoom.id
             roomId = id
 
             let resolved: String
@@ -369,43 +367,286 @@ struct StandInviteSheet: View {
             }
             code = resolved
             shareImage = StandInviteCardRenderer.render(
-                theme: enforcement.theme.name,
+                headline: "I'm standing on God's word for \(StandInviteCopy.firstPerson(enforcement.theme)) this week.",
                 title: enforcement.displayTitle,
                 code: Self.formatted(resolved)
             )
+            AnalyticsService.shared.track("stand_invite_sheet_ready", parameters: [
+                "room_id": id,
+                "source": resolvedRoom.isNew ? "new" : "existing",
+                "has_image": shareImage != nil,
+            ])
         } catch let failure as InviteFailure {
             failureShown = failure
             AnalyticsService.shared.track("stand_invite_failed", parameters: [
                 "stage": failure.stage,
                 "reason": failure.reason,
             ])
+            AnalyticsService.shared.track("stand_invite_sheet_failed", parameters: [
+                "stage": failure.stage,
+                "reason": failure.reason,
+            ])
         } catch {
-            failureShown = InviteFailure.creating(error)
+            let failure = InviteFailure.creating(error)
+            failureShown = failure
+            AnalyticsService.shared.track("stand_invite_sheet_failed", parameters: [
+                "stage": failure.stage,
+                "reason": failure.reason,
+            ])
         }
         isWorking = false
     }
 
-    /// The room to invite into, creating it if this is a fresh stand.
+    /// The room to invite into, creating it if this is a fresh stand. `isNew`
+    /// is true only when this call minted it.
     ///
     /// `createStand` already hands back a first code, so it is cached here
     /// rather than thrown away and immediately re-minted.
     @MainActor
-    private func resolveRoomId() async throws -> String {
+    private func resolveRoom() async throws -> (id: String, isNew: Bool) {
         switch source {
         case .room(let room):
-            return room.id
+            return (room.id, false)
 
         case .newStand(let plan):
             if let existing = StandInviteLauncher.existingRoom(for: plan) {
-                return existing.id
+                return (existing.id, false)
             }
             _ = try await StandAuthCoordinator.shared.ensureAccount()
             let name = UserDefaults.standard.string(forKey: "userName") ?? "Friend"
             let result = try await StandService.shared.createStand(
                 enforcement: plan, name: name)
             Self.codesByRoom[result.roomId] = result.code
-            return result.roomId
+            return (result.roomId, true)
         }
+    }
+}
+
+// MARK: - Ready
+
+/// The ready state, on its own so it can be previewed without a network.
+///
+/// One job: send the invite. The card leads, one headline says what this is,
+/// one gold button sends it, and the code (the fallback for a link that will
+/// not open) waits behind a quiet disclosure instead of competing with it.
+struct StandInviteReadyView: View {
+
+    let card: UIImage?
+    let privacyLine: String
+    let formattedCode: String
+    /// Empty unless Remote Config turns the old-build note back on.
+    let recipientNote: String
+    let hasSent: Bool
+    let onSend: () -> Void
+
+    @State private var showCode = false
+    @State private var copied = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: DS.Spacing.lg) {
+                cardImage
+                    .padding(.top, DS.Spacing.xs)
+
+                VStack(spacing: DS.Spacing.xs) {
+                    Text(hasSent ? "Your invite is on its way" : "Stand with someone this week")
+                        .font(.system(size: 26, weight: .semibold, design: .serif))
+                        .foregroundColor(DS.Palette.textPrimary)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .contentTransition(.opacity)
+
+                    Text(privacyLine)
+                        .font(DS.Typography.callout)
+                        .foregroundColor(DS.Palette.textSecondary)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(.horizontal, DS.Spacing.sm)
+
+                VStack(spacing: DS.Spacing.sm) {
+                    sendButton
+
+                    if !recipientNote.isEmpty {
+                        Text(recipientNote)
+                            .font(DS.Typography.caption)
+                            .foregroundColor(DS.Palette.textSecondary)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+
+                codeDisclosure
+            }
+            .padding(.horizontal, DS.Spacing.lg)
+            .padding(.bottom, DS.Spacing.xl)
+            .animation(reduceMotion ? nil : DS.Motion.smooth, value: hasSent)
+        }
+        .scrollBounceBehavior(.basedOnSize)
+    }
+
+    @ViewBuilder
+    private var cardImage: some View {
+        if let card {
+            Image(uiImage: card)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(maxWidth: 300, maxHeight: 375)
+                .clipShape(RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous)
+                        .stroke(DS.Palette.gold.opacity(0.25), lineWidth: 1)
+                )
+                .dsShadow(DS.Elevation.high)
+                .accessibilityLabel("Your invite card")
+        } else {
+            // The render failed. The invite still goes as text, so the screen
+            // keeps its shape rather than collapsing around a missing card.
+            Image(systemName: "person.2.fill")
+                .font(.system(size: 44, weight: .semibold))
+                .foregroundColor(DS.Palette.gold)
+                .frame(width: 120, height: 120)
+                .background(Circle().fill(DS.Palette.gold.opacity(0.12)))
+                .accessibilityHidden(true)
+        }
+    }
+
+    private var sendButton: some View {
+        Button(action: onSend) {
+            Label(hasSent ? "Send to someone else" : "Send the invite",
+                  systemImage: "paperplane.fill")
+                .font(.system(size: 17, weight: .semibold, design: .rounded))
+                .foregroundColor(.black)
+                .frame(maxWidth: .infinity, minHeight: 54)
+                .background(Capsule().fill(DS.Gradient.gold))
+                .contentShape(Capsule())
+        }
+        .buttonStyle(.dsPressable())
+    }
+
+    private var codeDisclosure: some View {
+        VStack(spacing: DS.Spacing.sm) {
+            Button {
+                Juice.play(.tapLight)
+                withAnimation(reduceMotion ? nil : DS.Motion.smooth) { showCode.toggle() }
+            } label: {
+                HStack(spacing: 6) {
+                    Text("Can't open the link? Share a code")
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 11, weight: .semibold))
+                        .rotationEffect(.degrees(showCode ? 180 : 0))
+                }
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(DS.Palette.textSecondary)
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(PlainButtonStyle())
+            .accessibilityHint(showCode ? "Hides the invite code" : "Shows the invite code")
+
+            if showCode {
+                codeTile
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
+    }
+
+    private var codeTile: some View {
+        Button {
+            UIPasteboard.general.string = formattedCode
+            PremiumHaptics.success()
+            copied = true
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 1_800_000_000)
+                copied = false
+            }
+        } label: {
+            VStack(spacing: DS.Spacing.xs) {
+                Text(formattedCode)
+                    .font(.system(size: 28, weight: .bold, design: .monospaced))
+                    .tracking(3)
+                    .foregroundColor(DS.Palette.textPrimary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                Text(copied ? "Copied" : "Tap to copy. Good for 14 days.")
+                    .font(DS.Typography.caption)
+                    .foregroundColor(copied ? DS.Palette.gold : DS.Palette.textSecondary)
+                    .contentTransition(.opacity)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, DS.Spacing.md)
+            .background(
+                RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
+                    .fill(DS.Palette.surface)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
+                    .stroke(DS.Palette.hairline, lineWidth: 1)
+            )
+        }
+        .buttonStyle(.dsPressable(feel: .tapLight, haptics: false))
+        .accessibilityLabel("Invite code \(formattedCode)")
+        .accessibilityHint("Copies the code")
+    }
+}
+
+// MARK: - Share sheet
+
+/// `UIActivityViewController` with its completion reported back.
+///
+/// The shared `ShareSheet` has no way to pass a completion in, and now that
+/// the sheet can open by itself, "the share sheet appeared" no longer means
+/// "somebody chose to send". The completion is the only honest signal of a
+/// send.
+private struct StandActivitySheet: UIViewControllerRepresentable {
+
+    let items: [Any]
+    let onFinish: (_ activity: String?, _ completed: Bool) -> Void
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        let controller = UIActivityViewController(activityItems: items,
+                                                  applicationActivities: nil)
+        controller.completionWithItemsHandler = { activity, completed, _, _ in
+            onFinish(activity?.rawValue, completed)
+        }
+        return controller
+    }
+
+    func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
+}
+
+#Preview("Ready") {
+    ZStack {
+        Gradients().speakLifeCYOCell.ignoresSafeArea()
+        StandInviteReadyView(
+            card: StandInviteCardRenderer.render(
+                headline: "I'm standing on God's word for peace this week.",
+                title: "Enforcing Peace",
+                code: "ABCD-2345"),
+            privacyLine: "They'll see you're standing for peace.",
+            formattedCode: "ABCD-2345",
+            recipientNote: "",
+            hasSent: false,
+            onSend: {}
+        )
+    }
+}
+
+#Preview("Sent, long theme") {
+    ZStack {
+        Gradients().speakLifeCYOCell.ignoresSafeArea()
+        StandInviteReadyView(
+            card: StandInviteCardRenderer.render(
+                headline: "I'm standing on God's word for my walk with God this week.",
+                title: "Enforcing My Walk With God",
+                code: "WXYZ-6789"),
+            privacyLine: "They'll see you're standing for your walk with God.",
+            formattedCode: "WXYZ-6789",
+            recipientNote: "",
+            hasSent: true,
+            onSend: {}
+        )
     }
 }
 

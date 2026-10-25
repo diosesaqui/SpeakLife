@@ -110,22 +110,19 @@ struct EnforcementCard: View {
                     StandInvitePromptSheet(enforcement: active)
                 }
             }
-            // Days 1 to 3 rather than day 1 only.
+            // Day 1 of every new campaign, once per run.
             //
-            // The one-time welcome offer now fires on the same first burst and
-            // takes precedence (StandDiscovery.shouldPrompt yields to it), so a
-            // day-1-only trigger meant anyone who got the offer never saw this
-            // ask at all. `shouldPrompt` already dedupes per day and caps at
-            // three prompts for life, so widening the window costs nothing and
-            // simply lets a suppressed day-1 land on day 2.
+            // Keyed by the run (id plus start date), so a second week of the
+            // same campaign is asked too, and no week is asked twice. Days 2
+            // and 3 only catch a run whose day-1 ask lost to the welcome offer,
+            // which fires on the same first burst and takes precedence
+            // (`StandDiscovery.shouldPrompt` yields to it).
             .onChange(of: service.progress.completedDayNumbers.count) { _, count in
-                guard (1...3).contains(count), let _ = service.activeEnforcement,
-                      // Never asked before. Without this, widening the window
-                      // asks EVERYBODY on days 1, 2 and 3 and spends the whole
-                      // lifetime budget of three prompts in three days.
-                      StandDiscovery.hasNeverPrompted,
-                      StandDiscovery.shouldPrompt(forDay: count) else { return }
-                StandDiscovery.markPrompted(day: count)
+                guard let active = service.activeEnforcement else { return }
+                let run = service.progress.activeRunKey ?? active.id
+                guard StandDiscovery.shouldPrompt(for: active, run: run,
+                                                  completedDays: count) else { return }
+                StandDiscovery.markPrompted(run: run)
                 showStandPrompt = true
             }
         }

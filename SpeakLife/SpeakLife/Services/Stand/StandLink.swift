@@ -93,10 +93,12 @@ enum StandLink {
     /// ships in the same build.
     ///
     /// ⚠️ DEFERRED, NOT PENDING. MVP ships on the default and does NOT set this
-    /// key. The mitigation is the note on `StandInviteSheet` telling the sender
-    /// to have their recipient update first, and the failure is recoverable
-    /// anyway: codes live 14 days and `joinStand` treats `alreadyMember` as
-    /// success, so updating and re-tapping the same link joins fine.
+    /// key. The "ask them to update" note on `StandInviteSheet` has since been
+    /// retired (old builds are a small share now; Remote Config
+    /// `standInviteRecipientNote` can bring it back), and the failure is
+    /// recoverable anyway: codes live 14 days and `joinStand` treats
+    /// `alreadyMember` as success, so updating and re-tapping the same link
+    /// joins fine.
     ///
     /// The fix, when it is worth doing, is a host those builds do NOT claim:
     /// iOS cannot match it, so it opens in Safari and Branch's own page offers
