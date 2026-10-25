@@ -31,6 +31,9 @@ struct DevotionalView: View {
                 self.presentationMode.wrappedValue.dismiss()
             }
             .onAppear {
+                // A topic picked yesterday doesn't carry over: today opens on
+                // the general devotional until the reader picks again.
+                viewModel.expireStaleCategoryIfNeeded()
                 // Track verses/devotionals read for badge system
                 let current = UserDefaults.standard.integer(forKey: "totalVersesRead")
                 UserDefaults.standard.set(current + 1, forKey: "totalVersesRead")
