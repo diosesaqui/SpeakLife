@@ -62,6 +62,14 @@ final class YearInReviewStatsTests: XCTestCase {
         XCTAssertNil(YearInReviewStats.recapYear(for: date(2026, 6, 15), calendar: calendar))
     }
 
+    func testRulesRunOnTheGregorianCalendarWhateverTheDevice() {
+        // A Japanese or Buddhist device calendar would call 2026 something
+        // else, and Hebrew or Islamic month 12 is not December.
+        XCTAssertEqual(YearInReviewStats.gregorian.identifier, .gregorian)
+        XCTAssertEqual(YearInReviewStats.gregorian.timeZone, TimeZone.current)
+        XCTAssertEqual(stats().calendar.identifier, .gregorian)
+    }
+
     // MARK: - Percent of year
 
     func testInProgressYearDividesByDaysElapsed() {
@@ -216,7 +224,7 @@ final class YearInReviewStatsTests: XCTestCase {
         // Built "today" for this year, so the year is in progress whatever
         // the test machine's time zone.
         let words = YearInReviewStats(
-            year: Calendar.current.component(.year, from: Date()),
+            year: YearInReviewStats.gregorian.component(.year, from: Date()),
             daysActive: 20, longestStreakInYear: 5, bestMonth: nil, totalDeclarationsSpoken: 40,
             currentStreak: 0, peakStrengthLevel: .warrior, peakStrengthScore: 5, asOf: Date()
         ).shareWords(for: .days, locale: enUS)

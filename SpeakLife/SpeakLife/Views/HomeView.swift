@@ -121,6 +121,13 @@ struct HomeView: View {
     /// Every way into the Year in Review goes through this, and the one
     /// fullScreenCover below shows what it holds.
     @ObservedObject private var yearInReview = YearInReviewCoordinator.shared
+    /// A recap push from someone with no Daily Burst yet this year: offer
+    /// the Burst instead of showing nothing.
+    @State private var showYearInReviewBurstOffer = false
+    /// The triggered paywall wanted to show while the recap was up. It is
+    /// raised once the recap closes, and only then, so a paywall the user
+    /// swiped away is not thrown straight back at them.
+    @State private var paywallDeferredByYearInReview = false
     // The Inbox, presented from the remote-message reader's
     // "See All SpeakLife Messages" CTA.
     @State private var showSpeakLifeMessages = false
@@ -281,7 +288,14 @@ struct HomeView: View {
                             }
                             .onChange(of: paywallTrigger.shouldShowPaywall) { newValue in
                                 if newValue && !subscriptionStore.isPremium {
-                                    showTriggeredPaywall = true
+                                    // Not over the Year in Review (e.g. on the
+                                    // way back from Instagram); raised when it
+                                    // closes, below.
+                                    if yearInReview.presentation != nil {
+                                        paywallDeferredByYearInReview = true
+                                    } else {
+                                        showTriggeredPaywall = true
+                                    }
                                 }
                             }
                             .onReceive(NotificationCenter.default.publisher(for: Notification.Name("StreakCompleted"))) { _ in
@@ -337,12 +351,12 @@ struct HomeView: View {
                                     .environmentObject(appState)
                             }
                             .fullScreenCover(item: $yearInReview.presentation) { presentation in
-                                // Snapshot premium status into the view so a
-                                // late StoreKit hydration can't mutate the
-                                // slide list mid-presentation.
+                                // Premium status was captured when the recap
+                                // opened, so a late RevenueCat answer cannot
+                                // change the slide list mid-presentation.
                                 YearInReviewView(
                                     stats: presentation.stats,
-                                    includesPremiumExtras: subscriptionStore.isPremium,
+                                    includesPremiumExtras: presentation.includesPremiumExtras,
                                     source: presentation.source
                                 )
                                 .environmentObject(subscriptionStore)
@@ -353,10 +367,34 @@ struct HomeView: View {
                             .onChange(of: yearInReview.pendingPush) { _, pending in
                                 if pending { presentPendingYearInReviewPush() }
                             }
-                            // A launch cover was in the way of a recap push:
-                            // try again the moment it closes.
-                            .onChange(of: showDailyStructuredDayOnLaunch) { _, showing in
-                                if !showing { presentPendingYearInReviewPush() }
+                            // Whenever the last presentation closes (paywall,
+                            // launch cover, the recap itself), give anything
+                            // that waited for the slot its turn: the monthly
+                            // offer, a paywall the recap held back, a recap
+                            // push and the auto-launch.
+                            .onChange(of: isLaunchPresentationActive) { _, active in
+                                guard !active else { return }
+                                checkMonthlyAnnualOffer()
+                                if paywallDeferredByYearInReview {
+                                    paywallDeferredByYearInReview = false
+                                    if paywallTrigger.shouldShowPaywall && !subscriptionStore.isPremium {
+                                        showTriggeredPaywall = true
+                                    }
+                                }
+                                checkForYearInReview()
+                            }
+                            .alert("Your year starts today", isPresented: $showYearInReviewBurstOffer) {
+                                Button("Start my Daily Burst") {
+                                    // The Burst's cover lives on the feed tab:
+                                    // the same route the Today checklist uses.
+                                    tabViewModel.goToDeclarations()
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                                        DailyDeclarationReminderService.shared.handleNotificationTap()
+                                    }
+                                }
+                                Button("Not now", role: .cancel) {}
+                            } message: {
+                                Text("Speak your first Daily Burst and your Year in Review begins.")
                             }
 
                 } else {
@@ -583,7 +621,11 @@ struct HomeView: View {
         guard subscriptionStore.monthlyAnnualOfferDue,
               let endsAt = subscriptionStore.premiumPeriodEndsAt,
               endsAt.timeIntervalSince1970 != monthlyAnnualOfferShownForPeriod,
-              !showMonthlyAnnualOffer, !showSubscription, !showTriggeredPaywall
+              !showMonthlyAnnualOffer, !showSubscription, !showTriggeredPaywall,
+              // Never over the recap: returning from Instagram fires
+              // didBecomeActive and would burn this period's offer on a
+              // sheet that cannot present. Re-run when the recap closes.
+              yearInReview.presentation == nil
         else { return }
         monthlyAnnualOfferShownForPeriod = endsAt.timeIntervalSince1970
         showMonthlyAnnualOffer = true
@@ -1029,37 +1071,66 @@ struct HomeView: View {
             recapYear: stats.year,
             daysActive: stats.daysActive,
             alreadySeen: YearInReviewCoordinator.hasBeenSeen(year: stats.year),
-            anotherPresentationActive: isLaunchPresentationActive
+            anotherPresentationActive: isAnythingPresented
         )
         guard eligible else { return }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            // Re-check: the paywall or another launch cover may have come up
-            // during the delay. If so, wait for the next foreground.
+            // Re-check: the paywall or another cover may have come up during
+            // the delay. If so, the onChange on `isLaunchPresentationActive`
+            // or the next foreground tries again.
             guard appState.isOnboarded,
-                  !isLaunchPresentationActive,
+                  !isAnythingPresented,
+                  !yearInReview.pendingPush,
                   !YearInReviewCoordinator.hasBeenSeen(year: stats.year) else { return }
-            yearInReview.open(source: .auto)
+            yearInReview.open(source: .auto, isPremium: subscriptionStore.isPremium)
         }
     }
 
     /// Opens the recap for a tapped `deepLink = yearInReview` push once
     /// nothing else is on screen. If something is, the request waits for the
-    /// next foreground or for the launch cover to close.
+    /// onChange on `isLaunchPresentationActive` or the next foreground.
     private func presentPendingYearInReviewPush() {
         guard yearInReview.pendingPush else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
             guard yearInReview.pendingPush,
                   appState.isOnboarded,
-                  !isShowingLanding,
-                  !isLaunchPresentationActive else { return }
+                  !isShowingLanding else { return }
+            // Tapped while the recap is already open: nothing left to do, and
+            // keeping it would reopen the recap the moment it closes.
+            if yearInReview.presentation != nil {
+                yearInReview.clearPendingPush()
+                return
+            }
+            guard !isAnythingPresented else { return }
             yearInReview.clearPendingPush()
-            yearInReview.open(source: .push)
+            if !yearInReview.open(source: .push, isPremium: subscriptionStore.isPremium) {
+                handleIneligibleYearInReviewPush()
+            }
         }
     }
 
-    /// Anything already presented from this screen. SwiftUI shows one
-    /// presentation at a time, so the recap must not race these for the slot.
+    /// The push reached someone the recap cannot open for: outside the
+    /// window on their local date (sent before midnight in their zone), or no
+    /// Daily Burst yet this year. Land on Today, and in the window offer the
+    /// Burst that starts their recap.
+    private func handleIneligibleYearInReviewPush() {
+        let windowOpen = YearInReviewStats.recapYear(for: Date()) != nil
+        let daysActive = yearInReview.entryStats?.daysActive ?? 0
+        AnalyticsService.shared.track("year_in_review_push_ineligible", parameters: [
+            "window_open": windowOpen,
+            "days_active": daysActive
+        ])
+        tabViewModel.resetToHome()
+        if windowOpen && daysActive == 0 {
+            showYearInReviewBurstOffer = true
+        }
+    }
+
+    /// Everything presented from this screen that SwiftUI can observe: each
+    /// input is @State, @Binding or a published value, so `onChange` sees it
+    /// flip. SwiftUI shows one presentation at a time, so the recap must not
+    /// race these for the slot; when this turns false, waiting work runs.
     private var isLaunchPresentationActive: Bool {
         yearInReview.presentation != nil
             || showSubscription
@@ -1069,10 +1140,24 @@ struct HomeView: View {
             || anniversaryMilestone != nil
             || showPDMigrationSheet
             || isPresented
+            || showSpeakLifeMessages
+            || showYearInReviewBurstOffer
             || subscriptionStore.showEmailCaptureAfterPurchase
             || appState.remoteMessage != nil
             || appState.pushOffer != nil
             || appState.showWarriorRoom
+    }
+
+    /// The above, plus anything presented that this view does not own (a
+    /// sheet from a child view, a UIKit alert or share sheet), read off the
+    /// key window. Not observable, so it is checked at the moment of opening.
+    private var isAnythingPresented: Bool {
+        if isLaunchPresentationActive { return true }
+        let keyWindow = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+            .first { $0.isKeyWindow }
+        return keyWindow?.rootViewController?.presentedViewController != nil
     }
 
     /// Surfaces a one-time anniversary overlay for premium subscribers at 30,

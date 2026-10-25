@@ -566,7 +566,7 @@ struct YearInReviewView: View {
                 eyebrow: eyebrow,
                 hero: count(total),
                 caption: total == 1 ? "declaration I spoke in my Daily Burst" : "declarations I spoke in my Daily Burst",
-                verse: "My word that goes out from my mouth will not return to me empty.",
+                verse: "So is my word that goes out from my mouth: It will not return to me empty.",
                 reference: "Isaiah 55:11"
             )
         case .strength:
@@ -614,6 +614,15 @@ struct YearInReviewView: View {
     private enum ShareMethod: String {
         case shareSheet = "share_sheet"
         case instagramStories = "instagram_stories"
+        /// Instagram is not installed, so the card is saved to Photos instead.
+        case instagramFallbackSave = "instagram_fallback_save"
+    }
+
+    private static let instagramStoriesURL = URL(string: "instagram-stories://share")
+
+    private var canOpenInstagramStories: Bool {
+        guard let url = Self.instagramStoriesURL else { return false }
+        return UIApplication.shared.canOpenURL(url)
     }
 
     @ViewBuilder
@@ -630,9 +639,15 @@ struct YearInReviewView: View {
     private func share(_ slide: YearInReviewSlide, method: ShareMethod) {
         guard let image = YearInReviewShareCard.render(shareCard(for: slide)) else { return }
 
+        // Logged as what actually happens: with Instagram missing, the shared
+        // helper saves the card to Photos rather than opening a story.
+        let loggedMethod: ShareMethod = (method == .instagramStories && !canOpenInstagramStories)
+            ? .instagramFallbackSave
+            : method
+
         AnalyticsService.shared.track("year_in_review_shared", parameters: [
             "slide": slide.rawValue,
-            "method": method.rawValue,
+            "method": loggedMethod.rawValue,
             "year": stats.year,
             "in_progress": stats.isInProgress
         ])
@@ -644,8 +659,10 @@ struct YearInReviewView: View {
             let link = ReferralLink.url(.yearInReview, campaign: String(stats.year))
             shareItem = ShareItem(image: image,
                                   text: ReferralShareText(stats.shareWords(for: slide), link: link))
-        case .instagramStories:
-            shareToInstagramStories(image: image)
+        case .instagramStories, .instagramFallbackSave:
+            // `_ =` keeps this compiling whether the shared helper returns
+            // Void (today) or a Bool (PR #501).
+            _ = shareToInstagramStories(image: image)
         }
     }
 }

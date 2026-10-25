@@ -31,19 +31,32 @@ struct YearInReviewStats: Identifiable {
     /// When the recap was built. In December the year is still running, so
     /// percentages and copy are measured against this day, not Dec 31.
     let asOf: Date
+    /// The calendar every date rule here runs on. Gregorian whatever the
+    /// device is set to: on a Japanese or Buddhist calendar the "year" is
+    /// not 2026, and on Hebrew or Islamic month 12 is not December.
+    var calendar: Calendar = YearInReviewStats.gregorian
+
+    /// Gregorian in the device's own time zone, so "Dec 1" is the user's
+    /// Dec 1.
+    static var gregorian: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = .current
+        calendar.locale = .current
+        return calendar
+    }
 
     /// Recap is meaningful only if the user showed up at all this year.
     var hasMeaningfulActivity: Bool { daysActive >= 1 }
 
     /// True while the recapped year is still running (the December window).
     var isInProgress: Bool {
-        Self.isInProgress(year: year, asOf: asOf, calendar: .current)
+        Self.isInProgress(year: year, asOf: asOf, calendar: calendar)
     }
 
     /// Days active as a percent of the year so far (or the whole year, once
     /// it has closed).
     var percentOfYear: Int {
-        Self.percentOfYear(daysActive: daysActive, year: year, asOf: asOf, calendar: .current)
+        Self.percentOfYear(daysActive: daysActive, year: year, asOf: asOf, calendar: calendar)
     }
 
     /// The year after the recap, which the closing declaration speaks over.
@@ -52,8 +65,8 @@ struct YearInReviewStats: Identifiable {
     /// Builds the stats by filtering BurstCompletionTracker.shared.completions
     /// down to a single calendar year. We pull `currentStreak` from the same
     /// source so it matches what the user sees on their streak screen.
-    static func build(for year: Int, asOf: Date = Date()) -> YearInReviewStats {
-        let calendar = Calendar.current
+    static func build(for year: Int, asOf: Date = Date(),
+                      calendar: Calendar = YearInReviewStats.gregorian) -> YearInReviewStats {
         let components = DateComponents(year: year, month: 1, day: 1)
         let yearStart = calendar.date(from: components) ?? Date()
         let yearEnd = calendar.date(byAdding: .year, value: 1, to: yearStart) ?? Date()
@@ -88,7 +101,8 @@ struct YearInReviewStats: Identifiable {
             currentStreak: BurstCompletionTracker.shared.currentStreak,
             peakStrengthLevel: peakLevel,
             peakStrengthScore: peakScore,
-            asOf: asOf
+            asOf: asOf,
+            calendar: calendar
         )
     }
 
@@ -177,7 +191,7 @@ extension YearInReviewStats {
     /// The window opens Dec 1, while Spotify Wrapped has everyone sharing,
     /// and recaps the year still in progress. From Jan 1 to Jan 15 it recaps
     /// the year that just closed. Any other day it is shut.
-    static func recapYear(for date: Date, calendar: Calendar = .current) -> Int? {
+    static func recapYear(for date: Date, calendar: Calendar = YearInReviewStats.gregorian) -> Int? {
         let parts = calendar.dateComponents([.year, .month, .day], from: date)
         guard let year = parts.year, let month = parts.month, let day = parts.day else { return nil }
         if month == 12 { return year }
@@ -378,7 +392,7 @@ extension YearInReviewStats {
                        bestMonth: (name: String, count: Int)? = (name: "September", count: 27),
                        asOf: Date = Date()) -> YearInReviewStats {
         YearInReviewStats(
-            year: Calendar.current.component(.year, from: asOf),
+            year: YearInReviewStats.gregorian.component(.year, from: asOf),
             daysActive: daysActive,
             longestStreakInYear: min(daysActive, 46),
             bestMonth: bestMonth,

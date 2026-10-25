@@ -11,6 +11,7 @@
 //  fullScreenCover shows whatever the coordinator holds.
 //
 
+import Combine
 import SwiftUI
 
 // MARK: - Coordinator
@@ -24,6 +25,10 @@ final class YearInReviewCoordinator: ObservableObject {
     struct Presentation: Identifiable {
         let stats: YearInReviewStats
         let source: YearInReviewSource
+        /// Premium status at open time. Fixed for the whole showing so a
+        /// late RevenueCat answer cannot insert the Strength slide under the
+        /// page the user is on.
+        let includesPremiumExtras: Bool
         var id: Int { stats.year }
     }
 
@@ -37,16 +42,27 @@ final class YearInReviewCoordinator: ObservableObject {
     /// A tapped recap push, waiting until nothing else is on screen.
     @Published private(set) var pendingPush = false
 
-    private init() {}
+    private var burstSubscription: AnyCancellable?
+
+    private init() {
+        // A Daily Burst finished mid-session (perhaps the user's first this
+        // year) changes the numbers and can make the entry points appear.
+        burstSubscription = BurstCompletionTracker.shared.$completions
+            .dropFirst()
+            // @Published emits before the new value is stored; hopping to the
+            // next main-queue turn lets `build` read the updated history.
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in self?.refresh() }
+    }
 
     /// Rebuilds the entry-point stats for today. Cheap: one pass over the
     /// Daily Burst history.
-    func refresh(now: Date = Date()) {
-        guard let year = YearInReviewStats.recapYear(for: now) else {
+    func refresh(now: Date = Date(), calendar: Calendar = YearInReviewStats.gregorian) {
+        guard let year = YearInReviewStats.recapYear(for: now, calendar: calendar) else {
             if entryStats != nil { entryStats = nil }
             return
         }
-        let stats = YearInReviewStats.build(for: year, asOf: now)
+        let stats = YearInReviewStats.build(for: year, asOf: now, calendar: calendar)
         entryStats = YearInReviewEligibility.showsEntryPoint(recapYear: year, daysActive: stats.daysActive)
             ? stats : nil
     }
@@ -54,14 +70,14 @@ final class YearInReviewCoordinator: ObservableObject {
     /// Opens the recap. Returns false when the window is shut, there is
     /// nothing to show for this source, or a recap is already up.
     @discardableResult
-    func open(source: YearInReviewSource, now: Date = Date()) -> Bool {
+    func open(source: YearInReviewSource, isPremium: Bool, now: Date = Date()) -> Bool {
         guard presentation == nil else { return false }
         refresh(now: now)
         guard let stats = entryStats,
               YearInReviewEligibility.canOpen(source: source,
                                               recapYear: stats.year,
                                               daysActive: stats.daysActive) else { return false }
-        presentation = Presentation(stats: stats, source: source)
+        presentation = Presentation(stats: stats, source: source, includesPremiumExtras: isPremium)
         return true
     }
 
@@ -88,13 +104,14 @@ final class YearInReviewCoordinator: ObservableObject {
 /// outside it.
 struct YearInReviewTodayCard: View {
     @ObservedObject private var coordinator = YearInReviewCoordinator.shared
+    @EnvironmentObject private var subscriptionStore: SubscriptionStore
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var shimmer = false
 
     var body: some View {
         if let stats = coordinator.entryStats {
             Button {
-                coordinator.open(source: .todayCard)
+                coordinator.open(source: .todayCard, isPremium: subscriptionStore.isPremium)
             } label: {
                 card(stats)
             }
@@ -159,6 +176,14 @@ struct YearInReviewTodayCard: View {
                 shimmer = true
             }
         }
+        // A tab switch tears down the repeating animation but keeps
+        // `shimmer` true, which would leave the band parked off-card. Reset
+        // it without animation so the next appear starts the sweep again.
+        .onDisappear {
+            var reset = Transaction()
+            reset.disablesAnimations = true
+            withTransaction(reset) { shimmer = false }
+        }
     }
 
     /// A slow band of light that sweeps across now and then.
@@ -179,12 +204,13 @@ struct YearInReviewTodayCard: View {
 /// A Profile row into the recap during the window. Renders nothing outside it.
 struct YearInReviewProfileSection: View {
     @ObservedObject private var coordinator = YearInReviewCoordinator.shared
+    @EnvironmentObject private var subscriptionStore: SubscriptionStore
 
     var body: some View {
         if let stats = coordinator.entryStats {
             Section {
                 Button {
-                    coordinator.open(source: .profile)
+                    coordinator.open(source: .profile, isPremium: subscriptionStore.isPremium)
                 } label: {
                     HStack {
                         Image(systemName: "crown.fill")
@@ -214,6 +240,7 @@ private extension YearInReviewStats {
     YearInReviewTodayCard()
         .padding(20)
         .background(Color.black)
+        .environmentObject(SubscriptionStore())
         .onAppear { YearInReviewCoordinator.shared.refresh() }
 }
 #endif
