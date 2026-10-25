@@ -357,6 +357,59 @@ struct StandInviteRow: View {
     }
 }
 
+// MARK: - Typing a code
+//
+// The invite message ends "Link won't open? Use code ABCD-2345 in SpeakLife",
+// and for a long time there was nowhere to type it: `StandJoinView` only ever
+// opened from a link, and My Stands is hidden until you have a stand. This is
+// the always-there way in, for the recipient the link failed.
+
+struct StandCodeEntryLink: View {
+
+    /// Analytics only: where the link was tapped.
+    let source: String
+
+    @State private var showJoin = false
+    /// Re-applied to the sheet, so a joined room can open a Burst.
+    @Environment(\.standBurst) private var standBurst
+
+    var body: some View {
+        if FeatureFlag.standTogetherEnabled {
+            Button {
+                Juice.play(.tapLight)
+                AnalyticsService.shared.track("stand_code_entry_opened", parameters: [
+                    "source": source,
+                ])
+                showJoin = true
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "ticket")
+                        .font(.system(size: 12, weight: .semibold))
+                    Text("Have an invite code?")
+                }
+                .font(.system(size: 14, weight: .medium, design: .rounded))
+                .foregroundColor(DS.Palette.textSecondary)
+                .frame(maxWidth: .infinity, minHeight: 44)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(PlainButtonStyle())
+            .accessibilityHint("Join a stand someone invited you to")
+            .sheet(isPresented: $showJoin) {
+                NavigationStack {
+                    StandJoinView()
+                        .toolbar {
+                            ToolbarItem(placement: .topBarLeading) {
+                                Button("Cancel") { showJoin = false }
+                                    .foregroundColor(DS.Palette.gold)
+                            }
+                        }
+                }
+                .environment(\.standBurst, standBurst)
+            }
+        }
+    }
+}
+
 // MARK: - Shared lookup
 
 /// Finding the stand a campaign already has, in one place.

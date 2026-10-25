@@ -84,6 +84,20 @@ struct EnforcementCard: View {
     @State private var showStandPrompt = false
 
     var body: some View {
+        // A Group, not a VStack, so the two children sit in the checklist's own
+        // stack: with the flag off and the card ineligible this adds nothing,
+        // not an empty row with spacing around it.
+        Group {
+            card
+            // Outside the eligibility gate on purpose. The person most likely
+            // to need it is a new install whose invite link did not open, and
+            // the card itself hides until the foundation week is done.
+            StandCodeEntryLink(source: "today")
+        }
+    }
+
+    @ViewBuilder
+    private var card: some View {
         if service.isEligible(totalDaysCompleted: totalDaysCompleted) {
             Group {
                 if let enforcement = service.activeEnforcement, let day = service.activeDay {

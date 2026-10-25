@@ -47,6 +47,58 @@ public enum StandInviteCopy {
     }
 }
 
+// MARK: - Typed code
+
+/// What the code field shows while someone types or pastes.
+///
+/// People paste whatever they were sent: "ABCD-2345", "abcd2345", the whole
+/// link, or the whole message ("Link won't open? Use code ABCD-2345 in
+/// SpeakLife."). Every one of those should land as `ABCD-2345` in the field
+/// rather than as the first eight letters of the sentence.
+public enum StandCodeInput {
+
+    /// Mirrors `StandLink.alphabet` and CODE_ALPHABET in
+    /// functions/standTogether.js.
+    static let alphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
+    static let length = 8
+
+    /// The field's display form: uppercase, at most eight code characters,
+    /// with a dash after the fourth.
+    public static func display(_ raw: String) -> String {
+        let code = extract(raw)
+        guard code.count > 4 else { return code }
+        let mid = code.index(code.startIndex, offsetBy: 4)
+        return "\(code[code.startIndex..<mid])-\(code[mid...])"
+    }
+
+    /// The code characters in `raw`, at most eight.
+    static func extract(_ raw: String) -> String {
+        // A pasted link: the segment after "/stand/" or "stand=".
+        for marker in ["stand/", "stand="] {
+            if let range = raw.range(of: marker, options: [.caseInsensitive, .backwards]) {
+                let tail = raw[range.upperBound...]
+                    .prefix { $0.isLetter || $0.isNumber || $0 == "-" }
+                return String(clean(String(tail)).prefix(length))
+            }
+        }
+        // A pasted sentence: the one word that is a whole valid code.
+        let words = raw.split(whereSeparator: { $0.isWhitespace })
+        if words.count > 1,
+           let word = words.map({ clean(String($0)) }).first(where: isComplete) {
+            return word
+        }
+        return String(clean(raw).prefix(length))
+    }
+
+    private static func clean(_ raw: String) -> String {
+        raw.uppercased().filter { $0.isLetter || $0.isNumber }
+    }
+
+    private static func isComplete(_ code: String) -> Bool {
+        code.count == length && code.allSatisfy { alphabet.contains($0) }
+    }
+}
+
 // MARK: - Day-1 ask
 
 /// When the "Who needs this with you?" sheet may appear.

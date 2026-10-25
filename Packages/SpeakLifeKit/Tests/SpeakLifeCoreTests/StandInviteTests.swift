@@ -40,6 +40,37 @@ final class StandInviteTests: XCTestCase {
         }
     }
 
+    // MARK: - Typed code
+
+    func testTypingFormatsAsYouGo() {
+        XCTAssertEqual(StandCodeInput.display(""), "")
+        XCTAssertEqual(StandCodeInput.display("ab"), "AB")
+        XCTAssertEqual(StandCodeInput.display("abcd"), "ABCD")
+        XCTAssertEqual(StandCodeInput.display("abcd2"), "ABCD-2")
+        // Backspacing over the dash drops it rather than trapping the cursor.
+        XCTAssertEqual(StandCodeInput.display("ABCD-"), "ABCD")
+        XCTAssertEqual(StandCodeInput.display("ABCD-2345"), "ABCD-2345")
+    }
+
+    func testPasteWithOrWithoutDashOrSpaces() {
+        XCTAssertEqual(StandCodeInput.display("ABCD2345"), "ABCD-2345")
+        XCTAssertEqual(StandCodeInput.display("abcd-2345"), "ABCD-2345")
+        XCTAssertEqual(StandCodeInput.display(" abcd 2345 "), "ABCD-2345")
+        XCTAssertEqual(StandCodeInput.display("ABCD-2345-XYZ"), "ABCD-2345")
+    }
+
+    func testPasteTheLink() {
+        XCTAssertEqual(StandCodeInput.display("https://speaklife.app.link/stand/ABCD2345"), "ABCD-2345")
+        XCTAssertEqual(StandCodeInput.display("speaklife://stand/abcd2345"), "ABCD-2345")
+        XCTAssertEqual(StandCodeInput.display("https://go.speaklife.app/x?stand=ABCD2345"), "ABCD-2345")
+    }
+
+    func testPasteTheWholeMessage() {
+        let message = "Will you stand with me this week?\n\nhttps://speaklife.app.link/stand/WXYZ6789\n\nLink won't open? Use code WXYZ-6789 in SpeakLife."
+        XCTAssertEqual(StandCodeInput.display(message), "WXYZ-6789")
+        XCTAssertEqual(StandCodeInput.display("Use code WXYZ-6789 in SpeakLife."), "WXYZ-6789")
+    }
+
     // MARK: - Day-1 ask
 
     func testAsksOnDayOneOfANewRun() {
