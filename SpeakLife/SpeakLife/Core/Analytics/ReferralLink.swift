@@ -77,6 +77,11 @@ enum ReferralLink {
         }
         items.append(contentsOf: extra)
         components.queryItems = items
+        // URLComponents leaves "+" bare in query values, and Branch and most
+        // servers read a bare "+" as a space, so "Psalm 23 + John 3" would
+        // arrive as "Psalm 23   John 3". Encode it explicitly.
+        components.percentEncodedQuery = components.percentEncodedQuery?
+            .replacingOccurrences(of: "+", with: "%2B")
 
         // Every part above is a fixed, valid component, so this cannot be nil.
         return components.url ?? URL(string: "https://\(host)/")!
