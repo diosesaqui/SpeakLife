@@ -27,7 +27,8 @@ import UIKit
 enum ReferralLink {
 
     /// What was shared. Becomes Branch's `feature`, so installs break down by
-    /// surface in Branch and in `acquisition_source`.
+    /// surface in Branch, and is recorded as `acquisition_creative` on referral
+    /// installs (`acquisition_source` is the channel, "share", for all of them).
     enum Feature: String {
         case declarationCard = "declaration_card"
         case dailyBurst = "daily_burst"
@@ -77,6 +78,11 @@ enum ReferralLink {
         }
         items.append(contentsOf: extra)
         components.queryItems = items
+        // URLComponents leaves "+" bare in query values, and Branch and most
+        // servers read a bare "+" as a space, so "Psalm 23 + John 3" would
+        // arrive as "Psalm 23   John 3". Encode it explicitly.
+        components.percentEncodedQuery = components.percentEncodedQuery?
+            .replacingOccurrences(of: "+", with: "%2B")
 
         // Every part above is a fixed, valid component, so this cannot be nil.
         return components.url ?? URL(string: "https://\(host)/")!
@@ -147,7 +153,8 @@ final class ReferralShareText: NSObject, UIActivityItemSource {
         // reaches a person is worth more than one that clutters a post.
         guard let activityType else { return true }
         switch activityType {
-        case .message, .mail:
+        // AirDrop goes to one person nearby, the same as a message.
+        case .message, .mail, .airDrop:
             return true
         // Copied text is almost always pasted into a chat.
         case .copyToPasteboard:
