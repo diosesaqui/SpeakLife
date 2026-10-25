@@ -22,6 +22,7 @@
 //
 
 import Foundation
+import UIKit
 
 enum ReferralLink {
 
@@ -79,5 +80,81 @@ enum ReferralLink {
 
         // Every part above is a fixed, valid component, so this cannot be nil.
         return components.url ?? URL(string: "https://\(host)/")!
+    }
+}
+
+// MARK: - Share text
+
+/// Share-sheet text that carries the tracked link only when the user sends it
+/// as a message.
+///
+/// A link belongs in a chat, where one person taps it. On an Instagram or
+/// Facebook post, in Notes or in a saved image, a raw URL is clutter, so those
+/// get the words alone. The share sheet asks for the item only after the user
+/// picks a destination, which is what lets one item answer differently per app.
+///
+/// Use it in place of a plain String in `activityItems`:
+/// `ShareSheet(activityItems: [image, ReferralShareText("…", link: url)])`.
+final class ReferralShareText: NSObject, UIActivityItemSource {
+
+    let text: String
+    let link: URL
+
+    init(_ text: String, link: URL) {
+        self.text = text
+        self.link = link
+    }
+
+    func activityViewControllerPlaceholderItem(_ activityViewController: UIActivityViewController) -> Any {
+        text
+    }
+
+    func activityViewController(_ activityViewController: UIActivityViewController,
+                                itemForActivityType activityType: UIActivity.ActivityType?) -> Any? {
+        Self.message(text: text, link: link, for: activityType)
+    }
+
+    /// What goes to the chosen app. Pure, so the rule is unit-testable.
+    static func message(text: String, link: URL, for activityType: UIActivity.ActivityType?) -> String? {
+        let words = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard includesLink(for: activityType) else {
+            return words.isEmpty ? nil : words
+        }
+        return words.isEmpty ? link.absoluteString : "\(words)\n\(link.absoluteString)"
+    }
+
+    /// Messaging destinations, matched on the share extension's bundle id.
+    /// Third-party extensions arrive as raw activity types named after the
+    /// app's bundle id, which is stable across app versions.
+    private static let messagingBundlePrefixes = [
+        "net.whatsapp.",               // WhatsApp
+        "com.facebook.messenger",      // Messenger
+        "ph.telegra.",                 // Telegram
+        "org.whispersystems.signal",   // Signal
+        "com.viber.",                  // Viber
+        "jp.naver.line",               // LINE
+        "com.tencent.xin",             // WeChat
+        "com.hammerandchisel.discord", // Discord
+        "com.groupme.",                // GroupMe
+        "com.kik.",                    // Kik
+        "com.google.chat",             // Google Chat
+        "com.skype.",                  // Skype
+        "com.tinyspeck.chatlyio"       // Slack
+    ]
+
+    static func includesLink(for activityType: UIActivity.ActivityType?) -> Bool {
+        // No type means the sheet did not say where it is going; a link that
+        // reaches a person is worth more than one that clutters a post.
+        guard let activityType else { return true }
+        switch activityType {
+        case .message, .mail:
+            return true
+        // Copied text is almost always pasted into a chat.
+        case .copyToPasteboard:
+            return true
+        default:
+            let id = activityType.rawValue.lowercased()
+            return messagingBundlePrefixes.contains { id.hasPrefix($0) }
+        }
     }
 }
