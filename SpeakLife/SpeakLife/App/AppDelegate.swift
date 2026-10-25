@@ -863,7 +863,10 @@ enum BranchAttribution {
             source: candidates.first ?? "branch",
             campaign: string("~campaign"),
             adGroup: string("~ad_set_name"),
-            creative: string("~creative_name"),
+            // Every share link has channel "share", so the source cannot tell
+            // surfaces apart. The share's feature (declaration_card, favorite,
+            // ...) rides in creative instead.
+            creative: string("~creative_name") ?? (channel == .referral ? string("~feature") : nil),
             keyword: string("~keyword")
         )
     }
@@ -908,6 +911,20 @@ enum BranchAttribution {
         let feature: String?
     }
 
+    /// Where a recorded referral is reported. Injected so tests capture the
+    /// calls instead of sending real events from the test host.
+    struct ReferralAnalytics {
+        var setUserProperty: (_ name: String, _ value: Any) -> Void
+        var track: (_ event: String, _ parameters: [String: Any]) -> Void
+
+        static var shared: ReferralAnalytics {
+            ReferralAnalytics(
+                setUserProperty: { AnalyticsService.shared.setUserProperty($0, value: $1) },
+                track: { AnalyticsService.shared.track($0, parameters: $1) }
+            )
+        }
+    }
+
     /// The sharer behind this session, or nil when it should not be credited.
     ///
     /// Only an install counts: an existing user tapping a friend's link has a
@@ -932,15 +949,16 @@ enum BranchAttribution {
     @discardableResult
     static func recordReferral(from params: [String: Any],
                                defaults: UserDefaults = .standard,
-                               ownDistinctId: String? = AnalyticsService.shared.postHogDistinctId) -> Referral? {
+                               ownDistinctId: String? = AnalyticsService.shared.postHogDistinctId,
+                               analytics: ReferralAnalytics = .shared) -> Referral? {
         guard defaults.string(forKey: referredByDefaultsKey) == nil,
               let referral = referral(from: params, ownDistinctId: ownDistinctId) else { return nil }
         defaults.set(referral.referrer, forKey: referredByDefaultsKey)
 
-        AnalyticsService.shared.setUserProperty(referredByProperty, value: referral.referrer)
+        analytics.setUserProperty(referredByProperty, referral.referrer)
         var parameters: [String: Any] = [referredByProperty: referral.referrer]
         if let feature = referral.feature { parameters["feature"] = feature }
-        AnalyticsService.shared.track("referral_install_attributed", parameters: parameters)
+        analytics.track("referral_install_attributed", parameters)
         return referral
     }
 }

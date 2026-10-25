@@ -214,11 +214,20 @@ struct BibleChatAnswerView: View {
             Button {
                 Juice.play(.tapLight)
                 showShareSheet = true
+                AnalyticsService.shared.trackShare(
+                    contentType: "bible_chat_topic",
+                    contentId: topic.id,
+                    shareMethod: "share_sheet",
+                    metadata: [:]
+                )
             } label: {
                 actionLabel(systemImage: "square.and.arrow.up", title: "Share")
             }
             .sheet(isPresented: $showShareSheet) {
+                // Half height like the system sheet ShareLink opened.
                 ShareSheet(activityItems: [shareItem])
+                    .ignoresSafeArea()
+                    .presentationDetents([.medium, .large])
             }
             Button {
                 // A copy is almost always pasted into a chat, so it carries

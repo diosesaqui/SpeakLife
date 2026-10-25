@@ -10,7 +10,8 @@ import SwiftUI
 struct DailyVerseDetailView: View {
     let verse: RandomVerse
     @Environment(\.dismiss) var dismiss
-    @State private var showShareSheet = false
+    /// Presented as a sheet item, so the sheet always reads the share it was
+    /// opened for and never shows up blank.
     @State private var shareText: ReferralShareText?
     
     var body: some View {
@@ -126,10 +127,8 @@ struct DailyVerseDetailView: View {
                     }
                 }
             }
-            .sheet(isPresented: $showShareSheet) {
-                if let shareText {
-                    ShareSheet(activityItems: [shareText])
-                }
+            .sheet(item: $shareText) { item in
+                ShareSheet(activityItems: [item])
             }
         }
         .navigationViewStyle(.stack)
@@ -141,7 +140,6 @@ struct DailyVerseDetailView: View {
             "\u{201C}\(verse.text)\u{201D}\n\(verse.book.name) \(verse.chapter):\(verse.number)"
                 + "\n\nMy verse for today. Start your mornings in God's Word with me.",
             link: ReferralLink.url(.dailyVerse))
-        showShareSheet = true
     }
     
     private func copyVerse() {
@@ -171,3 +169,7 @@ struct DailyVerseDetailView: View {
         )
     )
 }
+
+// A class gets an ObjectIdentifier id for free, which is all `.sheet(item:)`
+// needs: each tap builds a new share, so each one is a new presentation.
+extension ReferralShareText: Identifiable {}

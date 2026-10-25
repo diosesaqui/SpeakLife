@@ -193,6 +193,26 @@ final class AcquisitionAttributionTests: XCTestCase {
         XCTAssertEqual(attribution?.campaign, "faith")
     }
 
+    /// Every share has channel "share", so the surface has to ride somewhere
+    /// else to be told apart in a breakdown.
+    func testShareClickRecordsFeatureAsCreative() {
+        let attribution = BranchAttribution.attribution(from: [
+            "+clicked_branch_link": true,
+            "~channel": "share",
+            "~feature": "declaration_card"
+        ])
+        XCTAssertEqual(attribution?.creative, "declaration_card")
+    }
+
+    func testPaidClickDoesNotTakeFeatureAsCreative() {
+        let attribution = BranchAttribution.attribution(from: [
+            "+clicked_branch_link": true,
+            "~channel": "Facebook",
+            "~feature": "paid advertising"
+        ])
+        XCTAssertNil(attribution?.creative)
+    }
+
     func testReferralLinkCarriesShareChannelOnTheRootPath() {
         let url = ReferralLink.url(.declarationCard, campaign: "faith")
         let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
@@ -221,6 +241,20 @@ final class AcquisitionAttributionTests: XCTestCase {
         ]
         if let referrer { params[ReferralLink.referrerKey] = referrer }
         return params
+    }
+
+    /// Captures what a recorded referral reports, so no real event leaves
+    /// the test host.
+    private final class AnalyticsSpy {
+        var properties: [(String, Any)] = []
+        var events: [(String, [String: Any])] = []
+
+        var analytics: BranchAttribution.ReferralAnalytics {
+            BranchAttribution.ReferralAnalytics(
+                setUserProperty: { [unowned self] in self.properties.append(($0, $1)) },
+                track: { [unowned self] in self.events.append(($0, $1)) }
+            )
+        }
     }
 
     private func freshDefaults() -> UserDefaults {
@@ -269,27 +303,49 @@ final class AcquisitionAttributionTests: XCTestCase {
                        BranchAttribution.Referral(referrer: "sharer-123", feature: nil))
     }
 
-    func testReferredByIsStoredOnce() {
+    func testReferredByIsSetAndReported() {
         let defaults = freshDefaults()
-        let first = BranchAttribution.recordReferral(from: shareInstallParams(), defaults: defaults, ownDistinctId: "me")
+        let spy = AnalyticsSpy()
+        let first = BranchAttribution.recordReferral(
+            from: shareInstallParams(), defaults: defaults, ownDistinctId: "me", analytics: spy.analytics)
+
         XCTAssertEqual(first?.referrer, "sharer-123")
         XCTAssertEqual(defaults.string(forKey: BranchAttribution.referredByDefaultsKey), "sharer-123")
+
+        XCTAssertEqual(spy.properties.count, 1)
+        XCTAssertEqual(spy.properties.first?.0, "referred_by")
+        XCTAssertEqual(spy.properties.first?.1 as? String, "sharer-123")
+
+        XCTAssertEqual(spy.events.count, 1)
+        XCTAssertEqual(spy.events.first?.0, "referral_install_attributed")
+        XCTAssertEqual(spy.events.first?.1["referred_by"] as? String, "sharer-123")
+        XCTAssertEqual(spy.events.first?.1["feature"] as? String, "favorite")
     }
 
     func testReferredByIsNeverOverwritten() {
         let defaults = freshDefaults()
-        BranchAttribution.recordReferral(from: shareInstallParams(), defaults: defaults, ownDistinctId: "me")
+        let spy = AnalyticsSpy()
+        BranchAttribution.recordReferral(
+            from: shareInstallParams(), defaults: defaults, ownDistinctId: "me", analytics: spy.analytics)
 
         let second = BranchAttribution.recordReferral(
-            from: shareInstallParams(referrer: "someone-else"), defaults: defaults, ownDistinctId: "me")
+            from: shareInstallParams(referrer: "someone-else"), defaults: defaults,
+            ownDistinctId: "me", analytics: spy.analytics)
         XCTAssertNil(second)
         XCTAssertEqual(defaults.string(forKey: BranchAttribution.referredByDefaultsKey), "sharer-123")
+        // The second install session reports nothing.
+        XCTAssertEqual(spy.properties.count, 1)
+        XCTAssertEqual(spy.events.count, 1)
     }
 
-    func testNothingIsStoredWithoutSlRef() {
+    func testNothingIsStoredOrReportedWithoutSlRef() {
         let defaults = freshDefaults()
+        let spy = AnalyticsSpy()
         XCTAssertNil(BranchAttribution.recordReferral(
-            from: shareInstallParams(referrer: nil), defaults: defaults, ownDistinctId: "me"))
+            from: shareInstallParams(referrer: nil), defaults: defaults,
+            ownDistinctId: "me", analytics: spy.analytics))
         XCTAssertNil(defaults.string(forKey: BranchAttribution.referredByDefaultsKey))
+        XCTAssertTrue(spy.properties.isEmpty)
+        XCTAssertTrue(spy.events.isEmpty)
     }
 }
