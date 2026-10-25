@@ -18,6 +18,7 @@ final class ReferralShareTextTests: XCTestCase {
         let messaging: [UIActivity.ActivityType] = [
             .message,
             .mail,
+            .airDrop,
             .copyToPasteboard,
             UIActivity.ActivityType("net.whatsapp.WhatsApp.ShareExtension"),
             UIActivity.ActivityType("com.facebook.Messenger.ShareExtension"),
