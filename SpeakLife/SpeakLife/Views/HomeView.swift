@@ -447,6 +447,13 @@ struct HomeView: View {
                 PushOfferView(route: route)
                     .environmentObject(subscriptionStore)
             }
+            // Driven by a tapped Warrior Room push (prayer request, testimony,
+            // milestone). Same level as the sheets above so it presents during
+            // the launch window too.
+            .sheet(isPresented: $appState.showWarriorRoom) {
+                PrayerWallView()
+                    .environmentObject(subscriptionStore)
+            }
             // The Inbox, reached from the reader CTA above (must be a separate
             // presentation so it can appear after the reader sheet dismisses).
             .sheet(isPresented: $showSpeakLifeMessages) {

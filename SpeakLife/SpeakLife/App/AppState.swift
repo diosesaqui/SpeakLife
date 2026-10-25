@@ -46,6 +46,11 @@ final class AppState: ObservableObject {
     /// In memory only, like `remoteMessage`; drives the sheet in HomeView.
     @Published var pushOffer: PushOfferRoute?
 
+    /// Opens the Warrior Room as a sheet, from a tapped prayer request or
+    /// testimony push. Used when the Warrior Room is not a tab (the AI tab
+    /// owns tag 4). In memory only; dismissal clears it.
+    @Published var showWarriorRoom = false
+
     /// An invite code from a Stand link, waiting to be redeemed.
     ///
     /// @AppStorage, not @Published-only, because a DEFERRED Branch link
