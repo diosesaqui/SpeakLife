@@ -397,6 +397,11 @@
 		STANDB000000000000000001 /* StandCompletionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = STAND0000000000000000001 /* StandCompletionView.swift */; };
 		STANDB000000000000000002 /* StandConflictSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = STAND0000000000000000002 /* StandConflictSheet.swift */; };
 		STANDB000000000000000003 /* StandDiscovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = STAND0000000000000000003 /* StandDiscovery.swift */; };
+		SPKOB0000000000000000001 /* SpeakOverLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = SPKO00000000000000000001 /* SpeakOverLink.swift */; };
+		SPKOB0000000000000000002 /* SpeakOverInbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = SPKO00000000000000000002 /* SpeakOverInbox.swift */; };
+		SPKOB0000000000000000003 /* SpeakOverSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = SPKO00000000000000000003 /* SpeakOverSheet.swift */; };
+		SPKOB0000000000000000004 /* SpeakOverReceivedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SPKO00000000000000000004 /* SpeakOverReceivedView.swift */; };
+		SPKOB0000000000000000005 /* SpeakOverLinkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = SPKO00000000000000000005 /* SpeakOverLinkTests.swift */; };
 		OFFERB000000000000000001 /* WelcomeOfferPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = OFFER0000000000000000001 /* WelcomeOfferPresenter.swift */; };
 		OFFERB000000000000000002 /* PersonalDeclarationPrompt.swift in Sources */ = {isa = PBXBuildFile; fileRef = OFFER0000000000000000002 /* PersonalDeclarationPrompt.swift */; };
 		OFFERB000000000000000003 /* LapsedPaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = OFFER0000000000000000003 /* LapsedPaywallView.swift */; };
@@ -821,6 +826,11 @@
 		STAND0000000000000000001 /* StandCompletionView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StandCompletionView.swift; sourceTree = "<group>"; };
 		STAND0000000000000000002 /* StandConflictSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StandConflictSheet.swift; sourceTree = "<group>"; };
 		STAND0000000000000000003 /* StandDiscovery.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StandDiscovery.swift; sourceTree = "<group>"; };
+		SPKO00000000000000000001 /* SpeakOverLink.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SpeakOverLink.swift; sourceTree = "<group>"; };
+		SPKO00000000000000000002 /* SpeakOverInbox.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SpeakOverInbox.swift; sourceTree = "<group>"; };
+		SPKO00000000000000000003 /* SpeakOverSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SpeakOverSheet.swift; sourceTree = "<group>"; };
+		SPKO00000000000000000004 /* SpeakOverReceivedView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SpeakOverReceivedView.swift; sourceTree = "<group>"; };
+		SPKO00000000000000000005 /* SpeakOverLinkTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SpeakOverLinkTests.swift; sourceTree = "<group>"; };
 		OFFER0000000000000000001 /* WelcomeOfferPresenter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WelcomeOfferPresenter.swift; sourceTree = "<group>"; };
 		OFFER0000000000000000002 /* PersonalDeclarationPrompt.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PersonalDeclarationPrompt.swift; sourceTree = "<group>"; };
 		OFFER0000000000000000003 /* LapsedPaywallView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LapsedPaywallView.swift; sourceTree = "<group>"; };
@@ -962,6 +972,7 @@
 				4501F3A82F840A01008704F9 /* PrayerWallPostTests.swift */,
 				4501F3AA2F840A01008704F9 /* PrayerWallViewModelTests.swift */,
 				2F740F6829D4017400E89E7F /* APIClientTests.swift */,
+				SPKO00000000000000000005 /* SpeakOverLinkTests.swift */,
 				4568852B2B428FE2007B1EBB /* SpeakLifeTests-Bridging-Header.h */,
 			);
 			path = SpeakLifeTests;
@@ -1414,6 +1425,7 @@
 			children = (
 				F0RY0UG00000000000000001 /* ForYou */,
 				STANDG000000000000000001 /* Stand */,
+				SPKOG0000000000000000001 /* SpeakOver */,
 				OFFERG000000000000000001 /* Offer */,
 				TIC00GRP000000000000002A /* Guard */,
 				458510D82B159B0D00230EE5 /* LandingView.swift */,
@@ -1920,6 +1932,18 @@
 			path = Offer;
 			sourceTree = "<group>";
 		};
+		SPKOG0000000000000000001 /* SpeakOver */ = {
+			isa = PBXGroup;
+			children = (
+				SPKO00000000000000000001 /* SpeakOverLink.swift */,
+				SPKO00000000000000000002 /* SpeakOverInbox.swift */,
+				SPKO00000000000000000003 /* SpeakOverSheet.swift */,
+				SPKO00000000000000000004 /* SpeakOverReceivedView.swift */,
+			);
+			name = SpeakOver;
+			path = SpeakOver;
+			sourceTree = "<group>";
+		};
 		STANDG000000000000000001 /* Stand */ = {
 			isa = PBXGroup;
 			children = (
@@ -2146,6 +2170,7 @@
 				4501F3A72F840A01008704F9 /* PrayerWallPostTests.swift in Sources */,
 				4501F3A92F840A01008704F9 /* PrayerWallViewModelTests.swift in Sources */,
 				2F740F6929D4017400E89E7F /* APIClientTests.swift in Sources */,
+				SPKOB0000000000000000005 /* SpeakOverLinkTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2156,6 +2181,10 @@
 				STANDB000000000000000001 /* StandCompletionView.swift in Sources */,
 				STANDB000000000000000002 /* StandConflictSheet.swift in Sources */,
 				STANDB000000000000000003 /* StandDiscovery.swift in Sources */,
+				SPKOB0000000000000000001 /* SpeakOverLink.swift in Sources */,
+				SPKOB0000000000000000002 /* SpeakOverInbox.swift in Sources */,
+				SPKOB0000000000000000003 /* SpeakOverSheet.swift in Sources */,
+				SPKOB0000000000000000004 /* SpeakOverReceivedView.swift in Sources */,
 				OFFERB000000000000000001 /* WelcomeOfferPresenter.swift in Sources */,
 				OFFERB000000000000000002 /* PersonalDeclarationPrompt.swift in Sources */,
 				OFFERB000000000000000003 /* LapsedPaywallView.swift in Sources */,
