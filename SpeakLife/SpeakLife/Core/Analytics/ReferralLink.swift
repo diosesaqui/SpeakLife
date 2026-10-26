@@ -22,23 +22,42 @@
 //
 
 import Foundation
+import UIKit
 
 enum ReferralLink {
 
     /// What was shared. Becomes Branch's `feature`, so installs break down by
-    /// surface in Branch and in `acquisition_source`.
+    /// surface in Branch, and is recorded as `acquisition_creative` on referral
+    /// installs (`acquisition_source` is the channel, "share", for all of them).
     enum Feature: String {
         case declarationCard = "declaration_card"
         case dailyBurst = "daily_burst"
         case devotional = "devotional"
+        case profileInvite = "profile_invite"
+        case favorite = "favorite"
+        case tracker = "tracker"
+        case audioFavorite = "audio_favorite"
+        case bibleVerse = "bible_verse"
+        case dailyVerse = "daily_verse"
+        case bibleChat = "bible_chat"
+        case standCompletion = "stand_completion"
+        case speakOver = "speak_over"
+        case yearInReview = "year_in_review"
     }
 
     static let host = "speaklife.app.link"
 
+    /// Query key carrying the sharer's anonymous analytics id. Branch hands it
+    /// back as link data on the recipient's first session.
+    static let referrerKey = "sl_ref"
+
     /// - Parameters:
     ///   - feature: the surface the share came from.
     ///   - campaign: optional finer label, such as the declaration category.
-    static func url(_ feature: Feature, campaign: String? = nil) -> URL {
+    ///   - extra: link data for the recipient's app, such as what to open.
+    ///     Branch passes unknown keys through on the first session.
+    static func url(_ feature: Feature, campaign: String? = nil,
+                    extra: [URLQueryItem] = []) -> URL {
         var components = URLComponents()
         components.scheme = "https"
         components.host = host
@@ -55,11 +74,94 @@ enum ReferralLink {
         // through as link data, so a later "who brought whom" report (and a
         // reward for the sharer) can be built without changing the link.
         if let referrer = AnalyticsService.shared.postHogDistinctId, !referrer.isEmpty {
-            items.append(URLQueryItem(name: "sl_ref", value: referrer))
+            items.append(URLQueryItem(name: referrerKey, value: referrer))
         }
+        items.append(contentsOf: extra)
         components.queryItems = items
+        // URLComponents leaves "+" bare in query values, and Branch and most
+        // servers read a bare "+" as a space, so "Psalm 23 + John 3" would
+        // arrive as "Psalm 23   John 3". Encode it explicitly.
+        components.percentEncodedQuery = components.percentEncodedQuery?
+            .replacingOccurrences(of: "+", with: "%2B")
 
         // Every part above is a fixed, valid component, so this cannot be nil.
         return components.url ?? URL(string: "https://\(host)/")!
+    }
+}
+
+// MARK: - Share text
+
+/// Share-sheet text that carries the tracked link only when the user sends it
+/// as a message.
+///
+/// A link belongs in a chat, where one person taps it. On an Instagram or
+/// Facebook post, in Notes or in a saved image, a raw URL is clutter, so those
+/// get the words alone. The share sheet asks for the item only after the user
+/// picks a destination, which is what lets one item answer differently per app.
+///
+/// Use it in place of a plain String in `activityItems`:
+/// `ShareSheet(activityItems: [image, ReferralShareText("…", link: url)])`.
+final class ReferralShareText: NSObject, UIActivityItemSource {
+
+    let text: String
+    let link: URL
+
+    init(_ text: String, link: URL) {
+        self.text = text
+        self.link = link
+    }
+
+    func activityViewControllerPlaceholderItem(_ activityViewController: UIActivityViewController) -> Any {
+        text
+    }
+
+    func activityViewController(_ activityViewController: UIActivityViewController,
+                                itemForActivityType activityType: UIActivity.ActivityType?) -> Any? {
+        Self.message(text: text, link: link, for: activityType)
+    }
+
+    /// What goes to the chosen app. Pure, so the rule is unit-testable.
+    static func message(text: String, link: URL, for activityType: UIActivity.ActivityType?) -> String? {
+        let words = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard includesLink(for: activityType) else {
+            return words.isEmpty ? nil : words
+        }
+        return words.isEmpty ? link.absoluteString : "\(words)\n\(link.absoluteString)"
+    }
+
+    /// Messaging destinations, matched on the share extension's bundle id.
+    /// Third-party extensions arrive as raw activity types named after the
+    /// app's bundle id, which is stable across app versions.
+    private static let messagingBundlePrefixes = [
+        "net.whatsapp.",               // WhatsApp
+        "com.facebook.messenger",      // Messenger
+        "ph.telegra.",                 // Telegram
+        "org.whispersystems.signal",   // Signal
+        "com.viber.",                  // Viber
+        "jp.naver.line",               // LINE
+        "com.tencent.xin",             // WeChat
+        "com.hammerandchisel.discord", // Discord
+        "com.groupme.",                // GroupMe
+        "com.kik.",                    // Kik
+        "com.google.chat",             // Google Chat
+        "com.skype.",                  // Skype
+        "com.tinyspeck.chatlyio"       // Slack
+    ]
+
+    static func includesLink(for activityType: UIActivity.ActivityType?) -> Bool {
+        // No type means the sheet did not say where it is going; a link that
+        // reaches a person is worth more than one that clutters a post.
+        guard let activityType else { return true }
+        switch activityType {
+        // AirDrop goes to one person nearby, the same as a message.
+        case .message, .mail, .airDrop:
+            return true
+        // Copied text is almost always pasted into a chat.
+        case .copyToPasteboard:
+            return true
+        default:
+            let id = activityType.rawValue.lowercased()
+            return messagingBundlePrefixes.contains { id.hasPrefix($0) }
+        }
     }
 }
