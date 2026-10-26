@@ -32,6 +32,7 @@
 		D0960000000000000096BBBB /* OnboardingAngleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0960000000000000096AAAA /* OnboardingAngleTests.swift */; };
 		AC0A11B7E5700000000000B1 /* AcquisitionAttributionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0A11B7E5700000000000A1 /* AcquisitionAttributionTests.swift */; };
 		SHRTB0000000000000000001 /* ReferralShareTextTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = SHRT00000000000000000001 /* ReferralShareTextTests.swift */; };
+		CARDB0000000000000000002 /* ShareMomentsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CARD00000000000000000002 /* ShareMomentsTests.swift */; };
 		4501F3A72F840A01008704F9 /* PrayerWallPostTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4501F3A82F840A01008704F9 /* PrayerWallPostTests.swift */; };
 		4501F3A92F840A01008704F9 /* PrayerWallViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4501F3AA2F840A01008704F9 /* PrayerWallViewModelTests.swift */; };
 		450901B22F630925008704F9 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 450901B12F630925008704F9 /* GoogleService-Info.plist */; };
@@ -59,6 +60,7 @@
 		45C0A1232F2A0B0100A27856 /* AcquisitionAttribution.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C0A1222F2A0B0100A27856 /* AcquisitionAttribution.swift */; };
 		SHAREB000000000000000001 /* ReferralLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = SHARE0000000000000000001 /* ReferralLink.swift */; };
 		SHAREB000000000000000002 /* DeclarationStoryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = SHARE0000000000000000002 /* DeclarationStoryCard.swift */; };
+		CARDB0000000000000000001 /* ShareMoments.swift in Sources */ = {isa = PBXBuildFile; fileRef = CARD00000000000000000001 /* ShareMoments.swift */; };
 		452F6AD32E87CD3F00A27856 /* EnhancedAnalyticsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 452F6ACE2E87CD3F00A27856 /* EnhancedAnalyticsService.swift */; };
 		452F6AD42E87CD3F00A27856 /* RecommendationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 452F6AD12E87CD3F00A27856 /* RecommendationEngine.swift */; };
 		452F6AD52E87CD3F00A27856 /* MLTaskLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 452F6AD02E87CD3F00A27856 /* MLTaskLibrary.swift */; };
@@ -470,6 +472,7 @@
 		C0960000000000000096AAAA /* OnboardingAngleTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OnboardingAngleTests.swift; sourceTree = "<group>"; };
 		AC0A11B7E5700000000000A1 /* AcquisitionAttributionTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AcquisitionAttributionTests.swift; sourceTree = "<group>"; };
 		SHRT00000000000000000001 /* ReferralShareTextTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReferralShareTextTests.swift; sourceTree = "<group>"; };
+		CARD00000000000000000002 /* ShareMomentsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareMomentsTests.swift; sourceTree = "<group>"; };
 		4501F3A82F840A01008704F9 /* PrayerWallPostTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerWallPostTests.swift; sourceTree = "<group>"; };
 		4501F3AA2F840A01008704F9 /* PrayerWallViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerWallViewModelTests.swift; sourceTree = "<group>"; };
 		450901B12F630925008704F9 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
@@ -492,6 +495,7 @@
 		45C0A1222F2A0B0100A27856 /* AcquisitionAttribution.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcquisitionAttribution.swift; sourceTree = "<group>"; };
 		SHARE0000000000000000001 /* ReferralLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReferralLink.swift; sourceTree = "<group>"; };
 		SHARE0000000000000000002 /* DeclarationStoryCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeclarationStoryCard.swift; sourceTree = "<group>"; };
+		CARD00000000000000000001 /* ShareMoments.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareMoments.swift; sourceTree = "<group>"; };
 		452F6ACB2E87CD3F00A27856 /* AINotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AINotificationService.swift; sourceTree = "<group>"; };
 		452F6ACC2E87CD3F00A27856 /* ContentCategorizationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentCategorizationService.swift; sourceTree = "<group>"; };
 		452F6ACD2E87CD3F00A27856 /* CreateMLTrainingPipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateMLTrainingPipeline.swift; sourceTree = "<group>"; };
@@ -954,6 +958,7 @@
 				C0960000000000000096AAAA /* OnboardingAngleTests.swift */,
 				AC0A11B7E5700000000000A1 /* AcquisitionAttributionTests.swift */,
 				SHRT00000000000000000001 /* ReferralShareTextTests.swift */,
+				CARD00000000000000000002 /* ShareMomentsTests.swift */,
 				4501F3A82F840A01008704F9 /* PrayerWallPostTests.swift */,
 				4501F3AA2F840A01008704F9 /* PrayerWallViewModelTests.swift */,
 				2F740F6829D4017400E89E7F /* APIClientTests.swift */,
@@ -1644,6 +1649,7 @@
 				45F3E7622EB43B8A002B1F4E /* DeclarationAnimationSettings.swift */,
 				7AA8709F28DACCB700134ADB /* DeclarationContentView.swift */,
 				SHARE0000000000000000002 /* DeclarationStoryCard.swift */,
+				CARD00000000000000000001 /* ShareMoments.swift */,
 				7AA8709D28DACCB700134ADB /* QuoteLabel.swift */,
 				7AA8709E28DACCB700134ADB /* HeartView.swift */,
 				453A831D2C9BF18500398ECE /* DeclarationMenuButton.swift */,
@@ -2136,6 +2142,7 @@
 				D0960000000000000096BBBB /* OnboardingAngleTests.swift in Sources */,
 				AC0A11B7E5700000000000B1 /* AcquisitionAttributionTests.swift in Sources */,
 				SHRTB0000000000000000001 /* ReferralShareTextTests.swift in Sources */,
+				CARDB0000000000000000002 /* ShareMomentsTests.swift in Sources */,
 				4501F3A72F840A01008704F9 /* PrayerWallPostTests.swift in Sources */,
 				4501F3A92F840A01008704F9 /* PrayerWallViewModelTests.swift in Sources */,
 				2F740F6929D4017400E89E7F /* APIClientTests.swift in Sources */,
@@ -2381,6 +2388,7 @@
 				45C0A1232F2A0B0100A27856 /* AcquisitionAttribution.swift in Sources */,
 				SHAREB000000000000000001 /* ReferralLink.swift in Sources */,
 				SHAREB000000000000000002 /* DeclarationStoryCard.swift in Sources */,
+				CARDB0000000000000000001 /* ShareMoments.swift in Sources */,
 				454807542E3F049400B8C71B /* DailyChecklistView.swift in Sources */,
 				7AF46FC52A41326100A45C01 /* AbbasLoveView.swift in Sources */,
 				453A831E2C9BF18500398ECE /* DeclarationMenuButton.swift in Sources */,
