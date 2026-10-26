@@ -669,6 +669,13 @@ struct ModernDailyChecklistView: View {
                 // the width pin on the content below.
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: 12) {
+                        // Dec 1 to Jan 15 only: the way back into the Year in
+                        // Review. Renders nothing outside the window.
+                        if isHomeTab {
+                            YearInReviewTodayCard()
+                                .padding(.horizontal, 20)
+                                .dsAppear(0.02)
+                        }
                         // Trial week only (treatment group): progress toward
                         // three app days, where trial-to-paid jumps.
                         if TrialExperienceService.shared.showsTrialProgress {

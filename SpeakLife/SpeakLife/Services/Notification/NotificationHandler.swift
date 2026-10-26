@@ -65,6 +65,15 @@ final class NotificationHandler: NSObject, ObservableObject, UNUserNotificationC
             category: content.categoryIdentifier
         )
 
+        // The December recap push (`deepLink` = `yearInReview`). Routing
+        // below carries on as normal and lands on the Today tab; HomeView
+        // presents the recap over it once nothing else is on screen.
+        if YearInReviewEligibility.isRecapPush(content.userInfo) {
+            DispatchQueue.main.async {
+                YearInReviewCoordinator.shared.requestFromPush()
+            }
+        }
+
         // Check if this is a daily burst notification
         if content.userInfo["action"] as? String == "daily_declaration_burst" {
             // Handle daily burst notification
