@@ -21,12 +21,12 @@ final class StandInviteTests: XCTestCase {
         XCTAssertEqual(StandInviteCopy.firstPerson(.mentalHealth), "a sound mind")
     }
 
-    /// "God's Promise" would read "God's Word over God's promise".
+    /// "God's Promise" would read "God's Word for God's promise".
     func testFertilityNamesTheFamilyPromised() {
         XCTAssertEqual(StandInviteCopy.firstPerson(.fertility), "the family God promised me")
         XCTAssertEqual(StandInviteCopy.secondPerson(.fertility), "the family God promised you")
         XCTAssertEqual(StandInviteCopy.cardHeadline(.fertility),
-                       "I'm speaking God's Word over the family God promised me this week.")
+                       "I'm standing on God's Word for the family God promised me this week.")
     }
 
     func testSecondPersonSwapsThePossessive() {
@@ -37,18 +37,18 @@ final class StandInviteTests: XCTestCase {
 
     func testAskAndHeadlineWording() {
         XCTAssertEqual(StandInviteCopy.ask(.marriage),
-                       "Will you stand with me this week? For 7 days I'm speaking God's Word over my marriage. Join me.")
+                       "Will you stand with me this week? For 7 days I'm standing on God's Word for my marriage. Join me.")
         XCTAssertEqual(StandInviteCopy.cardHeadline(.anxiety),
-                       "I'm speaking God's Word over peace this week.")
+                       "I'm standing on God's Word for peace this week.")
     }
 
-    /// No theme may say "God's Word over God's …", or leave "me" in a line
+    /// No theme may say "God's Word for God's …", or leave "me" in a line
     /// addressed to the sender.
-    func testEveryThemeReadsCleanlyAfterGodsWordOver() {
+    func testEveryThemeReadsCleanlyAfterGodsWordFor() {
         for theme in DeclarationCategory.allCases {
             XCTAssertFalse(StandInviteCopy.firstPerson(theme).hasPrefix("God"), "\(theme)")
             XCTAssertFalse(StandInviteCopy.secondPerson(theme).hasSuffix(" me"), "\(theme)")
-            XCTAssertTrue(StandInviteCopy.ask(theme).contains("God's Word over "), "\(theme)")
+            XCTAssertTrue(StandInviteCopy.ask(theme).contains("God's Word for "), "\(theme)")
         }
     }
 
@@ -103,7 +103,7 @@ final class StandInviteTests: XCTestCase {
         XCTAssertTrue(message.contains("strength"))
         XCTAssertEqual(StandCodeInput.display(message), "WXYZ-6789")
         // Undashed, the last valid word wins, since the code comes last.
-        XCTAssertEqual(StandCodeInput.display("speaking over strength code WXYZ6789"), "WXYZ-6789")
+        XCTAssertEqual(StandCodeInput.display("standing for strength code WXYZ6789"), "WXYZ-6789")
     }
 
     // MARK: - Day-1 ask

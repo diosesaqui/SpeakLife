@@ -22,19 +22,19 @@ public enum StandInviteCopy {
 
     /// The message sent with the invite, above the link and the code.
     public static func ask(_ theme: DeclarationCategory) -> String {
-        "Will you stand with me this week? For 7 days I'm speaking God's Word over \(firstPerson(theme)). Join me."
+        "Will you stand with me this week? For 7 days I'm standing on God's Word for \(firstPerson(theme)). Join me."
     }
 
     /// The serif line on the invite card.
     public static func cardHeadline(_ theme: DeclarationCategory) -> String {
-        "I'm speaking God's Word over \(firstPerson(theme)) this week."
+        "I'm standing on God's Word for \(firstPerson(theme)) this week."
     }
 
     /// "peace", "my marriage", "my walk with God". For the sender's own voice:
-    /// "I'm speaking God's Word over my marriage."
+    /// "I'm standing on God's Word for my marriage."
     public static func firstPerson(_ theme: DeclarationCategory) -> String {
         switch theme {
-        // Its title is "God's Promise", which reads "God's Word over God's
+        // Its title is "God's Promise", which reads "God's Word for God's
         // promise" in the ask. The promise is a family, so the line says so.
         case .fertility: return "the family God promised me"
         default:         return sentenceCase(theme.enforcementTitle)
