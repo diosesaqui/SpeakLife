@@ -767,10 +767,12 @@ struct HighConversionPaywallView: View {
     /// Per-day equivalent of the annual price ("$0.16/day"), the smallest
     /// honest unit of the same billed amount. StoreKit price ÷ 365, formatted
     /// in the product's own locale and currency, so it is never a hardcoded "$".
-    /// Rides the `hardOnboardingPaywall` Remote Config switch: nil while it is
-    /// off, and every per-day spot falls back to its pre-per-day copy.
+    /// Rides the `billedAmountFirst` Remote Config switch, with the rest of the
+    /// price presentation: nil while it is off, and every per-day spot falls
+    /// back to its pre-per-day copy. (It used to ride `hardOnboardingPaywall`,
+    /// which now controls only whether the paywall can be closed.)
     private var annualPerDay: String? {
-        guard subscriptionStore.hardOnboardingPaywall,
+        guard subscriptionStore.billedAmountFirst,
               let p = subscriptionStore.currentOfferedPremium else { return nil }
         return localizedPrice(p.price / 365, in: p)
     }
@@ -778,7 +780,7 @@ struct HighConversionPaywallView: View {
     /// ÷ 365 (a month is not 30 days, so this is the true daily cost across a
     /// year of billing). Same storefront formatting and same flag as annualPerDay.
     private var nonAnnualPerDay: String? {
-        guard subscriptionStore.hardOnboardingPaywall else { return nil }
+        guard subscriptionStore.billedAmountFirst else { return nil }
         if showWeeklyPlan, let w = subscriptionStore.currentOfferedWeekly {
             return localizedPrice(w.price / 7, in: w)
         }
