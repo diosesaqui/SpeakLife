@@ -42,6 +42,7 @@ enum SpeakOverInbox {
 
     private static let pendingKey = "speakOverPendingGift"
     private static let lastShownKey = "speakOverLastShownGift"
+    private static let openedKey = "speakOverOpenedDeliveryIds"
 
     /// A gift nobody opened in two weeks is stale; showing it then would be odd.
     static let lifetime: TimeInterval = 14 * 24 * 60 * 60
@@ -109,10 +110,73 @@ enum SpeakOverInbox {
         }
     }
 
+    /// True the first time a delivery opens, false after.
+    ///
+    /// Persisted, so a gift that comes back after the app was killed with it
+    /// open is not counted as a second open. Keeps the last few ids only.
+    @discardableResult
+    static func markOpened(_ delivery: SpeakOverDelivery,
+                           defaults: UserDefaults = .standard) -> Bool {
+        var ids = defaults.stringArray(forKey: openedKey) ?? []
+        let id = delivery.id.uuidString
+        guard !ids.contains(id) else { return false }
+        ids.append(id)
+        defaults.set(Array(ids.suffix(20)), forKey: openedKey)
+        return true
+    }
+
     private static func decode<T: Decodable>(_ type: T.Type, forKey key: String,
                                              defaults: UserDefaults) -> T? {
         guard let data = defaults.data(forKey: key) else { return nil }
         return try? JSONDecoder().decode(type, from: data)
+    }
+}
+
+// MARK: - Presentation gate
+
+/// When a waiting gift may take the screen. Pure, so the budget is testable.
+///
+/// Two rules:
+///  - The screen must be idle on two checks in a row. Several presenters
+///    (the post-Burst prompt and offer, the first-run Burst) fire a beat after
+///    something else closes, so one quiet instant is not proof of a quiet
+///    screen. A gift that grabs that instant drops theirs, and they burn their
+///    once-ever flags before presenting.
+///  - While waiting, one chain of retries with a fixed budget. Anything from
+///    outside (foreground, a new gift, onboarding ending) starts it afresh.
+struct SpeakOverGate: Equatable {
+
+    enum Decision: Equatable {
+        case present
+        case retry
+        case giveUp
+    }
+
+    static let retryInterval: Double = 1.5
+    /// 120 checks at 1.5s: three minutes of waiting for another screen.
+    static let maxRetries = 120
+
+    private(set) var retriesLeft = SpeakOverGate.maxRetries
+    private(set) var idleChecks = 0
+
+    mutating func reset() {
+        retriesLeft = Self.maxRetries
+        idleChecks = 0
+    }
+
+    mutating func check(isIdle: Bool) -> Decision {
+        if isIdle {
+            idleChecks += 1
+            if idleChecks >= 2 {
+                idleChecks = 0
+                return .present
+            }
+        } else {
+            idleChecks = 0
+        }
+        guard retriesLeft > 0 else { return .giveUp }
+        retriesLeft -= 1
+        return .retry
     }
 }
 
@@ -127,37 +191,52 @@ struct SpeakOverPresentationModifier: ViewModifier {
     /// Read once per presentation for the background photo. Not observed, so a
     /// theme change does not re-render the whole app root.
     let themeViewModel: ThemeViewModel
+    /// For the verse of a line that is one of ours. Not observed, same reason.
+    let declarationStore: DeclarationViewModel
+    /// The launch animation is root content, not a presentation, so the
+    /// presented-controller check cannot see it. HomeView raises its own
+    /// launch sheet as it ends, and a gift already on screen would drop it.
+    let isShowingLanding: Bool
 
     @Environment(\.scenePhase) private var scenePhase
     /// The gift on screen, kept so dismissal can mark that exact one shown.
     @State private var showing: SpeakOverDelivery?
+    @State private var verse: String?
     @State private var presentedAt: Date?
-    @State private var busyRetries = 0
-
-    /// About three minutes of waiting for another screen to close.
-    private let maxBusyRetries = 90
+    @State private var gate = SpeakOverGate()
+    /// The one pending check. Every new trigger replaces it, so there is only
+    /// ever one chain of retries.
+    @State private var checkTask: Task<Void, Never>?
+    /// When the post-Burst presenters were first seen pending. They clear
+    /// their own flag on the way out, but a Burst from a stand returns before
+    /// that, so their word is trusted for a bounded time only.
+    @State private var yieldingSince: Date?
 
     func body(content: Content) -> some View {
         content
-            .onAppear { schedule() }
-            .onChange(of: appState.isOnboarded) { _, _ in schedule() }
+            .onAppear { trigger() }
+            .onChange(of: appState.isOnboarded) { _, _ in trigger() }
+            .onChange(of: isShowingLanding) { _, visible in
+                // Let HomeView's own launch presentations go first.
+                if !visible { trigger(after: 1.5) }
+            }
             .onChange(of: scenePhase) { _, phase in
-                if phase == .active { schedule() }
+                if phase == .active { trigger() }
             }
             .onReceive(NotificationCenter.default.publisher(for: SpeakOverInbox.didChange)) { _ in
-                schedule()
+                trigger()
             }
             .fullScreenCover(item: $appState.pendingSpeakOver, onDismiss: {
-                // Marked on the way out, not on the way in: if the app is
-                // killed while the gift is open, it comes back next launch
-                // instead of being lost.
+                // Marked on the way out (and when it is spoken), not on the
+                // way in: if the app is killed while the gift is open, it comes
+                // back next launch instead of being lost.
                 if let showing { SpeakOverInbox.markShown(showing) }
                 showing = nil
                 presentedAt = nil
                 // A second gift may have arrived while this one was open.
-                schedule()
+                trigger()
             }) { delivery in
-                SpeakOverReceivedView(delivery: delivery, background: backgroundImage)
+                SpeakOverReceivedView(delivery: delivery, verse: verse, background: backgroundImage)
             }
     }
 
@@ -168,52 +247,93 @@ struct SpeakOverPresentationModifier: ViewModifier {
         return UIImage(named: themeViewModel.selectedTheme.backgroundImageString)
     }
 
-    /// A short settle before every check, so a cold launch from a link lets the
-    /// landing animation and launch routing finish first.
+    /// Something from outside: a fresh budget and a fresh chain.
     @MainActor
-    private func schedule(after seconds: Double = 0.9) {
-        Task { @MainActor in
+    private func trigger(after seconds: Double = SpeakOverGate.retryInterval) {
+        gate.reset()
+        schedule(after: seconds)
+    }
+
+    /// Replaces any pending check with this one.
+    @MainActor
+    private func schedule(after seconds: Double) {
+        checkTask?.cancel()
+        checkTask = Task { @MainActor in
             try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+            guard !Task.isCancelled else { return }
             evaluate()
         }
     }
 
     @MainActor
     private func evaluate() {
-        // Never over onboarding: a fresh install resolves the link before it
-        // has even started.
-        guard appState.isOnboarded else { return }
+        // Never over onboarding (a fresh install resolves the link before it
+        // has started), and never over the launch animation; its end triggers
+        // a fresh check.
+        guard appState.isOnboarded, !isShowingLanding else { return }
 
         if appState.pendingSpeakOver != nil {
-            // A cover SwiftUI could not present (something else was up after
-            // all) leaves the slot set with nothing on screen, which would
-            // block every later gift. If nothing is presented a few seconds on,
-            // free the slot; the gift is still in the inbox and comes straight
-            // back.
-            if !Self.isScreenBusy, let presentedAt, Date().timeIntervalSince(presentedAt) > 3 {
+            // Our cover is up, or SwiftUI dropped it because something else
+            // was. Its dismissal triggers a fresh check, but nothing would in
+            // the second case, so keep checking on the same budget.
+            guard !Self.isScreenBusy else {
+                if gate.check(isIdle: false) == .retry {
+                    schedule(after: SpeakOverGate.retryInterval)
+                }
+                return
+            }
+            // Nothing is presented, yet the slot is set: SwiftUI dropped the
+            // cover. Free the slot after a moment; the gift is still in the
+            // inbox and comes straight back.
+            if let presentedAt, Date().timeIntervalSince(presentedAt) > 3 {
                 appState.pendingSpeakOver = nil
                 showing = nil
                 self.presentedAt = nil
-                schedule()
+                trigger()
+            } else {
+                schedule(after: SpeakOverGate.retryInterval)
             }
             return
         }
 
         guard let delivery = SpeakOverInbox.pending() else { return }
 
-        // A sheet or cover is already up, most often the paywall right after
-        // onboarding. SwiftUI silently drops a second cover, so wait for it.
-        if Self.isScreenBusy {
-            guard busyRetries < maxBusyRetries else { return }
-            busyRetries += 1
-            schedule(after: 2)
-            return
+        // Over a hard paywall (lapsed or never-subscribed wall) is allowed on
+        // purpose: those replace the root content rather than presenting, so
+        // this check sees an idle screen. A gift is free, and closing it lands
+        // the user back on the wall.
+        let idle = !Self.isScreenBusy && !otherPresenterIsDue()
+        switch gate.check(isIdle: idle) {
+        case .present:
+            showing = delivery
+            verse = SpeakOverLink.verse(for: delivery.gift, in: declarationStore.allAvailableDeclarations)
+            presentedAt = Date()
+            appState.pendingSpeakOver = delivery
+        case .retry:
+            schedule(after: SpeakOverGate.retryInterval)
+        case .giveUp:
+            // Waits for the next foreground, gift or onboarding change.
+            break
         }
+    }
 
-        busyRetries = 0
-        showing = delivery
-        presentedAt = Date()
-        appState.pendingSpeakOver = delivery
+    /// Presenters that fire a beat after a Burst closes, or open the first-run
+    /// Burst a beat after home appears. Raising the gift in that gap would
+    /// drop theirs.
+    @MainActor
+    private func otherPresenterIsDue() -> Bool {
+        let due = appState.pendingFirstRunBurst
+            || PersonalDeclarationPrompt.shared.isPendingOrShowing
+            || WelcomeOfferPresenter.shared.isPendingOrShowing
+        guard due else {
+            yieldingSince = nil
+            return false
+        }
+        let since = yieldingSince ?? Date()
+        yieldingSince = since
+        // A real one presents within a second or two. A flag still up after
+        // 10s belongs to a Burst that never reached its presenters.
+        return Date().timeIntervalSince(since) < 10
     }
 
     /// Whether the key window already has something presented over it.
@@ -230,7 +350,13 @@ struct SpeakOverPresentationModifier: ViewModifier {
 
 extension View {
     /// Attach once, at the root, next to `standRedemption`.
-    func speakOverPresentation(appState: AppState, themeViewModel: ThemeViewModel) -> some View {
-        modifier(SpeakOverPresentationModifier(appState: appState, themeViewModel: themeViewModel))
+    func speakOverPresentation(appState: AppState,
+                               themeViewModel: ThemeViewModel,
+                               declarationStore: DeclarationViewModel,
+                               isShowingLanding: Bool) -> some View {
+        modifier(SpeakOverPresentationModifier(appState: appState,
+                                               themeViewModel: themeViewModel,
+                                               declarationStore: declarationStore,
+                                               isShowingLanding: isShowingLanding))
     }
 }

@@ -151,7 +151,10 @@ struct SpeakLifeApp: App {
                     // Opens a declaration a friend sent ("Speak it over
                     // someone"). Same rules as the Stand code: never over
                     // onboarding, never over another open screen.
-                    .speakOverPresentation(appState: appState, themeViewModel: themeStore)
+                    .speakOverPresentation(appState: appState,
+                                           themeViewModel: themeStore,
+                                           declarationStore: declarationStore,
+                                           isShowingLanding: isShowingLanding)
                     // Presents the shared day-7 celebration and opens the room a
                     // stand push points at. Both were previously set by code that
                     // nothing read.

@@ -33,7 +33,7 @@ final class SpeakOverLinkTests: XCTestCase {
     }
 
     func testPunctuationSurvivesTheTrip() throws {
-        let tricky = "I'm free & whole; \"no weapon\" formed = nothing? 100% His/mine #rooted"
+        let tricky = "I'm free & whole; \"no weapon\" formed = nothing? 100% His/mine #rooted + sealed"
         let url = SpeakOverLink.url(text: tricky, book: "Jesus", from: "José", to: nil, campaign: nil)
         let gift = try XCTUnwrap(SpeakOverLink.parse(url))
         XCTAssertEqual(gift.text, tricky)
@@ -167,7 +167,7 @@ final class SpeakOverLinkTests: XCTestCase {
     }
 
     func testCopyHasNoDashes() {
-        let lines = [SpeakOverCopy.sendTitle, SpeakOverCopy.subline,
+        let lines = [SpeakOverCopy.sendTitle, SpeakOverCopy.subline(to: nil), SpeakOverCopy.subline(to: "Ana"),
                      SpeakOverCopy.shareText(to: "Ana"), SpeakOverCopy.shareText(to: nil)]
         for line in lines {
             XCTAssertFalse(line.contains("\u{2014}") || line.contains("\u{2013}"), line)
@@ -226,5 +226,115 @@ final class SpeakOverLinkTests: XCTestCase {
         XCTAssertNil(SpeakOverInbox.pending(now: then.addingTimeInterval(SpeakOverInbox.lifetime + 1),
                                             defaults: defaults))
         XCTAssertNil(SpeakOverInbox.pending(now: then, defaults: defaults))
+    }
+
+    func testShareTextReadsCompleteWithoutTheLink() {
+        // ReferralShareText drops the link outside messaging apps, so the
+        // words must not end pointing at something that is not there.
+        XCTAssertTrue(SpeakOverCopy.shareText(to: nil).hasSuffix("."))
+        XCTAssertTrue(SpeakOverCopy.shareText(to: "Ana").hasSuffix("."))
+        XCTAssertFalse(SpeakOverCopy.shareText(to: nil).contains(":"))
+    }
+
+    func testSublineUsesTheRecipientName() {
+        XCTAssertEqual(SpeakOverCopy.subline(to: nil), "Speak this out loud today.")
+        XCTAssertEqual(SpeakOverCopy.subline(to: ""), "Speak this out loud today.")
+        XCTAssertEqual(SpeakOverCopy.subline(to: "Ana"), "Ana, speak this out loud today.")
+    }
+
+    // MARK: - Combining marks and joiners
+
+    func testStackedCombiningMarksAreCapped() throws {
+        let zalgo = "I" + String(repeating: "\u{0301}", count: 40) + " am whole"
+        let cleaned = try XCTUnwrap(SpeakOverLink.clean(zalgo, limit: nil))
+        XCTAssertEqual(cleaned.unicodeScalars.count,
+                       1 + SpeakOverLink.maxMarksPerCharacter + " am whole".unicodeScalars.count)
+        // An ordinary accent survives untouched.
+        XCTAssertEqual(SpeakOverLink.clean("Jose\u{0301}", limit: nil), "Jose\u{0301}")
+    }
+
+    func testParseRejectsTextWithTooManyScalars() throws {
+        // 280 characters, each a letter with three marks: within the
+        // character cap, over the scalar cap.
+        let heavy = String(repeating: "a\u{0301}\u{0302}\u{0303}", count: SpeakOverLink.maxTextLength)
+        XCTAssertEqual(heavy.count, SpeakOverLink.maxTextLength)
+        var components = URLComponents(string: "https://speaklife.app.link/")!
+        components.queryItems = [URLQueryItem(name: "so_t", value: heavy)]
+        XCTAssertNil(SpeakOverLink.parse(try XCTUnwrap(components.url)))
+    }
+
+    func testBuildKeepsWithinTheScalarCap() throws {
+        let heavy = String(repeating: "a\u{0301}\u{0302}\u{0303}", count: SpeakOverLink.maxTextLength)
+        let url = SpeakOverLink.url(text: heavy, book: nil, from: nil, to: nil, campaign: nil)
+        let gift = try XCTUnwrap(SpeakOverLink.parse(url))
+        XCTAssertLessThanOrEqual(gift.text.unicodeScalars.count,
+                                 SpeakOverLink.maxTextLength * SpeakOverLink.maxScalarsPerCharacter)
+    }
+
+    func testJoinersSurviveCleaning() {
+        let family = "\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F467}"
+        XCTAssertEqual(SpeakOverLink.clean("Love \(family)", limit: nil), "Love \(family)")
+        // Persian spelling that needs the zero-width non-joiner.
+        let persian = "\u{0645}\u{06CC}\u{200C}\u{062E}\u{0648}\u{0627}\u{0647}\u{0645}"
+        XCTAssertEqual(SpeakOverLink.clean(persian, limit: nil), persian)
+    }
+
+    // MARK: - Verse
+
+    func testVerseOnlyForAnExactMatch() {
+        let pool = [
+            Declaration(text: "I am healed.", book: "Isaiah 53:5", bibleVerseText: "By his wounds we are healed.",
+                        category: .health),
+            Declaration(text: "Mine.", book: nil, bibleVerseText: "Should not show.", category: .myOwn)
+        ]
+        XCTAssertEqual(SpeakOverLink.verse(for: SpeakOverGift(text: "I am healed.", book: "Isaiah 53:5", from: nil, to: nil),
+                                           in: pool), "By his wounds we are healed.")
+        XCTAssertNil(SpeakOverLink.verse(for: SpeakOverGift(text: "I am healed", book: "Isaiah 53:5", from: nil, to: nil),
+                                         in: pool))
+        XCTAssertNil(SpeakOverLink.verse(for: SpeakOverGift(text: "I am healed.", book: "Psalm 1:3", from: nil, to: nil),
+                                         in: pool))
+        XCTAssertNil(SpeakOverLink.verse(for: SpeakOverGift(text: "Mine.", book: nil, from: nil, to: nil), in: pool))
+    }
+
+    // MARK: - Opened once
+
+    func testOpenedIsCountedOncePerDelivery() {
+        let defaults = makeDefaults()
+        let delivery = SpeakOverDelivery(gift: SpeakOverGift(text: text, book: nil, from: nil, to: nil),
+                                         source: .link, receivedAt: Date())
+        XCTAssertTrue(SpeakOverInbox.markOpened(delivery, defaults: defaults))
+        XCTAssertFalse(SpeakOverInbox.markOpened(delivery, defaults: defaults))
+        let other = SpeakOverDelivery(gift: delivery.gift, source: .link, receivedAt: Date())
+        XCTAssertTrue(SpeakOverInbox.markOpened(other, defaults: defaults))
+    }
+
+    // MARK: - Presentation gate
+
+    func testGateNeedsTwoIdleChecksInARow() {
+        var gate = SpeakOverGate()
+        XCTAssertEqual(gate.check(isIdle: true), .retry)
+        XCTAssertEqual(gate.check(isIdle: false), .retry)
+        XCTAssertEqual(gate.check(isIdle: true), .retry)
+        XCTAssertEqual(gate.check(isIdle: true), .present)
+    }
+
+    func testGateGivesUpWhenTheBudgetIsSpentAndResetRefillsIt() {
+        var gate = SpeakOverGate()
+        for _ in 0..<SpeakOverGate.maxRetries {
+            XCTAssertEqual(gate.check(isIdle: false), .retry)
+        }
+        XCTAssertEqual(gate.check(isIdle: false), .giveUp)
+        gate.reset()
+        XCTAssertEqual(gate.retriesLeft, SpeakOverGate.maxRetries)
+        XCTAssertEqual(gate.check(isIdle: true), .retry)
+        XCTAssertEqual(gate.check(isIdle: true), .present)
+    }
+
+    func testResetClearsAHalfConfirmedIdle() {
+        var gate = SpeakOverGate()
+        _ = gate.check(isIdle: true)
+        gate.reset()
+        XCTAssertEqual(gate.idleChecks, 0)
+        XCTAssertEqual(gate.check(isIdle: true), .retry)
     }
 }

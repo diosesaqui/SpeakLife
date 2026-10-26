@@ -118,7 +118,8 @@ enum SpeakOverLink {
     /// trimmed, because a long name is harmless.
     private static func gift(from values: [String: String]) -> SpeakOverGift? {
         guard let text = clean(values[Key.text], limit: nil),
-              text.count <= maxTextLength else { return nil }
+              text.count <= maxTextLength,
+              text.unicodeScalars.count <= maxTextLength * maxScalarsPerCharacter else { return nil }
         return SpeakOverGift(
             text: text,
             book: clean(values[Key.book], limit: maxBookLength),
@@ -127,33 +128,79 @@ enum SpeakOverLink {
         )
     }
 
+    // MARK: - Verse
+
+    /// The verse for a received line, when it is one of the app's own
+    /// declarations, word for word. The link carries no verse (it would double
+    /// its length), and a line someone typed has none to show, so anything
+    /// that does not match exactly gets the reference alone. Local data only.
+    static func verse(for gift: SpeakOverGift, in pool: [Declaration]) -> String? {
+        let match = pool.first { declaration in
+            declaration.category != .myOwn
+                && declaration.text == gift.text
+                && (gift.book == nil || declaration.book == gift.book)
+        }
+        guard let verse = match?.bibleVerseText?
+            .trimmingCharacters(in: .whitespacesAndNewlines), !verse.isEmpty else { return nil }
+        return verse
+    }
+
     // MARK: - Cleaning
+
+    /// Combining marks kept on one character. Real scripts (accents,
+    /// Devanagari vowel signs, an emoji's variation selector) need one to
+    /// three; stacks of dozens ("Zalgo" text) exist only to spill out of the
+    /// layout.
+    static let maxMarksPerCharacter = 3
+    /// The caps above count characters, and one character can hold many
+    /// scalars. This bounds the raw size too.
+    static let maxScalarsPerCharacter = 3
+
+    /// Zero-width non-joiner and joiner. Format characters, but load bearing:
+    /// emoji sequences and Persian and Indic names are spelled with them.
+    private static let keptFormatScalars: Set<UInt32> = [0x200C, 0x200D]
 
     /// Plain, single-line text, or nil when nothing is left.
     ///
-    /// Control characters (newlines, tabs, bells) become spaces. Invisible
-    /// format characters (zero-width spaces, right-to-left overrides) are
-    /// dropped, because they can make a line read differently from what it
-    /// says. Runs of whitespace collapse to one space.
+    /// Control characters (newlines, tabs, bells) become spaces. Other
+    /// invisible format characters (zero-width spaces, right-to-left
+    /// overrides) are dropped, because they can make a line read differently
+    /// from what it says. Combining marks are capped per character. Runs of
+    /// whitespace collapse to one space.
     static func clean(_ raw: String?, limit: Int?) -> String? {
         guard let raw else { return nil }
         var scalars = String.UnicodeScalarView()
+        var marksInARow = 0
         for scalar in raw.unicodeScalars {
             switch scalar.properties.generalCategory {
             case .control:
+                marksInARow = 0
                 scalars.append(Unicode.Scalar(UInt8(32)))
             case .format:
-                continue
+                if keptFormatScalars.contains(scalar.value) {
+                    scalars.append(scalar)
+                }
+            case .nonspacingMark, .enclosingMark, .spacingMark:
+                marksInARow += 1
+                if marksInARow <= maxMarksPerCharacter {
+                    scalars.append(scalar)
+                }
             default:
+                marksInARow = 0
                 scalars.append(scalar)
             }
         }
         var text = String(scalars)
             .split(whereSeparator: { $0.isWhitespace })
             .joined(separator: " ")
-        if let limit, text.count > limit {
-            text = String(text.prefix(limit))
-                .trimmingCharacters(in: .whitespacesAndNewlines)
+        if let limit {
+            if text.count > limit {
+                text = String(text.prefix(limit))
+            }
+            while text.unicodeScalars.count > limit * maxScalarsPerCharacter, !text.isEmpty {
+                text.removeLast()
+            }
+            text = text.trimmingCharacters(in: .whitespacesAndNewlines)
         }
         return text.isEmpty ? nil : text
     }
@@ -173,12 +220,19 @@ enum SpeakOverCopy {
         return "\(sender) is standing with you"
     }
 
-    static let subline = "Speak this out loud today."
+    /// Under the headline. Uses the recipient's name when the sender gave it.
+    static func subline(to recipient: String?) -> String {
+        guard let recipient, !recipient.isEmpty else { return "Speak this out loud today." }
+        return "\(recipient), speak this out loud today."
+    }
 
-    /// The words that travel with the card in the share sheet. The link is
-    /// added by `ReferralShareText`, which carries it to messaging apps only.
+    /// The words that travel with the card in the share sheet.
+    ///
+    /// `ReferralShareText` adds the link for messaging apps only, so these
+    /// must read as a finished thought on their own: a full stop, not a colon
+    /// pointing at a link that may not be there.
     static func shareText(to recipient: String?) -> String {
-        let line = "I'm standing with you on this one. Speak it out loud today:"
+        let line = "I'm standing with you on this one. Speak it out loud today."
         if let recipient, !recipient.isEmpty {
             return "\(recipient), \(line)"
         }

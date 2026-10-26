@@ -22,6 +22,8 @@ import AVFoundation
 struct SpeakOverReceivedView: View {
 
     let delivery: SpeakOverDelivery
+    /// The verse, only when the line is one of the app's own word for word.
+    var verse: String? = nil
     let background: UIImage?
 
     @Environment(\.dismiss) private var dismiss
@@ -37,6 +39,12 @@ struct SpeakOverReceivedView: View {
     @State private var isSecondPass = false
     @State private var isVerifying = false
     @State private var showMicRationale = false
+    /// Set the moment the screen is closing. Every step of the speaking flow
+    /// checks it after each await, so a transcript that comes back after the
+    /// user left can never re-arm the mic behind a screen that is gone.
+    @State private var isClosed = false
+    /// Whether the mic was used here, so closing puts the audio session back.
+    @State private var usedMic = false
     @State private var showSendBack = false
 
     // Staged reveal.
@@ -82,28 +90,36 @@ struct SpeakOverReceivedView: View {
         }
         .environment(\.colorScheme, .dark)
         .onAppear {
-            AnalyticsService.shared.track("speak_over_opened", parameters: [
-                "source": delivery.source.rawValue,
-                "has_sender_name": gift.from != nil,
-                "is_jesus_voice": gift.isJesusVoice
-            ])
+            // Once per delivery, even if the app was killed with it open and
+            // it came back.
+            if SpeakOverInbox.markOpened(delivery) {
+                AnalyticsService.shared.track("speak_over_opened", parameters: [
+                    "source": delivery.source.rawValue,
+                    "has_sender_name": gift.from != nil,
+                    "has_recipient_name": gift.to != nil,
+                    "has_verse": verse != nil,
+                    "is_jesus_voice": gift.isJesusVoice
+                ])
+            }
             reveal()
         }
-        .onDisappear { verifier.cancel() }
+        .onDisappear { close() }
         // The speaker stopped. Let the transcript decide, as Take It Captive does.
         .onChange(of: verifier.endpointedAt) { _, stamped in
-            guard stamped != nil, phase == .listening, !isVerifying else { return }
+            guard stamped != nil, phase == .listening, !isVerifying, !isClosed else { return }
             Task { await verify() }
         }
         .alert("Turn on the mic?", isPresented: $showMicRationale) {
             Button("Not now", role: .cancel) { phase = .fallback }
             Button("Continue") { Task { await listen() } }
         } message: {
-            Text("SpeakLife listens to check you spoke the line out loud. The audio is deleted the moment it's checked, and never saved.")
+            // True of DeclarationVerificationService: it deletes the file
+            // after transcribing and on cancel.
+            Text("SpeakLife listens to check you said the line. iOS will ask for the mic and speech recognition. The audio is deleted once it's checked.")
         }
         .sheet(isPresented: $showSendBack) {
             SpeakOverSheet(
-                declaration: Declaration(text: gift.text, book: gift.book),
+                declaration: Declaration(text: gift.text, book: gift.book, bibleVerseText: verse),
                 background: background,
                 recipientName: gift.from,
                 origin: .sentBack
@@ -165,7 +181,7 @@ struct SpeakOverReceivedView: View {
         HStack {
             Spacer()
             Button {
-                verifier.cancel()
+                close()
                 dismiss()
             } label: {
                 Image(systemName: "xmark")
@@ -200,7 +216,7 @@ struct SpeakOverReceivedView: View {
                 .minimumScaleFactor(0.8)
                 .shadow(color: .black.opacity(0.5), radius: 8, y: 1)
 
-            Text(phase == .spoken ? "You spoke it. It's yours." : SpeakOverCopy.subline)
+            Text(phase == .spoken ? "You spoke it. It's yours." : SpeakOverCopy.subline(to: gift.to))
                 .font(DS.Typography.callout)
                 .foregroundColor(.white.opacity(0.78))
                 .multilineTextAlignment(.center)
@@ -219,6 +235,12 @@ struct SpeakOverReceivedView: View {
         case ..<170: return 26
         default:     return 22
         }
+    }
+
+    /// The reference, unless the line is Jesus' own words (labelled above it).
+    private var reference: String? {
+        guard let book = gift.book, !gift.isJesusVoice else { return nil }
+        return book.uppercased()
     }
 
     private var declaration: some View {
@@ -250,13 +272,27 @@ struct SpeakOverReceivedView: View {
                 // (minimumScaleFactor) instead of pushing the buttons off screen.
                 .layoutPriority(1)
 
-            // The reference, unless the line is Jesus' own words (labelled above).
-            if let book = gift.book, !gift.isJesusVoice {
+            if reference != nil || verse != nil {
                 Capsule()
                     .fill(Self.gold)
                     .frame(width: 40, height: 2)
                     .padding(.top, DS.Spacing.lg)
-                Text(book.uppercased())
+            }
+
+            if let verse {
+                Text(verse)
+                    .font(.system(size: 15, weight: .regular, design: .serif).italic())
+                    .foregroundColor(.white.opacity(0.8))
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(3)
+                    .lineLimit(4)
+                    .minimumScaleFactor(0.85)
+                    .shadow(color: .black.opacity(0.6), radius: 6, y: 1)
+                    .padding(.top, DS.Spacing.sm)
+            }
+
+            if let reference {
+                Text(reference)
                     .font(.system(size: 13, weight: .semibold))
                     .tracking(3)
                     .foregroundColor(Self.gold)
@@ -279,7 +315,7 @@ struct SpeakOverReceivedView: View {
                 listeningControls
             case .fallback:
                 goldButton("I said it", icon: "checkmark") { settle(method: "tap") }
-                Text("Out loud or under your breath, it counts.")
+                Text("Say it when you can. It's still yours.")
                     .font(DS.Typography.caption)
                     .foregroundColor(.white.opacity(0.55))
                     .multilineTextAlignment(.center)
@@ -401,6 +437,7 @@ struct SpeakOverReceivedView: View {
 
     @MainActor
     private func startSpeaking() {
+        guard !isClosed else { return }
         if AVAudioApplication.shared.recordPermission == .denied {
             // Denied before. Asking again is a nag; the tap way is honoured.
             phase = .fallback
@@ -417,12 +454,22 @@ struct SpeakOverReceivedView: View {
 
     @MainActor
     private func listen() async {
+        guard !isClosed, phase == .ready || phase == .listening else { return }
         phase = .listening
+        usedMic = true
         do {
             try await verifier.startRecording(autoStopAfterSilence: 1.2, preferOnDevice: true)
         } catch {
             // Permission refused or the engine failed. Never an error screen.
-            phase = .fallback
+            if !isClosed, phase == .listening { phase = .fallback }
+            return
+        }
+        // The permission dialogs can take as long as the user likes. If they
+        // closed the screen or chose the tap way meanwhile, the recording
+        // that just started must stop at once.
+        if isClosed || phase != .listening {
+            verifier.cancel()
+            if isClosed { restoreAudioSession() }
         }
     }
 
@@ -434,6 +481,10 @@ struct SpeakOverReceivedView: View {
         isVerifying = true
         let matched = await verifier.stopAndTranscribe()
         isVerifying = false
+
+        // Transcribing takes up to 8 seconds. Whatever the user did in that
+        // time (closed the screen, chose the tap way) wins over the result.
+        guard !isClosed, phase == .listening else { return }
 
         if matched >= Self.matchThreshold {
             settle(method: "mic")
@@ -449,15 +500,37 @@ struct SpeakOverReceivedView: View {
 
     @MainActor
     private func settle(method: String) {
-        guard phase != .spoken else { return }
+        guard phase != .spoken, !isClosed else { return }
         verifier.cancel()
         PremiumHaptics.safeSuccess()
         withAnimation(reduceMotion ? nil : DS.Motion.smooth) { phase = .spoken }
+        // Spoken is done: it must not come back if the app is killed before
+        // this screen is closed.
+        SpeakOverInbox.markShown(delivery)
         AnalyticsService.shared.track("speak_over_spoken", parameters: [
             "method": method,
             "source": delivery.source.rawValue,
             "is_jesus_voice": gift.isJesusVoice
         ])
+    }
+
+    /// Both exits (X and the cover going away) end here. Stops the mic and
+    /// hands the audio session back to playback.
+    @MainActor
+    private func close() {
+        guard !isClosed else { return }
+        isClosed = true
+        verifier.cancel()
+        restoreAudioSession()
+    }
+
+    /// The verifier leaves the session in `.record`, which silences the app's
+    /// background music until something else resets it. Put back the category
+    /// `AudioPlayerService` plays with. Only if the mic was actually used.
+    @MainActor
+    private func restoreAudioSession() {
+        guard usedMic else { return }
+        try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.mixWithOthers])
     }
 }
 
@@ -469,6 +542,7 @@ struct SpeakOverReceivedView: View {
                 book: "Isaiah 53:5", from: "Maria", to: "Ana"),
             source: .link,
             receivedAt: Date()),
+        verse: "But he was pierced for our transgressions, he was crushed for our iniquities; the punishment that brought us peace was on him, and by his wounds we are healed.",
         background: nil
     )
 }

@@ -99,7 +99,8 @@ struct SpeakOverSheet: View {
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
-            Text("They get this card and a link that opens it in SpeakLife.")
+            // The link travels to messaging apps only, so say where to send it.
+            Text("Send it in a message, and the link opens it for them in SpeakLife.")
                 .font(DS.Typography.callout)
                 .foregroundColor(DS.Palette.textSecondary)
                 .multilineTextAlignment(.center)
@@ -259,6 +260,9 @@ struct SpeakOverSheet: View {
             origin == .sentBack ? "speak_over_sent_back" : "speak_over_sent",
             parameters: [
                 "method": activityType?.rawValue ?? "unknown",
+                // The gift is the link, and it only rides along to messaging
+                // apps. A send without it reaches a person as a card alone.
+                "link_included": ReferralShareText.includesLink(for: activityType),
                 "category": declaration.category.rawValue,
                 "has_sender_name": cleanSender != nil,
                 "has_recipient_name": cleanRecipient != nil,
