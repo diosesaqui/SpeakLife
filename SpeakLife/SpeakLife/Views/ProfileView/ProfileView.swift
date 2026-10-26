@@ -124,6 +124,9 @@ struct ProfileView: View {
             Spacer().frame(height: DS.Spacing.xs)
         }
                 List {
+                    // Year in Review, Dec 1 to Jan 15 only.
+                    YearInReviewProfileSection()
+
                     Section(header: Text("Premium".uppercased()).font(.caption)) {
                         subscriptionRow
                         giveRow
