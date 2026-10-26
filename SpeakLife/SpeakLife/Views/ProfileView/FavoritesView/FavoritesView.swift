@@ -80,10 +80,33 @@ struct ContentRow: View {
                 .clipShape(Circle())
         }
         .sheet(isPresented: $showShareSheet) {
-            ShareSheet(activityItems: ["\(declaration.text) \nSpeakLife App:", APP.Product.urlID])
+            ShareSheet(activityItems: [shareText])
         }
     }
     
+    /// The declaration, its verse and a line to say it together. The tracked
+    /// link is added only for messaging apps.
+    ///
+    /// Jesus-voice entries carry "Jesus" as their book. They speak to the
+    /// reader ("I took your sickness"), so without naming the speaker the
+    /// recipient would read them as the sharer talking. They get "Jesus says:"
+    /// and an invite to read, not to speak.
+    private var shareText: ReferralShareText {
+        let link = ReferralLink.url(.favorite, campaign: declaration.category.rawValue)
+        let book = declaration.book?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let isJesusVoice = book == "Jesus"
+        var text = declaration.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !text.isEmpty {
+            if isJesusVoice {
+                text = "Jesus says: \(text)"
+            } else if !book.isEmpty {
+                text += "\n\(book)"
+            }
+        }
+        let invite = isJesusVoice ? "Read what Jesus says over you." : "Speak this one out loud with me."
+        return ReferralShareText(text.isEmpty ? invite : "\(text)\n\n\(invite)", link: link)
+    }
+
     @ViewBuilder
     private var contextMenuContent: some View {
         Button(action: share) {
