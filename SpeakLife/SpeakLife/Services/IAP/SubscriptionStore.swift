@@ -536,8 +536,11 @@ final class SubscriptionStore: ObservableObject {
     // High Conversion paywall's Annual card leads with the amount actually
     // charged ("$49.99/yr") and drops the per-month figure to the line under
     // it, which is how App Review wants the billed price shown. When false the
-    // card leads with the per-month equivalent as before. Reads false if the
-    // key is missing from the console.
+    // card leads with the per-month equivalent as before. Also gates the
+    // per-day price lines on that paywall and the Book row in Profile, which
+    // used to ride `hardOnboardingPaywall`; that switch now controls only
+    // whether the paywall can be closed. Reads false if the key is missing
+    // from the console.
     @Published var billedAmountFirst = false
     // Lapsed-user wall (RC key "hardLapsedPaywall"). When true, an onboarded
     // user whose premium trial or subscription has ended sees LapsedPaywallView
