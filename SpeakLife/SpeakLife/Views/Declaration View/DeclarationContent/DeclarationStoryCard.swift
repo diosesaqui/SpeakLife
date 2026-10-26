@@ -21,25 +21,56 @@
 
 import SwiftUI
 import UIKit
+import CoreText
 
 enum DeclarationStoryCard {
 
     static let size = CGSize(width: 1080, height: 1920)
+
+    /// Where a card sits in a set shared together, such as a whole Daily Burst,
+    /// so the person receiving them reads them in order.
+    struct Position: Equatable {
+        /// 1-based.
+        let number: Int
+        let total: Int
+    }
+
+    /// The gold label above the declaration. Jesus-voice lines (`book ==
+    /// "Jesus"`, CLAUDE.md rule 1) say so instead of "I declare". A position
+    /// is added only when there is more than one card to read in order.
+    static func eyebrow(isJesusVoice: Bool, position: Position?) -> String {
+        let label = isJesusVoice ? "JESUS SAYS" : "I DECLARE"
+        guard let position, position.total > 1, position.number >= 1 else { return label }
+        return "\(label) · \(position.number) OF \(position.total)"
+    }
 
     /// Renders the card. Main actor because `ImageRenderer` is.
     ///
     /// - Parameters:
     ///   - declaration: what is being shared.
     ///   - background: the speaker's theme photo, or nil for the fallback gradient.
+    ///   - position: the card's place in a shared set, or nil for a single card.
     @MainActor
-    static func render(declaration: Declaration, background: UIImage?) -> UIImage? {
+    static func render(declaration: Declaration, background: UIImage?,
+                       position: Position? = nil) -> UIImage? {
         let renderer = ImageRenderer(
-            content: DeclarationStoryCardView(declaration: declaration, background: background)
+            content: DeclarationStoryCardView(declaration: declaration, background: background,
+                                              position: position)
         )
         renderer.scale = 1
         renderer.proposedSize = ProposedViewSize(size)
         renderer.isOpaque = true
         return renderer.uiImage
+    }
+
+    /// The speaker's own theme photo, so the card looks like their app: their
+    /// uploaded picture when they set one, otherwise the theme's artwork. Nil
+    /// only when neither loads, and the card then draws its gradient.
+    static func background(for theme: ThemeViewModel) -> UIImage? {
+        if theme.showUserSelectedImage, let selected = theme.selectedImage {
+            return selected
+        }
+        return UIImage(named: theme.selectedTheme.backgroundImageString)
     }
 }
 
@@ -47,6 +78,8 @@ struct DeclarationStoryCardView: View {
 
     let declaration: Declaration
     let background: UIImage?
+    /// Set only when the card is one of a set, such as a whole Daily Burst.
+    var position: DeclarationStoryCard.Position? = nil
 
     private static let gold = Color(red: 0.945, green: 0.824, blue: 0.604)   // #F1D29A
     private let width = DeclarationStoryCard.size.width
@@ -169,7 +202,7 @@ struct DeclarationStoryCardView: View {
         HStack(spacing: 28) {
             LinearGradient(colors: [.clear, Self.gold], startPoint: .leading, endPoint: .trailing)
                 .frame(width: 90, height: 2)
-            Text(isJesusVoice ? "JESUS SAYS" : "I DECLARE")
+            Text(DeclarationStoryCard.eyebrow(isJesusVoice: isJesusVoice, position: position))
                 .font(.system(size: 28, weight: .semibold))
                 .tracking(10)
                 .foregroundStyle(Self.gold)
@@ -183,15 +216,15 @@ struct DeclarationStoryCardView: View {
 
     private var content: some View {
         VStack(spacing: 0) {
-            // The opening quote mark. Its glyph sits high in a very tall line
-            // box at this size, so it is pinned to a fixed-height slot.
-            Text("\u{201C}")
-                .font(.system(size: 240, weight: .regular, design: .serif))
-                .foregroundStyle(Self.gold.opacity(0.95))
+            // The opening quote mark: the glyph's own outline scaled into a
+            // fixed 60px-tall box, so its ink is exactly 60px high and sits
+            // exactly 30px above the declaration on every device and OS.
+            // Drawn as a font glyph it floated inside a 286px line box and
+            // had to be nudged into place by eye.
+            OpeningQuoteMark()
+                .fill(Self.gold.opacity(0.95))
+                .frame(width: 160, height: 60)
                 .shadow(color: Self.gold.opacity(0.35), radius: 20)
-                .fixedSize()
-                .frame(height: 90, alignment: .top)
-                .offset(y: -50)
                 .padding(.bottom, 30)
 
             Text(declaration.text)
@@ -267,4 +300,102 @@ struct DeclarationStoryCardView: View {
                 )
         )
     }
+}
+
+// MARK: - Quote mark
+
+/// The opening quote mark as a filled outline, fitted to whatever frame it is
+/// given.
+///
+/// The outline comes from the glyph itself (Georgia, which ships on every iOS
+/// device) and is scaled by its own ink bounds, not by font metrics. A 60px
+/// tall frame gives exactly 60px of ink, centred, with nothing above or below
+/// it, so its position cannot drift with a font's line height.
+struct OpeningQuoteMark: Shape {
+
+    /// Built once. Nil only if the font or glyph is missing, and then the card
+    /// simply has no quote mark.
+    private static let glyph: CGPath? = {
+        let font = CTFontCreateWithName("Georgia" as CFString, 240, nil)
+        var characters: [UniChar] = [0x201C]
+        var glyphs: [CGGlyph] = [0]
+        guard CTFontGetGlyphsForCharacters(font, &characters, &glyphs, 1) else { return nil }
+        return CTFontCreatePathForGlyph(font, glyphs[0], nil)
+    }()
+
+    func path(in rect: CGRect) -> Path {
+        guard let glyph = Self.glyph else { return Path() }
+        let bounds = glyph.boundingBoxOfPath
+        guard bounds.width > 0, bounds.height > 0 else { return Path() }
+
+        let scale = min(rect.width / bounds.width, rect.height / bounds.height)
+        // Core Text draws y-up and SwiftUI y-down, hence the negative y scale.
+        let transform = CGAffineTransform(translationX: rect.midX, y: rect.midY)
+            .scaledBy(x: scale, y: -scale)
+            .translatedBy(x: -bounds.midX, y: -bounds.midY)
+        return Path(glyph).applying(transform)
+    }
+}
+
+// MARK: - Previews
+
+/// The card at a third of its size, about how it reads in a story.
+private func storyCardPreview(_ declaration: Declaration,
+                              position: DeclarationStoryCard.Position? = nil) -> some View {
+    DeclarationStoryCardView(declaration: declaration, background: nil, position: position)
+        .frame(width: 1080, height: 1920)
+        .scaleEffect(1.0 / 3.0)
+        .frame(width: 360, height: 640)
+}
+
+#Preview("Short") {
+    storyCardPreview(Declaration(
+        text: "I am made in the image of God.",
+        book: "Genesis 1:27",
+        bibleVerseText: "So God created mankind in his own image, in the image of God he created them; male and female he created them.",
+        category: .identity
+    ))
+}
+
+#Preview("Median, 68 characters") {
+    storyCardPreview(Declaration(
+        text: "The Lord's love never ceases, and His mercies are new every morning.",
+        book: "Lamentations 3:22-23",
+        bibleVerseText: "The steadfast love of the Lord never ceases; his mercies never come to an end; they are new every morning; great is your faithfulness.",
+        category: .love
+    ))
+}
+
+#Preview("Longest, 211 characters") {
+    storyCardPreview(Declaration(
+        text: "I am in the lineage of something eternal. Every faithful act I take today is a seed in a story that spans generations. My obedience is not small. It is part of an unfolding covenant that reaches beyond my sight.",
+        book: "Ruth 4:13b",
+        bibleVerseText: "Then Boaz took Ruth and she became his wife... and she gave birth to a son.",
+        category: .ruth
+    ))
+}
+
+#Preview("Jesus voice") {
+    storyCardPreview(Declaration(
+        text: "You speak to the mountain without doubt, and what you say comes to pass.",
+        book: "Jesus",
+        bibleVerseText: "Truly I tell you, if anyone says to this mountain, 'Go, throw yourself into the sea,' and does not doubt in their heart but believes that what they say will happen, it will be done for them.",
+        category: .speaklife
+    ))
+}
+
+#Preview("Own declaration, no verse") {
+    storyCardPreview(Declaration(
+        text: "My home is full of peace, and every room is covered in prayer.",
+        category: .myOwn
+    ))
+}
+
+#Preview("Burst card, 1 of 7") {
+    storyCardPreview(Declaration(
+        text: "I have the mind of Christ.",
+        book: "1 Corinthians 2:16",
+        bibleVerseText: "For who has known the mind of the Lord so as to instruct him? But we have the mind of Christ.",
+        category: .wisdom
+    ), position: .init(number: 1, total: 7))
 }
