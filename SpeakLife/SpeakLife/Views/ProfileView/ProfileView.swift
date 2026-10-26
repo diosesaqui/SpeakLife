@@ -133,9 +133,8 @@ struct ProfileView: View {
                         redeemCodeRow
                     }
 
-                    // Rides the `billedAmountFirst` Remote Config switch, like
-                    // the paywall's per-day pricing: hidden while it is off.
-                    if subscriptionStore.billedAmountFirst {
+                    // Hidden while Remote Config `billedAmountFirst` is on.
+                    if !subscriptionStore.billedAmountFirst {
                         Section(header: Text("Book".uppercased()).font(.caption)) {
                             bookLink
                         }
