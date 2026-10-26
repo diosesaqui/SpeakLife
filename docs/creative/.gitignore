@@ -1,0 +1,17 @@
+# Bulky or regenerable media stays local. Finished ad videos live on the
+# claude/sofia-facetime-media branch (public raw URLs for Meta uploads).
+.DS_Store
+*.mp4
+*.mov
+*.zip
+exports/
+app-store-ipad13/
+characters/*/training/
+characters/*/master-options*/
+videos/**/*frame*.png
+videos/**/*frames*.jpg
+videos/**/*_check.jpg
+videos/**/*_caps.jpg
+videos/**/*_end.jpg
+videos/**/stills/
+*.orig.png
