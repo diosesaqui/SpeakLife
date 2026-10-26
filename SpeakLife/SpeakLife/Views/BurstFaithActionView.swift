@@ -210,7 +210,7 @@ struct BurstFaithActionView: View {
             .ignoresSafeArea()
         BurstFaithActionView(
             theme: .faith,
-            action: FaithActionCatalog.action(for: .faith),
+            action: DailyDeclarationBurstView.sendBurstAction,
             onSend: {},
             onSkip: {}
         )
@@ -223,7 +223,7 @@ struct BurstFaithActionView: View {
         Color.black.ignoresSafeArea()
         BurstFaithActionView(
             theme: .health,
-            action: FaithActionCatalog.action(for: .health),
+            action: DailyDeclarationBurstView.sendBurstAction,
             isPreparingShare: true,
             onSend: {},
             onSkip: {}

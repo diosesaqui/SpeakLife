@@ -56,6 +56,13 @@ struct DailyDeclarationBurstView: View {
     /// Both the eighth slat and the completion screen use it, so they share
     /// one in-flight guard.
     @StateObject private var burstShare = BurstShareController()
+    /// A send from the eighth slat completed, so the finish screen offers
+    /// "Send to someone else" instead of the first send again.
+    @State private var didSendBurst = false
+    /// The badge cover came due while a share was up; it waits for the share.
+    @State private var badgeUnlockDeferred = false
+    /// Sizes the card thumbnails to the screen's real pixels.
+    @Environment(\.displayScale) private var displayScale
     /// The finish screen's headline and line, picked once when it appears.
     @State private var victoryTitle = ""
     @State private var motivationLine = ""
@@ -212,6 +219,14 @@ struct DailyDeclarationBurstView: View {
         .preferredColorScheme(.dark)
         .onAppear {
             loadDynamicDeclarations()
+        }
+        .onChange(of: burstShare.isBusy) { _, busy in
+            // The badge waited for a share; raise it once the sheet is gone,
+            // after its dismissal has settled.
+            guard !busy, badgeUnlockDeferred else { return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                presentBadgeUnlockIfOwed()
+            }
         }
         .fullScreenCover(isPresented: $streakViewModel.showBadgeUnlock) {
             if let badge = streakViewModel.badgeManager.recentlyUnlocked {
@@ -582,8 +597,13 @@ struct DailyDeclarationBurstView: View {
     // MARK: - Completion View
     
     private func completionView(geometry: GeometryProxy) -> some View {
-        // Small phones get a tighter celebration so the cards keep their size.
-        let compact = geometry.size.height < 760
+        // The burst's ZStack ignores the safe area, so the real window's size
+        // and insets decide the layout: content clears the Dynamic Island and
+        // the footer clears the home indicator. Small phones (by full screen
+        // height) get a tighter celebration so the cards keep their size.
+        let metrics = windowMetrics
+        let compact = Self.isCompactScreen(metrics.size)
+        let cardHeight = finishCardHeight(screen: metrics.size)
 
         return ZStack {
             // Animated background particles. Placed from the index, not
@@ -623,15 +643,27 @@ struct DailyDeclarationBurstView: View {
                         if burstShare.expectedCount > 0 {
                             BurstCardsSection(
                                 controller: burstShare,
-                                width: geometry.size.width,
-                                onSendAll: { sendBurst(surface: "burst_completion_screen") { _ in } }
+                                width: metrics.size.width,
+                                cardHeight: cardHeight
                             )
                             .scaleEffect(shareButtonOpacity)
                             .opacity(shareButtonOpacity)
                         }
                     }
-                    .padding(.top, compact ? 44 : 64)
+                    .padding(.top, metrics.insets.top + (compact ? DS.Spacing.xs : DS.Spacing.md))
                     .padding(.bottom, DS.Spacing.md)
+                }
+
+                // Pinned, so the screen's primary action is never below the fold.
+                if burstShare.expectedCount > 0 {
+                    BurstSendAllButton(
+                        controller: burstShare,
+                        title: didSendBurst ? "Send to someone else" : "Send these to a friend",
+                        action: { sendBurst(surface: "burst_completion_screen") { _ in } }
+                    )
+                    .padding(.top, DS.Spacing.xs)
+                    .scaleEffect(shareButtonOpacity)
+                    .opacity(shareButtonOpacity)
                 }
 
                 HStack(spacing: DS.Spacing.sm) {
@@ -669,8 +701,8 @@ struct DailyDeclarationBurstView: View {
                     }
                     .buttonStyle(.dsPressable(feel: .tapLight, haptics: false))
                 }
-                .padding(.top, DS.Spacing.xs)
-                .padding(.bottom, compact ? 24 : 40)
+                .padding(.top, DS.Spacing.sm)
+                .padding(.bottom, metrics.insets.bottom + DS.Spacing.sm)
             }
         }
         .onAppear {
@@ -680,8 +712,8 @@ struct DailyDeclarationBurstView: View {
             motivationLine = getMotivationalMessage()
             triggerCompletionAnimations()
             // Normally started on the eighth slat; this covers any way here
-            // that skipped it.
-            prepareBurstCards()
+            // that skipped it, after the celebration's opening beat.
+            prepareBurstCards(startDelay: 0.6)
         }
         .sheet(isPresented: $showSpiritualGraph) {
             SpiritualStrengthGraph(tracker: burstTracker)
@@ -974,24 +1006,56 @@ struct DailyDeclarationBurstView: View {
     /// invitation and a tracked link. `completion` gets true only for a share
     /// the system reports as completed.
     private func sendBurst(surface: String, completion: @escaping (Bool) -> Void) {
-        guard !burstShare.isPreparing, !morningDeclarations.isEmpty else { return }
-        AnalyticsService.shared.track("share_prompt_tapped", parameters: [
-            "surface": surface,
-            "card_count": morningDeclarations.count
-        ])
+        // `burst_share_tapped` (in the controller) is this tap's one event.
+        guard !burstShare.isBusy, !morningDeclarations.isEmpty else { return }
         prepareBurstCards()
-        burstShare.shareAll(surface: surface, completion: completion)
+        burstShare.shareAll(surface: surface) { completed in
+            if completed { didSendBurst = true }
+            completion(completed)
+        }
     }
 
     /// Starts drawing this burst's cards. Only the first call renders, so the
     /// eighth slat, its send and the finish screen all reuse one set.
-    private func prepareBurstCards() {
+    ///
+    /// - Parameter startDelay: lets an entrance animation finish before the
+    ///   first full-size render takes the main thread.
+    private func prepareBurstCards(startDelay: TimeInterval = 0) {
         guard !morningDeclarations.isEmpty else { return }
+        let metrics = windowMetrics
+        let cardWidth = finishCardHeight(screen: metrics.size) * 9 / 16
         burstShare.prepare(
             lines: morningDeclarations,
             theme: burstTheme,
-            background: DeclarationStoryCard.background(for: themeViewModel)
+            background: DeclarationStoryCard.background(for: themeViewModel),
+            thumbnailWidth: cardWidth * displayScale,
+            startDelay: startDelay
         )
+    }
+
+    /// The real window's full size and safe-area insets. The burst's ZStack
+    /// ignores the safe area, so neither can be read from its geometry.
+    private var windowMetrics: (size: CGSize, insets: UIEdgeInsets) {
+        let window = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap(\.windows)
+            .first(where: \.isKeyWindow)
+        return (window?.bounds.size ?? CGSize(width: 390, height: 844),
+                window?.safeAreaInsets ?? .zero)
+    }
+
+    /// Small phones (an iPhone SE or mini) by full screen height.
+    private static func isCompactScreen(_ screen: CGSize) -> Bool {
+        screen.height < 700
+    }
+
+    /// The finish screen's card height: as large as the room allows, at most
+    /// 42% of a small screen and 50% of a larger one, and never wider than
+    /// 60% of the screen (300pt cap) at 9:16.
+    private func finishCardHeight(screen: CGSize) -> CGFloat {
+        let maxHeight = screen.height * (Self.isCompactScreen(screen) ? 0.42 : 0.50)
+        let maxWidth = min(screen.width * 0.6, 300)
+        return max(min(maxHeight, maxWidth * 16 / 9), 120)
     }
 
     // MARK: - Actions
@@ -1111,12 +1175,16 @@ struct DailyDeclarationBurstView: View {
     /// Resolves what this burst was about and asks for one action on it.
     private func presentActionSlide() {
         let theme = burstTheme
-        let action = FaithActionCatalog.action(for: theme)
+        // The slat's yes is the send, so the action it shows is the send.
+        // Showing the catalog action here would record a commitment to
+        // something the user never chose.
+        let action = Self.sendBurstAction
         faithAction = action
 
         AnalyticsService.shared.track("daily_burst_action_shown", parameters: [
             "theme": theme.rawValue,
-            "action": action.headline
+            "action": Self.sendBurstActionID,
+            "headline": action.headline
         ])
         // The eighth slat leads with the send, so this is the burst's share
         // prompt being shown.
@@ -1130,9 +1198,21 @@ struct DailyDeclarationBurstView: View {
         }
 
         // Drawn while the eighth slat is read, so the send and the finish
-        // screen's carousel usually find the cards already done.
-        prepareBurstCards()
+        // screen's carousel usually find the cards already done. Started
+        // after the slat's entrance so the first render cannot stutter it.
+        prepareBurstCards(startDelay: 0.6)
     }
+
+    /// The eighth slat's action: pass the promises on. Sharing them with
+    /// someone who needs them is the act of faith this slat asks for.
+    static let sendBurstAction = FaithAction(
+        icon: "paperplane.fill",
+        headline: "Send today's promises to a friend in need",
+        detail: "Someone you love needs these words today."
+    )
+    /// Reported as `action` on the slat's events, so the change from the
+    /// catalog's actions is explicit in analytics.
+    static let sendBurstActionID = "send_burst"
 
     private func commitToAction(_ action: FaithAction) {
         // Deliberately not `.success` — the completion screen fires that one a beat
@@ -1141,9 +1221,12 @@ struct DailyDeclarationBurstView: View {
         committedAction = action
         FaithActionCommitmentStore.shared.commit(to: action, theme: burstTheme)
 
+        // `action` is now the send (`send_burst`), committed by a completed
+        // share, no longer a catalog action committed by a tap.
         AnalyticsService.shared.track("daily_burst_action_committed", parameters: [
             "theme": burstTheme.rawValue,
-            "action": action.headline
+            "action": Self.sendBurstActionID,
+            "headline": action.headline
         ])
 
         advanceToCompletion()
@@ -1154,7 +1237,8 @@ struct DailyDeclarationBurstView: View {
 
         AnalyticsService.shared.track("daily_burst_action_skipped", parameters: [
             "theme": burstTheme.rawValue,
-            "action": action.headline
+            "action": Self.sendBurstActionID,
+            "headline": action.headline
         ])
 
         advanceToCompletion()
@@ -1164,15 +1248,31 @@ struct DailyDeclarationBurstView: View {
         // The badge popup is wired to ModernDailyChecklistView which isn't visible here.
         // Directly trigger it after a short delay so it appears on the completion screen.
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            if streakViewModel.badgeManager.recentlyUnlocked != nil, !streakViewModel.showBadgeUnlock {
-                streakViewModel.showBadgeUnlock = true
-            }
+            presentBadgeUnlockIfOwed()
         }
 
         withAnimation(DS.Motion.smooth) {
             showActionSlide = false
             showCompletionView = true
         }
+    }
+
+    /// Raises the badge cover, unless a share is being prepared or its sheet
+    /// is up: a cover raised then is dropped and `showBadgeUnlock` would stay
+    /// stuck true. In that case it waits, and `onChange(of: burstShare.isBusy)`
+    /// calls this again once the share is done.
+    private func presentBadgeUnlockIfOwed() {
+        guard streakViewModel.badgeManager.recentlyUnlocked != nil,
+              !streakViewModel.showBadgeUnlock else {
+            badgeUnlockDeferred = false
+            return
+        }
+        guard !burstShare.isBusy else {
+            badgeUnlockDeferred = true
+            return
+        }
+        badgeUnlockDeferred = false
+        streakViewModel.showBadgeUnlock = true
     }
 
     private func completeBurst() {

@@ -123,6 +123,8 @@ struct DeclarationContentView: View {
     /// "Share today's word": shown once a day after the fifth declaration
     /// (see `FeedShareNudgePolicy`), then hidden on its own after a few seconds.
     @State private var showShareNudge = false
+    /// Whether this showing's `share_prompt_shown` has been sent.
+    @State private var shareNudgeLogged = false
     
     
     
@@ -354,6 +356,13 @@ struct DeclarationContentView: View {
                 .padding(.bottom, DS.Spacing.sm)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
                 .task {
+                    // Counted when it is actually drawn, once per showing.
+                    if !shareNudgeLogged {
+                        shareNudgeLogged = true
+                        AnalyticsService.shared.track("share_prompt_shown", parameters: [
+                            "surface": "feed_nudge"
+                        ])
+                    }
                     // Restarts if an overlay hid it, so it always gets its
                     // full few seconds on screen before leaving by itself.
                     try? await Task.sleep(nanoseconds: 6_000_000_000)
@@ -548,12 +557,14 @@ struct DeclarationContentView: View {
     }
 
     private func considerShareNudge() {
+        // Never on the swipe that raises the review prompt (`askForReview`
+        // runs right after this). Checked before the policy counts the swipe,
+        // so the nudge simply moves to the next one.
+        guard (reviewCounter + 1) % 7 != 0 else { return }
         let policy = FeedShareNudgePolicy(defaults: .standard)
         guard policy.recordDeclarationReached(installDate: AnalyticsContext.shared.userInstallDate) else { return }
 
-        AnalyticsService.shared.track("share_prompt_shown", parameters: [
-            "surface": "feed_nudge"
-        ])
+        shareNudgeLogged = false
         // A beat after the swipe, so it slides in on a page that has settled.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
             withAnimation(DS.Motion.smooth) { showShareNudge = true }
@@ -887,7 +898,11 @@ class ImageSaver: NSObject {
     }
 }
 
-func shareToInstagramStories(image: UIImage) {
+/// - Returns: true only when the image went straight into Instagram's story
+///   editor. False when it fell back to saving to Photos (or asking for
+///   access), so a caller never counts that as a completed share.
+@discardableResult
+func shareToInstagramStories(image: UIImage) -> Bool {
     // Straight into Instagram's story editor with the card as the background.
     // Needs the Meta app id (Info.plist `FacebookAppID`) as source_application
     // and `instagram-stories` in LSApplicationQueriesSchemes; both are present.
@@ -900,7 +915,7 @@ func shareToInstagramStories(image: UIImage) {
             options: [.expirationDate: Date().addingTimeInterval(5 * 60)]
         )
         UIApplication.shared.open(url)
-        return
+        return true
     }
 
     // Instagram missing or the API refused: save to Photos and point the way.
@@ -920,6 +935,7 @@ func shareToInstagramStories(image: UIImage) {
             }
         }
     }
+    return false
 }
 
 private func saveImageToPhotos(image: UIImage) {
@@ -944,8 +960,9 @@ private func showImageSavedAlert() {
     }
     
     let alert = UIAlertController(
-        title: "🎉 Image Saved!",
-        message: "Your affirmation has been saved to Photos. Open Instagram and create a new Story to share it!",
+        // Generic: declaration, burst, streak and Year in Review cards all land here.
+        title: "Saved to Photos",
+        message: "Open Instagram and add it to your Story.",
         preferredStyle: .alert
     )
     
@@ -975,7 +992,7 @@ private func showPhotosPermissionAlert() {
     
     let alert = UIAlertController(
         title: "Photos Access Needed",
-        message: "To save your affirmation, please allow access to Photos in Settings.",
+        message: "To save your card, allow access to Photos in Settings.",
         preferredStyle: .alert
     )
     
