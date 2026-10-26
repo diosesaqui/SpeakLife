@@ -120,12 +120,20 @@ struct AudioContentRow: View {
         }
         .buttonStyle(PlainButtonStyle())
         .sheet(isPresented: $showShareSheet) {
-            ShareSheet(activityItems: [
-                "🎵 \(audio.title) - \(audio.subtitle)",
-                "Listen on SpeakLife App",
-                APP.Product.urlID
-            ])
+            ShareSheet(activityItems: [shareText])
         }
+    }
+
+    /// Title, subtitle when there is one, and a line to listen. The tracked
+    /// link is added only for messaging apps.
+    private var shareText: ReferralShareText {
+        let link = ReferralLink.url(.audioFavorite, campaign: audio.id)
+        let heading = [audio.title, audio.subtitle]
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .joined(separator: "\n")
+        let invite = "This one is building my faith. Listen with me on SpeakLife."
+        return ReferralShareText(heading.isEmpty ? invite : "🎧 \(heading)\n\n\(invite)", link: link)
     }
     
     // MARK: - Actions
