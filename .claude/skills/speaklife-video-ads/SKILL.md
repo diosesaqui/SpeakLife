@@ -47,20 +47,34 @@ text-only prompt, or the face drifts.
 
 ## 3 · Start frame (Higgsfield `generate_image`)
 
+**Plain, not pretty.** The frame decides whether the video reads as real or AI. Golden-hour glow,
+smooth skin, glossy lips, perfect teeth, a big model smile and catalog rooms all scream AI (FT-01
+to FT-05 had this). The 2026-10-26 realism test (`docs/creative/videos/2026-10-26-realism-test/`)
+fixed it with the prompt below, and the user picked it as "def better".
+
 ```
 model: gpt_image_2_5, aspect_ratio: 9:16, quality: high
 medias: [{role: image_references, value: <master image job>}]
-prompt: "The exact same young woman as the reference, same face and features. This image IS the
-view from her phone's front camera during a video call while she <setting>: vertical close selfie
-at arm's length, <light>, <background softly blurred>, <outfit>, <hair>, small gold cross necklace.
-She looks straight into the lens with <emotion matching the script>, lips parted mid-sentence.
-NO phone visible anywhere. Real iPhone front-camera look, slight wide angle, natural skin texture.
-Absolutely no text, no captions, no interface, no icons, no status bar, no legible signs."
+prompt: "The exact same young woman as the reference, same face and features. This image IS a raw,
+unedited frame from her phone's front camera during a casual video call <setting, e.g. at night
+sitting on her couch in a lived-in living room>. Vertical close selfie at arm's length, slightly
+off-center, camera a little below eye level. Lighting: <ordinary light, e.g. one warm table lamp
+off to the side plus the cool glow of a TV>, flat and a bit dim, slightly underexposed, no golden
+hour, no glow, no rim light. Real iPhone front-camera image quality: visible sensor noise and grain,
+slight softness, mild compression. Real skin: visible pores, uneven texture, faint under-eye
+shadows, a small blemish, no retouching, no makeup or almost none, natural unglossed lips. <Messy,
+everyday hair, e.g. loosely pulled back in a messy low bun with flyaways>. Wearing <worn everyday
+clothes, e.g. an old faded gray crewneck sweatshirt> and the small gold cross necklace. Background
+softly out of focus and slightly cluttered. Neutral relaxed expression, mid-sentence with lips
+slightly parted, no big smile, teeth barely visible. She looks straight into the lens. NO phone
+visible anywhere. Not a model, not a photoshoot, ordinary and candid. Absolutely no text, no
+captions, no interface, no icons, no status bar."
 ```
 
-Pick a setting not used yet (used: bedroom, window, city sidewalk, balcony, parked car, kitchen).
-Download and **look at it** before spending video credits: same face, no phone, no text.
-`soul_2` frames tend to add a phone and fake UI, so use `gpt_image_2_5` as above.
+Change the setting each time but keep it ordinary (used: bedroom, window, city sidewalk, balcony,
+parked car, kitchen, couch at night). Daylight is fine if it's flat and ordinary, never golden.
+Download and **look at it** before spending video credits: same face, no phone, no text, nothing
+glamorous. `soul_2` frames tend to add a phone and fake UI, so use `gpt_image_2_5` as above.
 
 ## 4 · Video (Higgsfield `generate_video`)
 
@@ -68,13 +82,20 @@ Download and **look at it** before spending video credits: same face, no phone, 
 model: seedance_2_5, mode: omni_reference, duration: 15 | 30, resolution: 720p,
 aspect_ratio: 9:16, generate_audio: true, use_unlim: false
 medias: [{role: start_image, value: <start frame job>}, {role: image_references, value: <master job>}]
-prompt: "One continuous handheld front-camera selfie take, like a FaceTime call <setting>, no cuts.
-The young woman from the start frame talks straight into the lens to a close friend with <energy>,
-small natural head movements. Real lip-sync to her own voice. Same <outfit>, same <place>
-throughout. Her voice: young American woman in her early twenties, warm, confident,
-conversational. She says exactly, in English, at a natural pace: \"<SCRIPT>\" Only her voice and
-faint room tone. No music, no other voices, no on-screen text, no captions, no phone visible."
+prompt: "One continuous handheld front-camera selfie take, like a casual FaceTime call <setting>,
+no cuts. Raw iPhone front-camera footage: <same light as the frame>, visible grain, slight handheld
+wobble, natural imperfect framing. The young woman from the start frame talks straight into the
+lens to a close friend, relaxed and real, not performing: small natural head movements, a quick
+glance away once, a little shrug, she tucks a loose strand of hair once. Real lip-sync to her own
+voice. Same <outfit>, same <place>, same <hair> throughout. Her voice: young American woman in her
+early twenties, casual, a little low-key, natural pauses and slight vocal fry, like talking to a
+friend, not an announcer. She says exactly, in English, at a natural pace: \"<SCRIPT>\" Only her
+voice and faint room tone. No music, no other voices, no on-screen text, no captions, no phone
+visible."
 ```
+
+Seedance stays the default: in the realism test the user preferred it over Veo 3.1 (two 8s
+clips joined with a jump cut, 160 credits for 15s), and it keeps the face locked to the master.
 
 - A 30s render takes about 9–15 minutes. Poll with `jobs_wait`; tell the user it's rendering.
 - `429 not_enough_boost_credits` with enough credits: retry once with `use_unlim: false`.
@@ -82,6 +103,17 @@ faint room tone. No music, no other voices, no on-screen text, no captions, no p
 - Save the raw file next to the batch as `<id>-raw.mp4`.
 
 ## 5 · Captions (`docs/creative/videos/tools/caption_v2.py`)
+
+**First, the phone look** (same as the test's `build.sh`): scale to 1080x1920 and add light grain
+before captioning, then re-encode the captioned file like a phone upload.
+
+```bash
+ffmpeg -i <raw.mp4> -vf "scale=1080:1920:flags=lanczos,noise=alls=7:allf=t,format=yuv420p" \
+  -c:v libx264 -crf 18 -c:a aac -ar 48000 <look.mp4>
+# caption <look.mp4> (below) into <tmp.mp4>, then:
+ffmpeg -i <tmp.mp4> -c:v libx264 -preset slow -crf 26 -maxrate 4M -bufsize 8M \
+  -c:a aac -b:a 128k -movflags +faststart <ID-slug-character.mp4>
+```
 
 The approved look: big condensed uppercase phrases, the spoken word on a yellow box, keywords in
 gold, verse reference chips, and an Instagram-native hook (TikTok Sans SemiBold, white highlight,
