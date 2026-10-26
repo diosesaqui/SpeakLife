@@ -138,8 +138,16 @@ after. Target: 2× within 30 days.
 6. Do **not** change `standLinkDomain` (see the handoff doc, step 2d). List
    the Branch and DNS steps for the founder in the PR body instead.
 
-**Measure.** `stand_invite_shared / stand_created` (target above 50%) and
-`stand_joined / stand_invite_shared` (target above 25%).
+**Measure.** Count a stand as sent when it has a
+`stand_invite_share_completed` with `completed = true` and `sent = true`
+(any activity except Copy or Save Image). That is the real "sent" signal.
+Targets: sent / `stand_created` above 50%, and `stand_joined` / sent above
+25%. Do not use `stand_invite_share_opened` for this: the share sheet now
+opens by itself after "Invite someone", so that event fires on nearly every
+stand and would meet the target by construction. `stand_invite_shared`
+still counts real taps on "Send the invite" only, so it stays comparable
+with the 13-of-56 baseline. Also watch `stand_invite_sheet_ready` /
+`stand_invite_sheet_failed` (load vs failure) and `stand_code_entry_opened`.
 
 ---
 

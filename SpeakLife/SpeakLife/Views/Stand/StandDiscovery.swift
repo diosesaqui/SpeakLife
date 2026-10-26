@@ -16,9 +16,9 @@
 //  the most charge. That is a direct payoff of the mirror invariant and should
 //  not be traded away later for a "start together" flow.
 //
-//  Everything here is gated on `FeatureFlag.standTogetherEnabled` and, for the
-//  one-shot prompts, on a global cap: somebody who is never going to invite
-//  anyone should stop being asked.
+//  Everything here is gated on `FeatureFlag.standTogetherEnabled`. The day-1
+//  ask comes once per campaign run, never twice for the same one, so every new
+//  week gets its moment without anyone being nagged inside one.
 //
 
 import SwiftUI
@@ -33,27 +33,59 @@ import SpeakLifeCore
 @MainActor
 enum StandDiscovery {
 
-    private static let promptCountKey = "standInvitePromptCount"
-    private static let lastPromptedDayKey = "standInvitePromptedForDay"
+    /// Run keys (`EnforcementProgress.activeRunKey`) already asked.
+    ///
+    /// Replaces a lifetime cap of three asks that only fired for somebody who
+    /// had never been asked, so a person's first campaign got the ask and
+    /// every one after it got nothing. The rule is now per run: once for each
+    /// new campaign, never twice for the same one. See `StandInvitePromptRule`.
+    private static let promptedRunsKey = "standInvitePromptedRuns"
 
-    /// Three, ever. The persistent row on the campaign card does not count
-    /// against this — it is passive and always present, so it can never nag.
-    static let maxPrompts = 3
+    /// What the old lifetime budget wrote. Read only by the one-time migration
+    /// below, never written again.
+    private static let legacyCountKey = "standInvitePromptCount"
+    private static let legacyDayKey = "standInvitePromptedForDay"
 
-    static var hasPromptBudget: Bool {
-        UserDefaults.standard.integer(forKey: promptCountKey) < maxPrompts
+    private static var promptedRuns: [String] {
+        UserDefaults.standard.stringArray(forKey: promptedRunsKey) ?? []
     }
 
-    static func recordPromptShown() {
-        let n = UserDefaults.standard.integer(forKey: promptCountKey)
-        UserDefaults.standard.set(n + 1, forKey: promptCountKey)
+    /// Seeds the per-run list the first time it is read, so somebody the old
+    /// build already asked this week is not asked again on day 2 or 3. See
+    /// `StandInvitePromptRule.migrated`. Writing the key, even empty, is what
+    /// makes it run once.
+    private static func migrateIfNeeded(run runKey: String, completedDays: Int) {
+        let defaults = UserDefaults.standard
+        guard defaults.object(forKey: promptedRunsKey) == nil else { return }
+        let legacyPrompted = defaults.integer(forKey: legacyCountKey) > 0
+            || defaults.integer(forKey: legacyDayKey) != 0
+        let seeded = StandInvitePromptRule.migrated(legacyPrompted: legacyPrompted,
+                                                    runKey: runKey,
+                                                    completedDays: completedDays)
+        defaults.set(seeded, forKey: promptedRunsKey)
     }
 
-    /// True once per campaign day, so returning to the Today tab five times
-    /// after finishing day 1 does not ask five times.
-    static func shouldPrompt(forDay day: Int) -> Bool {
-        guard FeatureFlag.standTogetherEnabled, hasPromptBudget else { return false }
-        guard !StandService.shared.rooms.contains(where: { $0.status == .active }) else { return false }
+    /// True on day 1 of a run that has not been asked yet (days 2 and 3 only
+    /// as the fallback described on `StandInvitePromptRule.window`).
+    static func shouldPrompt(for enforcement: Enforcement, run runKey: String,
+                             completedDays: Int) -> Bool {
+        guard FeatureFlag.standTogetherEnabled else { return false }
+        migrateIfNeeded(run: runKey, completedDays: completedDays)
+        guard StandInvitePromptRule.shouldPrompt(runKey: runKey,
+                                                 completedDays: completedDays,
+                                                 promptedRuns: promptedRuns) else { return false }
+        // Somebody is already standing with them on this campaign, usually
+        // because they joined it from an invite. Asking "who needs this with
+        // you?" then is asking a question they have already answered. A stand
+        // of one does not count: it is an invite nobody has taken yet, and the
+        // sheet reuses it rather than minting another.
+        let uid = StandAuthCoordinator.shared.currentUid ?? ""
+        let alreadyTogether = StandService.shared.rooms.contains { room in
+            room.status == .active
+                && room.enforcement.id == enforcement.id
+                && room.activeMembers.contains { $0.uid != uid }
+        }
+        guard !alreadyTogether else { return false }
         // The one-time welcome offer fires on the same burst completion this
         // prompt does, and it yields to nothing: it is once-ever, it is
         // revenue, and a sheet it collides with is simply gone. This one can
@@ -61,19 +93,13 @@ enum StandDiscovery {
         // persistent row on the card is there the whole time either way.
         guard !WelcomeOfferPresenter.shared.isPendingOrShowing,
               !PersonalDeclarationPrompt.shared.isPendingOrShowing else { return false }
-        return UserDefaults.standard.integer(forKey: lastPromptedDayKey) != day
+        return true
     }
 
-    /// Nobody has ever been asked. The day-1 ask can be suppressed by a
-    /// post-Burst prompt, so `EnforcementCard` retries on days 2 and 3 — but
-    /// only for somebody who was never asked, not as three asks for everyone.
-    static var hasNeverPrompted: Bool {
-        UserDefaults.standard.integer(forKey: lastPromptedDayKey) == 0
-    }
-
-    static func markPrompted(day: Int) {
-        UserDefaults.standard.set(day, forKey: lastPromptedDayKey)
-        recordPromptShown()
+    /// Spends this run's ask. Call right before presenting.
+    static func markPrompted(run runKey: String) {
+        let updated = StandInvitePromptRule.recording(runKey, in: promptedRuns)
+        UserDefaults.standard.set(updated, forKey: promptedRunsKey)
     }
 }
 
@@ -130,6 +156,15 @@ struct StandInviteRow: View {
         return existingRoom.activeMembers.filter { $0.uid != auth.currentUid }
     }
 
+    /// Who, which day, and a dot per person for today, once somebody else is
+    /// standing with you. Read from the room the listener already holds, so it
+    /// costs no network call. Nil for a stand of one, and until the account
+    /// uid is known, in which case the row falls back to the copy below.
+    private var pairStreak: StandPairStreak? {
+        guard let existingRoom, let uid = auth.currentUid else { return nil }
+        return existingRoom.pairStreak(viewer: uid, todayStamp: StandDayStamp.stamp())
+    }
+
     var body: some View {
         if FeatureFlag.standTogetherEnabled {
             Button {
@@ -157,6 +192,9 @@ struct StandInviteRow: View {
                             .minimumScaleFactor(0.85)
                     }
                     Spacer(minLength: DS.Spacing.xs)
+                    if let pairStreak {
+                        dayPill(pairStreak)
+                    }
                     Image(systemName: "chevron.right")
                         .font(.system(size: 12, weight: .bold))
                         .foregroundColor(.white.opacity(0.4))
@@ -179,13 +217,15 @@ struct StandInviteRow: View {
             .buttonStyle(PlainButtonStyle())
             .padding(.top, DS.Spacing.xxs)
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("\(title). \(subtitle)")
+            .accessibilityLabel(accessibilityText)
             .accessibilityAddTraits(.isButton)
             // Presented for a campaign, not a room: the sheet creates the stand
             // itself and shows any failure on its own face. Nothing here can
             // fail silently.
             .sheet(isPresented: $showInvite) {
-                StandInviteSheet(source: .newStand(enforcement))
+                // The row says "Invite someone", so the tap was the decision:
+                // the share sheet opens by itself once the invite is ready.
+                StandInviteSheet(source: .newStand(enforcement), autoShare: true)
             }
             .sheet(isPresented: $showRoom) {
                 if let existingRoom {
@@ -207,6 +247,9 @@ struct StandInviteRow: View {
         guard existingRoom != nil else {
             return "Invite someone to stand with you"
         }
+        // "You and Maria" / "You and 3 others". Names the pair, not the
+        // feature, because a person is what brings somebody back tomorrow.
+        if let pairStreak { return pairStreak.title }
         guard let first = companions.first else {
             return "Your stand is ready"
         }
@@ -259,9 +302,55 @@ struct StandInviteRow: View {
         return "They enforce victory with you, all 7 days."
     }
 
+    private var accessibilityText: String {
+        guard let pairStreak else { return "\(title). \(subtitle)" }
+        return "\(title). Day \(pairStreak.day) of \(Enforcement.length). \(subtitle)"
+    }
+
+    /// The shared day, filled gold once everyone has spoken today.
+    private func dayPill(_ streak: StandPairStreak) -> some View {
+        Text("DAY \(streak.day)")
+            .font(.system(size: 11, weight: .heavy, design: .rounded))
+            .tracking(0.8)
+            .foregroundColor(streak.everyoneSpokeToday ? .black : DS.Palette.gold)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(
+                Capsule().fill(streak.everyoneSpokeToday
+                               ? DS.Palette.gold
+                               : DS.Palette.gold.opacity(0.14))
+            )
+            .fixedSize()
+    }
+
+    /// Today's dots: one per person, the viewer first. Full colour with a gold
+    /// ring once that person has spoken today, faded until then. Presence, not
+    /// absence: nobody is marked late (see `presenceSummary`).
+    private func todayDots(_ streak: StandPairStreak) -> some View {
+        HStack(spacing: -8) {
+            ForEach(streak.dots) { dot in
+                ZStack {
+                    Circle()
+                        .fill(StandMemberRow.palette[dot.colorIndex % StandMemberRow.palette.count]
+                            .opacity(dot.spokeToday ? 1 : 0.32))
+                        .frame(width: 26, height: 26)
+                    Text(dot.initial)
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundColor(.white.opacity(dot.spokeToday ? 1 : 0.7))
+                }
+                .overlay(
+                    Circle().stroke(dot.spokeToday ? DS.Palette.gold : Color.black.opacity(0.35),
+                                    lineWidth: dot.spokeToday ? 2 : 1.5)
+                )
+            }
+        }
+    }
+
     @ViewBuilder
     private var leading: some View {
-        if let existingRoom, !companions.isEmpty {
+        if let pairStreak {
+            todayDots(pairStreak)
+        } else if let existingRoom, !companions.isEmpty {
             avatars(existingRoom)
         } else {
             Image(systemName: "person.2.fill")
@@ -284,6 +373,67 @@ struct StandInviteRow: View {
                         .foregroundColor(.white)
                 }
                 .overlay(Circle().stroke(Color.black.opacity(0.35), lineWidth: 1.5))
+            }
+        }
+    }
+}
+
+// MARK: - Typing a code
+//
+// The invite message ends "Link won't open? Use code ABCD-2345 in SpeakLife",
+// and for a long time there was nowhere to type it: `StandJoinView` only ever
+// opened from a link, and My Stands is hidden until you have a stand. This is
+// the always-there way in, for the recipient the link failed.
+
+struct StandCodeEntryLink: View {
+
+    /// Analytics only: where the link was tapped.
+    let source: String
+    /// Hide once the user is in an active stand. On Today it would otherwise
+    /// sit under the pair-streak row forever; My Stands keeps it regardless.
+    var hidesWhenInStand = false
+
+    @ObservedObject private var service = StandService.shared
+    @State private var showJoin = false
+    /// Re-applied to the sheet, so a joined room can open a Burst.
+    @Environment(\.standBurst) private var standBurst
+
+    private var isHidden: Bool {
+        hidesWhenInStand && service.rooms.contains { $0.status == .active }
+    }
+
+    var body: some View {
+        if FeatureFlag.standTogetherEnabled, !isHidden {
+            Button {
+                Juice.play(.tapLight)
+                AnalyticsService.shared.track("stand_code_entry_opened", parameters: [
+                    "source": source,
+                ])
+                showJoin = true
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "ticket")
+                        .font(.system(size: 12, weight: .semibold))
+                    Text("Have an invite code?")
+                }
+                .font(.system(size: 14, weight: .medium, design: .rounded))
+                .foregroundColor(DS.Palette.textSecondary)
+                .frame(maxWidth: .infinity, minHeight: 44)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(PlainButtonStyle())
+            .accessibilityHint("Join a stand someone invited you to")
+            .sheet(isPresented: $showJoin) {
+                NavigationStack {
+                    StandJoinView()
+                        .toolbar {
+                            ToolbarItem(placement: .topBarLeading) {
+                                Button("Cancel") { showJoin = false }
+                                    .foregroundColor(DS.Palette.gold)
+                            }
+                        }
+                }
+                .environment(\.standBurst, standBurst)
             }
         }
     }
@@ -319,28 +469,39 @@ struct StandInvitePromptSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var showInvite = false
+    /// Set by the invite sheet once an invite actually went out.
+    @State private var inviteSent = false
 
     var body: some View {
         ZStack {
             Gradients().speakLifeCYOCell.ignoresSafeArea()
             VStack(spacing: DS.Spacing.lg) {
-                Spacer()
+                Spacer(minLength: DS.Spacing.sm)
 
-                Text("👐").font(.system(size: 56))
+                Image(systemName: "person.2.fill")
+                    .font(.system(size: 30, weight: .semibold))
+                    .foregroundColor(DS.Palette.gold)
+                    .frame(width: 72, height: 72)
+                    .background(Circle().fill(DS.Palette.gold.opacity(0.14)))
+                    .overlay(Circle().stroke(DS.Palette.gold.opacity(0.35), lineWidth: 1))
+                    .accessibilityHidden(true)
 
-                Text("Who needs this with you?")
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
-                    .foregroundColor(DS.Palette.textPrimary)
-                    .multilineTextAlignment(.center)
+                VStack(spacing: DS.Spacing.xs) {
+                    Text("Who needs this with you?")
+                        .font(.system(size: 28, weight: .semibold, design: .serif))
+                        .foregroundColor(DS.Palette.textPrimary)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
 
-                Text("Seven days, the same word, spoken together. They don't have to start today.")
-                    .font(DS.Typography.body)
-                    .foregroundColor(DS.Palette.textSecondary)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.horizontal, DS.Spacing.md)
+                    Text("Seven days of God's Word, spoken together. They can start when they're ready.")
+                        .font(DS.Typography.body)
+                        .foregroundColor(DS.Palette.textSecondary)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.horizontal, DS.Spacing.md)
+                }
 
-                Spacer()
+                Spacer(minLength: DS.Spacing.sm)
 
                 // Opens the invite sheet and lets it do the work. This button
                 // used to create the room itself and set `room` from a call
@@ -352,21 +513,34 @@ struct StandInvitePromptSheet: View {
                     Text("Invite someone")
                         .font(.system(size: 17, weight: .semibold, design: .rounded))
                         .foregroundColor(.black)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, DS.Spacing.sm)
-                        .background(Capsule().fill(DS.Palette.gold))
+                        .frame(maxWidth: .infinity, minHeight: 54)
+                        .background(Capsule().fill(DS.Gradient.gold))
+                        .contentShape(Capsule())
                 }
+                .buttonStyle(.dsPressable())
 
                 Button("Maybe later") { dismiss() }
                     .font(.system(size: 16, weight: .medium, design: .rounded))
                     .foregroundColor(DS.Palette.textSecondary)
-                    .padding(.bottom, DS.Spacing.md)
+                    .frame(minHeight: 44)
+                    .padding(.bottom, DS.Spacing.xs)
             }
             .padding(DS.Spacing.md)
         }
-        .presentationDetents([.medium])
-        .sheet(isPresented: $showInvite) {
-            StandInviteSheet(source: .newStand(enforcement))
+        // `.large` too, so the larger accessibility text sizes never clip the
+        // button off the bottom of a half-height sheet.
+        .presentationDetents([.medium, .large])
+        // After a send, closing the invite closes this ask too: the question
+        // has been answered. After a cancel it stays, so they can try again or
+        // choose "Maybe later".
+        .sheet(isPresented: $showInvite, onDismiss: {
+            if inviteSent { dismiss() }
+        }) {
+            // "Invite someone" was the decision, so the share sheet opens by
+            // itself once the invite is ready instead of asking for a second
+            // tap on "Send the invite".
+            StandInviteSheet(source: .newStand(enforcement), autoShare: true,
+                             onSent: { inviteSent = true })
         }
         .onAppear {
             AnalyticsService.shared.track("stand_invite_prompted", parameters: [
@@ -589,4 +763,13 @@ struct StandUpgradePromptSheet: View {
         }
         .presentationDetents([.medium])
     }
+}
+
+#Preview("Day-1 ask") {
+    Color.black
+        .sheet(isPresented: .constant(true)) {
+            StandInvitePromptSheet(enforcement: Enforcement(
+                id: "peace", title: "Enforcing Peace", tagline: "Seven days.",
+                theme: .anxiety, days: []))
+        }
 }

@@ -30,6 +30,7 @@ struct StandListView: View {
                     if !active.isEmpty { section("STANDING NOW", rooms: active) }
                     if !past.isEmpty { section("HELD", rooms: past) }
                     if service.rooms.isEmpty { empty }
+                    StandCodeEntryLink(source: "my_stands")
                 }
                 .padding(DS.Spacing.md)
             }

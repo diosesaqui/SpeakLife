@@ -28,6 +28,14 @@ struct StandJoinView: View {
     @State var prefilledCode: String = ""
 
     @State private var typed = ""
+    /// The code field opens focused when there is no prefilled code: typing it
+    /// is the only reason to be on this screen.
+    @FocusState private var focus: Field?
+    private enum Field: Hashable { case code, name }
+    /// `stand_invite_opened` fires once a typed code is actually submitted, not
+    /// when the screen opens. The entry point is always on Today now, and
+    /// counting curious taps as opened invites would inflate the funnel.
+    @State private var trackedManualOpen = false
     @State private var name = UserDefaults.standard.string(forKey: "userName") ?? ""
     @State private var isWorking = false
     @State private var errorText: String?
@@ -108,9 +116,13 @@ struct StandJoinView: View {
             StandRoomView(roomId: id)
         }
         .onAppear {
-            AnalyticsService.shared.track("stand_invite_opened", parameters: [
-                "source": prefilledCode.isEmpty ? "manual_code" : "link",
-            ])
+            if prefilledCode.isEmpty {
+                focus = .code
+            } else {
+                AnalyticsService.shared.track("stand_invite_opened", parameters: [
+                    "source": "link",
+                ])
+            }
         }
     }
 
@@ -126,6 +138,12 @@ struct StandJoinView: View {
                 .font(.system(size: 24, weight: .bold, design: .rounded))
                 .foregroundColor(DS.Palette.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
+            if prefilledCode.isEmpty {
+                Text("Enter the code from their message. You can paste the whole message.")
+                    .font(DS.Typography.callout)
+                    .foregroundColor(DS.Palette.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 
@@ -138,6 +156,19 @@ struct StandJoinView: View {
             TextField("ABCD-2345", text: $typed)
                 .textInputAutocapitalization(.characters)
                 .autocorrectionDisabled()
+                .keyboardType(.asciiCapable)
+                .submitLabel(.next)
+                .focused($focus, equals: .code)
+                .onSubmit { focus = .name }
+                // Formats as they type and cleans up whatever they paste: the
+                // code with or without its dash, the link, or the whole
+                // message it arrived in. Idempotent, so assigning back does
+                // not loop.
+                .onChange(of: typed) { _, new in
+                    let display = StandCodeInput.display(new)
+                    if display != new { typed = display }
+                }
+                .accessibilityLabel("Invite code")
                 .font(.system(size: 22, weight: .bold, design: .monospaced))
                 .foregroundColor(DS.Palette.textPrimary)
                 .padding(DS.Spacing.sm)
@@ -154,6 +185,15 @@ struct StandJoinView: View {
                 .foregroundColor(DS.Palette.textSecondary)
             TextField("First name", text: $name)
                 .autocorrectionDisabled()
+                .textContentType(.givenName)
+                .submitLabel(.join)
+                .focused($focus, equals: .name)
+                // Return joins, the same as the button, and only when the
+                // button would. Otherwise it simply closes the keyboard.
+                .onSubmit {
+                    guard canSubmit else { return }
+                    Task { await attemptJoin() }
+                }
                 .font(DS.Typography.body)
                 .foregroundColor(DS.Palette.textPrimary)
                 .padding(DS.Spacing.sm)
@@ -197,6 +237,12 @@ struct StandJoinView: View {
     private func attemptJoin() async {
         isWorking = true
         errorText = nil
+        if prefilledCode.isEmpty, !trackedManualOpen {
+            trackedManualOpen = true
+            AnalyticsService.shared.track("stand_invite_opened", parameters: [
+                "source": "manual_code",
+            ])
+        }
         do {
             // Silent account creation. The wall never appears here.
             _ = try await StandAuthCoordinator.shared.ensureAccount()
@@ -317,4 +363,8 @@ struct StandJoinView: View {
 private struct ConflictBox: Identifiable {
     let id = UUID()
     let value: StandJoinConflict
+}
+
+#Preview("Typed code") {
+    NavigationStack { StandJoinView() }
 }
