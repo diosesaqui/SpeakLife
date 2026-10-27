@@ -41,7 +41,7 @@ Any audit of instrumentation quality must scope to current builds:
 -- Every shipped build since global context landed in 4.54. Extend this on
 -- every version bump: the list drops an unlisted build silently, and the
 -- newest build is the one an audit most needs to see.
-AND properties.$app_version IN ('4.54','4.55','4.56','4.57','4.58','4.59','4.60','4.61','4.62','4.63','4.64','4.65','4.66','4.67','4.68','4.69','4.70','4.71','4.72','4.73')
+AND properties.$app_version IN ('4.54','4.55','4.56','4.57','4.58','4.59','4.60','4.61','4.62','4.63','4.64','4.65','4.66','4.67','4.68','4.69','4.70','4.71','4.72','4.73','4.74')
 ```
 
 Corollary: `days_since_install` is unusable as a cohorting dimension on older
