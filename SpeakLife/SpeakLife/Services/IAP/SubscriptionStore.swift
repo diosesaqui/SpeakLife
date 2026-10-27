@@ -1059,7 +1059,7 @@ final class SubscriptionStore: ObservableObject {
     @MainActor
     private func applyCustomerInfo(_ info: RevenueCat.CustomerInfo) {
         defer { entitlementsResolved = true }
-        let premiumActive   = RevenueCatManager.shared.isPremiumActive(info)
+        let premiumActive   = true//RevenueCatManager.shared.isPremiumActive(info)
         let devotionalActive = RevenueCatManager.shared.isDevotionalActive(info)
 
         // Captured before the mirrors below overwrite them. The cancellation
