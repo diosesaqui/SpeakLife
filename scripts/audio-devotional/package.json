@@ -1,0 +1,10 @@
+{
+  "name": "speaklife-audio-devotional",
+  "private": true,
+  "description": "Publish a new audio devotional: ElevenLabs TTS, Firebase Storage upload, Remote Config bump, FCM push.",
+  "type": "commonjs",
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  }
+}

@@ -24,3 +24,8 @@ scripts/send-message.env
 # Swift Package Manager build artifacts for local packages (Packages/SpeakLifeKit)
 Packages/*/.build/
 Packages/*/.swiftpm/
+
+# Audio devotional pipeline: deps, catalog backups, per-episode working files
+scripts/audio-devotional/node_modules/
+scripts/audio-devotional/backups/
+scripts/audio-devotional/work/
