@@ -42,40 +42,41 @@ def reverb(x, seconds, wet, rng):
 
 SETTINGS = {
     #             reverb s, wet, low-pass,  fade in, fade out
-    "stillwaters": (3.2, 0.32, 9000, 2.0, 7.0),
-    "dwelling": (5.0, 0.45, 7000, 6.0, 12.0),
     "shoreline": (4.0, 0.40, 8000, 6.0, 12.0),
-    "lanterns": (3.6, 0.38, 10000, 2.0, 8.0),
-    "morninglight": (3.4, 0.34, 9000, 2.0, 8.0),
 }
 
-name, src, dst = sys.argv[1:4]
-rng = np.random.default_rng(sum(map(ord, name)))
-sr, x = wavfile.read(src)
-x = x.astype(np.float64) / 32768
-rev_s, wet, lp, fin, fout = SETTINGS[name]
+def main():
+    name, src, dst = sys.argv[1:4]
+    rng = np.random.default_rng(sum(map(ord, name)))
+    sr, x = wavfile.read(src)
+    x = x.astype(np.float64) / 32768
+    rev_s, wet, lp, fin, fout = SETTINGS[name]
 
-x = filt(x, 35, "high")
-x = filt(x, lp, "low", 1)  # gentle top roll-off: warm, never harsh
-# trim leading silence to 0.3 s
-nz = np.argmax(np.max(np.abs(x), axis=1) > 1e-4)
-x = x[max(0, nz - int(0.3 * SR)):]
-x = np.concatenate([x, np.zeros((int(rev_s * SR), 2))])
-x = reverb(x, rev_s, wet, rng)
+    x = filt(x, 35, "high")
+    x = filt(x, lp, "low", 1)  # gentle top roll-off: warm, never harsh
+    # trim leading silence to 0.3 s
+    nz = np.argmax(np.max(np.abs(x), axis=1) > 1e-4)
+    x = x[max(0, nz - int(0.3 * SR)):]
+    x = np.concatenate([x, np.zeros((int(rev_s * SR), 2))])
+    x = reverb(x, rev_s, wet, rng)
 
-if name == "shoreline":
-    waves = ocean(len(x) / SR + 1, rng, 10.0)[: len(x)]
-    waves = filt(waves, 6000, "low")
-    waves *= np.sqrt(np.mean(x ** 2) / np.mean(waves ** 2)) * 0.55
-    x = x + waves
+    if name == "shoreline":
+        waves = ocean(len(x) / SR + 1, rng, 10.0)[: len(x)]
+        waves = filt(waves, 6000, "low")
+        waves *= np.sqrt(np.mean(x ** 2) / np.mean(waves ** 2)) * 0.55
+        x = x + waves
 
-# trim trailing silence
-alive = np.where(np.max(np.abs(x), axis=1) > np.max(np.abs(x)) * 0.002)[0]
-x = x[: alive[-1] + int(0.5 * SR)]
-t = np.arange(len(x)) / SR
-dur = t[-1]
-env = np.clip(t / fin, 0, 1) ** 2 * np.clip((dur - t) / fout, 0, 1) ** 1.5
-x *= env[:, None]
-x /= np.max(np.abs(x)) * 1.05
-wavfile.write(dst, SR, (x * 32767).astype(np.int16))
-print(name, round(dur, 1), "s")
+    # trim trailing silence
+    alive = np.where(np.max(np.abs(x), axis=1) > np.max(np.abs(x)) * 0.002)[0]
+    x = x[: alive[-1] + int(0.5 * SR)]
+    t = np.arange(len(x)) / SR
+    dur = t[-1]
+    env = np.clip(t / fin, 0, 1) ** 2 * np.clip((dur - t) / fout, 0, 1) ** 1.5
+    x *= env[:, None]
+    x /= np.max(np.abs(x)) * 1.05
+    wavfile.write(dst, SR, (x * 32767).astype(np.int16))
+    print(name, round(dur, 1), "s")
+
+
+if __name__ == "__main__":
+    main()
