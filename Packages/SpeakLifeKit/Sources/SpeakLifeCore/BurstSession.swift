@@ -339,6 +339,7 @@ public struct BurstSessionBuilder {
         let personal = personalLines(
             favorites: favorites,
             custom: custom,
+            alongside: session.declarations,
             excluding: Set(session.declarations.map(\.text)),
             limit: personalSlotCount
         )
@@ -353,21 +354,22 @@ public struct BurstSessionBuilder {
 
     /// Favorites and the user's own declarations drawn together, deduped by
     /// text. A favorite is a copy of a bundled line, so the same words can reach
-    /// the builder from both the category and the favorites.
+    /// the builder from both the category and the favorites. A favorite on the
+    /// same verse as a line already in the burst waits until nothing fresher is
+    /// left.
     private func personalLines(
         favorites: [Declaration],
         custom: [Declaration],
+        alongside: [BurstDeclaration],
         excluding spoken: Set<String>,
         limit: Int
     ) -> [BurstDeclaration] {
-        guard limit > 0 else { return [] }
-        var used = spoken
-        var lines: [BurstDeclaration] = []
-        for declaration in shuffle(favorites + custom) where lines.count < limit {
-            guard used.insert(declaration.text).inserted else { continue }
-            lines.append(burstLine(declaration))
-        }
-        return lines
+        BurstVariety.pick(
+            shuffle(favorites + custom).map(burstLine),
+            limit: limit,
+            alongside: alongside,
+            blockedTexts: spoken
+        )
     }
 
     private func burstLine(_ declaration: Declaration) -> BurstDeclaration {
@@ -439,19 +441,21 @@ public struct BurstSessionBuilder {
             // six new lines a day for a week even after the chain extends it, and
             // repeating this campaign's earlier fill beats dropping to the static
             // fallback list, which is not about their theme at all.
-            for step in 0..<candidates.count where declarations.count < declarationCount {
-                let candidate = candidates[(window + step) % candidates.count]
-                guard !spoken.contains(candidate.text) else { continue }
-                declarations.append(
-                    BurstDeclaration(
-                        text: candidate.text,
-                        verse: candidate.book ?? "",
-                        scripture: candidate.bibleVerseText,
-                        category: candidate.category
-                    )
-                )
-                spoken.insert(candidate.text)
+            let rotated = (0..<candidates.count).map { step in
+                burstLine(candidates[(window + step) % candidates.count])
             }
+            // The fill steers clear of every anchor's verse, not just today's:
+            // the anchors are written on the theme's best-known verses, so the
+            // pool often carries a declaration on the very same one.
+            let fill = BurstVariety.pick(
+                rotated,
+                limit: declarationCount - declarations.count,
+                alongside: declarations,
+                avoiding: enforcement.days.map { anchorLine($0, of: enforcement) },
+                blockedTexts: spoken
+            )
+            declarations += fill
+            spoken.formUnion(fill.map(\.text))
         }
 
         // The pool loads asynchronously and a burst can open before it lands.
@@ -570,17 +574,16 @@ public struct BurstSessionBuilder {
         let hasPersonal = !(favorites.isEmpty && custom.isEmpty)
         let categoryShare = declarationCount - (hasPersonal ? personalSlotCount : 0)
 
-        var selectedDeclarations: [BurstDeclaration] = []
-        var spoken = Set<String>()
-        for declaration in shuffle(categoryPool) where selectedDeclarations.count < categoryShare {
-            guard spoken.insert(declaration.text).inserted else { continue }
-            selectedDeclarations.append(burstLine(declaration))
-        }
+        var selectedDeclarations = BurstVariety.pick(
+            shuffle(categoryPool).map(burstLine),
+            limit: categoryShare
+        )
 
         selectedDeclarations += personalLines(
             favorites: favorites,
             custom: custom,
-            excluding: spoken,
+            alongside: selectedDeclarations,
+            excluding: Set(selectedDeclarations.map(\.text)),
             limit: declarationCount - selectedDeclarations.count
         )
 
