@@ -42,7 +42,7 @@ const BUCKET = process.env.FIREBASE_STORAGE_BUCKET || 'speaklife-3e5c4.appspot.c
 const CATALOG_PATH = 'audioDevotionals.json';
 const RC_KEY = 'audioRemoteVersion';
 const PUSH_TOPIC = 'allUsers';
-const DEFAULT_VOICE_ID = 'hg9PG9Wl6NW6CGaI2HBu'; // "Franchiz" cloned voice
+const DEFAULT_VOICE_ID = 'onwK4e9ZLuTAKqWW03F9'; // "Daniel - Steady Broadcaster"
 const DEFAULT_MODEL = 'eleven_multilingual_v2';
 const BACKUP_DIR = path.join(__dirname, 'backups');
 const MAX_TTS_CHARS = 4500; // eleven_multilingual_v2 caps a request near 5,000 chars
@@ -351,7 +351,7 @@ SpeakLife audio devotional pipeline
   node publish.js restore  --backup backups/audioDevotionals.<stamp>.json
 
 Env: FIREBASE_SERVICE_ACCOUNT (JSON or base64), ELEVENLABS_API_KEY (tts only),
-     ELEVENLABS_VOICE_ID (optional, defaults to the Franchiz voice).
+     ELEVENLABS_VOICE_ID (optional, defaults to Daniel - Steady Broadcaster).
 `;
 
 module.exports = { parseLenient, nextSlot, chunkScript, validateEpisode };

@@ -1,6 +1,6 @@
 ---
 name: audio-devotional-pipeline
-description: End-to-end pipeline that turns a topic into a live SpeakLife audio devotional — writes the script, records it in the founder's ElevenLabs voice, uploads the mp3 and the updated catalog to Firebase Storage, bumps Remote Config so every app picks it up with no release, and pushes a notification that opens the new episode. Trigger when the user gives a topic and wants a new audio devotional, episode, or "audio" made and published, or says "new episode on…", "make an audio devotional about…", "record a devotional", "publish an audio", or "run the audio pipeline".
+description: End-to-end pipeline that turns a topic into a live SpeakLife audio devotional — writes the script, records it in the ElevenLabs "Daniel - Steady Broadcaster" voice, uploads the mp3 and the updated catalog to Firebase Storage, bumps Remote Config so every app picks it up with no release, and pushes a notification that opens the new episode. Trigger when the user gives a topic and wants a new audio devotional, episode, or "audio" made and published, or says "new episode on…", "make an audio devotional about…", "record a devotional", "publish an audio", or "run the audio pipeline".
 ---
 
 # Audio Devotional Pipeline
@@ -10,7 +10,7 @@ Topic in, live episode out. Five steps, each a command in
 
 1. **Slot** — read the live catalog, find the next episode number.
 2. **Script** — write the devotional (you, following the rules below).
-3. **Voice** — record it with ElevenLabs in the Franchiz voice.
+3. **Voice** — record it with ElevenLabs in the Daniel voice.
 4. **Publish** — upload mp3 → update `audioDevotionals.json` → bump `audioRemoteVersion`.
 5. **Notify** — push to every user, opening the new episode.
 
@@ -135,7 +135,7 @@ wait.
 
 ## Step 3 — Record it
 
-Voice: **Franchiz** (`hg9PG9Wl6NW6CGaI2HBu`, the founder's cloned voice).
+Voice: **Daniel - Steady Broadcaster** (`onwK4e9ZLuTAKqWW03F9`), the voice every existing episode uses.
 Model `eleven_multilingual_v2`. Override with `--voice` only if the user asks.
 
 **With `ELEVENLABS_API_KEY` set:**
@@ -148,7 +148,7 @@ It splits long scripts on paragraph breaks, passes neighbouring text for
 continuous tone, joins the mp3, and prints the length.
 
 **Without the key — ElevenLabs connector:** load `creative_generate_speech`
-via ToolSearch, generate with `voice_id: "hg9PG9Wl6NW6CGaI2HBu"` and the
+via ToolSearch, generate with `voice_id: "onwK4e9ZLuTAKqWW03F9"` and the
 script text, poll `creative_get_flow_run_status` until done, pick the better
 of the takes, and download its audio URL with `curl -sSL -o work/<slug>/<id> "<url>"`.
 Don't retry a generation call; it charges again.
