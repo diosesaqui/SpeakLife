@@ -402,7 +402,7 @@ struct DeclarationView: View {
         })
         .onChange(of: presentDevotionalSubscriptionView, perform: handleDevotionalPresentation)
         .alert(isPresented: $viewModel.showErrorMessage, content: errorAlert)
-        .alert("Know anyone that can benefit from SpeakLife?", isPresented: $share, actions: shareAlert)
+        .alert("Know someone who needs a word today?", isPresented: $share, actions: shareAlert)
         .sheet(isPresented: $isShowingMailView) {
             MailView(isShowing: $isShowingMailView, result: self.$result, origin: .review, isSubscribed: subscriptionStore.isPremium)
         }
@@ -488,10 +488,10 @@ struct DeclarationView: View {
     
     @ViewBuilder
     private func shareAlert() -> some View {
-        Button("Yes, I'll share with friends!") {
+        Button("Share SpeakLife") {
             shareSpeakLife()
         }
-        Button("No thanks") {
+        Button("Not now", role: .cancel) {
         }
     }
     
@@ -569,9 +569,10 @@ struct DeclarationView: View {
             if let scene = UIApplication.shared.connectedScenes
                 .first(where: { $0.activationState == .foregroundActive })
                 as? UIWindowScene {
-                let url = URL(string: "\(APP.Product.urlID)")!
-                
-                let activityVC = UIActivityViewController(activityItems: ["Check out Speak Life - Bible Meditation app that'll transform your life!", url], applicationActivities: nil)
+                let invite = ReferralShareText(
+                    "This app helps me speak God's Word over my life every day. Try it with me.",
+                    link: ReferralLink.url(.profileInvite))
+                let activityVC = UIActivityViewController(activityItems: [invite], applicationActivities: nil)
                 let window = scene.windows.first
                 window?.rootViewController?.present(activityVC, animated: true)
                 shared += 1

@@ -193,6 +193,26 @@ final class AcquisitionAttributionTests: XCTestCase {
         XCTAssertEqual(attribution?.campaign, "faith")
     }
 
+    /// Every share has channel "share", so the surface has to ride somewhere
+    /// else to be told apart in a breakdown.
+    func testShareClickRecordsFeatureAsCreative() {
+        let attribution = BranchAttribution.attribution(from: [
+            "+clicked_branch_link": true,
+            "~channel": "share",
+            "~feature": "declaration_card"
+        ])
+        XCTAssertEqual(attribution?.creative, "declaration_card")
+    }
+
+    func testPaidClickDoesNotTakeFeatureAsCreative() {
+        let attribution = BranchAttribution.attribution(from: [
+            "+clicked_branch_link": true,
+            "~channel": "Facebook",
+            "~feature": "paid advertising"
+        ])
+        XCTAssertNil(attribution?.creative)
+    }
+
     func testReferralLinkCarriesShareChannelOnTheRootPath() {
         let url = ReferralLink.url(.declarationCard, campaign: "faith")
         let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
@@ -207,5 +227,125 @@ final class AcquisitionAttributionTests: XCTestCase {
         XCTAssertEqual(value("campaign"), "faith")
         // Must never be mistaken for a stand invite.
         XCTAssertNil(StandLink.code(from: url))
+    }
+
+    // MARK: - Referrer: who shared the link behind an install
+
+    /// What Branch hands back on the install session from a shared link.
+    private func shareInstallParams(referrer: Any? = "sharer-123") -> [String: Any] {
+        var params: [String: Any] = [
+            "+clicked_branch_link": true,
+            "+is_first_session": true,
+            "~channel": "share",
+            "~feature": "favorite"
+        ]
+        if let referrer { params[ReferralLink.referrerKey] = referrer }
+        return params
+    }
+
+    /// Captures what a recorded referral reports, so no real event leaves
+    /// the test host.
+    private final class AnalyticsSpy {
+        var properties: [(String, Any)] = []
+        var events: [(String, [String: Any])] = []
+
+        var analytics: BranchAttribution.ReferralAnalytics {
+            BranchAttribution.ReferralAnalytics(
+                setUserProperty: { [unowned self] in self.properties.append(($0, $1)) },
+                track: { [unowned self] in self.events.append(($0, $1)) }
+            )
+        }
+    }
+
+    private func freshDefaults() -> UserDefaults {
+        let name = "ReferralTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: name)!
+        addTeardownBlock { UserDefaults().removePersistentDomain(forName: name) }
+        return defaults
+    }
+
+    func testReferrerIsReadFromSlRef() {
+        let referral = BranchAttribution.referral(from: shareInstallParams(), ownDistinctId: "me")
+        XCTAssertEqual(referral, BranchAttribution.Referral(referrer: "sharer-123", feature: "favorite"))
+    }
+
+    func testNoReferrerWhenSlRefIsAbsentOrUnusable() {
+        XCTAssertNil(BranchAttribution.referral(from: shareInstallParams(referrer: nil), ownDistinctId: "me"))
+        XCTAssertNil(BranchAttribution.referral(from: shareInstallParams(referrer: "   "), ownDistinctId: "me"))
+        XCTAssertNil(BranchAttribution.referral(from: shareInstallParams(referrer: 42), ownDistinctId: "me"))
+        XCTAssertNil(BranchAttribution.referral(
+            from: shareInstallParams(referrer: String(repeating: "x", count: 129)), ownDistinctId: "me"))
+    }
+
+    func testReferrerNeedsAClickedInstallSession() {
+        var notClicked = shareInstallParams()
+        notClicked["+clicked_branch_link"] = false
+        XCTAssertNil(BranchAttribution.referral(from: notClicked, ownDistinctId: "me"))
+
+        // An existing user opening a friend's link was not brought in by it.
+        var notFirst = shareInstallParams()
+        notFirst["+is_first_session"] = false
+        XCTAssertNil(BranchAttribution.referral(from: notFirst, ownDistinctId: "me"))
+
+        var missingFirst = shareInstallParams()
+        missingFirst.removeValue(forKey: "+is_first_session")
+        XCTAssertNil(BranchAttribution.referral(from: missingFirst, ownDistinctId: "me"))
+    }
+
+    func testOwnLinkIsNotAReferral() {
+        XCTAssertNil(BranchAttribution.referral(from: shareInstallParams(), ownDistinctId: "sharer-123"))
+    }
+
+    func testReferrerIsTrimmedAndBlankFeatureDropped() {
+        var params = shareInstallParams(referrer: "  sharer-123\n")
+        params["~feature"] = "  "
+        XCTAssertEqual(BranchAttribution.referral(from: params, ownDistinctId: nil),
+                       BranchAttribution.Referral(referrer: "sharer-123", feature: nil))
+    }
+
+    func testReferredByIsSetAndReported() {
+        let defaults = freshDefaults()
+        let spy = AnalyticsSpy()
+        let first = BranchAttribution.recordReferral(
+            from: shareInstallParams(), defaults: defaults, ownDistinctId: "me", analytics: spy.analytics)
+
+        XCTAssertEqual(first?.referrer, "sharer-123")
+        XCTAssertEqual(defaults.string(forKey: BranchAttribution.referredByDefaultsKey), "sharer-123")
+
+        XCTAssertEqual(spy.properties.count, 1)
+        XCTAssertEqual(spy.properties.first?.0, "referred_by")
+        XCTAssertEqual(spy.properties.first?.1 as? String, "sharer-123")
+
+        XCTAssertEqual(spy.events.count, 1)
+        XCTAssertEqual(spy.events.first?.0, "referral_install_attributed")
+        XCTAssertEqual(spy.events.first?.1["referred_by"] as? String, "sharer-123")
+        XCTAssertEqual(spy.events.first?.1["feature"] as? String, "favorite")
+    }
+
+    func testReferredByIsNeverOverwritten() {
+        let defaults = freshDefaults()
+        let spy = AnalyticsSpy()
+        BranchAttribution.recordReferral(
+            from: shareInstallParams(), defaults: defaults, ownDistinctId: "me", analytics: spy.analytics)
+
+        let second = BranchAttribution.recordReferral(
+            from: shareInstallParams(referrer: "someone-else"), defaults: defaults,
+            ownDistinctId: "me", analytics: spy.analytics)
+        XCTAssertNil(second)
+        XCTAssertEqual(defaults.string(forKey: BranchAttribution.referredByDefaultsKey), "sharer-123")
+        // The second install session reports nothing.
+        XCTAssertEqual(spy.properties.count, 1)
+        XCTAssertEqual(spy.events.count, 1)
+    }
+
+    func testNothingIsStoredOrReportedWithoutSlRef() {
+        let defaults = freshDefaults()
+        let spy = AnalyticsSpy()
+        XCTAssertNil(BranchAttribution.recordReferral(
+            from: shareInstallParams(referrer: nil), defaults: defaults,
+            ownDistinctId: "me", analytics: spy.analytics))
+        XCTAssertNil(defaults.string(forKey: BranchAttribution.referredByDefaultsKey))
+        XCTAssertTrue(spy.properties.isEmpty)
+        XCTAssertTrue(spy.events.isEmpty)
     }
 }

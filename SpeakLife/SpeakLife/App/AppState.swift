@@ -64,6 +64,14 @@ final class AppState: ObservableObject {
     /// dismissal.
     @AppStorage("pendingStandCode") var pendingStandCode = ""
 
+    /// A declaration someone sent ("Speak it over someone"), on screen now.
+    ///
+    /// In memory only. The gift itself waits in `SpeakOverInbox`, which
+    /// persists it across onboarding and app kills; this is just the slot
+    /// `SpeakOverPresentationModifier` presents from, filled once the user is
+    /// onboarded and nothing else is up.
+    @Published var pendingSpeakOver: SpeakOverDelivery?
+
     /// The email address this install has given us, or "" for none.
     ///
     /// Restored with the email subsystem (removed in c605131f), and on the SAME

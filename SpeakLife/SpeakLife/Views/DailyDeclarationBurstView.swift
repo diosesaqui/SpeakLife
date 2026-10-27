@@ -52,6 +52,20 @@ struct DailyDeclarationBurstView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     
     @StateObject private var burstTracker = BurstCompletionTracker.shared
+    /// The one path a burst is shared through: every line as a story card.
+    /// Both the eighth slat and the completion screen use it, so they share
+    /// one in-flight guard.
+    @StateObject private var burstShare = BurstShareController()
+    /// A send from the eighth slat completed, so the finish screen offers
+    /// "Send to someone else" instead of the first send again.
+    @State private var didSendBurst = false
+    /// The badge cover came due while a share was up; it waits for the share.
+    @State private var badgeUnlockDeferred = false
+    /// Sizes the card thumbnails to the screen's real pixels.
+    @Environment(\.displayScale) private var displayScale
+    /// The finish screen's headline and line, picked once when it appears.
+    @State private var victoryTitle = ""
+    @State private var motivationLine = ""
     @State private var currentDeclarationIndex = 0
     @State private var showCompletionView = false
     /// Distinct days this user has completed a Burst, read once the completion
@@ -172,7 +186,15 @@ struct DailyDeclarationBurstView: View {
                     BurstFaithActionView(
                         theme: burstTheme,
                         action: action,
-                        onCommit: { commitToAction(action) },
+                        isPreparingShare: burstShare.isPreparing,
+                        onSend: {
+                            // Sending the promises on is the act of faith, so a
+                            // completed send commits it and moves on. A cancel
+                            // leaves the user here to send or skip.
+                            sendBurst(surface: "burst_complete") { completed in
+                                if completed { commitToAction(action) }
+                            }
+                        },
                         onSkip: { skipAction(action) }
                     )
                 } else if !showCompletionView {
@@ -197,6 +219,14 @@ struct DailyDeclarationBurstView: View {
         .preferredColorScheme(.dark)
         .onAppear {
             loadDynamicDeclarations()
+        }
+        .onChange(of: burstShare.isBusy) { _, busy in
+            // The badge waited for a share; raise it once the sheet is gone,
+            // after its dismissal has settled.
+            guard !busy, badgeUnlockDeferred else { return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                presentBadgeUnlockIfOwed()
+            }
         }
         .fullScreenCover(isPresented: $streakViewModel.showBadgeUnlock) {
             if let badge = streakViewModel.badgeManager.recentlyUnlocked {
@@ -567,8 +597,18 @@ struct DailyDeclarationBurstView: View {
     // MARK: - Completion View
     
     private func completionView(geometry: GeometryProxy) -> some View {
-        ZStack {
-            // Animated background particles
+        // The burst's ZStack ignores the safe area, so the real window's size
+        // and insets decide the layout: content clears the Dynamic Island and
+        // the footer clears the home indicator. Small phones (by full screen
+        // height) get a tighter celebration so the cards keep their size.
+        let metrics = windowMetrics
+        let compact = Self.isCompactScreen(metrics.size)
+        let cardHeight = finishCardHeight(screen: metrics.size)
+
+        return ZStack {
+            // Animated background particles. Placed from the index, not
+            // `random()`: this view redraws as each card arrives, and random
+            // positions would make every particle jump on each redraw.
             ForEach(0..<(reduceMotion ? 0 : 20), id: \.self) { index in
                 Circle()
                     .fill(
@@ -578,10 +618,10 @@ struct DailyDeclarationBurstView: View {
                             endPoint: .bottomTrailing
                         )
                     )
-                    .frame(width: CGFloat.random(in: 2...6))
+                    .frame(width: 2 + 4 * Self.particleNoise(index, salt: 3))
                     .position(
-                        x: CGFloat.random(in: 0...geometry.size.width),
-                        y: CGFloat.random(in: 0...geometry.size.height)
+                        x: geometry.size.width * Self.particleNoise(index, salt: 1),
+                        y: geometry.size.height * Self.particleNoise(index, salt: 2)
                     )
                     .opacity(confettiOpacity)
                     .animation(
@@ -591,234 +631,241 @@ struct DailyDeclarationBurstView: View {
                         value: confettiOpacity
                     )
             }
-            
+
             VStack(spacing: 0) {
-                Spacer()
-                
-                VStack(spacing: 30) {
-                    // Success Animation with multiple layers
-                    ZStack {
-                        // Outer pulsing ring
-                        Circle()
-                            .stroke(
-                                LinearGradient(
-                                    colors: [Color.yellow.opacity(0.3), Color.orange.opacity(0.2)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 2
-                            )
-                            .frame(width: 160, height: 160)
-                            .scaleEffect(checkmarkScale * 1.3)
-                            .opacity(starOpacity)
-                        
-                        // Middle glow
-                        Circle()
-                            .fill(
-                                RadialGradient(
-                                    colors: [Color.orange.opacity(0.5), Color.clear],
-                                    center: .center,
-                                    startRadius: 5,
-                                    endRadius: 60
-                                )
-                            )
-                            .frame(width: 140, height: 140)
-                            .scaleEffect(checkmarkScale * 1.1)
-                            .blur(radius: 10)
-                        
-                        // The seven declarations, closed into a ring.
-                        //
-                        // This was eight generic stars, which could have been any
-                        // app's celebration. These are the same segments as the
-                        // progress rail, one per line actually spoken, brought up
-                        // from the bottom of the burst and set around the mark.
-                        // The reward is made of the work rather than dropped on
-                        // top of it.
-                        ForEach(0..<max(morningDeclarations.count, 1), id: \.self) { index in
-                            let count = max(morningDeclarations.count, 1)
-                            let angle = (Double(index) / Double(count)) * 2 * .pi - .pi / 2
+                // Scrolls so nothing clips on an iPhone SE or at large type.
+                // The cards are the reason to stay on this screen, so the
+                // celebration above them is kept compact.
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: compact ? DS.Spacing.md : DS.Spacing.lg) {
+                        celebrationHeader(compact: compact)
 
-                            Capsule()
-                                .fill(DS.Gradient.gold)
-                                .frame(width: 5, height: 18)
-                                .shadow(color: DS.Palette.gold.opacity(0.7), radius: 5)
-                                .offset(
-                                    x: cos(angle) * 78,
-                                    y: sin(angle) * 78
-                                )
-                                // Each segment stands on end, pointing out from the
-                                // mark like rays rather than lying flat.
-                                .rotationEffect(.degrees(angle * 180 / .pi + 90))
-                                .scaleEffect(starOpacity)
-                                .opacity(starOpacity)
-                        }
-                        
-                        // Main checkmark with gradient
-                        ZStack {
-                            Circle()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [Color(red: 1.0, green: 0.8, blue: 0.2), Color(red: 1.0, green: 0.6, blue: 0.1)],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .frame(width: 100, height: 100)
-                                .scaleEffect(checkmarkScale)
-                                .shadow(color: .orange, radius: 20, x: 0, y: 5)
-                            
-                            Image(systemName: "checkmark")
-                                .font(.system(size: 50, weight: .bold))
-                                .foregroundColor(.white)
-                                .scaleEffect(checkmarkScale)
-                                .rotationEffect(.degrees(checkmarkRotation))
+                        if burstShare.expectedCount > 0 {
+                            BurstCardsSection(
+                                controller: burstShare,
+                                width: metrics.size.width,
+                                cardHeight: cardHeight
+                            )
+                            .scaleEffect(shareButtonOpacity)
+                            .opacity(shareButtonOpacity)
                         }
                     }
-                    
-                    // Dynamic title with gradient
-                    Text(getVictoryMessage())
-                        .font(.system(size: 34, weight: .black))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [.white, Color(red: 1.0, green: 0.9, blue: 0.7)],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                        .scaleEffect(checkmarkScale)
-                        .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 2)
-                    
-                    VStack(spacing: 20) {
-                        Text(getMotivationalMessage())
-                            .font(.system(size: 19, weight: .medium))
-                            .foregroundColor(.white.opacity(0.95))
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 20)
-                            .scaleEffect(statsScale)
-                        
-                        // Streak only — the one stat that actually matters
-                        StatCard(
-                            count: streakViewModel.displayStreak,
-                            label: "Day Streak",
-                            icon: "flame.fill",
-                            scale: statsScale,
-                            highlight: streakViewModel.displayStreak >= 7
-                        )
-                        .padding(.top, 8)
-                        
-                        // What they said yes to on the eighth slat. Shown so the
-                        // commitment survives the celebration instead of being
-                        // buried under it.
-                        if let committedAction {
-                            HStack(spacing: DS.Spacing.xs) {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .font(.system(size: 15, weight: .bold))
-                                    .foregroundColor(DS.Palette.gold)
-
-                                Text(committedAction.headline)
-                                    .font(.system(size: 15, weight: .semibold))
-                                    .foregroundColor(.white.opacity(0.9))
-                                    .multilineTextAlignment(.leading)
-                                    .fixedSize(horizontal: false, vertical: true)
-                            }
-                            .padding(.horizontal, DS.Spacing.md)
-                            .padding(.vertical, DS.Spacing.sm)
-                            .background(
-                                Capsule().fill(Color.white.opacity(0.10))
-                            )
-                            .opacity(starOpacity)
-                        }
-
-                        // Milestone callout
-                        if streakViewModel.displayStreak % 7 == 0 && streakViewModel.displayStreak > 0 {
-                            Text("🎉 \(streakViewModel.displayStreak / 7) WEEK\(streakViewModel.displayStreak == 7 ? "" : "S") STRONG!")
-                                .font(.system(size: 13, weight: .bold))
-                                .foregroundColor(.yellow)
-                                .opacity(starOpacity)
-                        }
-                    }
-                    .padding(.horizontal, 30)
+                    .padding(.top, metrics.insets.top + (compact ? DS.Spacing.xs : DS.Spacing.md))
+                    .padding(.bottom, DS.Spacing.md)
                 }
-                
-                Spacer()
-                
-                VStack(spacing: DS.Spacing.md) {
-                    // Share Victory Button
-                    Button(action: shareVictory) {
-                        HStack(spacing: 10) {
-                            Image(systemName: "square.and.arrow.up")
-                                .font(.system(size: 17, weight: .semibold))
-                            Text("Share Your Victory")
-                                .font(.system(size: 17, weight: .semibold))
-                        }
-                        .foregroundColor(.white)
-                        .frame(width: geometry.size.width * 0.85, height: 50)
-                        .background(
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 25)
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [Color.purple.opacity(0.8), Color.blue.opacity(0.8)],
-                                            startPoint: .leading,
-                                            endPoint: .trailing
-                                        )
-                                    )
-                                
-                                RoundedRectangle(cornerRadius: 25)
-                                    .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                            }
-                        )
-                        .shadow(color: .purple.opacity(0.3), radius: 10, x: 0, y: 5)
-                    }
+
+                // Pinned, so the screen's primary action is never below the fold.
+                if burstShare.expectedCount > 0 {
+                    BurstSendAllButton(
+                        controller: burstShare,
+                        title: didSendBurst ? "Send to someone else" : "Send these to a friend",
+                        action: { sendBurst(surface: "burst_completion_screen") { _ in } }
+                    )
+                    .padding(.top, DS.Spacing.xs)
                     .scaleEffect(shareButtonOpacity)
                     .opacity(shareButtonOpacity)
-                    
-                    HStack(spacing: DS.Spacing.sm) {
-                        Button(action: { showSpiritualGraph = true }) {
-                            HStack {
-                                Image(systemName: "chart.line.uptrend.xyaxis")
-                                    .font(.system(size: 16))
-                                Text("Growth")
-                                    .font(.system(size: 15, weight: .medium))
-                            }
-                            .foregroundColor(Color(red: 0.9, green: 0.7, blue: 0.3))
+                }
+
+                HStack(spacing: DS.Spacing.sm) {
+                    Button(action: { showSpiritualGraph = true }) {
+                        HStack {
+                            Image(systemName: "chart.line.uptrend.xyaxis")
+                                .font(.system(size: 16))
+                            Text("Growth")
+                                .font(.system(size: 15, weight: .medium))
+                        }
+                        .foregroundColor(Color(red: 0.9, green: 0.7, blue: 0.3))
+                        .frame(width: geometry.size.width * 0.4, height: 44)
+                        .background(
+                            RoundedRectangle(cornerRadius: 22)
+                                .stroke(Color(red: 0.9, green: 0.7, blue: 0.3), lineWidth: 1)
+                        )
+                    }
+                    .buttonStyle(.dsPressable(feel: .tapSolid))
+
+                    // Quieter than before: "Send these to a friend" is the one
+                    // primary action on this screen now.
+                    Button(action: completeBurst) {
+                        Text("Continue")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundColor(.white)
                             .frame(width: geometry.size.width * 0.4, height: 44)
                             .background(
                                 RoundedRectangle(cornerRadius: 22)
-                                    .stroke(Color(red: 0.9, green: 0.7, blue: 0.3), lineWidth: 1)
+                                    .fill(Color.white.opacity(0.14))
                             )
-                        }
-                        .buttonStyle(.dsPressable(feel: .tapSolid))
-
-                        Button(action: completeBurst) {
-                            Text("Continue")
-                                .font(.system(size: 17, weight: .bold))
-                                .foregroundColor(.white)
-                                .frame(width: geometry.size.width * 0.4, height: 44)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 22)
-                                        .fill(
-                                            LinearGradient(
-                                                colors: [Color(red: 1.0, green: 0.58, blue: 0.0), Color(red: 1.0, green: 0.34, blue: 0.13)],
-                                                startPoint: .leading,
-                                                endPoint: .trailing
-                                            )
-                                        )
-                                )
-                                .shadow(color: .orange.opacity(0.3), radius: 10, x: 0, y: 5)
-                        }
-                        .buttonStyle(.dsPressable(feel: .tapLight, haptics: false))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 22)
+                                    .stroke(Color.white.opacity(0.25), lineWidth: 1)
+                            )
                     }
+                    .buttonStyle(.dsPressable(feel: .tapLight, haptics: false))
                 }
-                .padding(.bottom, 50)
+                .padding(.top, DS.Spacing.sm)
+                .padding(.bottom, metrics.insets.bottom + DS.Spacing.sm)
             }
         }
         .onAppear {
+            // Picked once: these draw at random, and this screen redraws as
+            // each card arrives.
+            victoryTitle = getVictoryMessage()
+            motivationLine = getMotivationalMessage()
             triggerCompletionAnimations()
+            // Normally started on the eighth slat; this covers any way here
+            // that skipped it, after the celebration's opening beat.
+            prepareBurstCards(startDelay: 0.6)
         }
         .sheet(isPresented: $showSpiritualGraph) {
             SpiritualStrengthGraph(tracker: burstTracker)
         }
+    }
+
+    /// The celebration, sized down so the cards below it can lead.
+    private func celebrationHeader(compact: Bool) -> some View {
+        VStack(spacing: compact ? DS.Spacing.sm : DS.Spacing.md) {
+            // Success mark with the seven declarations closed into a ring.
+            //
+            // The ring segments are the same as the progress rail, one per
+            // line actually spoken, set around the mark. The reward is made of
+            // the work rather than dropped on top of it.
+            ZStack {
+                Circle()
+                    .stroke(
+                        LinearGradient(
+                            colors: [Color.yellow.opacity(0.3), Color.orange.opacity(0.2)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 2
+                    )
+                    .frame(width: 160, height: 160)
+                    .scaleEffect(checkmarkScale * 1.3)
+                    .opacity(starOpacity)
+
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [Color.orange.opacity(0.5), Color.clear],
+                            center: .center,
+                            startRadius: 5,
+                            endRadius: 60
+                        )
+                    )
+                    .frame(width: 140, height: 140)
+                    .scaleEffect(checkmarkScale * 1.1)
+                    .blur(radius: 10)
+
+                ForEach(0..<max(morningDeclarations.count, 1), id: \.self) { index in
+                    let count = max(morningDeclarations.count, 1)
+                    let angle = (Double(index) / Double(count)) * 2 * .pi - .pi / 2
+
+                    Capsule()
+                        .fill(DS.Gradient.gold)
+                        .frame(width: 5, height: 18)
+                        .shadow(color: DS.Palette.gold.opacity(0.7), radius: 5)
+                        .offset(x: cos(angle) * 78, y: sin(angle) * 78)
+                        .rotationEffect(.degrees(angle * 180 / .pi + 90))
+                        .scaleEffect(starOpacity)
+                        .opacity(starOpacity)
+                }
+
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [Color(red: 1.0, green: 0.8, blue: 0.2), Color(red: 1.0, green: 0.6, blue: 0.1)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 100, height: 100)
+                        .scaleEffect(checkmarkScale)
+                        .shadow(color: .orange, radius: 20, x: 0, y: 5)
+
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 50, weight: .bold))
+                        .foregroundColor(.white)
+                        .scaleEffect(checkmarkScale)
+                        .rotationEffect(.degrees(checkmarkRotation))
+                }
+            }
+            // The mark is drawn at its old size and scaled as one piece, so
+            // the ring geometry stays exactly as designed.
+            .frame(width: 200, height: 200)
+            .scaleEffect(compact ? 0.55 : 0.7)
+            .frame(width: compact ? 110 : 140, height: compact ? 110 : 140)
+
+            Text(victoryTitle)
+                .font(.system(size: compact ? 26 : 30, weight: .black))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [.white, Color(red: 1.0, green: 0.9, blue: 0.7)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .multilineTextAlignment(.center)
+                .scaleEffect(checkmarkScale)
+                .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 2)
+
+            if !motivationLine.isEmpty {
+                Text(motivationLine)
+                    .font(.system(size: compact ? 15 : 16, weight: .medium))
+                    .foregroundColor(.white.opacity(0.9))
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, DS.Spacing.xl)
+                    .scaleEffect(statsScale)
+            }
+
+            // The streak as one line instead of a tile, so the cards keep the room.
+            HStack(spacing: DS.Spacing.xs) {
+                Image(systemName: "flame.fill")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(streakViewModel.displayStreak >= 7 ? DS.Gradient.ember : DS.Gradient.gold)
+                CountUpText(value: streakViewModel.displayStreak,
+                            font: .system(size: 17, weight: .black))
+                Text("day streak")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.85))
+                if streakViewModel.displayStreak % 7 == 0 && streakViewModel.displayStreak > 0 {
+                    Text("· \(streakViewModel.displayStreak / 7) week\(streakViewModel.displayStreak == 7 ? "" : "s") strong")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(DS.Palette.gold)
+                }
+            }
+            .padding(.horizontal, DS.Spacing.md)
+            .padding(.vertical, DS.Spacing.xs)
+            .background(Capsule().fill(Color.white.opacity(0.10)))
+            .scaleEffect(statsScale)
+
+            // What they said yes to on the eighth slat, so the commitment
+            // survives the celebration instead of being buried under it.
+            if let committedAction {
+                HStack(spacing: DS.Spacing.xs) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(DS.Palette.gold)
+
+                    Text(committedAction.headline)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.9))
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(.horizontal, DS.Spacing.md)
+                .padding(.vertical, DS.Spacing.xs)
+                .background(Capsule().fill(Color.white.opacity(0.10)))
+                .opacity(starOpacity)
+                .padding(.horizontal, DS.Spacing.lg)
+            }
+        }
+    }
+
+    /// A stable 0...1 value per particle, so a redraw never moves them.
+    private static func particleNoise(_ index: Int, salt: Double) -> CGFloat {
+        let value = sin(Double(index) * 12.9898 + salt * 78.233) * 43758.5453
+        return CGFloat(value - value.rounded(.down))
     }
     
     // MARK: - Completion Helper Views
@@ -955,46 +1002,62 @@ struct DailyDeclarationBurstView: View {
         }
     }
     
-    private func shareVictory() {
-        // Haptic feedback
-        Juice.play(.tapLight)
-
-        let message = "I just completed my Daily Victory Burst on SpeakLife! 🔥\n\n✅ \(morningDeclarations.count) Declarations Spoken\n🔥 \(streakViewModel.displayStreak) Day Streak\n💪 \(burstTracker.currentStrengthScore)% Spiritual Strength\n\nJoin me in speaking life daily!\n\(ReferralLink.url(.dailyBurst).absoluteString)"
-        
-        // Get the active window scene
-        guard let windowScene = UIApplication.shared.connectedScenes
-            .first(where: { $0.activationState == .foregroundActive || $0.activationState == .foregroundInactive }) as? UIWindowScene,
-              let rootViewController = windowScene.windows.first?.rootViewController else {
-            print("Could not find root view controller for sharing")
-            return
+    /// Sends every line of this burst as a story card, in order, with an
+    /// invitation and a tracked link. `completion` gets true only for a share
+    /// the system reports as completed.
+    private func sendBurst(surface: String, completion: @escaping (Bool) -> Void) {
+        // `burst_share_tapped` (in the controller) is this tap's one event.
+        guard !burstShare.isBusy, !morningDeclarations.isEmpty else { return }
+        prepareBurstCards()
+        burstShare.shareAll(surface: surface) { completed in
+            if completed { didSendBurst = true }
+            completion(completed)
         }
-        
-        // Find the topmost view controller
-        var topController = rootViewController
-        while let presentedController = topController.presentedViewController {
-            topController = presentedController
-        }
-        
-        let activityVC = UIActivityViewController(
-            activityItems: [message],
-            applicationActivities: nil
-        )
-        
-        // For iPad
-        if let popover = activityVC.popoverPresentationController {
-            popover.sourceView = topController.view
-            popover.sourceRect = CGRect(x: topController.view.bounds.midX, y: topController.view.bounds.midY, width: 0, height: 0)
-            popover.permittedArrowDirections = []
-        }
-        
-        topController.present(activityVC, animated: true)
-        
-        AnalyticsService.shared.track("daily_burst_shared", parameters: [
-            "streak": streakViewModel.displayStreak,
-            "strength_score": burstTracker.currentStrengthScore
-        ])
     }
-    
+
+    /// Starts drawing this burst's cards. Only the first call renders, so the
+    /// eighth slat, its send and the finish screen all reuse one set.
+    ///
+    /// - Parameter startDelay: lets an entrance animation finish before the
+    ///   first full-size render takes the main thread.
+    private func prepareBurstCards(startDelay: TimeInterval = 0) {
+        guard !morningDeclarations.isEmpty else { return }
+        let metrics = windowMetrics
+        let cardWidth = finishCardHeight(screen: metrics.size) * 9 / 16
+        burstShare.prepare(
+            lines: morningDeclarations,
+            theme: burstTheme,
+            background: DeclarationStoryCard.background(for: themeViewModel),
+            thumbnailWidth: cardWidth * displayScale,
+            startDelay: startDelay
+        )
+    }
+
+    /// The real window's full size and safe-area insets. The burst's ZStack
+    /// ignores the safe area, so neither can be read from its geometry.
+    private var windowMetrics: (size: CGSize, insets: UIEdgeInsets) {
+        let window = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap(\.windows)
+            .first(where: \.isKeyWindow)
+        return (window?.bounds.size ?? CGSize(width: 390, height: 844),
+                window?.safeAreaInsets ?? .zero)
+    }
+
+    /// Small phones (an iPhone SE or mini) by full screen height.
+    private static func isCompactScreen(_ screen: CGSize) -> Bool {
+        screen.height < 700
+    }
+
+    /// The finish screen's card height: as large as the room allows, at most
+    /// 42% of a small screen and 50% of a larger one, and never wider than
+    /// 60% of the screen (300pt cap) at 9:16.
+    private func finishCardHeight(screen: CGSize) -> CGFloat {
+        let maxHeight = screen.height * (Self.isCompactScreen(screen) ? 0.42 : 0.50)
+        let maxWidth = min(screen.width * 0.6, 300)
+        return max(min(maxHeight, maxWidth * 16 / 9), 120)
+    }
+
     // MARK: - Actions
     
     /// The mode picked on the intro, before there is a card to speak.
@@ -1112,18 +1175,44 @@ struct DailyDeclarationBurstView: View {
     /// Resolves what this burst was about and asks for one action on it.
     private func presentActionSlide() {
         let theme = burstTheme
-        let action = FaithActionCatalog.action(for: theme)
+        // The slat's yes is the send, so the action it shows is the send.
+        // Showing the catalog action here would record a commitment to
+        // something the user never chose.
+        let action = Self.sendBurstAction
         faithAction = action
 
         AnalyticsService.shared.track("daily_burst_action_shown", parameters: [
             "theme": theme.rawValue,
-            "action": action.headline
+            "action": Self.sendBurstActionID,
+            "headline": action.headline
+        ])
+        // The eighth slat leads with the send, so this is the burst's share
+        // prompt being shown.
+        AnalyticsService.shared.track("share_prompt_shown", parameters: [
+            "surface": "burst_complete",
+            "card_count": morningDeclarations.count
         ])
 
         withAnimation(DS.Motion.smooth) {
             showActionSlide = true
         }
+
+        // Drawn while the eighth slat is read, so the send and the finish
+        // screen's carousel usually find the cards already done. Started
+        // after the slat's entrance so the first render cannot stutter it.
+        prepareBurstCards(startDelay: 0.6)
     }
+
+    /// The eighth slat's action: pass the promises on. Sharing them with
+    /// someone who needs them is the act of faith this slat asks for.
+    static let sendBurstAction = FaithAction(
+        icon: "paperplane.fill",
+        headline: "Send today's promises to a friend in need",
+        detail: "Someone you love needs these words today."
+    )
+    /// Reported as `action` on the slat's events, so the change from the
+    /// catalog's actions is explicit in analytics.
+    static let sendBurstActionID = "send_burst"
 
     private func commitToAction(_ action: FaithAction) {
         // Deliberately not `.success` — the completion screen fires that one a beat
@@ -1132,9 +1221,12 @@ struct DailyDeclarationBurstView: View {
         committedAction = action
         FaithActionCommitmentStore.shared.commit(to: action, theme: burstTheme)
 
+        // `action` is now the send (`send_burst`), committed by a completed
+        // share, no longer a catalog action committed by a tap.
         AnalyticsService.shared.track("daily_burst_action_committed", parameters: [
             "theme": burstTheme.rawValue,
-            "action": action.headline
+            "action": Self.sendBurstActionID,
+            "headline": action.headline
         ])
 
         advanceToCompletion()
@@ -1145,7 +1237,8 @@ struct DailyDeclarationBurstView: View {
 
         AnalyticsService.shared.track("daily_burst_action_skipped", parameters: [
             "theme": burstTheme.rawValue,
-            "action": action.headline
+            "action": Self.sendBurstActionID,
+            "headline": action.headline
         ])
 
         advanceToCompletion()
@@ -1155,15 +1248,31 @@ struct DailyDeclarationBurstView: View {
         // The badge popup is wired to ModernDailyChecklistView which isn't visible here.
         // Directly trigger it after a short delay so it appears on the completion screen.
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            if streakViewModel.badgeManager.recentlyUnlocked != nil, !streakViewModel.showBadgeUnlock {
-                streakViewModel.showBadgeUnlock = true
-            }
+            presentBadgeUnlockIfOwed()
         }
 
         withAnimation(DS.Motion.smooth) {
             showActionSlide = false
             showCompletionView = true
         }
+    }
+
+    /// Raises the badge cover, unless a share is being prepared or its sheet
+    /// is up: a cover raised then is dropped and `showBadgeUnlock` would stay
+    /// stuck true. In that case it waits, and `onChange(of: burstShare.isBusy)`
+    /// calls this again once the share is done.
+    private func presentBadgeUnlockIfOwed() {
+        guard streakViewModel.badgeManager.recentlyUnlocked != nil,
+              !streakViewModel.showBadgeUnlock else {
+            badgeUnlockDeferred = false
+            return
+        }
+        guard !burstShare.isBusy else {
+            badgeUnlockDeferred = true
+            return
+        }
+        badgeUnlockDeferred = false
+        streakViewModel.showBadgeUnlock = true
     }
 
     private func completeBurst() {

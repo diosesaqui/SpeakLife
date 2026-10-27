@@ -92,7 +92,9 @@ struct StandRoomView: View {
             }
         }
         .sheet(isPresented: $showInvite) {
-            if let room { StandInviteSheet(room: room) }
+            // Both ways in ("Invite someone", "Send the invite again") are an
+            // explicit ask to send, so the share sheet opens by itself.
+            if let room { StandInviteSheet(room: room, autoShare: true) }
         }
         // Was set, and the 3-prompt budget spent, with nothing presenting it.
         .sheet(isPresented: $showUpgradePrompt) {

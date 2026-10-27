@@ -101,6 +101,8 @@ struct DeclarationContentView: View {
     @ObservedObject var viewModel: DeclarationViewModel
     @State private var isFavorite: Bool = false
     @State private var showShareSheet = false
+    /// The declaration being sent with "Send to someone".
+    @State private var speakOverDeclaration: Declaration?
     @State private var image: UIImage?
     @State private var showAnimation = false
     @State private var isCapturingScreenshot = false
@@ -120,6 +122,11 @@ struct DeclarationContentView: View {
     @State private var rotationAngle: Double = 0
     @State private var buttonVisibilities: [Bool] = [false, false]
     @State private var numberOfItems: Int = 2
+    /// "Share today's word": shown once a day after the fifth declaration
+    /// (see `FeedShareNudgePolicy`), then hidden on its own after a few seconds.
+    @State private var showShareNudge = false
+    /// Whether this showing's `share_prompt_shown` has been sent.
+    @State private var shareNudgeLogged = false
     
     
     
@@ -235,6 +242,11 @@ struct DeclarationContentView: View {
                 }
                 lastAllowedTab = newIndex
                 isMenuExpanded = false
+                // The chip belongs to the card it was offered on.
+                if showShareNudge {
+                    withAnimation(DS.Motion.quick) { showShareNudge = false }
+                }
+                if isNewCard { considerShareNudge() }
                 askForReview()
                 let declaration = viewModel.declarations[newIndex]
                 viewModel.setCurrent(declaration)
@@ -336,6 +348,30 @@ struct DeclarationContentView: View {
         VStack {
             
             Spacer()
+            if isShareNudgeVisible(on: declaration) {
+                ShareNudgeChip(
+                    onShare: { shareNudgeTapped(declaration: declaration) },
+                    onDismiss: {
+                        withAnimation(DS.Motion.quick) { showShareNudge = false }
+                    }
+                )
+                .padding(.bottom, DS.Spacing.sm)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .task {
+                    // Counted when it is actually drawn, once per showing.
+                    if !shareNudgeLogged {
+                        shareNudgeLogged = true
+                        AnalyticsService.shared.track("share_prompt_shown", parameters: [
+                            "surface": "feed_nudge"
+                        ])
+                    }
+                    // Restarts if an overlay hid it, so it always gets its
+                    // full few seconds on screen before leaving by itself.
+                    try? await Task.sleep(nanoseconds: 6_000_000_000)
+                    guard !Task.isCancelled else { return }
+                    withAnimation(DS.Motion.smooth) { showShareNudge = false }
+                }
+            }
             intentStackButtons(declaration: declaration)
                 .opacity(appState.showScreenshotLabel ? 0 : 1)
             VStack {
@@ -507,17 +543,51 @@ struct DeclarationContentView: View {
     
     /// The speaker's own theme photo, so the card looks like their app.
     private var shareBackground: UIImage? {
-        if themeViewModel.showUserSelectedImage, let selected = themeViewModel.selectedImage {
-            return selected
-        }
-        return UIImage(named: themeViewModel.selectedTheme.backgroundImageString)
+        DeclarationStoryCard.background(for: themeViewModel)
     }
 
-    /// The text that travels with the card: a line to say and a tracked link,
-    /// so an install that comes from this share is counted as a referral.
-    private func shareMessage(for declaration: Declaration) -> String {
+    // MARK: - Share nudge
+
+    /// Only on the card showing, and never over the share menu, the favorite
+    /// heart, the screenshot label or a sheet.
+    private func isShareNudgeVisible(on declaration: Declaration) -> Bool {
+        guard showShareNudge,
+              !isMenuExpanded, !isFavorite, !appState.showScreenshotLabel,
+              !showShareSheet, !showStormFreeLimit,
+              viewModel.declarations.indices.contains(viewModel.selectedTab) else { return false }
+        return viewModel.declarations[viewModel.selectedTab].id == declaration.id
+    }
+
+    private func considerShareNudge() {
+        // Never on the swipe that raises the review prompt (`askForReview`
+        // runs right after this). Checked before the policy counts the swipe,
+        // so the nudge simply moves to the next one.
+        guard (reviewCounter + 1) % 7 != 0 else { return }
+        let policy = FeedShareNudgePolicy(defaults: .standard)
+        guard policy.recordDeclarationReached(installDate: AnalyticsContext.shared.userInstallDate) else { return }
+
+        shareNudgeLogged = false
+        // A beat after the swipe, so it slides in on a page that has settled.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            withAnimation(DS.Motion.smooth) { showShareNudge = true }
+        }
+    }
+
+    private func shareNudgeTapped(declaration: Declaration) {
+        AnalyticsService.shared.track("share_prompt_tapped", parameters: [
+            "surface": "feed_nudge",
+            "category": declaration.category.rawValue
+        ])
+        withAnimation(DS.Motion.quick) { showShareNudge = false }
+        shareTapped(declaration: declaration)
+    }
+
+    /// The text that travels with the card: a line to say, plus a tracked link
+    /// when it goes to a messaging app, so an install that comes from this
+    /// share is counted as a referral. Posts and saved images get the words only.
+    private func shareMessage(for declaration: Declaration) -> ReferralShareText {
         let link = ReferralLink.url(.declarationCard, campaign: declaration.category.rawValue)
-        return "Speak this one out loud with me 🙏\n\(link.absoluteString)"
+        return ReferralShareText("Speak this one out loud with me 🙏", link: link)
     }
 
     private func createScreenshotImage(completion: @escaping (UIImage?) -> Void) {
@@ -704,6 +774,9 @@ struct DeclarationContentView: View {
         HStack(spacing: DS.Spacing.lg) {
                 
                 Menu {
+                    Button("Send to someone") {
+                        speakOverDeclaration = declaration
+                    }
                     Button("Instagram Stories") {
                         viewModel.setCurrent(declaration)
                         setImage() {
@@ -747,6 +820,14 @@ struct DeclarationContentView: View {
                 
         }
         .foregroundColor(.white)
+        // Every page carries these buttons, so only the page whose declaration
+        // is being sent presents the sheet.
+        .sheet(item: Binding(
+            get: { speakOverDeclaration?.id == declaration.id ? speakOverDeclaration : nil },
+            set: { speakOverDeclaration = $0 }
+        )) { item in
+            SpeakOverSheet(declaration: item, background: shareBackground)
+        }
     }
     
     private func affirm(_ declaration: Declaration, isAffirmation: Bool) {
@@ -830,7 +911,11 @@ class ImageSaver: NSObject {
     }
 }
 
-func shareToInstagramStories(image: UIImage) {
+/// - Returns: true only when the image went straight into Instagram's story
+///   editor. False when it fell back to saving to Photos (or asking for
+///   access), so a caller never counts that as a completed share.
+@discardableResult
+func shareToInstagramStories(image: UIImage) -> Bool {
     // Straight into Instagram's story editor with the card as the background.
     // Needs the Meta app id (Info.plist `FacebookAppID`) as source_application
     // and `instagram-stories` in LSApplicationQueriesSchemes; both are present.
@@ -843,7 +928,7 @@ func shareToInstagramStories(image: UIImage) {
             options: [.expirationDate: Date().addingTimeInterval(5 * 60)]
         )
         UIApplication.shared.open(url)
-        return
+        return true
     }
 
     // Instagram missing or the API refused: save to Photos and point the way.
@@ -863,6 +948,7 @@ func shareToInstagramStories(image: UIImage) {
             }
         }
     }
+    return false
 }
 
 private func saveImageToPhotos(image: UIImage) {
@@ -887,8 +973,9 @@ private func showImageSavedAlert() {
     }
     
     let alert = UIAlertController(
-        title: "🎉 Image Saved!",
-        message: "Your affirmation has been saved to Photos. Open Instagram and create a new Story to share it!",
+        // Generic: declaration, burst, streak and Year in Review cards all land here.
+        title: "Saved to Photos",
+        message: "Open Instagram and add it to your Story.",
         preferredStyle: .alert
     )
     
@@ -918,7 +1005,7 @@ private func showPhotosPermissionAlert() {
     
     let alert = UIAlertController(
         title: "Photos Access Needed",
-        message: "To save your affirmation, please allow access to Photos in Settings.",
+        message: "To save your card, allow access to Photos in Settings.",
         preferredStyle: .alert
     )
     

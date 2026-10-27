@@ -31,6 +31,8 @@
 		4501F3A52F840A01008704F9 /* WarriorRoomTypesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4501F3A62F840A01008704F9 /* WarriorRoomTypesTests.swift */; };
 		D0960000000000000096BBBB /* OnboardingAngleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0960000000000000096AAAA /* OnboardingAngleTests.swift */; };
 		AC0A11B7E5700000000000B1 /* AcquisitionAttributionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0A11B7E5700000000000A1 /* AcquisitionAttributionTests.swift */; };
+		SHRTB0000000000000000001 /* ReferralShareTextTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = SHRT00000000000000000001 /* ReferralShareTextTests.swift */; };
+		CARDB0000000000000000002 /* ShareMomentsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CARD00000000000000000002 /* ShareMomentsTests.swift */; };
 		4501F3A72F840A01008704F9 /* PrayerWallPostTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4501F3A82F840A01008704F9 /* PrayerWallPostTests.swift */; };
 		4501F3A92F840A01008704F9 /* PrayerWallViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4501F3AA2F840A01008704F9 /* PrayerWallViewModelTests.swift */; };
 		450901B22F630925008704F9 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 450901B12F630925008704F9 /* GoogleService-Info.plist */; };
@@ -58,6 +60,7 @@
 		45C0A1232F2A0B0100A27856 /* AcquisitionAttribution.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C0A1222F2A0B0100A27856 /* AcquisitionAttribution.swift */; };
 		SHAREB000000000000000001 /* ReferralLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = SHARE0000000000000000001 /* ReferralLink.swift */; };
 		SHAREB000000000000000002 /* DeclarationStoryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = SHARE0000000000000000002 /* DeclarationStoryCard.swift */; };
+		CARDB0000000000000000001 /* ShareMoments.swift in Sources */ = {isa = PBXBuildFile; fileRef = CARD00000000000000000001 /* ShareMoments.swift */; };
 		452F6AD32E87CD3F00A27856 /* EnhancedAnalyticsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 452F6ACE2E87CD3F00A27856 /* EnhancedAnalyticsService.swift */; };
 		452F6AD42E87CD3F00A27856 /* RecommendationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 452F6AD12E87CD3F00A27856 /* RecommendationEngine.swift */; };
 		452F6AD52E87CD3F00A27856 /* MLTaskLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 452F6AD02E87CD3F00A27856 /* MLTaskLibrary.swift */; };
@@ -211,6 +214,9 @@
 		45F0BBBB2F40C0EB00571394 /* PremiumAnniversaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F0AAAA2F40C0EB00571394 /* PremiumAnniversaryView.swift */; };
 		45F0DDDD2F40C0EB00571394 /* YearInReviewStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F0CCCC2F40C0EB00571394 /* YearInReviewStats.swift */; };
 		45F0FFFF2F40C0EB00571394 /* YearInReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F0EEEE2F40C0EB00571394 /* YearInReviewView.swift */; };
+		YIRV0000000000000000B001 /* YearInReviewShareCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = YIRV0000000000000000A001 /* YearInReviewShareCard.swift */; };
+		YIRV0000000000000000B002 /* YearInReviewEntryPoints.swift in Sources */ = {isa = PBXBuildFile; fileRef = YIRV0000000000000000A002 /* YearInReviewEntryPoints.swift */; };
+		YIRV0000000000000000B003 /* YearInReviewStatsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = YIRV0000000000000000A003 /* YearInReviewStatsTests.swift */; };
 		45F3E7572EAAAD38002B1F4E /* AudioDevotionalsTutorial.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F3E7562EAAAD38002B1F4E /* AudioDevotionalsTutorial.swift */; };
 		45F3E7582EAAAD38002B1F4E /* AffirmationsTutorial.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F3E7552EAAAD38002B1F4E /* AffirmationsTutorial.swift */; };
 		45F3E75B2EAAAD41002B1F4E /* CreateYourOwnTutorial.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45F3E7592EAAAD41002B1F4E /* CreateYourOwnTutorial.swift */; };
@@ -394,6 +400,11 @@
 		STANDB000000000000000001 /* StandCompletionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = STAND0000000000000000001 /* StandCompletionView.swift */; };
 		STANDB000000000000000002 /* StandConflictSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = STAND0000000000000000002 /* StandConflictSheet.swift */; };
 		STANDB000000000000000003 /* StandDiscovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = STAND0000000000000000003 /* StandDiscovery.swift */; };
+		SPKOB0000000000000000001 /* SpeakOverLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = SPKO00000000000000000001 /* SpeakOverLink.swift */; };
+		SPKOB0000000000000000002 /* SpeakOverInbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = SPKO00000000000000000002 /* SpeakOverInbox.swift */; };
+		SPKOB0000000000000000003 /* SpeakOverSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = SPKO00000000000000000003 /* SpeakOverSheet.swift */; };
+		SPKOB0000000000000000004 /* SpeakOverReceivedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SPKO00000000000000000004 /* SpeakOverReceivedView.swift */; };
+		SPKOB0000000000000000005 /* SpeakOverLinkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = SPKO00000000000000000005 /* SpeakOverLinkTests.swift */; };
 		OFFERB000000000000000001 /* WelcomeOfferPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = OFFER0000000000000000001 /* WelcomeOfferPresenter.swift */; };
 		OFFERB000000000000000002 /* PersonalDeclarationPrompt.swift in Sources */ = {isa = PBXBuildFile; fileRef = OFFER0000000000000000002 /* PersonalDeclarationPrompt.swift */; };
 		OFFERB000000000000000003 /* LapsedPaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = OFFER0000000000000000003 /* LapsedPaywallView.swift */; };
@@ -468,6 +479,8 @@
 		4501F3A62F840A01008704F9 /* WarriorRoomTypesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WarriorRoomTypesTests.swift; sourceTree = "<group>"; };
 		C0960000000000000096AAAA /* OnboardingAngleTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = OnboardingAngleTests.swift; sourceTree = "<group>"; };
 		AC0A11B7E5700000000000A1 /* AcquisitionAttributionTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AcquisitionAttributionTests.swift; sourceTree = "<group>"; };
+		SHRT00000000000000000001 /* ReferralShareTextTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReferralShareTextTests.swift; sourceTree = "<group>"; };
+		CARD00000000000000000002 /* ShareMomentsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareMomentsTests.swift; sourceTree = "<group>"; };
 		4501F3A82F840A01008704F9 /* PrayerWallPostTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerWallPostTests.swift; sourceTree = "<group>"; };
 		4501F3AA2F840A01008704F9 /* PrayerWallViewModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerWallViewModelTests.swift; sourceTree = "<group>"; };
 		450901B12F630925008704F9 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
@@ -490,6 +503,7 @@
 		45C0A1222F2A0B0100A27856 /* AcquisitionAttribution.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AcquisitionAttribution.swift; sourceTree = "<group>"; };
 		SHARE0000000000000000001 /* ReferralLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReferralLink.swift; sourceTree = "<group>"; };
 		SHARE0000000000000000002 /* DeclarationStoryCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeclarationStoryCard.swift; sourceTree = "<group>"; };
+		CARD00000000000000000001 /* ShareMoments.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareMoments.swift; sourceTree = "<group>"; };
 		452F6ACB2E87CD3F00A27856 /* AINotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AINotificationService.swift; sourceTree = "<group>"; };
 		452F6ACC2E87CD3F00A27856 /* ContentCategorizationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentCategorizationService.swift; sourceTree = "<group>"; };
 		452F6ACD2E87CD3F00A27856 /* CreateMLTrainingPipeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateMLTrainingPipeline.swift; sourceTree = "<group>"; };
@@ -638,6 +652,9 @@
 		45F0AAAA2F40C0EB00571394 /* PremiumAnniversaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PremiumAnniversaryView.swift; sourceTree = "<group>"; };
 		45F0CCCC2F40C0EB00571394 /* YearInReviewStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YearInReviewStats.swift; sourceTree = "<group>"; };
 		45F0EEEE2F40C0EB00571394 /* YearInReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YearInReviewView.swift; sourceTree = "<group>"; };
+		YIRV0000000000000000A001 /* YearInReviewShareCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YearInReviewShareCard.swift; sourceTree = "<group>"; };
+		YIRV0000000000000000A002 /* YearInReviewEntryPoints.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YearInReviewEntryPoints.swift; sourceTree = "<group>"; };
+		YIRV0000000000000000A003 /* YearInReviewStatsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YearInReviewStatsTests.swift; sourceTree = "<group>"; };
 		45F3E7552EAAAD38002B1F4E /* AffirmationsTutorial.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AffirmationsTutorial.swift; sourceTree = "<group>"; };
 		45F3E7562EAAAD38002B1F4E /* AudioDevotionalsTutorial.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioDevotionalsTutorial.swift; sourceTree = "<group>"; };
 		45F3E7592EAAAD41002B1F4E /* CreateYourOwnTutorial.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateYourOwnTutorial.swift; sourceTree = "<group>"; };
@@ -815,6 +832,11 @@
 		STAND0000000000000000001 /* StandCompletionView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StandCompletionView.swift; sourceTree = "<group>"; };
 		STAND0000000000000000002 /* StandConflictSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StandConflictSheet.swift; sourceTree = "<group>"; };
 		STAND0000000000000000003 /* StandDiscovery.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StandDiscovery.swift; sourceTree = "<group>"; };
+		SPKO00000000000000000001 /* SpeakOverLink.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SpeakOverLink.swift; sourceTree = "<group>"; };
+		SPKO00000000000000000002 /* SpeakOverInbox.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SpeakOverInbox.swift; sourceTree = "<group>"; };
+		SPKO00000000000000000003 /* SpeakOverSheet.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SpeakOverSheet.swift; sourceTree = "<group>"; };
+		SPKO00000000000000000004 /* SpeakOverReceivedView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SpeakOverReceivedView.swift; sourceTree = "<group>"; };
+		SPKO00000000000000000005 /* SpeakOverLinkTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SpeakOverLinkTests.swift; sourceTree = "<group>"; };
 		OFFER0000000000000000001 /* WelcomeOfferPresenter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WelcomeOfferPresenter.swift; sourceTree = "<group>"; };
 		OFFER0000000000000000002 /* PersonalDeclarationPrompt.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PersonalDeclarationPrompt.swift; sourceTree = "<group>"; };
 		OFFER0000000000000000003 /* LapsedPaywallView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LapsedPaywallView.swift; sourceTree = "<group>"; };
@@ -951,9 +973,13 @@
 				4501F3A62F840A01008704F9 /* WarriorRoomTypesTests.swift */,
 				C0960000000000000096AAAA /* OnboardingAngleTests.swift */,
 				AC0A11B7E5700000000000A1 /* AcquisitionAttributionTests.swift */,
+				YIRV0000000000000000A003 /* YearInReviewStatsTests.swift */,
+				SHRT00000000000000000001 /* ReferralShareTextTests.swift */,
+				CARD00000000000000000002 /* ShareMomentsTests.swift */,
 				4501F3A82F840A01008704F9 /* PrayerWallPostTests.swift */,
 				4501F3AA2F840A01008704F9 /* PrayerWallViewModelTests.swift */,
 				2F740F6829D4017400E89E7F /* APIClientTests.swift */,
+				SPKO00000000000000000005 /* SpeakOverLinkTests.swift */,
 				4568852B2B428FE2007B1EBB /* SpeakLifeTests-Bridging-Header.h */,
 			);
 			path = SpeakLifeTests;
@@ -1270,6 +1296,8 @@
 			children = (
 				45F0CCCC2F40C0EB00571394 /* YearInReviewStats.swift */,
 				45F0EEEE2F40C0EB00571394 /* YearInReviewView.swift */,
+				YIRV0000000000000000A001 /* YearInReviewShareCard.swift */,
+				YIRV0000000000000000A002 /* YearInReviewEntryPoints.swift */,
 			);
 			path = YearInReview;
 			sourceTree = "<group>";
@@ -1406,6 +1434,7 @@
 			children = (
 				F0RY0UG00000000000000001 /* ForYou */,
 				STANDG000000000000000001 /* Stand */,
+				SPKOG0000000000000000001 /* SpeakOver */,
 				OFFERG000000000000000001 /* Offer */,
 				TIC00GRP000000000000002A /* Guard */,
 				458510D82B159B0D00230EE5 /* LandingView.swift */,
@@ -1641,6 +1670,7 @@
 				45F3E7622EB43B8A002B1F4E /* DeclarationAnimationSettings.swift */,
 				7AA8709F28DACCB700134ADB /* DeclarationContentView.swift */,
 				SHARE0000000000000000002 /* DeclarationStoryCard.swift */,
+				CARD00000000000000000001 /* ShareMoments.swift */,
 				7AA8709D28DACCB700134ADB /* QuoteLabel.swift */,
 				7AA8709E28DACCB700134ADB /* HeartView.swift */,
 				453A831D2C9BF18500398ECE /* DeclarationMenuButton.swift */,
@@ -1911,6 +1941,18 @@
 			path = Offer;
 			sourceTree = "<group>";
 		};
+		SPKOG0000000000000000001 /* SpeakOver */ = {
+			isa = PBXGroup;
+			children = (
+				SPKO00000000000000000001 /* SpeakOverLink.swift */,
+				SPKO00000000000000000002 /* SpeakOverInbox.swift */,
+				SPKO00000000000000000003 /* SpeakOverSheet.swift */,
+				SPKO00000000000000000004 /* SpeakOverReceivedView.swift */,
+			);
+			name = SpeakOver;
+			path = SpeakOver;
+			sourceTree = "<group>";
+		};
 		STANDG000000000000000001 /* Stand */ = {
 			isa = PBXGroup;
 			children = (
@@ -2132,9 +2174,13 @@
 				4501F3A52F840A01008704F9 /* WarriorRoomTypesTests.swift in Sources */,
 				D0960000000000000096BBBB /* OnboardingAngleTests.swift in Sources */,
 				AC0A11B7E5700000000000B1 /* AcquisitionAttributionTests.swift in Sources */,
+				YIRV0000000000000000B003 /* YearInReviewStatsTests.swift in Sources */,
+				SHRTB0000000000000000001 /* ReferralShareTextTests.swift in Sources */,
+				CARDB0000000000000000002 /* ShareMomentsTests.swift in Sources */,
 				4501F3A72F840A01008704F9 /* PrayerWallPostTests.swift in Sources */,
 				4501F3A92F840A01008704F9 /* PrayerWallViewModelTests.swift in Sources */,
 				2F740F6929D4017400E89E7F /* APIClientTests.swift in Sources */,
+				SPKOB0000000000000000005 /* SpeakOverLinkTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2145,6 +2191,10 @@
 				STANDB000000000000000001 /* StandCompletionView.swift in Sources */,
 				STANDB000000000000000002 /* StandConflictSheet.swift in Sources */,
 				STANDB000000000000000003 /* StandDiscovery.swift in Sources */,
+				SPKOB0000000000000000001 /* SpeakOverLink.swift in Sources */,
+				SPKOB0000000000000000002 /* SpeakOverInbox.swift in Sources */,
+				SPKOB0000000000000000003 /* SpeakOverSheet.swift in Sources */,
+				SPKOB0000000000000000004 /* SpeakOverReceivedView.swift in Sources */,
 				OFFERB000000000000000001 /* WelcomeOfferPresenter.swift in Sources */,
 				OFFERB000000000000000002 /* PersonalDeclarationPrompt.swift in Sources */,
 				OFFERB000000000000000003 /* LapsedPaywallView.swift in Sources */,
@@ -2341,6 +2391,8 @@
 				45F0BBBB2F40C0EB00571394 /* PremiumAnniversaryView.swift in Sources */,
 				45F0DDDD2F40C0EB00571394 /* YearInReviewStats.swift in Sources */,
 				45F0FFFF2F40C0EB00571394 /* YearInReviewView.swift in Sources */,
+				YIRV0000000000000000B001 /* YearInReviewShareCard.swift in Sources */,
+				YIRV0000000000000000B002 /* YearInReviewEntryPoints.swift in Sources */,
 				7AA870D228DACCB700134ADB /* CategoryListView.swift in Sources */,
 				7AA870DA28DACCB700134ADB /* NotificationScene.swift in Sources */,
 				7AA870D528DACCB700134ADB /* ReminderEditView.swift in Sources */,
@@ -2377,6 +2429,7 @@
 				45C0A1232F2A0B0100A27856 /* AcquisitionAttribution.swift in Sources */,
 				SHAREB000000000000000001 /* ReferralLink.swift in Sources */,
 				SHAREB000000000000000002 /* DeclarationStoryCard.swift in Sources */,
+				CARDB0000000000000000001 /* ShareMoments.swift in Sources */,
 				454807542E3F049400B8C71B /* DailyChecklistView.swift in Sources */,
 				7AF46FC52A41326100A45C01 /* AbbasLoveView.swift in Sources */,
 				453A831E2C9BF18500398ECE /* DeclarationMenuButton.swift in Sources */,

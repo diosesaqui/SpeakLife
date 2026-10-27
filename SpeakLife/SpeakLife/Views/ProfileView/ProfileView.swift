@@ -62,7 +62,13 @@ struct ProfileView: View {
     @State private var showCommunity = false
     @State private var showStands = false
     @ObservedObject private var standService = StandService.shared
-    let url = URL(string:APP.Product.urlID)
+    /// Built when the sheet opens, not with the view, so the link carries the
+    /// sharer's analytics id even if it was not ready at first render. The
+    /// link is added only for messaging apps (see `ReferralShareText`).
+    private var shareInvite: ReferralShareText {
+        ReferralShareText("This app helps me speak God's Word over my life every day. Try it with me.",
+                          link: ReferralLink.url(.profileInvite))
+    }
     
     
     @ViewBuilder
@@ -118,15 +124,17 @@ struct ProfileView: View {
             Spacer().frame(height: DS.Spacing.xs)
         }
                 List {
+                    // Year in Review, Dec 1 to Jan 15 only.
+                    YearInReviewProfileSection()
+
                     Section(header: Text("Premium".uppercased()).font(.caption)) {
                         subscriptionRow
                         giveRow
                         redeemCodeRow
                     }
 
-                    // Rides the `hardOnboardingPaywall` Remote Config switch,
-                    // like the paywall's per-day pricing: hidden while it is off.
-                    if subscriptionStore.hardOnboardingPaywall {
+                    // Hidden while Remote Config `billedAmountFirst` is on.
+                    if !subscriptionStore.billedAmountFirst {
                         Section(header: Text("Book".uppercased()).font(.caption)) {
                             bookLink
                         }
@@ -169,7 +177,7 @@ struct ProfileView: View {
                     }
                     
                     .sheet(isPresented: $showShareSheet, content: {
-                        ShareSheet(activityItems: ["Check out SpeakLife - Bible Affirmations app that'll transform your life!", url as Any])
+                        ShareSheet(activityItems: [shareInvite])
                     })
 
                     Section(header: Text("Other".uppercased()).font(.caption)) {

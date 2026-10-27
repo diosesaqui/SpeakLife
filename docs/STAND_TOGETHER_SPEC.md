@@ -826,8 +826,13 @@ Use `CoreAnalytics.track` in the package, `AnalyticsService.shared.track` in the
 | Event | Properties |
 |---|---|
 | `stand_created` | `enforcement_id`, `theme`, `is_generated` |
-| `stand_invite_shared` | `room_id`, `channel` |
-| `stand_invite_opened` | `source` (`universal_link` \| `deferred` \| `manual_code`) |
+| `stand_invite_sheet_ready` | `room_id`, `source` (`new` \| `existing`), `has_image` |
+| `stand_invite_sheet_failed` | `stage` (`create` \| `invite`), `reason` |
+| `stand_invite_share_opened` | `room_id`, `trigger` (`tap` \| `auto`), `has_image`. Every time the share sheet comes up; `auto` is the automatic open after an "Invite someone" tap |
+| `stand_invite_shared` | `room_id`, `channel`, `has_image`. A real tap on "Send the invite" only, never the automatic open |
+| `stand_invite_share_completed` | `room_id`, `completed`, `sent`, `activity`. **The real "sent" signal is `completed = true` with an activity other than Copy or Save Image (`sent = true`)** |
+| `stand_code_entry_opened` | `source` (`today` \| `my_stands`) |
+| `stand_invite_opened` | `source` (`universal_link` \| `deferred` \| `link` \| `manual_code`). `manual_code` fires on the first submit of a typed code, not on opening the screen |
 | `stand_joined` | `room_id`, `member_count`, `had_active_campaign`, `conflict_resolution` |
 | `stand_join_failed` | `reason` (`expired` \| `revoked` \| `full` \| `not_found` \| `completed` \| `throttled`) |
 | `stand_day_spoken` | `room_id`, `day`, `member_count`, `others_spoken_today` |

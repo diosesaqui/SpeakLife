@@ -43,13 +43,17 @@ struct PrayerWallView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                // Background
-                Image(subscriptionStore.onboardingBGImage)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+                // Background. Sized to the container, not the screen: when a
+                // Warrior Room push opens this as a sheet, the sheet is shorter
+                // than the screen, and a screen-sized image grew the ZStack and
+                // pushed the content up under the nav bar.
+                Color.clear
+                    .overlay(
+                        Image(subscriptionStore.onboardingBGImage)
+                            .resizable()
+                            .scaledToFill()
+                    )
                     .clipped()
-                    
                     .ignoresSafeArea()
 
                 Color.black.opacity(0.50)
@@ -793,6 +797,26 @@ private struct AgreementPromptSheet: View {
     private var remaining: Int { Agreement.maxLength - text.count }
 
     var body: some View {
+        // Scrolls so the content stays top-aligned and reachable when it is
+        // taller than the half-height detent (larger text sizes, or a sheet
+        // stacked on the Warrior Room sheet), instead of being clipped.
+        ScrollView(showsIndicators: false) {
+            content
+        }
+        .scrollDismissesKeyboardCompat()
+        .background {
+            ZStack {
+                Image(subscriptionStore.onboardingBGImage)
+                    .resizable()
+                    .scaledToFill()
+                    .ignoresSafeArea()
+                Color.black.opacity(0.7)
+                    .ignoresSafeArea()
+            }
+        }
+    }
+
+    private var content: some View {
         VStack(spacing: 18) {
             Capsule()
                 .fill(Color.white.opacity(0.25))
@@ -889,16 +913,6 @@ private struct AgreementPromptSheet: View {
         // sheet to occasionally collapse to zero height — letting the
         // VStack size to its intrinsic content fixes that.
         .frame(maxWidth: .infinity)
-        .background {
-            ZStack {
-                Image(subscriptionStore.onboardingBGImage)
-                    .resizable()
-                    .scaledToFill()
-                    .ignoresSafeArea()
-                Color.black.opacity(0.7)
-                    .ignoresSafeArea()
-            }
-        }
     }
 
     private func anonymousPill(_ label: String,
@@ -919,11 +933,22 @@ private struct AgreementPromptSheet: View {
 // MARK: - Detents helper
 
 private extension View {
-    /// Applies `.medium` detents on iOS 16+, no-op on earlier versions.
+    /// Opens at `.medium` on iOS 16+ and can be pulled up to `.large` when
+    /// the content needs more room. No-op on earlier versions.
     @ViewBuilder
     func presentationDetentsCompat() -> some View {
         if #available(iOS 16.0, *) {
-            self.presentationDetents([.medium])
+            self.presentationDetents([.medium, .large])
+        } else {
+            self
+        }
+    }
+
+    /// Dragging the scroll view dismisses the keyboard on iOS 16+.
+    @ViewBuilder
+    func scrollDismissesKeyboardCompat() -> some View {
+        if #available(iOS 16.0, *) {
+            self.scrollDismissesKeyboard(.interactively)
         } else {
             self
         }
