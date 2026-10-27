@@ -2,9 +2,9 @@
 
 C major at 60 BPM, tuned so C = 528 Hz (A = 444) when mastered. The piano
 breathes like a person playing: it slows at the end of each phrase and
-drifts a little from bar to bar. The rain is built in layers: a soft hush,
-light patter on hard surfaces, drops landing in puddles, and the odd
-heavier drip.
+drifts a little from bar to bar. The rain is built from individual drops in
+layers (distant, middle, close), puddle plinks, the odd heavier drip and a
+quiet roof rumble. No smooth noise, which is what reads as static.
 
     python3 rainpiano.py compose OUT_DIR          -> gentlerain.piano.mid
     python3 rainpiano.py mix PIANO_WAV OUT_WAV    -> piano + rain, mixed
@@ -182,7 +182,8 @@ def save(p, path):
 # ------------------------------------------------------------------ rain
 
 def rain(n, sr, rng):
-    from scipy.signal import butter, sosfilt
+    """Rain built from individual drops, not smooth noise (smooth noise reads as static)."""
+    from scipy.signal import butter, oaconvolve, sosfilt
 
     def bp(x, lo, hi, order=2):
         return sosfilt(butter(order, [lo, hi], btype="band", fs=sr, output="sos"), x, axis=0)
@@ -190,54 +191,65 @@ def rain(n, sr, rng):
     def lp(x, fc, order=1):
         return sosfilt(butter(order, fc, btype="low", fs=sr, output="sos"), x, axis=0)
 
-    # 1. the hush: pink (warm, not hissy), wide, soft, slowly breathing
-    spec = np.fft.rfft(rng.normal(size=(n, 2)), axis=0)
-    freqs = np.fft.rfftfreq(n, 1 / sr)
-    spec *= (1 / np.sqrt(np.maximum(freqs, 20)))[:, None]
-    hush = bp(np.fft.irfft(spec, n=n, axis=0), 250, 5500)
-    swell = lp(rng.normal(size=(n, 1)), 0.15)
-    swell = 1 + 0.35 * swell / (np.max(np.abs(swell)) + 1e-9)
-    hush *= swell
-    # 2. patter: tiny clicks on hard surfaces
-    patter = np.zeros((n, 2))
-    for _ in range(int(n / sr * 90)):
-        p = rng.integers(0, n - 400)
-        L = 160
-        d = rng.normal(size=L) * np.exp(-np.arange(L) / rng.uniform(8, 30)) * rng.uniform(0.15, 1.0)
-        pan = rng.uniform(0, 1)
-        patter[p:p + L, 0] += d * (1 - pan)
-        patter[p:p + L, 1] += d * pan
-    patter = bp(patter, 1800, 9000)
-    # 3. puddle drops: the small rising "plink" of a bubble
+    def norm(x):
+        return x / (np.sqrt(np.mean(x ** 2)) + 1e-12)
+
+    def drops(rate, amp_shape, kernels, stereo_spread):
+        """Scatter drops at `rate` per second; each kernel is one kind of drop sound."""
+        out = np.zeros((n, 2))
+        for kern in kernels:
+            count = int(n / sr * rate / len(kernels))
+            pos = rng.integers(0, n, count)
+            amps = rng.exponential(1.0, count) ** amp_shape  # mostly small, a few bigger
+            pan = 0.5 + (rng.uniform(-0.5, 0.5, count) * stereo_spread)
+            for ch, g in ((0, 1 - pan), (1, pan)):
+                train = np.zeros(n)
+                np.add.at(train, pos, amps * g)
+                out[:, ch] += oaconvolve(train, kern)[:n]
+        return out
+
+    def kernel(ms, lo, hi):
+        L = int(sr * ms / 1000)
+        k = rng.normal(size=L) * np.exp(-np.arange(L) / (L / 5))
+        return bp(k, lo, hi)
+
+    # distant rain: thousands of tiny, soft, darker drops make the steady wash
+    far = drops(2600, 1.6, [kernel(6, 500, 2500), kernel(8, 700, 3200), kernel(5, 400, 2000)], 1.0)
+    # the middle: clearer drops on leaves and ground
+    mid = drops(380, 1.8, [kernel(4, 1200, 4500), kernel(7, 900, 3500), kernel(3, 1500, 5000)], 0.9)
+    # a few close drops, crisp and placed
+    near = drops(28, 2.2, [kernel(3, 1800, 5500), kernel(5, 1200, 4200)], 0.7)
+    # puddle drops: the small rising "plink" of a bubble
     plinks = np.zeros((n, 2))
-    for _ in range(int(n / sr * 6)):
+    for _ in range(int(n / sr * 5)):
         p = rng.integers(0, n - 2000)
         L = int(sr * rng.uniform(0.02, 0.05))
         tt = np.arange(L) / sr
-        f0 = rng.uniform(1200, 3200)
-        phase = 2 * np.pi * np.cumsum(f0 * (1 + 2.5 * tt / tt[-1])) / sr
+        f0 = rng.uniform(1100, 2600)
+        phase = 2 * np.pi * np.cumsum(f0 * (1 + 2.0 * tt / tt[-1])) / sr
         d = np.sin(phase) * np.exp(-tt / (L / sr / 4)) * rng.uniform(0.2, 0.7)
         pan = rng.uniform(0.15, 0.85)
         plinks[p:p + L, 0] += d * (1 - pan)
         plinks[p:p + L, 1] += d * pan
-    # 4. heavier drips from an edge, lower and rounder
+    # heavier drips from an edge, lower and rounder
     drips = np.zeros((n, 2))
-    for _ in range(int(n / sr * 0.8)):
+    for _ in range(int(n / sr * 0.7)):
         p = rng.integers(0, n - 4000)
         L = int(sr * 0.06)
         tt = np.arange(L) / sr
-        d = np.sin(2 * np.pi * rng.uniform(500, 900) * tt) * np.exp(-tt / 0.012) * rng.uniform(0.4, 0.9)
+        d = np.sin(2 * np.pi * rng.uniform(450, 800) * tt) * np.exp(-tt / 0.012) * rng.uniform(0.4, 0.9)
         side = rng.choice([0, 1])
         drips[p:p + L, side] += d
         drips[p:p + L, 1 - side] += d * 0.4
-    # 5. a faint low body: rain on a roof overhead
-    roof = lp(rng.normal(size=(n, 2)), 220, 2)
+    # body: a quiet, dark rumble, like rain on a roof overhead
+    body = lp(rng.normal(size=(n, 2)), 700, 2)
+    swell = lp(rng.normal(size=(n, 1)), 0.15)
+    swell = 1 + 0.3 * swell / (np.max(np.abs(swell)) + 1e-9)
 
-    def norm(x):
-        return x / (np.sqrt(np.mean(x ** 2)) + 1e-12)
-
-    out = norm(hush) * 1.0 + norm(patter) * 0.45 + norm(plinks) * 0.22 + norm(drips) * 0.18 + norm(roof) * 0.35
-    return lp(out, 6500, 2)  # soften the very top so it never turns to hiss
+    out = (norm(far) * 1.0 + norm(mid) * 0.55 + norm(near) * 0.3
+           + norm(plinks) * 0.16 + norm(drips) * 0.14 + norm(body) * 0.3) * swell
+    out = sosfilt(butter(1, 120, btype="high", fs=sr, output="sos"), out, axis=0)
+    return lp(out, 5000, 2)  # nothing bright enough to hiss
 
 
 def mix(piano_wav, out_wav):
@@ -259,7 +271,7 @@ def mix(piano_wav, out_wav):
     piano = np.concatenate([piano, np.zeros((max(0, n - len(piano)), 2))])[:n]
     r = rain(n, SR, rng)
     level = np.sqrt(np.mean(piano ** 2)) / np.sqrt(np.mean(r ** 2))
-    mixed = piano + r * level * 0.42
+    mixed = piano + r * level * 0.34
     t = np.arange(n) / SR
     dur = t[-1]
     env = np.clip(t / 3.0, 0, 1) ** 2 * np.clip((dur - t) / 6.0, 0, 1) ** 1.5
