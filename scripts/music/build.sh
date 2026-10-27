@@ -2,8 +2,14 @@
 # Rebuild the SpeakLife background music from source.
 # Needs: python3 (numpy, scipy, mido), fluidsynth, ffmpeg, and the
 # MuseScore General soundfont (apt: fluidsynth musescore-general-soundfont-lossless).
+#
+#   ./build.sh                 build the tracks the app ships (shoreline livingwater)
+#   ./build.sh gentlerain abide  build drafts too; they land in the Audio folder but
+#                              only ship once added to the Xcode project and HomeView
 set -euo pipefail
 cd "$(dirname "$0")"
+TRACKS=${*:-shoreline livingwater}
+want() { [[ " $TRACKS " == *" $1 "* ]]; }
 SF2=${SF2:-/usr/share/sounds/sf2/MuseScore_General_Full.sf2}
 OUT=../../SpeakLife/SpeakLife/Audio
 W=$(mktemp -d)
@@ -22,6 +28,7 @@ master() {
 }
 
 # Shoreline: piano and strings over ocean waves
+if want shoreline; then
 python3 compose.py "$W"
 render "$W/shoreline.mid" "$W/shoreline.raw.wav" 0.35
 python3 post.py shoreline "$W/shoreline.raw.wav" "$W/shoreline.wav"
@@ -30,10 +37,12 @@ ffmpeg -hide_banner -loglevel error -y -i "$W/shoreline.wav" \
   -af "asetrate=44100*444/440,aresample=44100:resampler=soxr,loudnorm=I=-16:TP=-1.5:LRA=11" \
   -ar 44100 -c:a libmp3lame -b:a 192k "$OUT/shoreline.mp3"
 echo "built shoreline"
+fi
 
 # Soaking pieces, rendered as stems then mixed
 python3 soak.py "$W"
 for n in secretplace gloryrain holyground abide; do
+  want "$n" || continue
   render "$W/$n.pad.mid" "$W/$n.pad.wav" 0.35
   render "$W/$n.piano.mid" "$W/$n.piano.wav" 1.2
   render "$W/$n.guitar.mid" "$W/$n.guitar.wav" 4
@@ -43,6 +52,7 @@ for n in secretplace gloryrain holyground abide; do
   echo "built $n"
 done
 # Living Water: just piano and flute (the other stems are written but not used)
+if want livingwater; then
 python3 groove.py "$W"
 render "$W/livingwater.piano.mid" "$W/livingwater.piano.wav" 1.2
 render "$W/livingwater.flute.mid" "$W/livingwater.flute.wav" 1.2
@@ -50,10 +60,13 @@ python3 mixsoak.py livingwater "$W" "$W/livingwater.mix.wav"
 # C major with C = 528 Hz (A = 444), so 528 Hz is its home note.
 master "$W/livingwater.mix.wav" "$OUT/livingwater.mp3" 444
 echo "built livingwater"
+fi
 # Gentle Rain: solo piano over rain, C = 528 Hz
+if want gentlerain; then
 python3 rainpiano.py compose "$W"
 render "$W/gentlerain.piano.mid" "$W/gentlerain.piano.wav" 1.2
 python3 rainpiano.py mix "$W/gentlerain.piano.wav" "$W/gentlerain.mix.wav"
 master "$W/gentlerain.mix.wav" "$OUT/gentlerain.mp3" 444
 echo "built gentlerain"
+fi
 rm -rf "$W"

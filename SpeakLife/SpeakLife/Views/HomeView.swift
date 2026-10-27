@@ -8,22 +8,18 @@
 import SwiftUI
 import FacebookCore
 import UserNotifications
-let resources: [MusicResources] = [.shoreline, .secretplace, .gloryrain, .holyground, .abide, .livingwater, .gentlerain]
+let resources: [MusicResources] = [.rainstorm, .everpresent, .shoreline, .livingwater]
 
 struct MusicResources {
     let name: String
     let artist: String
     let type: String
    
-    // Original SpeakLife pieces (sampled instruments, MIT/public-domain SoundFont).
-    // Rebuild with scripts/music/build.sh.
+    static let rainstorm = MusicResources(name: "rainstorm", artist: "Brock Hewitt", type: "mp3")
+    static let everpresent = MusicResources(name: "everpresent", artist: "Brock Hewitt", type: "mp3")
+    // Original SpeakLife pieces, tuned so C = 528 Hz. Rebuild with scripts/music/build.sh.
     static let shoreline = MusicResources(name: "shoreline", artist: "SpeakLife", type: "mp3")
-    static let secretplace = MusicResources(name: "secretplace", artist: "SpeakLife", type: "mp3")
-    static let gloryrain = MusicResources(name: "gloryrain", artist: "SpeakLife", type: "mp3")
-    static let holyground = MusicResources(name: "holyground", artist: "SpeakLife", type: "mp3")
-    static let abide = MusicResources(name: "abide", artist: "SpeakLife", type: "mp3")
     static let livingwater = MusicResources(name: "livingwater", artist: "SpeakLife", type: "mp3")
-    static let gentlerain = MusicResources(name: "gentlerain", artist: "SpeakLife", type: "mp3")
 }
 
 class TabViewModel: ObservableObject {
