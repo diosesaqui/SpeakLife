@@ -41,4 +41,14 @@ for n in secretplace gloryrain holyground abide; do
   master "$W/$n.mix.wav" "$OUT/$n.mp3"
   echo "built $n"
 done
+# Living Water: brushed drums, piano and flute
+python3 groove.py "$W"
+render "$W/livingwater.pad.mid" "$W/livingwater.pad.wav" 0.35
+render "$W/livingwater.piano.mid" "$W/livingwater.piano.wav" 1.2
+render "$W/livingwater.flute.mid" "$W/livingwater.flute.wav" 1.2
+render "$W/livingwater.drums.mid" "$W/livingwater.drums.wav" 1.2
+render "$W/livingwater.shimmer.mid" "$W/livingwater.shimmer.wav" 2.5
+python3 mixsoak.py livingwater "$W" "$W/livingwater.mix.wav"
+master "$W/livingwater.mix.wav" "$OUT/livingwater.mp3"
+echo "built livingwater"
 rm -rf "$W"

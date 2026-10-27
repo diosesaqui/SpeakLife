@@ -80,23 +80,41 @@ rng = np.random.default_rng(sum(map(ord, name)))
 meta = json.load(open(f"{stems_dir}/{name}.json"))
 n = int((meta["end_s"] + 8) * SR)
 
-pad = fit(load(f"{stems_dir}/{name}.pad.wav"), n)
-piano = fit(load(f"{stems_dir}/{name}.piano.wav"), n)
-guitar = fit(load(f"{stems_dir}/{name}.guitar.wav"), n)
-shim = fit(load(f"{stems_dir}/{name}.shimmer.wav"), n)
 
-pad = reverb(filt(pad, 40, "high"), 5.5, 0.5, rng)
-piano = reverb(filt(piano, 50, "high"), 3.6, 0.36, rng)
-guitar = reverb(echo(filt(filt(guitar, 180, "high"), 6000, "low"), meta["bpm"], rng), 6.5, 0.65, rng)
-shim = reverb(filt(shim, 300, "high"), 9.0, 0.95, rng)
-sub = sub_bass(meta, n, rng)
+def stem(kind):
+    return fit(load(f"{stems_dir}/{name}.{kind}.wav"), n)
 
+
+pad = reverb(filt(stem("pad"), 40, "high"), 5.5, 0.5, rng)
+piano = reverb(filt(stem("piano"), 50, "high"), 3.6, 0.36, rng)
 ref = rms(pad)
-mix = (pad
-       + piano * (ref / rms(piano)) * 0.95
-       + guitar * (ref / rms(guitar)) * 0.42
-       + shim * (ref / rms(shim)) * 0.30
-       + sub * (ref / rms(sub)) * 0.40)
+
+
+def shimmer():
+    return reverb(filt(stem("shimmer"), 300, "high"), 9.0, 0.95, rng)
+
+
+if name == "livingwater":
+    # Brushed drums sit back in a small room; the flute leads in a warm hall.
+    flute = reverb(filt(stem("flute"), 200, "high"), 3.2, 0.32, rng)
+    drums = reverb(filt(stem("drums"), 35, "high"), 1.3, 0.22, rng)
+    shim = shimmer()
+    sub = sub_bass(meta, n, rng)
+    mix = (pad * 0.8
+           + piano * (ref / rms(piano)) * 0.85
+           + flute * (ref / rms(flute)) * 1.0
+           + drums * (ref / rms(drums)) * 0.55
+           + shim * (ref / rms(shim)) * 0.22
+           + sub * (ref / rms(sub)) * 0.30)
+else:
+    guitar = reverb(echo(filt(filt(stem("guitar"), 180, "high"), 6000, "low"), meta["bpm"], rng), 6.5, 0.65, rng)
+    shim = shimmer()
+    sub = sub_bass(meta, n, rng)
+    mix = (pad
+           + piano * (ref / rms(piano)) * 0.95
+           + guitar * (ref / rms(guitar)) * 0.42
+           + shim * (ref / rms(shim)) * 0.30
+           + sub * (ref / rms(sub)) * 0.40)
 if name == "gloryrain":
     mix += rain(n, rng) * ref * 0.22
 
