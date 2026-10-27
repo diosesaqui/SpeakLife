@@ -85,38 +85,25 @@ def stem(kind):
     return fit(load(f"{stems_dir}/{name}.{kind}.wav"), n)
 
 
-pad = reverb(filt(stem("pad"), 40, "high"), 5.5, 0.5, rng)
-piano = reverb(filt(stem("piano"), 50, "high"), 3.6, 0.36, rng)
-ref = rms(pad)
-
-
-def shimmer():
-    return reverb(filt(stem("shimmer"), 300, "high"), 9.0, 0.95, rng)
-
-
 if name == "livingwater":
-    # Brushed drums sit back in a small room; the flute leads in a warm hall.
+    # Just piano and flute: the flute leads, the piano carries it, both in a warm hall.
+    piano = reverb(filt(stem("piano"), 50, "high"), 3.6, 0.38, rng)
     flute = reverb(filt(stem("flute"), 200, "high"), 3.2, 0.32, rng)
-    drums = reverb(filt(stem("drums"), 35, "high"), 1.3, 0.22, rng)
-    shim = shimmer()
-    sub = sub_bass(meta, n, rng)
-    mix = (pad * 0.8
-           + piano * (ref / rms(piano)) * 0.85
-           + flute * (ref / rms(flute)) * 1.0
-           + drums * (ref / rms(drums)) * 0.55
-           + shim * (ref / rms(shim)) * 0.22
-           + sub * (ref / rms(sub)) * 0.30)
+    mix = piano + flute * (rms(piano) / rms(flute)) * 1.05
 else:
+    pad = reverb(filt(stem("pad"), 40, "high"), 5.5, 0.5, rng)
+    piano = reverb(filt(stem("piano"), 50, "high"), 3.6, 0.36, rng)
+    ref = rms(pad)
     guitar = reverb(echo(filt(filt(stem("guitar"), 180, "high"), 6000, "low"), meta["bpm"], rng), 6.5, 0.65, rng)
-    shim = shimmer()
+    shim = reverb(filt(stem("shimmer"), 300, "high"), 9.0, 0.95, rng)
     sub = sub_bass(meta, n, rng)
     mix = (pad
            + piano * (ref / rms(piano)) * 0.95
            + guitar * (ref / rms(guitar)) * 0.42
            + shim * (ref / rms(shim)) * 0.30
            + sub * (ref / rms(sub)) * 0.40)
-if name == "gloryrain":
-    mix += rain(n, rng) * ref * 0.22
+    if name == "gloryrain":
+        mix += rain(n, rng) * ref * 0.22
 
 mix = filt(mix, 9500, "low", 1)
 alive = np.where(np.max(np.abs(mix), axis=1) > np.max(np.abs(mix)) * 0.002)[0]

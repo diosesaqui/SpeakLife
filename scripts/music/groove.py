@@ -1,9 +1,9 @@
-"""Living Water: brushed drums, piano and flute over the soaking pad.
+"""Living Water: piano and flute.
 
 C major (written in D, transposed), C = 528 Hz, 72 BPM, worship-ballad feel.
-The drums are a soft brush kit and come and go with the waves: they enter
-after the flute, build to a peak, drop out for a breakdown, return fuller,
-then fall away for the ending.
+The shipped mix is just piano and flute. The pad, shimmer and brushed
+drums are still written so the random stream, and with it the exact piano
+and flute performance, stays as first recorded; mixsoak.py leaves them out.
 """
 import json
 import sys
