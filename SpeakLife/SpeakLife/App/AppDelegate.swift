@@ -32,6 +32,7 @@ final class AppDelegate: NSObject, MessagingDelegate {
     var updateAppState: (() -> Void)?
     
     override init() {
+        AppCheckSetup.install()
         FirebaseApp.configure()
 
         // ─── RevenueCat ──────────────────────────────────────────────────────

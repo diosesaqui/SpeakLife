@@ -89,13 +89,13 @@ public final class GuardThoughtWriter {
         var request = URLRequest(url: AnthropicConfig.apiURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        await AnthropicConfig.authorize(&request)
         // Shorter than the personal-declaration matcher's 15s. This one runs
         // while someone is staring at a button they just pressed, so a slow
         // answer is worse than the keyword answer arriving now.
         request.timeoutInterval = 8
 
         let body = Request(
-            model: AnthropicConfig.model,
             maxTokens: 400,
             system: Self.systemPrompt,
             messages: [.init(role: "user", content: "The thought: \(thought)")]
@@ -233,7 +233,6 @@ public final class GuardThoughtWriter {
     }
 
     private struct Request: Encodable {
-        let model: String
         let maxTokens: Int
         let system: String
         let messages: [Message]
@@ -244,7 +243,7 @@ public final class GuardThoughtWriter {
         }
 
         enum CodingKeys: String, CodingKey {
-            case model, system, messages
+            case system, messages
             case maxTokens = "max_tokens"
         }
     }

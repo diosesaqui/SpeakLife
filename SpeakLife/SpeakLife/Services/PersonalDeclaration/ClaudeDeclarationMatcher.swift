@@ -57,10 +57,10 @@ final class ClaudeDeclarationMatcher: DeclarationMatcherProtocol {
         var request = URLRequest(url: AnthropicConfig.apiURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        await AnthropicConfig.authorize(&request)
         request.timeoutInterval = 15
 
         let body = ClaudeRequest(
-            model: AnthropicConfig.model,
             maxTokens: 512,
             system: AnthropicConfig.systemPrompt,
             messages: [.init(role: "user", content: "User need: \(input)")]
@@ -125,7 +125,6 @@ private enum ClaudeError: Error {
 }
 
 private struct ClaudeRequest: Encodable {
-    let model: String
     let maxTokens: Int
     let system: String
     let messages: [Message]
@@ -136,7 +135,7 @@ private struct ClaudeRequest: Encodable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case model, system, messages
+        case system, messages
         case maxTokens = "max_tokens"
     }
 }

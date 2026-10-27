@@ -10,8 +10,13 @@
  * Secret Manager instead; the app sends the same Messages API body it always
  * built and gets the same response back.
  *
- * Abuse limits live in lib/claudeProxyRequest.js (model, output, input caps)
- * plus a per-IP hourly limit here.
+ * Abuse limits:
+ *   - lib/claudeProxyRequest.js: server-chosen model, output/input caps.
+ *   - Firebase App Check: the app attaches a token proving it is a real
+ *     install. Logged-only until the ENFORCE_APP_CHECK param is true; turn it
+ *     on once the DeviceCheck key is registered in the Firebase console and the
+ *     App Check build has rolled out.
+ *   - A per-IP hourly limit (fails closed).
  *
  * Deploy: firebase deploy --only functions:claudeProxy
  * (Uses the ANTHROPIC_API_KEY secret that bibleChat already reads.)
@@ -19,28 +24,22 @@
 
 const crypto = require('crypto');
 const { onRequest } = require('firebase-functions/v2/https');
-const { defineSecret } = require('firebase-functions/params');
+const { defineSecret, defineBoolean } = require('firebase-functions/params');
 const { getApps, initializeApp } = require('firebase-admin/app');
+const { getAppCheck } = require('firebase-admin/app-check');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const Anthropic = require('@anthropic-ai/sdk');
-const { buildClaudeParams } = require('./lib/claudeProxyRequest');
+const { createClaudeProxyHandler } = require('./lib/claudeProxyHandler');
 
 if (getApps().length === 0) initializeApp();
 
 const db = getFirestore();
 const ANTHROPIC_API_KEY = defineSecret('ANTHROPIC_API_KEY');
+const ENFORCE_APP_CHECK = defineBoolean('ENFORCE_APP_CHECK', { default: false });
 
 // One person using every AI feature heavily stays far under this; a script
 // replaying the endpoint does not.
 const HOURLY_LIMIT_PER_IP = 60;
-
-function clientIp(req) {
-  const forwarded = req.headers['x-forwarded-for'];
-  if (typeof forwarded === 'string' && forwarded.length > 0) {
-    return forwarded.split(',')[0].trim();
-  }
-  return req.ip || 'unknown';
-}
 
 /** Counts this request and reports whether the IP is over its hourly limit. */
 async function overRateLimit(ip) {
@@ -55,11 +54,22 @@ async function overRateLimit(ip) {
     tx.set(ref, {
       count: FieldValue.increment(1),
       hour,
-      // Firestore TTL policy on expiresAt can clear these automatically.
+      // Cleared by the TTL policy in firestore.indexes.json.
       expiresAt: new Date((hour + 2) * 3600000),
     }, { merge: true });
     return false;
   });
+}
+
+async function verifyAppCheck(token) {
+  await getAppCheck().verifyToken(token);
+  return true;
+}
+
+let anthropic;
+function callClaude(params) {
+  anthropic = anthropic || new Anthropic({ apiKey: ANTHROPIC_API_KEY.value() });
+  return anthropic.messages.create(params);
 }
 
 exports.claudeProxy = onRequest(
@@ -67,38 +77,14 @@ exports.claudeProxy = onRequest(
     region: 'us-central1',
     secrets: [ANTHROPIC_API_KEY],
     timeoutSeconds: 30,
+    // One warm instance so a cold start does not eat Guard's 8-second client
+    // timeout and push people onto the keyword fallback.
+    minInstances: 1,
   },
-  async (req, res) => {
-    if (req.method !== 'POST') {
-      res.status(405).json({ error: 'method_not_allowed' });
-      return;
-    }
-
-    const built = buildClaudeParams(req.body);
-    if (!built.ok) {
-      res.status(400).json({ error: built.error });
-      return;
-    }
-
-    try {
-      if (await overRateLimit(clientIp(req))) {
-        res.status(429).json({ error: 'rate_limited' });
-        return;
-      }
-    } catch (err) {
-      // A Firestore hiccup must not take every AI feature down with it.
-      console.error('Rate limit check failed:', err.message);
-    }
-
-    try {
-      const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY.value() });
-      const completion = await client.messages.create(built.params);
-      // Same shape as api.anthropic.com/v1/messages, so the app's decoders
-      // read it unchanged.
-      res.json(completion);
-    } catch (err) {
-      console.error('Anthropic error:', err.message);
-      res.status(502).json({ error: 'ai_unavailable' });
-    }
-  }
+  createClaudeProxyHandler({
+    verifyAppCheck,
+    enforceAppCheck: () => ENFORCE_APP_CHECK.value(),
+    overRateLimit,
+    callClaude,
+  })
 );

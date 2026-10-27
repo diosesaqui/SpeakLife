@@ -265,10 +265,10 @@ public enum EnforcementCurator {
         var request = URLRequest(url: AnthropicConfig.apiURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        await AnthropicConfig.authorize(&request)
         request.timeoutInterval = 15
 
         let body = ClaudeCurationRequest(
-            model: AnthropicConfig.model,
             maxTokens: 256,
             system: """
             You select scripture declarations for a seven-day campaign. You never \
@@ -357,7 +357,6 @@ public enum EnforcementCurator {
 // MARK: - Wire types
 
 private struct ClaudeCurationRequest: Encodable {
-    let model: String
     let maxTokens: Int
     let system: String
     let messages: [Message]
@@ -365,7 +364,7 @@ private struct ClaudeCurationRequest: Encodable {
     struct Message: Encodable { let role: String; let content: String }
 
     enum CodingKeys: String, CodingKey {
-        case model, system, messages
+        case system, messages
         case maxTokens = "max_tokens"
     }
 }

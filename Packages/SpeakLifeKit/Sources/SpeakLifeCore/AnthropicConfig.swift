@@ -16,7 +16,19 @@ public enum AnthropicConfig {
     // on the device. It used to arrive through Remote Config, which any install
     // can read.
     public static let apiURL = URL(string: "https://us-central1-speaklife-3e5c4.cloudfunctions.net/claudeProxy")!
-    public static let model = "claude-haiku-4-5-20251001"
+    // The model is the server's choice (functions/lib/claudeProxyRequest.js), so
+    // requests do not send one.
+
+    // Returns a Firebase App Check token proving the request comes from a real
+    // install. Set by the app at launch; the package cannot import Firebase.
+    public static var appCheckToken: (@Sendable () async -> String?)?
+
+    /// Attaches the App Check token, when there is one, to a proxy request.
+    public static func authorize(_ request: inout URLRequest) async {
+        if let token = await appCheckToken?() {
+            request.setValue(token, forHTTPHeaderField: "X-Firebase-AppCheck")
+        }
+    }
 
     public static let systemPrompt = """
     You are a biblical declaration generator for SpeakLife, a Christian faith app used by over 1 million believers daily. Given a user's prayer need or spiritual struggle, generate a personalized declaration they will speak aloud every day.
