@@ -1,8 +1,9 @@
 """Living Water: brushed drums, piano and flute over the soaking pad.
 
-D major, 72 BPM, worship-ballad feel. The drums are a soft brush kit and
-come and go with the waves: they enter after the flute, build to a peak,
-drop out for a breakdown, return fuller, then fall away for the ending.
+C major (written in D, transposed), C = 528 Hz, 72 BPM, worship-ballad feel.
+The drums are a soft brush kit and come and go with the waves: they enter
+after the flute, build to a peak, drop out for a breakdown, return fuller,
+then fall away for the ending.
 """
 import json
 import sys
@@ -14,6 +15,9 @@ from compose import PPQ, m
 from soak import IVadd9, Soak, V, Vsus, vi7, I
 
 BPM = 72
+# Written in D, played a step lower in C so that, tuned to A = 444,
+# its home note C sits at exactly 528 Hz.
+TRANSPOSE = -2
 BAR = 4
 
 # Section map: (name, bars, intensity)
@@ -178,6 +182,8 @@ class Groove(Soak):
                     tr.append(mido.Message("control_change", channel=ch, control=ctrl, value=val, time=0))
             last = 0
             for t, order, ch, msg in sorted((e for e in self.ev if e[2] in cs), key=lambda e: (e[0], e[1])):
+                if msg.type in ("note_on", "note_off") and ch != 9:
+                    msg = msg.copy(note=msg.note + TRANSPOSE)
                 tr.append(msg.copy(time=t - last))
                 last = t
             mid.save(f"{out}/{name}.{stem}.mid")
@@ -230,5 +236,6 @@ if __name__ == "__main__":
     g, end = build()
     g.stems(out, "livingwater")
     with open(f"{out}/livingwater.json", "w") as f:
-        json.dump({"bpm": g.bpm, "timeline": g.timeline, "end_s": g.sec(end)}, f)
+        timeline = [(t, root + TRANSPOSE, i) for t, root, i in g.timeline]
+        json.dump({"bpm": g.bpm, "timeline": timeline, "end_s": g.sec(end)}, f)
     print("livingwater", round(g.sec(end)), "s")

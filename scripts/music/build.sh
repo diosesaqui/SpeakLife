@@ -10,9 +10,10 @@ W=$(mktemp -d)
 render() { fluidsynth -ni -q -R 0 -C 0 -g "$3" -r 44100 -F "$2" "$SF2" "$1" >/dev/null; }
 
 # Two-pass loudness match to -16 LUFS that keeps the build-ups intact,
-# tuned from A = 440 to A = 432 Hz on the way.
+# retuned on the way from A = 440 to A = $3 Hz (default 432).
+# A = 444 puts C at exactly 528 Hz.
 master() {
-  local pre="asetrate=44100*432/440,aresample=44100:resampler=soxr" js
+  local pre="asetrate=44100*${3:-432}/440,aresample=44100:resampler=soxr" js
   js=$(ffmpeg -hide_banner -nostats -i "$1" -af "$pre,loudnorm=I=-16:TP=-1.5:LRA=20:print_format=json" -f null - 2>&1 | sed -n '/^{/,/^}/p')
   g() { echo "$js" | python3 -c "import json,sys;print(json.load(sys.stdin)['$1'])"; }
   ffmpeg -hide_banner -loglevel error -y -i "$1" \
@@ -24,9 +25,9 @@ master() {
 python3 compose.py "$W"
 render "$W/shoreline.mid" "$W/shoreline.raw.wav" 0.35
 python3 post.py shoreline "$W/shoreline.raw.wav" "$W/shoreline.wav"
-# Shoreline keeps the single-pass mastering it shipped with.
+# Shoreline: tuned so C = 528 Hz (A = 444), single-pass mastering.
 ffmpeg -hide_banner -loglevel error -y -i "$W/shoreline.wav" \
-  -af "asetrate=44100*432/440,aresample=44100:resampler=soxr,loudnorm=I=-16:TP=-1.5:LRA=11" \
+  -af "asetrate=44100*444/440,aresample=44100:resampler=soxr,loudnorm=I=-16:TP=-1.5:LRA=11" \
   -ar 44100 -c:a libmp3lame -b:a 192k "$OUT/shoreline.mp3"
 echo "built shoreline"
 
@@ -49,6 +50,7 @@ render "$W/livingwater.flute.mid" "$W/livingwater.flute.wav" 1.2
 render "$W/livingwater.drums.mid" "$W/livingwater.drums.wav" 1.2
 render "$W/livingwater.shimmer.mid" "$W/livingwater.shimmer.wav" 2.5
 python3 mixsoak.py livingwater "$W" "$W/livingwater.mix.wav"
-master "$W/livingwater.mix.wav" "$OUT/livingwater.mp3"
+# C major with C = 528 Hz (A = 444), so 528 Hz is its home note.
+master "$W/livingwater.mix.wav" "$OUT/livingwater.mp3" 444
 echo "built livingwater"
 rm -rf "$W"
