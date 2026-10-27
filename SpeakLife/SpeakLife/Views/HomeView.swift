@@ -8,20 +8,13 @@
 import SwiftUI
 import FacebookCore
 import UserNotifications
-let resources: [MusicResources] = [
-    .sethpiano, .washed, .rainstorm, .everpresent,
-    .stillwaters, .dwelling, .shoreline, .lanterns, .morninglight,
-]
+let resources: [MusicResources] = [.stillwaters, .dwelling, .shoreline, .lanterns, .morninglight]
 
 struct MusicResources {
     let name: String
     let artist: String
     let type: String
    
-    static let sethpiano = MusicResources(name: "sethpiano", artist: "", type: "mp3")
-    static let washed = MusicResources(name: "washed", artist: "Brock Hewitt", type: "mp3")
-    static let rainstorm = MusicResources(name: "rainstorm", artist: "Brock Hewitt", type: "mp3")
-    static let everpresent = MusicResources(name: "everpresent", artist: "Brock Hewitt", type: "mp3")
     // Original SpeakLife pieces (sampled instruments, MIT/public-domain SoundFont)
     static let stillwaters = MusicResources(name: "stillwaters", artist: "SpeakLife", type: "mp3")
     static let dwelling = MusicResources(name: "dwelling", artist: "SpeakLife", type: "mp3")
