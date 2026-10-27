@@ -8,7 +8,7 @@
 import SwiftUI
 import FacebookCore
 import UserNotifications
-let resources: [MusicResources] = [.shoreline, .secretplace, .gloryrain, .holyground, .abide, .livingwater]
+let resources: [MusicResources] = [.shoreline, .secretplace, .gloryrain, .holyground, .abide, .livingwater, .gentlerain]
 
 struct MusicResources {
     let name: String
@@ -23,6 +23,7 @@ struct MusicResources {
     static let holyground = MusicResources(name: "holyground", artist: "SpeakLife", type: "mp3")
     static let abide = MusicResources(name: "abide", artist: "SpeakLife", type: "mp3")
     static let livingwater = MusicResources(name: "livingwater", artist: "SpeakLife", type: "mp3")
+    static let gentlerain = MusicResources(name: "gentlerain", artist: "SpeakLife", type: "mp3")
 }
 
 class TabViewModel: ObservableObject {

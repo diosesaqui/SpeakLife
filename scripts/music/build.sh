@@ -42,15 +42,18 @@ for n in secretplace gloryrain holyground abide; do
   master "$W/$n.mix.wav" "$OUT/$n.mp3"
   echo "built $n"
 done
-# Living Water: brushed drums, piano and flute
+# Living Water: just piano and flute (the other stems are written but not used)
 python3 groove.py "$W"
-render "$W/livingwater.pad.mid" "$W/livingwater.pad.wav" 0.35
 render "$W/livingwater.piano.mid" "$W/livingwater.piano.wav" 1.2
 render "$W/livingwater.flute.mid" "$W/livingwater.flute.wav" 1.2
-render "$W/livingwater.drums.mid" "$W/livingwater.drums.wav" 1.2
-render "$W/livingwater.shimmer.mid" "$W/livingwater.shimmer.wav" 2.5
 python3 mixsoak.py livingwater "$W" "$W/livingwater.mix.wav"
 # C major with C = 528 Hz (A = 444), so 528 Hz is its home note.
 master "$W/livingwater.mix.wav" "$OUT/livingwater.mp3" 444
 echo "built livingwater"
+# Gentle Rain: solo piano over rain, C = 528 Hz
+python3 rainpiano.py compose "$W"
+render "$W/gentlerain.piano.mid" "$W/gentlerain.piano.wav" 1.2
+python3 rainpiano.py mix "$W/gentlerain.piano.wav" "$W/gentlerain.mix.wav"
+master "$W/gentlerain.mix.wav" "$OUT/gentlerain.mp3" 444
+echo "built gentlerain"
 rm -rf "$W"

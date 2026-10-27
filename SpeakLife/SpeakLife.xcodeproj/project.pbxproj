@@ -176,6 +176,7 @@
 		3DE8888A79F8966025138467 /* holyground.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 8E1E22E110B41BE3C3D58727 /* holyground.mp3 */; };
 		F2BA4FC383EAB1A303A54691 /* abide.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 2C58B42DCDAEC856E5477D64 /* abide.mp3 */; };
 		E653694F4A622AA9635D1C2D /* livingwater.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 63D0DEB7079CAB793B1934BA /* livingwater.mp3 */; };
+		69C158594BC0915DC19F884A /* gentlerain.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 86AD7D802CF281DA4D33CC13 /* gentlerain.mp3 */; };
 		45A4A3D62D8917D600DFCEB7 /* TestimonyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45A4A3D52D8917D000DFCEB7 /* TestimonyView.swift */; };
 		45AE76712D7960BD0037EE12 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 45AE76702D7960BD0037EE12 /* FirebaseMessaging */; };
 		45B07A422D24D98300EA2F5D /* WhatsNewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45B07A412D24D98300EA2F5D /* WhatsNewView.swift */; };
@@ -620,6 +621,7 @@
 		8E1E22E110B41BE3C3D58727 /* holyground.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = holyground.mp3; sourceTree = "<group>"; };
 		2C58B42DCDAEC856E5477D64 /* abide.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = abide.mp3; sourceTree = "<group>"; };
 		63D0DEB7079CAB793B1934BA /* livingwater.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = livingwater.mp3; sourceTree = "<group>"; };
+		86AD7D802CF281DA4D33CC13 /* gentlerain.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = gentlerain.mp3; sourceTree = "<group>"; };
 		45A4A3D52D8917D000DFCEB7 /* TestimonyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestimonyView.swift; sourceTree = "<group>"; };
 		45B07A412D24D98300EA2F5D /* WhatsNewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhatsNewView.swift; sourceTree = "<group>"; };
 		45BC74602EC583E6003AC964 /* FirebaseInitializer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirebaseInitializer.swift; sourceTree = "<group>"; };
@@ -1282,6 +1284,7 @@
 				8E1E22E110B41BE3C3D58727 /* holyground.mp3 */,
 				2C58B42DCDAEC856E5477D64 /* abide.mp3 */,
 				63D0DEB7079CAB793B1934BA /* livingwater.mp3 */,
+				86AD7D802CF281DA4D33CC13 /* gentlerain.mp3 */,
 			);
 			path = Audio;
 			sourceTree = "<group>";
@@ -2146,6 +2149,7 @@
 				3DE8888A79F8966025138467 /* holyground.mp3 in Resources */,
 				F2BA4FC383EAB1A303A54691 /* abide.mp3 in Resources */,
 				E653694F4A622AA9635D1C2D /* livingwater.mp3 in Resources */,
+				69C158594BC0915DC19F884A /* gentlerain.mp3 in Resources */,
 				7A278FA2288915DF0084BB57 /* Preview Assets.xcassets in Resources */,
 				458C756A2D64811000C4F2B8 /* declarationsv6.json in Resources */,
 				7AA870E628DACFB800134ADB /* Localizable.strings in Resources */,
