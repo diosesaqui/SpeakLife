@@ -171,6 +171,11 @@
 		45A1B2C42F80000100D1C0DE /* AppIconPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45A1B2C32F80000100D1C0DE /* AppIconPickerView.swift */; };
 		45A4A3A52D7BF62600DFCEB7 /* declarationsv7.json in Resources */ = {isa = PBXBuildFile; fileRef = 45A4A3A32D7BD2A000DFCEB7 /* declarationsv7.json */; };
 		45A4A3CB2D869D2700DFCEB7 /* sethpiano.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 45A4A3CA2D869D2700DFCEB7 /* sethpiano.mp3 */; };
+		76E9C39E06EEB20E50EBD445 /* stillwaters.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = DC4ED982449636E68C23EA93 /* stillwaters.mp3 */; };
+		20E4384827759D1D514F0ECB /* dwelling.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = BB607FE56517338B8A8AD28D /* dwelling.mp3 */; };
+		E96F0F345B56C19CCFBE7D4D /* shoreline.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = EB870EEB8A2702A36117A46B /* shoreline.mp3 */; };
+		287294606C1D5479301E57DE /* lanterns.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = FBF83A919739B9279191FBA3 /* lanterns.mp3 */; };
+		2787D62199590EDD5EA937B5 /* morninglight.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 84BB4C9FFE2BECA56DB1CEDD /* morninglight.mp3 */; };
 		45A4A3CF2D86B81900DFCEB7 /* everpresent.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 45A4A3CE2D86B81900DFCEB7 /* everpresent.mp3 */; };
 		45A4A3D12D86B86100DFCEB7 /* washed.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 45A4A3D02D86B86100DFCEB7 /* washed.mp3 */; };
 		45A4A3D32D86B8DB00DFCEB7 /* rainstorm.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 45A4A3D22D86B8DB00DFCEB7 /* rainstorm.mp3 */; };
@@ -613,6 +618,11 @@
 		45A1B2C32F80000100D1C0DE /* AppIconPickerView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppIconPickerView.swift; sourceTree = "<group>"; };
 		45A4A3A32D7BD2A000DFCEB7 /* declarationsv7.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = declarationsv7.json; sourceTree = "<group>"; };
 		45A4A3CA2D869D2700DFCEB7 /* sethpiano.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = sethpiano.mp3; sourceTree = "<group>"; };
+		DC4ED982449636E68C23EA93 /* stillwaters.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = stillwaters.mp3; sourceTree = "<group>"; };
+		BB607FE56517338B8A8AD28D /* dwelling.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = dwelling.mp3; sourceTree = "<group>"; };
+		EB870EEB8A2702A36117A46B /* shoreline.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = shoreline.mp3; sourceTree = "<group>"; };
+		FBF83A919739B9279191FBA3 /* lanterns.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = lanterns.mp3; sourceTree = "<group>"; };
+		84BB4C9FFE2BECA56DB1CEDD /* morninglight.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = morninglight.mp3; sourceTree = "<group>"; };
 		45A4A3CE2D86B81900DFCEB7 /* everpresent.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = everpresent.mp3; sourceTree = "<group>"; };
 		45A4A3D02D86B86100DFCEB7 /* washed.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = washed.mp3; sourceTree = "<group>"; };
 		45A4A3D22D86B8DB00DFCEB7 /* rainstorm.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = rainstorm.mp3; sourceTree = "<group>"; };
@@ -1276,6 +1286,11 @@
 				45A4A3D02D86B86100DFCEB7 /* washed.mp3 */,
 				45A4A3D22D86B8DB00DFCEB7 /* rainstorm.mp3 */,
 				45A4A3CA2D869D2700DFCEB7 /* sethpiano.mp3 */,
+				DC4ED982449636E68C23EA93 /* stillwaters.mp3 */,
+				BB607FE56517338B8A8AD28D /* dwelling.mp3 */,
+				EB870EEB8A2702A36117A46B /* shoreline.mp3 */,
+				FBF83A919739B9279191FBA3 /* lanterns.mp3 */,
+				84BB4C9FFE2BECA56DB1CEDD /* morninglight.mp3 */,
 			);
 			path = Audio;
 			sourceTree = "<group>";
@@ -2136,6 +2151,11 @@
 				457CD3A72E8508F300F435EC /* README.md in Resources */,
 				456885282B395F66007B1EBB /* declarationsv3.json in Resources */,
 				45A4A3CB2D869D2700DFCEB7 /* sethpiano.mp3 in Resources */,
+				76E9C39E06EEB20E50EBD445 /* stillwaters.mp3 in Resources */,
+				20E4384827759D1D514F0ECB /* dwelling.mp3 in Resources */,
+				E96F0F345B56C19CCFBE7D4D /* shoreline.mp3 in Resources */,
+				287294606C1D5479301E57DE /* lanterns.mp3 in Resources */,
+				2787D62199590EDD5EA937B5 /* morninglight.mp3 in Resources */,
 				7A278FA2288915DF0084BB57 /* Preview Assets.xcassets in Resources */,
 				458C756A2D64811000C4F2B8 /* declarationsv6.json in Resources */,
 				7AA870E628DACFB800134ADB /* Localizable.strings in Resources */,

@@ -8,7 +8,10 @@
 import SwiftUI
 import FacebookCore
 import UserNotifications
-let resources: [MusicResources] = [.sethpiano, .washed, .rainstorm, .everpresent]
+let resources: [MusicResources] = [
+    .sethpiano, .washed, .rainstorm, .everpresent,
+    .stillwaters, .dwelling, .shoreline, .lanterns, .morninglight,
+]
 
 struct MusicResources {
     let name: String
@@ -19,6 +22,12 @@ struct MusicResources {
     static let washed = MusicResources(name: "washed", artist: "Brock Hewitt", type: "mp3")
     static let rainstorm = MusicResources(name: "rainstorm", artist: "Brock Hewitt", type: "mp3")
     static let everpresent = MusicResources(name: "everpresent", artist: "Brock Hewitt", type: "mp3")
+    // Original SpeakLife pieces (sampled instruments, MIT/public-domain SoundFont)
+    static let stillwaters = MusicResources(name: "stillwaters", artist: "SpeakLife", type: "mp3")
+    static let dwelling = MusicResources(name: "dwelling", artist: "SpeakLife", type: "mp3")
+    static let shoreline = MusicResources(name: "shoreline", artist: "SpeakLife", type: "mp3")
+    static let lanterns = MusicResources(name: "lanterns", artist: "SpeakLife", type: "mp3")
+    static let morninglight = MusicResources(name: "morninglight", artist: "SpeakLife", type: "mp3")
 }
 
 class TabViewModel: ObservableObject {
