@@ -948,8 +948,10 @@ final class SubscriptionStore: ObservableObject {
         // AI Feature Flag from Remote Config
         enableAIFeatures = remoteConfig["enableAIFeatures"].boolValue
 
-        // Anthropic API key from Remote Config
-        AnthropicConfig.apiKey = remoteConfig["anthropic_api_key"].stringValue
+        // Claude features go through the claudeProxy function, which holds the key.
+        // Remote Config only carries a kill switch now; unset means on.
+        let claudeSwitch = remoteConfig["claudeProxyEnabled"]
+        AnthropicConfig.isEnabled = claudeSwitch.source == .static ? true : claudeSwitch.boolValue
 
         // NLT API key from Remote Config (unset keeps NLT out of the Bible reader)
         NLTConfig.apiKey = remoteConfig["nlt_api_key"].stringValue

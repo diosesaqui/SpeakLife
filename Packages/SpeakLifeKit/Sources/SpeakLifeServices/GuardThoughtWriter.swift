@@ -14,8 +14,10 @@
 //  It is not gated on premium, and that is deliberate. Whatever someone is up
 //  against, the line they speak has to be about that exact thing, and a tier
 //  check here decided that most people got something adjacent instead. The only
-//  gate left is `isConfigured` — no key from Remote Config, no request — which
-//  doubles as the kill switch if this ever needs to be turned off in a hurry.
+//  gate left is `isConfigured` (`AnthropicConfig.isEnabled`, the Remote Config
+//  `claudeProxyEnabled` switch), the kill switch if this ever needs to be turned
+//  off in a hurry. The request goes to the claudeProxy function, which holds the
+//  key; there is no key on the device.
 //
 //  What is still true, and must stay true:
 //
@@ -78,18 +80,15 @@ public final class GuardThoughtWriter {
         self.session = session
     }
 
-    public var isConfigured: Bool { !AnthropicConfig.apiKey.isEmpty }
+    public var isConfigured: Bool { AnthropicConfig.isEnabled }
 
     /// - Parameter thought: the user's own words. Sent, never stored.
     public func write(thought: String) async throws -> WrittenCounter {
-        let apiKey = AnthropicConfig.apiKey
-        guard !apiKey.isEmpty else { throw GuardWriterError.notConfigured }
+        guard AnthropicConfig.isEnabled else { throw GuardWriterError.notConfigured }
 
         var request = URLRequest(url: AnthropicConfig.apiURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
-        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
         // Shorter than the personal-declaration matcher's 15s. This one runs
         // while someone is staring at a button they just pressed, so a slow
         // answer is worse than the keyword answer arriving now.

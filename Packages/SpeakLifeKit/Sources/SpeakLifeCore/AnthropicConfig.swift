@@ -6,10 +6,16 @@
 import Foundation
 
 public enum AnthropicConfig {
-    // Set by SubscriptionStore on app launch from Firebase Remote Config.
-    public static var apiKey: String = ""
+    // Kill switch for every on-device Claude feature. On by default; SubscriptionStore
+    // turns it off when Remote Config `claudeProxyEnabled` is set to false, and the
+    // features then fall back to their keyword answers.
+    public static var isEnabled = true
 
-    public static let apiURL = URL(string: "https://api.anthropic.com/v1/messages")!
+    // The claudeProxy Cloud Function. It holds the Anthropic key server-side and
+    // takes the same Messages API body api.anthropic.com does, so there is no key
+    // on the device. It used to arrive through Remote Config, which any install
+    // can read.
+    public static let apiURL = URL(string: "https://us-central1-speaklife-3e5c4.cloudfunctions.net/claudeProxy")!
     public static let model = "claude-haiku-4-5-20251001"
 
     public static let systemPrompt = """

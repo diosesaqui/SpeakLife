@@ -236,8 +236,7 @@ public enum EnforcementCurator {
                               candidates: [Declaration],
                               session: URLSession = .shared) async -> Outcome {
         guard candidates.count >= Enforcement.length else { return .unavailable }
-        let apiKey = AnthropicConfig.apiKey
-        guard !apiKey.isEmpty else { return .unavailable }
+        guard AnthropicConfig.isEnabled else { return .unavailable }
 
         let shortlist = Array(candidates.prefix(candidateLimit))
         let numbered = shortlist.enumerated()
@@ -266,8 +265,6 @@ public enum EnforcementCurator {
         var request = URLRequest(url: AnthropicConfig.apiURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
-        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
         request.timeoutInterval = 15
 
         let body = ClaudeCurationRequest(

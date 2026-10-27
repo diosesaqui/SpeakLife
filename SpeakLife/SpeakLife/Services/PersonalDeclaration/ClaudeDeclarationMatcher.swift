@@ -22,15 +22,12 @@ final class ClaudeDeclarationMatcher: DeclarationMatcherProtocol {
     // MARK: - DeclarationMatcherProtocol
 
     func match(input: String) async -> DeclarationMatch {
-        let apiKey = AnthropicConfig.apiKey
-        guard !apiKey.isEmpty else {
-            print("🔑 [Claude] API key is empty — falling back to keyword matcher")
-            AnalyticsService.shared.track("claude_fallback", parameters: ["reason": "no_key"])
+        guard AnthropicConfig.isEnabled else {
+            AnalyticsService.shared.track("claude_fallback", parameters: ["reason": "disabled"])
             return await fallback.match(input: input)
         }
-        print("🔑 [Claude] API key found, prefix: \(String(apiKey.prefix(12)))...")
         do {
-            let result = try await callClaude(input: input, apiKey: apiKey)
+            let result = try await callClaude(input: input)
             print("✅ [Claude] Match succeeded, category: \(result.category.rawValue)")
             AnalyticsService.shared.track("claude_success", parameters: ["category": result.category.rawValue])
             return result
@@ -56,12 +53,10 @@ final class ClaudeDeclarationMatcher: DeclarationMatcherProtocol {
 
     // MARK: - Private
 
-    private func callClaude(input: String, apiKey: String) async throws -> DeclarationMatch {
+    private func callClaude(input: String) async throws -> DeclarationMatch {
         var request = URLRequest(url: AnthropicConfig.apiURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
-        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
         request.timeoutInterval = 15
 
         let body = ClaudeRequest(

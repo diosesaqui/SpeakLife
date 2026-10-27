@@ -5,6 +5,7 @@
 module.exports = {
   ...require('./prayerWallNotifications'),
   ...require('./bibleChat'),
+  ...require('./claudeProxy'),
   ...require('./personalMessage'),
   ...require('./standTogether'),
   ...require('./emailCapture'),

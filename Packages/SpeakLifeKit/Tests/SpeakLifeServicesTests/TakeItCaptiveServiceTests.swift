@@ -744,16 +744,16 @@ final class GroundTakenBadgeTests: XCTestCase {
 /// These pin the things that must hold regardless of what the network does.
 final class GuardWrittenPathTests: XCTestCase {
 
-    private var savedKey: String!
+    private var savedEnabled: Bool!
 
     override func setUp() {
         super.setUp()
-        savedKey = AnthropicConfig.apiKey
+        savedEnabled = AnthropicConfig.isEnabled
     }
 
     override func tearDown() {
-        AnthropicConfig.apiKey = savedKey
-        savedKey = nil
+        AnthropicConfig.isEnabled = savedEnabled
+        savedEnabled = nil
         super.tearDown()
     }
 
@@ -768,7 +768,7 @@ final class GuardWrittenPathTests: XCTestCase {
     /// request, so someone in crisis is never held behind a network round trip
     /// and their words are never sent.
     func testCrisisTextNeverReachesTheNetwork() async {
-        AnthropicConfig.apiKey = "sk-ant-test-key-that-would-be-used"
+        AnthropicConfig.isEnabled = true
         let classifier = ThoughtClassifier(bank: makeBank())
         // A URLSession call would hang or fail here; reachOut must come back
         // immediately from the local screen instead.
@@ -776,28 +776,28 @@ final class GuardWrittenPathTests: XCTestCase {
         XCTAssertEqual(result, .reachOut)
     }
 
-    /// The privacy copy follows what actually happens, and nothing else. The key
-    /// arrives from Remote Config and can be empty, in which case everyone
+    /// The privacy copy follows what actually happens, and nothing else. The Claude
+    /// switch arrives from Remote Config and can be off, in which case everyone
     /// silently runs on device — and must not be told otherwise.
     ///
     /// Tier is deliberately not part of this answer any more. Whatever someone
     /// is up against, the line they speak is written for it, so the question
-    /// "will the words be sent" has exactly one input: is there a key.
+    /// "will the words be sent" has exactly one input: is the switch on.
     func testPrivacyLineFollowsWhatActuallyHappens() {
         let classifier = ThoughtClassifier(bank: makeBank())
 
-        AnthropicConfig.apiKey = ""
+        AnthropicConfig.isEnabled = false
         XCTAssertFalse(classifier.sendsThoughtOffDevice,
-                       "No key means the words stay on device.")
+                       "Switched off means the words stay on device.")
 
-        AnthropicConfig.apiKey = "sk-ant-test"
+        AnthropicConfig.isEnabled = true
         XCTAssertTrue(classifier.sendsThoughtOffDevice)
     }
 
-    /// No key configured is a fallback, not a failure. Someone who typed a real
+    /// Switched off is a fallback, not a failure. Someone who typed a real
     /// thought still gets something to speak.
     func testUnconfiguredFallsBackRatherThanDeadEnding() async {
-        AnthropicConfig.apiKey = ""
+        AnthropicConfig.isEnabled = false
         let classifier = ThoughtClassifier(bank: makeBank())
         guard case .matched(_, let thought, _) =
                 await classifier.answer("I am afraid all the time") else {
@@ -807,11 +807,11 @@ final class GuardWrittenPathTests: XCTestCase {
         XCTAssertFalse(thought.verseText.isEmpty)
     }
 
-    /// With no key, the answer IS the on-device answer, byte for byte. The
+    /// Switched off, the answer IS the on-device answer, byte for byte. The
     /// fallback is not a degraded variant of the local path; it is the local
     /// path.
     func testUnconfiguredAnswerIsTheLocalAnswer() async {
-        AnthropicConfig.apiKey = ""
+        AnthropicConfig.isEnabled = false
         let classifier = ThoughtClassifier(bank: makeBank())
         let input = "I am afraid all the time"
         let written = await classifier.answer(input)
