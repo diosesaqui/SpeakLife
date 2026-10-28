@@ -68,6 +68,12 @@ ad-spend source, so CPT/CAC must come from Ads Manager.
   Install Now (Learn More for very cold).
 - Structure: **1 campaign → 4 ad sets → 5 ads** = 20 creatives. Use full Duplicate, not Quick
   Duplicate. Group ad sets by formula or persona so you can read the pattern.
+- **Hard cap: never more than 6 active ads in a test ad set** (user rule, 2026-10-28). More ads
+  split the budget too thin for any of them to get a fair read. Before adding a 7th: pause the
+  worst ad that has hit the kill bar, or put the new ad in a new test ad set (new test campaign
+  if the AEM campaign is at its 5-ad-set limit). Paused ads don't count toward the 6.
+- The cap does **not** apply to Scale/Winners campaigns, where ad sets hold proven ads and the
+  goal is to keep raising budget.
 - Run **7–14 days. Don't touch it.**
   - Day ~5: look for ads hitting the winner bar.
   - Day 7: if still winning, **breed** them: duplicate, make a variation (see faith-ad-formulas →
@@ -76,6 +82,8 @@ ad-spend source, so CPT/CAC must come from Ads Manager.
     ready to scale.
 
 ## Campaign 2 — Scale
+
+**iOS app campaigns must be created as iOS 14+ campaigns** (`is_skadnetwork_attribution: true` on `ads_create_campaign`). AEM ad sets are rejected otherwise, and the flag can't be changed after creation (found 2026-10-28 when the first SL Winners attempt failed).
 
 1. Open each winning ad's post and copy its **Post ID** (the long number at the end of the post
    URL). Keep them in a doc with the ad name.
