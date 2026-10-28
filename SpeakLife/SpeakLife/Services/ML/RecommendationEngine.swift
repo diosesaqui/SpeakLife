@@ -286,7 +286,6 @@ final class RecommendationEngine: ObservableObject {
     // MARK: - Optimal Timing
     
     func getOptimalNotificationTimes(for user: User? = nil) async -> [Date] {
-        let userBehavior = EnhancedAnalyticsService.shared.userBehaviorProfile
         let optimalTimes = await MLTaskLibrary.shared.optimizeNotificationTiming(for: getCurrentUserId())
         
         var dates: [Date] = []

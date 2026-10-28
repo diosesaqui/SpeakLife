@@ -44,24 +44,15 @@ final class ContentCategorizationService: ObservableObject {
     // MARK: - Model Loading
     
     private func loadModels() async {
-        do {
-            await loadCategorizationModel()
-            await loadEmotionalToneModel()
-            
-            DispatchQueue.main.async {
-                self.isModelLoaded = true
-                self.lastUpdateDate = Date()
-            }
-            
-            print("✅ ML models loaded successfully")
-        } catch {
-            // Warning: 
-            print("⚠️ Failed to load ML models, using fallback: \(error)")
-            
-            DispatchQueue.main.async {
-                self.isModelLoaded = false
-            }
+        await loadCategorizationModel()
+        await loadEmotionalToneModel()
+        
+        DispatchQueue.main.async {
+            self.isModelLoaded = true
+            self.lastUpdateDate = Date()
         }
+        
+        print("✅ ML models loaded successfully")
     }
     
     private func loadCategorizationModel() async {
@@ -162,7 +153,7 @@ final class ContentCategorizationService: ObservableObject {
     private func categorizeWithMLModel(_ text: String, model: MLModel) async -> ContentCategories {
         do {
             // Prepare input for ML model
-            let inputFeatures = try MLFeatureValue(string: text)
+            let inputFeatures = MLFeatureValue(string: text)
             let prediction = try await model.prediction(from: MLDictionaryFeatureProvider(dictionary: ["text": inputFeatures]))
             
             // Extract spiritual categories
@@ -191,7 +182,7 @@ final class ContentCategorizationService: ObservableObject {
     private func getEmotionalTone(for text: String) async -> EmotionalTone {
         if let toneModel = emotionalToneModel {
             do {
-                let inputFeatures = try MLFeatureValue(string: text)
+                let inputFeatures = MLFeatureValue(string: text)
                 let prediction = try await toneModel.prediction(from: MLDictionaryFeatureProvider(dictionary: ["text": inputFeatures]))
                 
                 if let toneString = prediction.featureValue(for: "emotional_tone")?.stringValue,
@@ -306,11 +297,11 @@ final class ContentCategorizationService: ObservableObject {
     }
     
     func getDeclarationsForJournalEntry(_ journalText: String) async -> [Declaration] {
-        let categories = await categorizeContent(journalText)
+        _ = await categorizeContent(journalText)
         
         // This would query your declaration database based on categories
         // For now, return sample declarations that match the categories
-        var matchingDeclarations: [Declaration] = []
+        let matchingDeclarations: [Declaration] = []
         
         // In a real implementation, this would:
         // 1. Query CoreData for declarations matching the spiritual categories

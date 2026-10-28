@@ -372,7 +372,7 @@ class PrayerWallViewModel: ObservableObject {
                 DispatchQueue.main.async {
                     guard let self = self else { return }
                     self.isSubmitting = false
-                    if let error = error {
+                    if error != nil {
                         // Shown inside the post form, so no sign-in hand-off
                         // here: that would close the form and lose the text.
                         self.errorMessage = "Couldn't share your prayer. Please try again."

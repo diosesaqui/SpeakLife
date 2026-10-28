@@ -897,7 +897,7 @@ final class PostHogAnalyticsProvider: AnalyticsProvider {
 
     func configure() {
         #if canImport(PostHog)
-        let config = PostHogConfig(apiKey: apiKey, host: host)
+        let config = PostHogConfig(projectToken: apiKey, host: host)
         config.sessionReplay = enableSessionReplay
         // Mask sensitive text/images in replays by default; relax per-view as needed.
         config.sessionReplayConfig.maskAllTextInputs = true

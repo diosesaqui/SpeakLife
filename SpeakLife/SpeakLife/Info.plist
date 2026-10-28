@@ -40,8 +40,6 @@
 	<string>ca-app-pub-4361689433807539~4974376840</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
-	<key>MinimumOSVersion</key>
-	<string>16.0</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>

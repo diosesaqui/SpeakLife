@@ -255,7 +255,7 @@ struct TestimonialCard: View {
         VStack(alignment: .leading, spacing: 16) {
             // Stars
             HStack(spacing: 4) {
-                ForEach(0..<testimonial.rating) { _ in
+                ForEach(0..<testimonial.rating, id: \.self) { _ in
                     Image(systemName: "star.fill")
                         .font(.system(size: 16))
                         .foregroundColor(Color(red: 1.0, green: 0.8, blue: 0))

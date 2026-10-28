@@ -106,7 +106,8 @@ final class BibleCacheManager {
             var size: Int64 = 0
             
             if let enumerator = fileManager.enumerator(at: cacheDirectory, includingPropertiesForKeys: [.fileSizeKey]) {
-                for case let fileURL as URL in enumerator {
+                while let object = enumerator.nextObject() {
+                    guard let fileURL = object as? URL else { continue }
                     if let fileSize = try? fileURL.resourceValues(forKeys: [.fileSizeKey]).fileSize {
                         size += Int64(fileSize)
                     }

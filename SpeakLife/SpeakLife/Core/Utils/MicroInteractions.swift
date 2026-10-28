@@ -148,7 +148,7 @@ struct HeartPulse: View {
                 PremiumHaptics.favoriteRemoved()
             }
         }
-        .onChange(of: isFavorited) { favorited in
+        .onChange(of: isFavorited) { _, favorited in
             if favorited {
                 triggerPulse()
             }
@@ -348,7 +348,7 @@ struct PageTurn: ViewModifier {
                 perspective: 0.8
             )
             .animation(.easeInOut(duration: 0.6), value: rotationAngle)
-            .onChange(of: isActive) { active in
+            .onChange(of: isActive) { _, active in
                 if active {
                     rotationAngle = -90
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {

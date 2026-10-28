@@ -45,7 +45,7 @@ struct VoiceDictationButton: View {
         }
         .disabled(isTranscribing)
         .accessibilityLabel(voiceManager.isListening ? "Stop dictation" : "Dictate")
-        .onChange(of: voiceManager.voiceInputState) { state in
+        .onChange(of: voiceManager.voiceInputState) { _, state in
             // Recognition is final-only, so the transcript is ready on .completed.
             if state == .completed { append(voiceManager.transcribedText) }
         }

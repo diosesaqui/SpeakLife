@@ -140,7 +140,7 @@ struct BibleView: View {
             )
             .preferredColorScheme(.dark)
         }
-        .onChange(of: viewModel.isAuthenticated) { newValue in
+        .onChange(of: viewModel.isAuthenticated) { _, newValue in
             if newValue {
                 // Show a success banner or update UI
             }

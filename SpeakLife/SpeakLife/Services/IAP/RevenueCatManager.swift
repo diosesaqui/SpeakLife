@@ -177,7 +177,7 @@ final class RevenueCatManager {
     func eligibleWinBackOffer(for product: StoreKit.Product) async -> WinBackOffer? {
         guard Purchases.isConfigured, #available(iOS 18.0, *) else { return nil }
         do {
-            guard let rcProduct = try await Purchases.shared.products([product.id]).first else { return nil }
+            guard let rcProduct = await Purchases.shared.products([product.id]).first else { return nil }
             return try await Purchases.shared.eligibleWinBackOffers(forProduct: rcProduct).first
         } catch {
             print("RC win-back eligibility failed: \(error)")
@@ -220,7 +220,7 @@ final class RevenueCatManager {
                   winBackOffer: WinBackOffer? = nil,
                   willPresentSheet: () -> Void = {}) async throws -> StorePurchaseResult {
         if let winBackOffer, #available(iOS 18.0, *) {
-            guard let rcProduct = try await Purchases.shared.products([storeProduct.id]).first else {
+            guard let rcProduct = await Purchases.shared.products([storeProduct.id]).first else {
                 throw NSError(domain: "RevenueCat", code: -1,
                               userInfo: [NSLocalizedDescriptionKey: "Product not found in RC: \(storeProduct.id)"])
             }
@@ -243,7 +243,7 @@ final class RevenueCatManager {
         }
 
         // Fallback: purchase directly via StoreKit Product wrapper
-        let rcProduct = try await Purchases.shared.products([storeProduct.id]).first
+        let rcProduct = await Purchases.shared.products([storeProduct.id]).first
         guard let rcProduct else {
             throw NSError(domain: "RevenueCat", code: -1,
                           userInfo: [NSLocalizedDescriptionKey: "Product not found in RC: \(storeProduct.id)"])
@@ -263,7 +263,7 @@ final class RevenueCatManager {
             return result.customerInfo
         }
 
-        let products = try await Purchases.shared.products([productID])
+        let products = await Purchases.shared.products([productID])
         guard let rcProduct = products.first else {
             throw NSError(domain: "RevenueCat", code: -1,
                           userInfo: [NSLocalizedDescriptionKey: "Product not found in RC: \(productID)"])

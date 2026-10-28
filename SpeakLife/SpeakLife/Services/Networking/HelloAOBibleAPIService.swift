@@ -129,7 +129,6 @@ enum HelloAOContentItem: Codable {
         }
         
         // For any other type, just log and continue as unknown
-        let codingPath = decoder.codingPath.map { $0.stringValue }.joined(separator: " -> ")
         self = .unknown
     }
     
@@ -343,8 +342,6 @@ final class HelloAOBibleAPIService {
                 let result = try decoder.decode(T.self, from: data)
                 return result
             } catch {
-                if let responseString = String(data: data, encoding: .utf8) {
-                }
                 throw BibleAPIError.decodingError(error)
             }
         } catch let error as BibleAPIError {

@@ -166,7 +166,7 @@ struct DevotionalView: View {
                 }
                // .padding([.top], 40)
                 .padding([.bottom], 80)
-                .onChange(of: scrollToTop) { value in
+                .onChange(of: scrollToTop) { _, value in
                     if value {
                         scrollView.scrollTo("titleID", anchor: .top)
                         scrollToTop = false
@@ -383,7 +383,7 @@ struct DevotionalView: View {
                         proxy.scrollTo(selected.rawValue, anchor: .center)
                     }
                 }
-                .onChange(of: viewModel.selectedCategoryRaw) { raw in
+                .onChange(of: viewModel.selectedCategoryRaw) { _, raw in
                     withAnimation { proxy.scrollTo(raw.isEmpty ? "daily" : raw, anchor: .center) }
                 }
             }

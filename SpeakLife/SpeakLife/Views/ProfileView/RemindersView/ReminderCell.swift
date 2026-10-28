@@ -37,7 +37,7 @@ struct ReminderCell: View {
                     .foregroundColor(.white)
             }
             .toggleStyle(SwitchToggleStyle(tint: Constants.DAMidBlue))
-            .onChange(of: appState.notificationEnabled) { enabled in
+            .onChange(of: appState.notificationEnabled) { _, enabled in
                 DailyDeclarationReminderService.shared.isEnabled = enabled
                 showToast()
             }

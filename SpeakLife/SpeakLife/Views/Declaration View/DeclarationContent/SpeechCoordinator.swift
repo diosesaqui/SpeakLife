@@ -7,7 +7,7 @@
 
 import AVFoundation
 
-class SpeechCoordinator: NSObject, AVSpeechSynthesizerDelegate, ObservableObject {
+class SpeechCoordinator: NSObject, AVSpeechSynthesizerDelegate, ObservableObject, @unchecked Sendable {
     let synthesizer = AVSpeechSynthesizer()
     @Published var isSpeaking: Bool = false
 

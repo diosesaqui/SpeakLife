@@ -1307,7 +1307,7 @@ struct ModernDailyChecklistView: View {
             _ = TakeItCaptiveService.consumePendingLaunch()
             openTakeItCaptive(fromIntent: true)
         }
-        .onChange(of: viewModel.todayChecklist.isCompleted) { isCompleted in
+        .onChange(of: viewModel.todayChecklist.isCompleted) { _, isCompleted in
             if isCompleted {
                 // Skip when the final completion arrived via iCloud sync —
                 // the device that earned it already celebrated.
@@ -1753,7 +1753,7 @@ struct JournalEntrySheet: View {
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { focused = true }
         }
-        .onChange(of: voiceManager.voiceInputState) { state in
+        .onChange(of: voiceManager.voiceInputState) { _, state in
             // Recognition is final-only (no partial results), so the transcript
             // is ready once the recorder finishes transcribing.
             if state == .completed { appendTranscription(voiceManager.transcribedText) }
@@ -1886,6 +1886,7 @@ struct JournalEntrySheet: View {
                 // Don't leave an orphaned inserted object that a later viewContext
                 // save could flush; discard it. performAndWait is the synchronous
                 // variant (the async perform overload would need `await` here).
+                nonisolated(unsafe) let entry = entry
                 context.performAndWait { context.delete(entry) }
             }
         }

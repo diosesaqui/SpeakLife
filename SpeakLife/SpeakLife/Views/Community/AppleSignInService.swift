@@ -231,13 +231,16 @@ extension AppleSignInService: ASAuthorizationControllerDelegate {
 
 extension AppleSignInService: ASAuthorizationControllerPresentationContextProviding {
     nonisolated func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
-        // Find key window from connected scenes
-        if let scene = UIApplication.shared.connectedScenes
-            .compactMap({ $0 as? UIWindowScene })
-            .first(where: { $0.activationState == .foregroundActive }),
-           let window = scene.windows.first(where: { $0.isKeyWindow }) {
-            return window
+        // AuthenticationServices calls this on the main thread.
+        MainActor.assumeIsolated {
+            // Find key window from connected scenes
+            if let scene = UIApplication.shared.connectedScenes
+                .compactMap({ $0 as? UIWindowScene })
+                .first(where: { $0.activationState == .foregroundActive }),
+               let window = scene.windows.first(where: { $0.isKeyWindow }) {
+                return window
+            }
+            return UIWindow()
         }
-        return UIWindow()
     }
 }

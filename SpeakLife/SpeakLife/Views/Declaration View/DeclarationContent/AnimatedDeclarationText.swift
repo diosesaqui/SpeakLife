@@ -78,14 +78,14 @@ struct AnimatedDeclarationText: View {
                 resetAndStartAnimation()
             }
         }
-        .onChange(of: text) { newText in
+        .onChange(of: text) { _, newText in
             if lastText != newText {
                 lastText = newText
                 viewId = UUID() // Force view recreation
                 resetAndStartAnimation()
             }
         }
-        .onChange(of: scenePhase) { newPhase in
+        .onChange(of: scenePhase) { _, newPhase in
             switch newPhase {
             case .background, .inactive:
                 // App going to background or becoming inactive - pause animation

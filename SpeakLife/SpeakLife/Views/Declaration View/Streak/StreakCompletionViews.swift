@@ -380,7 +380,7 @@ struct StunningFireDisplay: View {
             .scaleEffect(numberScale)
             .animation(.spring(response: 0.8, dampingFraction: 0.6), value: numberScale)
         }
-        .onChange(of: showContent) { show in
+        .onChange(of: showContent) { _, show in
             if show {
                 startAnimations()
             }
@@ -458,7 +458,7 @@ struct AnimatedDaysText: View {
                     .animation(.easeInOut(duration: 0.5).repeatForever(), value: showCursor)
             }
         }
-        .onChange(of: showContent) { show in
+        .onChange(of: showContent) { _, show in
             if show {
                 startTypewriter()
             }

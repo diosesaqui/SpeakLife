@@ -368,7 +368,7 @@ struct OptimizedSubscriptionView: View {
     
     private var dynamicHeaderPricing: String {
         if selectedOption == "annual" {
-            guard let yearlyProduct = subscriptionStore.currentOfferedPremium else {
+            guard subscriptionStore.currentOfferedPremium != nil else {
                 return "First 3 days on us, then $39.99 per year"
             }
             return "Renew Your Mind. Respond Like Jesus"

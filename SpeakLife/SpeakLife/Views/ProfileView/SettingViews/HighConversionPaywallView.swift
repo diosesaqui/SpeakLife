@@ -927,7 +927,7 @@ struct HighConversionPaywallView: View {
         // Products can finish loading after onAppear (Remote Config + StoreKit
         // race the paywall presentation). Re-check eligibility whenever any of
         // the three offered product ids changes.
-        .onChange(of: offeredProductIDs) { _ in
+        .onChange(of: offeredProductIDs) {
             Task { await refreshTrialEligibility() }
         }
         .alert("", isPresented: $isShowingError) {
@@ -1175,7 +1175,7 @@ struct HighConversionPaywallView: View {
     private func testimonialCard(quote: String, author: String, stars: Int) -> some View {
         VStack(alignment: .leading, spacing: DS.Spacing.xs) {
             HStack(spacing: 2) {
-                ForEach(0..<stars) { _ in Image(systemName: "star.fill").font(.system(size: 10)).foregroundColor(.yellow) }
+                ForEach(0..<stars, id: \.self) { _ in Image(systemName: "star.fill").font(.system(size: 10)).foregroundColor(.yellow) }
             }
             Text("\(quote)")
                 .font(.system(size: 13))

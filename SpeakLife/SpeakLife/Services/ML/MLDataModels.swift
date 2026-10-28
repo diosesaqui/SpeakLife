@@ -190,6 +190,13 @@ struct ContentRecommendation: Identifiable, Codable {
     let emotionalTone: EmotionalTone
     let suggestedTiming: RecommendationTiming
     let connectionToJourney: String
+
+    // `id` is generated fresh per instance and never decoded.
+    private enum CodingKeys: String, CodingKey {
+        case declarationId, recommendationScore, recommendationReason, personalizedTitle,
+             personalizedMessage, confidence, aiCategories, emotionalTone, suggestedTiming,
+             connectionToJourney
+    }
 }
 
 struct RecommendationTiming: Codable {
@@ -209,6 +216,12 @@ struct PersonalizedCategory: Identifiable, Codable {
     let createdDate: Date
     let isActive: Bool
     let spiritualFocus: [SpiritualContentCategory]
+
+    // `id` is generated fresh per instance and never decoded.
+    private enum CodingKeys: String, CodingKey {
+        case name, description, contentIds, userReasonExplanation, confidence,
+             createdDate, isActive, spiritualFocus
+    }
     
     init(name: String, description: String, contentIds: [String], userReasonExplanation: String, confidence: Double, spiritualFocus: [SpiritualContentCategory]) {
         self.name = name
@@ -241,6 +254,12 @@ struct SpiritualTask: Identifiable, Codable {
         case medium = "medium"
         case high = "high"
         case urgent = "urgent"
+    }
+
+    // `id` is generated fresh per instance and never decoded.
+    private enum CodingKeys: String, CodingKey {
+        case title, description, aiGeneratedReason, estimatedMinutes, priority,
+             spiritualFocus, relatedDeclarationIds, completionDate, isCompleted, createdByAI
     }
     
     init(title: String, description: String, aiGeneratedReason: String, estimatedMinutes: Int, priority: TaskPriority, spiritualFocus: SpiritualContentCategory, relatedDeclarationIds: [String]) {

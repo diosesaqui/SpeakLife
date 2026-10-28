@@ -25,7 +25,7 @@ struct ChecklistNotificationSettings: View {
                     .foregroundColor(.white)
             }
             .toggleStyle(SwitchToggleStyle(tint: Constants.DAMidBlue))
-            .onChange(of: appState.eveningCheckInEnabled) { enabled in
+            .onChange(of: appState.eveningCheckInEnabled) { _, enabled in
                 // The evening push also requires the old master checklist
                 // switch, which has no UI. Turning this on must actually
                 // turn the push on.
@@ -162,7 +162,7 @@ struct TimePickerCompact: View {
                     RoundedRectangle(cornerRadius: 8)
                         .fill(Color.white.opacity(0.1))
                 )
-                .onChange(of: minute) { _ in onChange() }
+                .onChange(of: minute) { onChange() }
             }
             
             // AM/PM Picker

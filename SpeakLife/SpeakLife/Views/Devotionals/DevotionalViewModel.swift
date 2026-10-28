@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-final class DevotionalViewModel: ObservableObject, Sendable {
+final class DevotionalViewModel: ObservableObject, @unchecked Sendable {
     
     @AppStorage("devotionalDictionary") var devotionalDictionaryData = Data()
     
@@ -211,6 +211,7 @@ final class DevotionalViewModel: ObservableObject, Sendable {
     func fetchDevotional(remoteVersion: Int) async {
         
         if let devotional = await service.fetchTodayDevotional(remoteVersion: remoteVersion).first {
+            nonisolated(unsafe) let devotional = devotional
             DispatchQueue.main.async { [weak self] in
                 self?.calendarDevotional = devotional
                 // A reader who picked a category sees that instead; the
@@ -264,6 +265,7 @@ final class DevotionalViewModel: ObservableObject, Sendable {
     
     func forceRefreshDevotional(remoteVersion: Int) async {
         if let devotional = await service.forceRefreshDevotionals(remoteVersion: remoteVersion).first {
+            nonisolated(unsafe) let devotional = devotional
             DispatchQueue.main.async { [weak self] in
                 self?.devotional = devotional
             }

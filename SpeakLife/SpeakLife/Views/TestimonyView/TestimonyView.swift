@@ -137,7 +137,7 @@ struct TestimonyFormView: View {
                 Section(header: Text("Your Testimony")) {
                     TextEditor(text: $testimonyText)
                         .frame(minHeight: 100)
-                        .onChange(of: testimonyText) { newValue in
+                        .onChange(of: testimonyText) { _, newValue in
                             if newValue.count > characterLimit {
                                 testimonyText = String(newValue.prefix(characterLimit))
                             }

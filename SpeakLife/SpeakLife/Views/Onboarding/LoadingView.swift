@@ -101,7 +101,7 @@ struct BulletPointView: View {
         }
         .opacity(!isHighlighted ? 0 : 1)
         .animation(.easeInOut, value: !isHighlighted)
-        .onChange(of: isHighlighted) { newValue in
+        .onChange(of: isHighlighted) { _, newValue in
             if newValue {
                 withAnimation(Animation.easeInOut(duration: 1.0).delay(delay)) {
                     isHighlighted = newValue

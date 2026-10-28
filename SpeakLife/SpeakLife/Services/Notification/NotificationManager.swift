@@ -11,7 +11,7 @@
 
 import Foundation
 
-final class UpdateNotificationsOperation: Operation {
+final class UpdateNotificationsOperation: Operation, @unchecked Sendable {
 
     private let appState: AppState
 

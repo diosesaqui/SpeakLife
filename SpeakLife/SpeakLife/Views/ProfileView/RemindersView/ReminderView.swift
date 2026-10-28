@@ -202,7 +202,7 @@ struct BedtimeAudioReminderCell: View {
                     .foregroundColor(.white)
             }
             .toggleStyle(SwitchToggleStyle(tint: Constants.DAMidBlue))
-            .onChange(of: isEnabled) { enabled in
+            .onChange(of: isEnabled) { _, enabled in
                 LifecycleNotificationService.shared.scheduleBedtimeAudio(isPremium: subscriptionStore.isPremium)
                 AnalyticsService.shared.track("bedtime_audio_toggled", parameters: ["enabled": enabled])
                 showToast()

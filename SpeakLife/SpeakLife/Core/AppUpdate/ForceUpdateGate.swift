@@ -261,7 +261,7 @@ struct ForceUpdateGateModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .onAppear { sync() }
-            .onChange(of: subscriptionStore.forcedUpdatePrompt) { _ in sync() }
+            .onChange(of: subscriptionStore.forcedUpdatePrompt) { sync() }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
                 // Re-decide immediately from the config already activated in a
                 // previous session, so a returning user on a retired build is

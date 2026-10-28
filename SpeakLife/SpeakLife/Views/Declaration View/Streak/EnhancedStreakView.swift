@@ -62,7 +62,7 @@ struct EnhancedStreakView: View {
                 "is_completed_today": viewModel.todayChecklist.isCompleted
             ])
         }
-        .onChange(of: viewModel.todayChecklist.isCompleted) { isCompleted in
+        .onChange(of: viewModel.todayChecklist.isCompleted) { _, isCompleted in
             if isCompleted {
                 // Track streak completion
                 let newStreak = viewModel.streakStats.currentStreak

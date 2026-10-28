@@ -414,7 +414,7 @@ struct BibleChatConversationView: View {
                 .accessibilityLabel("Chat history")
             }
         }
-        .onChange(of: viewModel.needsPaywall) { newValue in
+        .onChange(of: viewModel.needsPaywall) { _, newValue in
             if newValue {
                 viewModel.needsPaywall = false
                 showPaywall = true
@@ -513,12 +513,12 @@ struct BibleChatConversationView: View {
             }
             // Drag the conversation down to dismiss the keyboard.
             .scrollDismissesKeyboard(.interactively)
-            .onChange(of: viewModel.messages.count) { _ in
+            .onChange(of: viewModel.messages.count) {
                 if let last = viewModel.messages.last {
                     withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
                 }
             }
-            .onChange(of: viewModel.isSending) { sending in
+            .onChange(of: viewModel.isSending) { _, sending in
                 if sending { withAnimation { proxy.scrollTo("typing", anchor: .bottom) } }
             }
         }
@@ -821,7 +821,7 @@ struct BibleChatConversationView: View {
         .lineLimit(1...5)
         // A vertical-axis field inserts a newline on Return. For short Q&A
         // that's not wanted, so treat a trailing newline as Send instead.
-        .onChange(of: viewModel.draft) { value in
+        .onChange(of: viewModel.draft) { _, value in
             guard value.hasSuffix("\n") else { return }
             viewModel.draft = String(value.dropLast())
             inputFocused = false

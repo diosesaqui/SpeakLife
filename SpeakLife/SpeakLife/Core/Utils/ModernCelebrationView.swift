@@ -111,7 +111,7 @@ struct SparkleCelebrationView: View {
             .scaleEffect(scale)
             .rotationEffect(.degrees(rotation))
             .offset(x: offset.x, y: offset.y)
-            .onChange(of: show) { newValue in
+            .onChange(of: show) { _, newValue in
                 if newValue {
                     startSparkle()
                 }
