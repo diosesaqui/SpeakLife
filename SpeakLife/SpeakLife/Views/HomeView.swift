@@ -8,7 +8,8 @@
 import SwiftUI
 import FacebookCore
 import UserNotifications
-let resources: [MusicResources] = [.rainstorm, .everpresent, .shoreline, .livingwater]
+// shoreline is pulled from the rotation for now. Add it back here to restore it.
+let resources: [MusicResources] = [.rainstorm, .everpresent, .livingwater]
 
 struct MusicResources {
     let name: String
