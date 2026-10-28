@@ -2130,8 +2130,19 @@ struct HighConversionPaywallView: View {
             let restored = await subscriptionStore.restore()
             await MainActor.run {
                 declarationStore.isPurchasing = false
-                errorMessage = restored ? "Purchases restored" : "No purchases found to restore."
-                isShowingError = true
+                AnalyticsService.shared.track("paywall_restore", parameters: [
+                    "restored": restored, "source": source, "variant": paywallVariant
+                ])
+                // A restored member moves on, the same as a buyer. Only showing
+                // an alert left them on the hard onboarding wall, which has no
+                // close button.
+                if restored {
+                    callback?()
+                    dismiss()
+                } else {
+                    errorMessage = "No purchases found to restore."
+                    isShowingError = true
+                }
             }
         }
     }
@@ -2487,8 +2498,13 @@ struct WelcomeOfferView: View {
             let restored = await subscriptionStore.restore()
             await MainActor.run {
                 declarationStore.isPurchasing = false
-                errorMessage = restored ? "Purchases restored" : "No purchases found to restore."
-                isShowingError = true
+                // A restored member already has access: close the offer.
+                if restored {
+                    onPurchaseSuccess()
+                } else {
+                    errorMessage = "No purchases found to restore."
+                    isShowingError = true
+                }
             }
         }
     }
