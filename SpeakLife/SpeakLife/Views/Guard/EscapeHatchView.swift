@@ -163,6 +163,10 @@ struct AskForThoughtView: View {
             : AnyShapeStyle(Color.white.opacity(0.10))
     }
 
+    private var fieldStroke: Color {
+        entry.isEmpty ? Color.white.opacity(0.12) : GuardStyle.gold.opacity(0.45)
+    }
+
     var body: some View {
         ZStack {
             LinearGradient(colors: [Color(hex: "#1B1D22"), Color(hex: "#101216")],
@@ -173,14 +177,14 @@ struct AskForThoughtView: View {
                 VStack(alignment: .leading, spacing: DS.Spacing.md) {
                     HStack {
                         Text("TAKE IT CAPTIVE")
-                            .font(.system(size: 11, weight: .bold))
-                            .tracking(2.6)
-                            .foregroundColor(.white.opacity(0.38))
+                            .font(GuardStyle.eyebrow)
+                            .tracking(GuardStyle.eyebrowTracking)
+                            .foregroundColor(GuardStyle.gold.opacity(0.75))
                         Spacer()
                         Button(action: onClose) {
                             Image(systemName: "xmark")
                                 .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.32))
+                                .foregroundColor(GuardStyle.tertiary)
                                 .frame(width: 32, height: 32)
                         }
                         .accessibilityLabel("Close")
@@ -222,11 +226,14 @@ struct AskForThoughtView: View {
                         // small phone at large type sizes.
                         .minimumScaleFactor(0.75)
                         .fixedSize(horizontal: false, vertical: true)
+                        .padding(.top, 8)
 
                     Text(privacyLine)
                         .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(.white.opacity(0.45))
+                        .foregroundColor(GuardStyle.secondary)
+                        .lineSpacing(2)
                         .fixedSize(horizontal: false, vertical: true)
+                        .padding(.bottom, 6)
 
                     TextEditor(text: $text)
                         .focused($focused)
@@ -239,10 +246,13 @@ struct AskForThoughtView: View {
                             RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
                                 .fill(Color.white.opacity(0.06))
                         )
+                        // The edge warms to gold once they start typing, so the
+                        // field answers them before the button does.
                         .overlay(
                             RoundedRectangle(cornerRadius: DS.Radius.md, style: .continuous)
-                                .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                                .stroke(fieldStroke, lineWidth: 1)
                         )
+                        .shadow(color: GuardStyle.gold.opacity(entry.isEmpty ? 0 : 0.12), radius: 14)
 
                     // Only once they have started, and never before. A hint on an
                     // empty field reads as a rule to clear; a hint under two typed
@@ -254,7 +264,7 @@ struct AskForThoughtView: View {
                     if !entry.isEmpty, !canSubmit, !showReachOut {
                         Text("A few more words, and we'll hand you the one that answers it.")
                             .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(.white.opacity(0.42))
+                            .foregroundColor(GuardStyle.tertiary)
                             .fixedSize(horizontal: false, vertical: true)
                             .transition(.opacity)
                     }
@@ -268,7 +278,7 @@ struct AskForThoughtView: View {
                              ? "\(remaining) more this month"
                              : "You've used this month's extra entries.")
                             .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(.white.opacity(0.4))
+                            .foregroundColor(GuardStyle.tertiary)
                     }
                 }
                 .padding(.horizontal, 24)
@@ -305,6 +315,11 @@ struct AskForThoughtView: View {
             }
         }
         .onAppear { focused = true }
+        // The button lighting up is the moment the app has enough to answer
+        // with, so it gets felt as well as seen.
+        .onChange(of: canSubmit) { _, ready in
+            if ready { PremiumHaptics.safeLight() }
+        }
     }
 
     // MARK: - Action footer
@@ -329,11 +344,13 @@ struct AskForThoughtView: View {
                         }
                         Text(isWriting ? "Answering it" : "Take it captive")
                             .font(.system(size: 16, weight: .bold, design: .rounded))
-                            .foregroundColor(canSubmit ? Color(hex: "#1A264D") : .white.opacity(0.4))
+                            .foregroundColor(canSubmit ? Color(hex: "#1A264D") : GuardStyle.tertiary)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
                     .background(Capsule().fill(submitFill))
+                    .shadow(color: GuardStyle.gold.opacity(canSubmit ? 0.35 : 0), radius: 16, y: 4)
+                    .scaleEffect(canSubmit ? 1 : 0.98)
                 }
                 .buttonStyle(.dsPressable(feel: .tapSolid))
                 .disabled(!canSubmit || isWriting)
@@ -362,7 +379,7 @@ struct AskForThoughtView: View {
                     } label: {
                         Text("Can't name one? Give me one to work with.")
                             .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.5))
+                            .foregroundColor(GuardStyle.secondary)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 6)
                     }

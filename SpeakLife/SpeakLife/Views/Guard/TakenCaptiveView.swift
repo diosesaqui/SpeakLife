@@ -64,6 +64,10 @@ struct TakenCaptiveView: View {
     @State private var warmed = false
     /// The line that names what just happened, after the card has gone.
     @State private var showVerdict = false
+    /// The verse lands a beat after the headline, then its reference, so the
+    /// moment arrives in three steps rather than as one block of text.
+    @State private var showVerse = false
+    @State private var showReference = false
     /// Set the instant the screen stops being live — by finishing, by the user
     /// closing it, or by the escape hatch.
     ///
@@ -78,7 +82,7 @@ struct TakenCaptiveView: View {
     private let colder = Color(hex: "#101216")
     private let navy = Color(hex: "#1A264D")
     private let deepNavy = Color(hex: "#0F1730")
-    private let gold = Color(hex: "#F5B742")
+    private let gold = GuardStyle.gold
 
     // The whole schedule, in one place so the timings can be read against each
     // other rather than hunted through the file.
@@ -96,7 +100,12 @@ struct TakenCaptiveView: View {
     private var seizeAt: Double { isOwnWords ? 0.30 : 1.70 }
     private var warmAt: Double { seizeAt + 0.42 }
     private var verdictAt: Double { seizeAt + 0.65 }
-    private var handOffAt: Double { seizeAt + 1.55 }
+    private var verseAt: Double { seizeAt + 0.95 }
+    private var referenceAt: Double { seizeAt + 1.20 }
+    /// About 2.2s after the verse lands. The verdict used to hold for 0.9s,
+    /// which was fine for two words and a reference but too short to read a
+    /// line of scripture.
+    private var handOffAt: Double { seizeAt + 3.10 }
 
     var body: some View {
         ZStack {
@@ -140,14 +149,15 @@ struct TakenCaptiveView: View {
 
     private var header: some View {
         HStack {
-            // It is not taken until it is taken. On a served thought the card
-            // sits for 1.7s of read time first, and a header claiming victory
-            // over a line the user is still reading is the app narrating
-            // something that has not happened. It flips on the seize.
-            Text(seized ? "TAKEN CAPTIVE" : "INCOMING")
-                .font(.system(size: 11, weight: .bold))
-                .tracking(2.6)
-                .foregroundColor(warmed ? gold.opacity(0.9) : .white.opacity(0.38))
+            // It is not taken until it is taken, so the header never claims it
+            // early. It fades on the seize rather than flipping to "TAKEN
+            // CAPTIVE": the verdict says exactly that a beat later, and saying
+            // it twice on one screen dulls both.
+            Text("INCOMING")
+                .font(GuardStyle.eyebrow)
+                .tracking(GuardStyle.eyebrowTracking)
+                .foregroundColor(GuardStyle.tertiary)
+                .opacity(seized ? 0 : 1)
                 .animation(DS.Motion.smooth, value: seized)
             Spacer()
             // The only control on the screen. A full-screen cover with no way
@@ -155,7 +165,7 @@ struct TakenCaptiveView: View {
             Button(action: close) {
                 Image(systemName: "xmark")
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.32))
+                    .foregroundColor(GuardStyle.tertiary)
                     .frame(width: 32, height: 32)
             }
             .accessibilityLabel("Close")
@@ -233,7 +243,7 @@ struct TakenCaptiveView: View {
         } label: {
             Text("Something else is on my mind")
                 .font(.system(size: 13, weight: .medium))
-                .foregroundColor(.white.opacity(0.36))
+                .foregroundColor(GuardStyle.tertiary)
                 .underline()
         }
         .buttonStyle(.plain)
@@ -244,19 +254,41 @@ struct TakenCaptiveView: View {
 
     /// What just happened, in the words the feature is built on. It lands on the
     /// empty field after the card has gone, so the screen is never blank and the
-    /// second and a half never reads as a stall.
+    /// three-second hold never reads as a stall.
+    ///
+    /// The verse is quoted, not just cited. A bare "2 Corinthians 10:5" on
+    /// every run read like a stray reference that never changed; the words say
+    /// it is the verse the whole feature stands on.
     private var verdict: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 14) {
             Text("Taken captive.")
-                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .font(.system(size: 34, weight: .bold, design: .rounded))
                 .foregroundColor(.white)
+                .shadow(color: gold.opacity(0.45), radius: 16)
+                .opacity(showVerdict ? 1 : 0)
+                .scaleEffect(showVerdict ? 1 : 0.94)
+
+            GuardRule()
+                .opacity(showVerse ? 1 : 0)
+
+            Text("\u{201C}We take captive every thought to make it obedient to Christ.\u{201D}")
+                .font(GuardStyle.scripture(17))
+                .foregroundColor(GuardStyle.scriptureInk.opacity(0.88))
+                .lineSpacing(4)
+                .frame(maxWidth: 300)
+                .fixedSize(horizontal: false, vertical: true)
+                .opacity(showVerse ? 1 : 0)
+                .offset(y: showVerse ? 0 : 8)
+
             Text("2 Corinthians 10:5")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(gold.opacity(0.85))
+                .textCase(.uppercase)
+                .font(GuardStyle.reference)
+                .tracking(GuardStyle.referenceTracking)
+                .foregroundColor(gold.opacity(0.9))
+                .opacity(showReference ? 1 : 0)
         }
         .multilineTextAlignment(.center)
-        .opacity(showVerdict ? 1 : 0)
-        .scaleEffect(showVerdict ? 1 : 0.94)
+        .accessibilityElement(children: .combine)
     }
 
     // MARK: - Schedule
@@ -274,6 +306,13 @@ struct TakenCaptiveView: View {
         }
         step(at: verdictAt) {
             withAnimation(DS.Motion.smooth) { showVerdict = true }
+        }
+        step(at: verseAt) {
+            PremiumHaptics.safeLight()
+            withAnimation(.easeOut(duration: 0.5)) { showVerse = true }
+        }
+        step(at: referenceAt) {
+            withAnimation(.easeOut(duration: 0.4)) { showReference = true }
         }
         step(at: handOffAt) {
             ended = true
@@ -295,5 +334,41 @@ struct TakenCaptiveView: View {
         guard !ended else { return }
         ended = true
         onClose()
+    }
+}
+
+// MARK: - Shared style
+
+/// The type and colour rules every screen in the drill shares.
+///
+/// Two tiers of quiet text, not five: `secondary` for a line someone should
+/// read, `tertiary` for chrome such as close buttons and the quieter links.
+/// Scripture is always set in the serif, so a verse never reads as interface
+/// copy.
+enum GuardStyle {
+    static let gold = Color(hex: "#F5B742")
+    /// Warm off-white for scripture. Pure white is harsh on navy at reading size.
+    static let scriptureInk = Color(hex: "#F3EEE4")
+    static let secondary = Color.white.opacity(0.62)
+    static let tertiary = Color.white.opacity(0.40)
+
+    static func scripture(_ size: CGFloat) -> Font {
+        .system(size: size, weight: .regular, design: .serif).italic()
+    }
+
+    /// A verse reference, uppercased and spaced like a seal under its line.
+    static let reference: Font = .system(size: 12, weight: .semibold)
+    static let referenceTracking: CGFloat = 1.8
+
+    static let eyebrow: Font = .system(size: 11, weight: .bold)
+    static let eyebrowTracking: CGFloat = 2.6
+}
+
+/// A short gold rule between a headline and the scripture under it.
+struct GuardRule: View {
+    var body: some View {
+        Capsule()
+            .fill(GuardStyle.gold.opacity(0.55))
+            .frame(width: 28, height: 1.5)
     }
 }

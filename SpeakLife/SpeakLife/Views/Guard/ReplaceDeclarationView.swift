@@ -79,10 +79,13 @@ struct ReplaceDeclarationView: View {
     /// same frame the card burned off, which read as one continuous blur rather
     /// than as arriving somewhere new.
     @State private var revealed = false
+    /// 0 to 1: a band of gold sweeps across the spoken lines once they are
+    /// confirmed, so the line is seen to land rather than only the waveform.
+    @State private var shimmer: CGFloat = 0
 
     /// Navy field, per spec.
     private let field = Color(hex: "#1A264D")
-    private let gold = Color(hex: "#F5B742")
+    private let gold = GuardStyle.gold
 
     var body: some View {
         ZStack {
@@ -106,7 +109,7 @@ struct ReplaceDeclarationView: View {
                     }) {
                         Image(systemName: "xmark")
                             .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.35))
+                            .foregroundColor(GuardStyle.tertiary)
                             .frame(width: 32, height: 32)
                     }
                     .accessibilityLabel("Close")
@@ -115,58 +118,34 @@ struct ReplaceDeclarationView: View {
                 Spacer(minLength: 0)
 
                 Text("SPEAK IT")
-                    .font(.system(size: 11, weight: .bold))
-                    .tracking(2.6)
+                    .font(GuardStyle.eyebrow)
+                    .tracking(GuardStyle.eyebrowTracking)
                     .foregroundColor(gold.opacity(0.9))
                     .opacity(revealed ? 1 : 0)
 
-                // Two lines, one breath, in the order Jesus used: speak to the
-                // thing, then say what is true. The rebuke is smaller and set
-                // apart above — it is the shorter, harder half, and it is over
-                // in four words. The declaration is what the screen is for.
-                //
-                // Both highlight off the SAME transcript. The verifier is
-                // primed with the two lines joined, so `matchedIndices` runs
-                // straight through and the second block only has to subtract
-                // the first block's length to find its own indices.
-                VStack(spacing: DS.Spacing.md) {
-                    HighlightedDeclarationText(
-                        displayWords: rebukeWords,
-                        matchedIndices: verifier.matchedIndices.filter { $0 < rebukeWords.count },
-                        isRecording: verifier.isRecording,
-                        fontSize: 19
-                    )
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
+                spokenLines
+                    .overlay { shimmerBand }
+                    .opacity(revealed ? 1 : 0)
+                    .offset(y: revealed ? 0 : 14)
 
-                    // Words light gold as the transcript matches them, so the
-                    // screen shows the line being taken rather than a bar
-                    // filling.
-                    HighlightedDeclarationText(
-                        displayWords: declarationWords,
-                        matchedIndices: Set(verifier.matchedIndices
-                            .filter { $0 >= rebukeWords.count }
-                            .map { $0 - rebukeWords.count }),
-                        isRecording: verifier.isRecording
-                    )
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .shadow(color: gold.opacity(0.25), radius: 18)
-                }
-                .opacity(revealed ? 1 : 0)
-                .offset(y: revealed ? 0 : 14)
-
-                VStack(spacing: 6) {
+                // Scripture in the serif, set apart by a short gold rule, so it
+                // reads as the verse under the line rather than as more copy.
+                VStack(spacing: 10) {
+                    GuardRule()
                     Text(thought.verseText)
-                        .font(.system(size: 14, weight: .regular))
-                        .foregroundColor(.white.opacity(0.7))
+                        .font(GuardStyle.scripture(16))
+                        .foregroundColor(GuardStyle.scriptureInk.opacity(0.85))
+                        .lineSpacing(3)
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
                     Text(thought.book)
-                        .font(.system(size: 13, weight: .semibold))
+                        .textCase(.uppercase)
+                        .font(GuardStyle.reference)
+                        .tracking(GuardStyle.referenceTracking)
                         .foregroundColor(gold.opacity(0.85))
                 }
                 .padding(.horizontal, 8)
+                .opacity(revealed ? 1 : 0)
 
                 Spacer(minLength: 0)
 
@@ -201,6 +180,58 @@ struct ReplaceDeclarationView: View {
             // is transcribed" here would be a lie told inside a permission ask.
             Text("SpeakLife listens to check you spoke the line out loud. The audio is deleted the moment it's checked, and never saved.")
         }
+    }
+
+    // MARK: - Spoken lines
+
+    /// Two lines, one breath, in the order Jesus used: speak to the
+    /// thing, then say what is true. The rebuke is smaller and set
+    /// apart above — it is the shorter, harder half, and it is over
+    /// in four words. The declaration is what the screen is for.
+    ///
+    /// Both highlight off the SAME transcript. The verifier is
+    /// primed with the two lines joined, so `matchedIndices` runs
+    /// straight through and the second block only has to subtract
+    /// the first block's length to find its own indices.
+    private var spokenLines: some View {
+        VStack(spacing: DS.Spacing.md) {
+            HighlightedDeclarationText(
+                displayWords: rebukeWords,
+                matchedIndices: verifier.matchedIndices.filter { $0 < rebukeWords.count },
+                isRecording: verifier.isRecording,
+                fontSize: 19
+            )
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
+
+            // Words light gold as the transcript matches them, so the
+            // screen shows the line being taken rather than a bar
+            // filling.
+            HighlightedDeclarationText(
+                displayWords: declarationWords,
+                matchedIndices: Set(verifier.matchedIndices
+                    .filter { $0 >= rebukeWords.count }
+                    .map { $0 - rebukeWords.count }),
+                isRecording: verifier.isRecording
+            )
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
+            .shadow(color: gold.opacity(0.25), radius: 18)
+        }
+    }
+
+    /// The confirmation sweep: a soft band of gold crossing the spoken lines,
+    /// masked to the letters so only the words catch the light.
+    private var shimmerBand: some View {
+        GeometryReader { geo in
+            LinearGradient(colors: [.clear, gold.opacity(0.75), .clear],
+                           startPoint: .leading, endPoint: .trailing)
+                .frame(width: geo.size.width * 0.45)
+                .offset(x: geo.size.width * (shimmer * 1.45 - 0.45))
+        }
+        .mask { spokenLines }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 
     // MARK: - Arming
@@ -294,7 +325,7 @@ struct ReplaceDeclarationView: View {
 
             Text(promptText)
                 .font(.system(size: 14, weight: .semibold, design: .rounded))
-                .foregroundColor(.white.opacity(settled ? 0.95 : 0.65))
+                .foregroundColor(settled ? .white.opacity(0.95) : GuardStyle.secondary)
                 .multilineTextAlignment(.center)
 
             // "I've said it." The way to finish on purpose.
@@ -309,7 +340,7 @@ struct ReplaceDeclarationView: View {
                 Button {
                     verifier.finishSpeaking()
                 } label: {
-                    Text("Done — I've said it")
+                    Text("I've said it")
                         .font(.system(size: 15, weight: .bold, design: .rounded))
                         .foregroundColor(.white.opacity(0.9))
                         .frame(maxWidth: .infinity)
@@ -338,7 +369,7 @@ struct ReplaceDeclarationView: View {
             } label: {
                 Text("Can't speak out loud right now")
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(.white.opacity(0.35))
+                    .foregroundColor(GuardStyle.tertiary)
                     .underline()
             }
             .buttonStyle(.plain)
@@ -415,7 +446,7 @@ struct ReplaceDeclarationView: View {
 
             Text("Speak it wherever you are. Out loud, or under your breath.")
                 .font(.system(size: 12, weight: .medium))
-                .foregroundColor(.white.opacity(0.4))
+                .foregroundColor(GuardStyle.tertiary)
                 .multilineTextAlignment(.center)
         }
     }
@@ -453,6 +484,7 @@ struct ReplaceDeclarationView: View {
         guard !settled else { return }
         settled = true
         PremiumHaptics.safeSuccess()
+        withAnimation(.easeInOut(duration: 0.9)) { shimmer = 1 }
         verifier.cancel()
         // 1.4s, not 0.7. The settle IS the confirmation, so it has to be on
         // screen long enough to be read as one — otherwise the +1 arrives before
