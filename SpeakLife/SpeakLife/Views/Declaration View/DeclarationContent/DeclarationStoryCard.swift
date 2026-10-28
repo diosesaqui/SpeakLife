@@ -283,7 +283,7 @@ struct DeclarationStoryCardView: View {
                 Text("Speak it with SpeakLife")
                     .font(.system(size: 31, weight: .bold))
                     .foregroundStyle(.white)
-                Text("Free on the App Store")
+                Text("Download on iOS")
                     .font(.system(size: 24, weight: .medium))
                     .foregroundStyle(.white.opacity(0.72))
             }
