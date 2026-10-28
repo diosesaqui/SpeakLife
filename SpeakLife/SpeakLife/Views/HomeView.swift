@@ -8,7 +8,7 @@
 import SwiftUI
 import FacebookCore
 import UserNotifications
-// shoreline is pulled from the rotation for now. Add it back here to restore it.
+// shoreline is pulled for now. To restore it, add it back here and to the Resources build phase.
 let resources: [MusicResources] = [.rainstorm, .everpresent, .livingwater]
 
 struct MusicResources {
