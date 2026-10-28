@@ -71,6 +71,11 @@ struct AskForThoughtView: View {
     /// response to what is coming against them.
     @State private var isWriting = false
     @FocusState private var focused: Bool
+    /// Drives the entrance: the question, then the line under it, then the
+    /// field, each coming into focus a beat apart.
+    @State private var appeared = false
+    /// 0 to 1: a band of light crosses the button the moment it unlocks.
+    @State private var sheen: CGFloat = 0
 
     /// Whether the words are about to leave the device.
     ///
@@ -227,6 +232,7 @@ struct AskForThoughtView: View {
                         .minimumScaleFactor(0.75)
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(.top, 8)
+                        .guardReveal(appeared, distance: 14)
 
                     Text(privacyLine)
                         .font(.system(size: 13, weight: .medium))
@@ -234,6 +240,7 @@ struct AskForThoughtView: View {
                         .lineSpacing(2)
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(.bottom, 6)
+                        .guardReveal(appeared, delay: 0.08)
 
                     TextEditor(text: $text)
                         .focused($focused)
@@ -253,6 +260,7 @@ struct AskForThoughtView: View {
                                 .stroke(fieldStroke, lineWidth: 1)
                         )
                         .shadow(color: GuardStyle.gold.opacity(entry.isEmpty ? 0 : 0.12), radius: 14)
+                        .guardReveal(appeared, delay: 0.16, distance: 8)
 
                     // Only once they have started, and never before. A hint on an
                     // empty field reads as a rule to clear; a hint under two typed
@@ -314,11 +322,21 @@ struct AskForThoughtView: View {
                     .font(.system(size: 16, weight: .semibold, design: .rounded))
             }
         }
-        .onAppear { focused = true }
+        .onAppear {
+            focused = true
+            appeared = true
+            GuardHaptics.shared.prepare()
+        }
         // The button lighting up is the moment the app has enough to answer
-        // with, so it gets felt as well as seen.
+        // with, so it is felt (a soft double click) and seen (a sheen crossing
+        // it) as well as coloured in.
         .onChange(of: canSubmit) { _, ready in
-            if ready { PremiumHaptics.safeLight() }
+            var reset = Transaction()
+            reset.disablesAnimations = true
+            withTransaction(reset) { sheen = 0 }
+            guard ready else { return }
+            GuardHaptics.shared.ready()
+            withAnimation(.easeInOut(duration: 0.85).delay(0.08)) { sheen = 1 }
         }
     }
 
@@ -349,8 +367,10 @@ struct AskForThoughtView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
                     .background(Capsule().fill(submitFill))
-                    .shadow(color: GuardStyle.gold.opacity(canSubmit ? 0.35 : 0), radius: 16, y: 4)
-                    .scaleEffect(canSubmit ? 1 : 0.98)
+                    .goldSweep(sheen, tint: .white)
+                    .shadow(color: GuardStyle.gold.opacity(canSubmit ? 0.4 : 0), radius: 18, y: 6)
+                    .scaleEffect(canSubmit ? 1 : 0.97)
+                    .animation(GuardStyle.lively, value: canSubmit)
                 }
                 .buttonStyle(.dsPressable(feel: .tapSolid))
                 .disabled(!canSubmit || isWriting)

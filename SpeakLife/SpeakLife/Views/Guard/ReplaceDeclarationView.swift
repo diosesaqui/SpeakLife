@@ -82,6 +82,9 @@ struct ReplaceDeclarationView: View {
     /// 0 to 1: a band of gold sweeps across the spoken lines once they are
     /// confirmed, so the line is seen to land rather than only the waveform.
     @State private var shimmer: CGFloat = 0
+    /// The lines swell a touch as the sweep peaks, then settle: the line is
+    /// seen to land.
+    @State private var breathe = false
 
     /// Navy field, per spec.
     private let field = Color(hex: "#1A264D")
@@ -121,17 +124,19 @@ struct ReplaceDeclarationView: View {
                     .font(GuardStyle.eyebrow)
                     .tracking(GuardStyle.eyebrowTracking)
                     .foregroundColor(gold.opacity(0.9))
-                    .opacity(revealed ? 1 : 0)
+                    .guardReveal(revealed)
 
+                // Arrives into focus a beat after the label. On confirm, a band
+                // of gold crosses the words while the haptic swells with it.
                 spokenLines
-                    .overlay { shimmerBand }
-                    .opacity(revealed ? 1 : 0)
-                    .offset(y: revealed ? 0 : 14)
+                    .goldSweep(shimmer)
+                    .scaleEffect(breathe ? 1.025 : 1)
+                    .guardReveal(revealed, delay: 0.1, distance: 14)
 
                 // Scripture in the serif, set apart by a short gold rule, so it
                 // reads as the verse under the line rather than as more copy.
                 VStack(spacing: 10) {
-                    GuardRule()
+                    GuardRule(shown: revealed, delay: 0.28)
                     Text(thought.verseText)
                         .font(GuardStyle.scripture(16))
                         .foregroundColor(GuardStyle.scriptureInk.opacity(0.85))
@@ -145,7 +150,7 @@ struct ReplaceDeclarationView: View {
                         .foregroundColor(gold.opacity(0.85))
                 }
                 .padding(.horizontal, 8)
-                .opacity(revealed ? 1 : 0)
+                .guardReveal(revealed, delay: 0.24)
 
                 Spacer(minLength: 0)
 
@@ -161,9 +166,12 @@ struct ReplaceDeclarationView: View {
         // The reveal lives in onAppear, not in the task: `.task`'s closure is
         // @Sendable and carries no actor guarantee, and this writes @State and
         // drives an animation.
-        .onAppear { withAnimation(DS.Motion.smooth) { revealed = true } }
+        .onAppear {
+            GuardHaptics.shared.prepare()
+            revealed = true
+        }
         .task { await arm() }
-        .onDisappear { verifier.cancel(); holdTimer?.invalidate() }
+        .onDisappear { verifier.cancel(); holdTimer?.invalidate(); GuardHaptics.shared.cancelHold() }
         // The speaker stopped. Close the recording and let the transcript
         // decide, rather than guessing from how loud the room was.
         .onChange(of: verifier.endpointedAt) { _, stamped in
@@ -218,20 +226,6 @@ struct ReplaceDeclarationView: View {
             .fixedSize(horizontal: false, vertical: true)
             .shadow(color: gold.opacity(0.25), radius: 18)
         }
-    }
-
-    /// The confirmation sweep: a soft band of gold crossing the spoken lines,
-    /// masked to the letters so only the words catch the light.
-    private var shimmerBand: some View {
-        GeometryReader { geo in
-            LinearGradient(colors: [.clear, gold.opacity(0.75), .clear],
-                           startPoint: .leading, endPoint: .trailing)
-                .frame(width: geo.size.width * 0.45)
-                .offset(x: geo.size.width * (shimmer * 1.45 - 0.45))
-        }
-        .mask { spokenLines }
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
     }
 
     // MARK: - Arming
@@ -453,7 +447,8 @@ struct ReplaceDeclarationView: View {
 
     private func beginHold() {
         guard holdTimer == nil, !settled else { return }
-        PremiumHaptics.safeLight()
+        // Tension builds under the thumb for exactly as long as the bar fills.
+        GuardHaptics.shared.beginHold(duration: 1.1)
         holdTimer = Timer.scheduledTimer(withTimeInterval: 0.02, repeats: true) { _ in
             Task { @MainActor in
                 let stepped: CGFloat = holdProgress + (0.02 / 1.1)
@@ -466,6 +461,7 @@ struct ReplaceDeclarationView: View {
     private func endHold() {
         holdTimer?.invalidate(); holdTimer = nil
         guard !settled else { return }
+        GuardHaptics.shared.cancelHold()
         withAnimation(DS.Motion.quick) { holdProgress = 0 }
     }
 
@@ -483,8 +479,14 @@ struct ReplaceDeclarationView: View {
     private func settle(method: String) {
         guard !settled else { return }
         settled = true
-        PremiumHaptics.safeSuccess()
+        GuardHaptics.shared.cancelHold()
+        // The sweep and the haptic swell are one gesture: same 0.9s, same peak.
+        GuardHaptics.shared.spoken(sweep: 0.9)
         withAnimation(.easeInOut(duration: 0.9)) { shimmer = 1 }
+        withAnimation(GuardStyle.lively.delay(0.3)) { breathe = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.75) {
+            withAnimation(GuardStyle.spring) { breathe = false }
+        }
         verifier.cancel()
         // 1.4s, not 0.7. The settle IS the confirmation, so it has to be on
         // screen long enough to be read as one — otherwise the +1 arrives before

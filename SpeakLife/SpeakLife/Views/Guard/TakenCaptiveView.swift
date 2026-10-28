@@ -60,6 +60,9 @@ struct TakenCaptiveView: View {
     /// The card is seized: it desaturates, tightens, and is pulled down to
     /// nothing.
     @State private var seized = false
+    /// The beat before the seize: the card lifts a hair, the way a hand closes
+    /// before it pulls. The haptic's rising pull plays across this beat.
+    @State private var bracing = false
     /// The field warms grey to navy under it.
     @State private var warmed = false
     /// The line that names what just happened, after the card has gone.
@@ -77,6 +80,8 @@ struct TakenCaptiveView: View {
     /// right after `guard_task_abandoned` said the opposite. Every step checks
     /// it.
     @State private var ended = false
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private let cold = Color(hex: "#1B1D22")
     private let colder = Color(hex: "#101216")
@@ -100,12 +105,18 @@ struct TakenCaptiveView: View {
     private var seizeAt: Double { isOwnWords ? 0.30 : 1.70 }
     private var warmAt: Double { seizeAt + 0.42 }
     private var verdictAt: Double { seizeAt + 0.65 }
+    /// The pull starts this long before the snap, so the haptic's rise and the
+    /// card's lift share one beat.
+    private let braceLead: Double = 0.14
     private var verseAt: Double { seizeAt + 0.95 }
-    private var referenceAt: Double { seizeAt + 1.20 }
-    /// About 2.2s after the verse lands. The verdict used to hold for 0.9s,
-    /// which was fine for two words and a reference but too short to read a
-    /// line of scripture.
-    private var handOffAt: Double { seizeAt + 3.10 }
+    /// After the last word of the verse has come into focus.
+    private var referenceAt: Double { seizeAt + 1.65 }
+    /// About 2.3s after the verse starts landing. The verdict used to hold for
+    /// 0.9s, which was fine for two words and a reference but too short to read
+    /// a line of scripture.
+    private var handOffAt: Double { seizeAt + 3.30 }
+
+    private static let verse = "\u{201C}We take captive every thought to make it obedient to Christ.\u{201D}"
 
     var body: some View {
         ZStack {
@@ -211,10 +222,12 @@ struct TakenCaptiveView: View {
                 RoundedRectangle(cornerRadius: DS.Radius.lg, style: .continuous)
                     .stroke(Color(hex: "#E2574C").opacity(seized ? 0.9 : 0), lineWidth: 2)
             )
-            .scaleEffect(seized ? 0.72 : 1)
+            // Under Reduce Motion the card only fades: no lift, no shrink, no
+            // blur, no drop.
+            .scaleEffect(reduceMotion ? 1 : (seized ? 0.72 : (bracing ? 1.035 : 1)))
             .opacity(seized ? 0 : 1)
-            .blur(radius: seized ? 22 : 0)
-            .offset(y: seized ? 26 : 0)
+            .blur(radius: seized && !reduceMotion ? 22 : 0)
+            .offset(y: reduceMotion ? 0 : (seized ? 26 : (bracing ? -4 : 0)))
             .accessibilityLabel("Taking captive: \(thought.text)")
     }
 
@@ -261,31 +274,29 @@ struct TakenCaptiveView: View {
     /// it is the verse the whole feature stands on.
     private var verdict: some View {
         VStack(spacing: 14) {
+            // Comes into focus out of a blur, with its glow arriving after it.
             Text("Taken captive.")
                 .font(.system(size: 34, weight: .bold, design: .rounded))
                 .foregroundColor(.white)
-                .shadow(color: gold.opacity(0.45), radius: 16)
-                .opacity(showVerdict ? 1 : 0)
-                .scaleEffect(showVerdict ? 1 : 0.94)
+                .shadow(color: gold.opacity(showVerdict ? 0.5 : 0), radius: 18)
+                .guardReveal(showVerdict, distance: 14)
 
-            GuardRule()
-                .opacity(showVerse ? 1 : 0)
+            GuardRule(shown: showVerse)
 
-            Text("\u{201C}We take captive every thought to make it obedient to Christ.\u{201D}")
-                .font(GuardStyle.scripture(17))
-                .foregroundColor(GuardStyle.scriptureInk.opacity(0.88))
-                .lineSpacing(4)
+            // The verse arrives one word at a time, so it is read as it lands.
+            WordByWordText(text: Self.verse,
+                           font: GuardStyle.scripture(17),
+                           color: GuardStyle.scriptureInk.opacity(0.9),
+                           shown: showVerse,
+                           delay: 0.08)
                 .frame(maxWidth: 300)
-                .fixedSize(horizontal: false, vertical: true)
-                .opacity(showVerse ? 1 : 0)
-                .offset(y: showVerse ? 0 : 8)
 
             Text("2 Corinthians 10:5")
                 .textCase(.uppercase)
                 .font(GuardStyle.reference)
                 .tracking(GuardStyle.referenceTracking)
                 .foregroundColor(gold.opacity(0.9))
-                .opacity(showReference ? 1 : 0)
+                .guardReveal(showReference, distance: 4)
         }
         .multilineTextAlignment(.center)
         .accessibilityElement(children: .combine)
@@ -294,25 +305,31 @@ struct TakenCaptiveView: View {
     // MARK: - Schedule
 
     private func play() {
-        // Seize. The heaviest haptic the app has, on the frame the card goes —
-        // the same one the old throw fired, because it is the same event.
+        GuardHaptics.shared.prepare()
+        // Brace. The card lifts as the haptic pull rises under the thumb.
+        step(at: seizeAt - braceLead) {
+            GuardHaptics.shared.seize()
+            withAnimation(.spring(duration: 0.18, bounce: 0.3)) { bracing = true }
+        }
+        // Seize. The snap in the haptic lands on this frame, as the card goes.
         step(at: seizeAt) {
-            PremiumHaptics.safeHeavy()
             withAnimation(.easeIn(duration: 0.34)) { seized = true }
         }
         // Warm. Grey to navy, so REPLACE rises into its own field.
         step(at: warmAt) {
             withAnimation(.easeInOut(duration: 0.6)) { warmed = true }
         }
+        // The reveals carry their own springs (see `GuardReveal`), so these
+        // only flip the state.
         step(at: verdictAt) {
-            withAnimation(DS.Motion.smooth) { showVerdict = true }
+            showVerdict = true
         }
         step(at: verseAt) {
-            PremiumHaptics.safeLight()
-            withAnimation(.easeOut(duration: 0.5)) { showVerse = true }
+            GuardHaptics.shared.verse()
+            showVerse = true
         }
         step(at: referenceAt) {
-            withAnimation(.easeOut(duration: 0.4)) { showReference = true }
+            showReference = true
         }
         step(at: handOffAt) {
             ended = true
@@ -334,41 +351,5 @@ struct TakenCaptiveView: View {
         guard !ended else { return }
         ended = true
         onClose()
-    }
-}
-
-// MARK: - Shared style
-
-/// The type and colour rules every screen in the drill shares.
-///
-/// Two tiers of quiet text, not five: `secondary` for a line someone should
-/// read, `tertiary` for chrome such as close buttons and the quieter links.
-/// Scripture is always set in the serif, so a verse never reads as interface
-/// copy.
-enum GuardStyle {
-    static let gold = Color(hex: "#F5B742")
-    /// Warm off-white for scripture. Pure white is harsh on navy at reading size.
-    static let scriptureInk = Color(hex: "#F3EEE4")
-    static let secondary = Color.white.opacity(0.62)
-    static let tertiary = Color.white.opacity(0.40)
-
-    static func scripture(_ size: CGFloat) -> Font {
-        .system(size: size, weight: .regular, design: .serif).italic()
-    }
-
-    /// A verse reference, uppercased and spaced like a seal under its line.
-    static let reference: Font = .system(size: 12, weight: .semibold)
-    static let referenceTracking: CGFloat = 1.8
-
-    static let eyebrow: Font = .system(size: 11, weight: .bold)
-    static let eyebrowTracking: CGFloat = 2.6
-}
-
-/// A short gold rule between a headline and the scripture under it.
-struct GuardRule: View {
-    var body: some View {
-        Capsule()
-            .fill(GuardStyle.gold.opacity(0.55))
-            .frame(width: 28, height: 1.5)
     }
 }
