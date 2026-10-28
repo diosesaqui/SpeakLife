@@ -68,3 +68,27 @@ SpeakLife puts God's promises in your mouth all day long: Scripture-rooted decla
 "God has moved in such a noticeable way in my thought life that I'm at a loss for words." ladfm0613, App Store review
 
 Try SpeakLife free and start tomorrow on what God says.
+
+---
+
+# SL-CREDITS-01 · Calm-style scrolling credits (moonlight2 night lake)
+
+Video: `SL-credits-night.mp4` (23.1s, ocean bed, `python3 render_credits.py`).
+Text scrolls up like movie credits; ends on the real "Resting in God's Peace and Strength" player card, "Try SpeakLife free" and the App Store badge.
+Verses behind the lines: Philippians 4:7, Philippians 4:19, 2 Timothy 1:7.
+
+**Headline (draft):** Keep praying. Start speaking.
+**Primary text (draft, short):** Speak God's promises over your mind, your home and your future with Scripture-rooted declarations and guided audio on the SpeakLife app.
+**CTA:** Download → http://itunes.apple.com/app/id1617492998
+
+---
+
+# SL-PROMISE-01 · "Do you need a promise from God?" credits (lakeSunrise2 dawn)
+
+Video: `SL-promise-credits-dawn.mp4` (21.2s, ocean bed, `python3 render_credits.py --promise`).
+Hook matches the Promises onboarding (`ob=promises`). Same player card + App Store end as SL-CREDITS-01.
+Verses behind the lines: 2 Corinthians 1:20, Psalm 30:5, Philippians 4:19, Isaiah 53:5, Isaiah 26:3, Isaiah 41:10.
+
+**Headline (draft):** God has a promise for this.
+**Primary text (draft, short):** God's promises are yes in Christ. Speak them over your mind, your body and your home every morning with Scripture-rooted declarations and guided audio on the SpeakLife app.
+**CTA:** Download → http://itunes.apple.com/app/id1617492998

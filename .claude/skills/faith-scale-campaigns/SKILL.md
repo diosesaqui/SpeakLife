@@ -38,8 +38,15 @@ numbers below; never invent them.
 **Current account facts (2026-10-01):** the main account is `253451158661796` (~$46K lifetime,
 optimizes `start_trial_mobile_app`; historical best CPT ≈ $24–26, volume winners $34–36). SpeakLife
 v2 `2082620432359498` is small and optimizes `fb_mobile_add_payment_info`. `967944814851435` is
-disabled. Use the historical CPTs in `docs/creative/LEARNINGS.md` as the starting winner bar until
-the user sets a target.
+disabled.
+
+**Target set by the user (2026-10-27), from Meta spend vs RevenueCat revenue:** break-even is about
+$16 per real trial (43% of trials pay ≈ $39 net in year one). Meta over-counts trials by about 10%,
+so in Meta's numbers: **winner (target) CPT ≤ $12, ceiling $14.** Kill: 0 trials after $30
+spend, or CPT > $14 after $45 spend. Winners graduate at CPT < $12 with ≥ 5 trials. Campaign
+`120247236092730227` ("SL Scale | Mind winners") is really the Test campaign; graduates go to an
+"SL Winners" campaign with the same setup, loaded by the same creative/post. Details:
+memory `max-cpa-unit-economics`. Re-derive if price, trial length or trial→paid moves.
 
 **Low-budget version.** The full 4 ad sets × $50/day test is ~$6K/month. Below that, keep the logic
 and shrink the shape: 1–2 test ad sets × 3–5 ads at the highest daily budget you can sustain, run
@@ -123,3 +130,5 @@ A table: ad set, ad name (`F{n}-{formula}-{persona}-{L|S}-{ob}`), formula, perso
 creative, primary text, headline, CTA, plus the budget per ad set, optimization event, exclusions,
 day-5 / day-7 / day-14 check dates, and the winner/kill bars filled with the user's real numbers.
 Never launch, pause or change budgets in Ads Manager without explicit confirmation for that action.
+Exception: the scheduled task `speaklife-ads-daily` runs with the user's standing authorization
+(2026-10-27) to pause, scale (+20%/48h, $600/day total cap), graduate and launch within these bars.
