@@ -78,6 +78,18 @@ struct StormPaywallView: View {
         .environment(\.colorScheme, .dark)
         .dynamicTypeSize(...DynamicTypeSize.accessibility2)
         .animation(.easeInOut(duration: 0.3), value: phase)
+        // Bought from the discount push while the onboarding wall sat
+        // underneath: run the normal post-purchase screens, which end in
+        // onFinish(.purchased). See PushOfferOnboardingHandoff.
+        .onReceive(NotificationCenter.default.publisher(for: PushOfferOnboardingHandoff.unlocked)) { _ in
+            guard placement == "onboarding" else { return }
+            switch phase {
+            case .paywall, .objection, .priceOffer: break
+            default: return
+            }
+            PushOfferOnboardingHandoff.claim()
+            handlePurchased(isTrial: subscriptionStore.isInTrial)
+        }
         #if DEBUG
         .onAppear {
             // Design review: STORM_PHASE=objection|reassurance|success|second|morning|save

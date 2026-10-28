@@ -340,3 +340,33 @@ struct PushOfferView: View {
         }
     }
 }
+
+// MARK: - Leaving onboarding after an offer purchase
+
+/// Gets someone who bought from the discount push out of onboarding.
+///
+/// The push reaches people who never finished onboarding, most of them
+/// stopped by the hard paywall. Buying closes the offer sheet, but the hard
+/// paywall underneath has no close button and only moves on after a purchase
+/// made on it, so a new subscriber was left facing a paywall they could not
+/// get past. On a relaunch onboarding restarts at its first screen, which
+/// ends at that same wall.
+///
+/// HomeView posts `unlocked` when the sheet closes with access and the user
+/// is still in onboarding. An onboarding paywall on screen claims it and runs
+/// its own post-purchase path, so the user's onboarding answers are saved the
+/// normal way. If nothing claims it (onboarding is on an earlier screen),
+/// HomeView finishes onboarding itself. Main thread only.
+enum PushOfferOnboardingHandoff {
+    static let unlocked = Notification.Name("pushOfferUnlockedDuringOnboarding")
+
+    /// Set by the paywall that took over. Reset on every post.
+    private(set) static var claimed = false
+
+    static func post() {
+        claimed = false
+        NotificationCenter.default.post(name: unlocked, object: nil)
+    }
+
+    static func claim() { claimed = true }
+}

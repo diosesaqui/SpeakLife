@@ -930,6 +930,15 @@ struct HighConversionPaywallView: View {
         .onChange(of: offeredProductIDs) {
             Task { await refreshTrialEligibility() }
         }
+        // Bought from the discount push while this hard wall sat underneath.
+        // Run the same success path as a purchase made here, or the user is
+        // stuck behind a wall with no close button. See PushOfferOnboardingHandoff.
+        .onReceive(NotificationCenter.default.publisher(for: PushOfferOnboardingHandoff.unlocked)) { _ in
+            guard source == "onboarding", !showMissionScreen, !missionContinued else { return }
+            PushOfferOnboardingHandoff.claim()
+            declarationStore.isPurchasing = false
+            presentMissionScreen(.mainPurchase)
+        }
         .alert("", isPresented: $isShowingError) {
             Button("OK", role: .cancel) { }
         } message: { Text(errorMessage) }
