@@ -27,6 +27,16 @@ struct GroundTakenView: View {
 
     @State private var showCount = false
     @State private var showPlusOne = false
+    /// Starts one below the new total and rolls up, so the number is seen to
+    /// grow rather than simply appear.
+    @State private var displayedTotal: Int?
+    /// The bloom swells once as the +1 lands, then settles back.
+    @State private var glowing = false
+    /// The ripple and sparks: gathered at the centre, then thrown out.
+    @State private var burstArmed = false
+    @State private var burstFired = false
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         ZStack {
@@ -34,37 +44,47 @@ struct GroundTakenView: View {
                            startPoint: .top, endPoint: .bottom)
                 .ignoresSafeArea()
 
-            RadialGradient(colors: [DS.Palette.gold.opacity(0.18), .clear],
-                           center: .center, startRadius: 8, endRadius: 300)
+            RadialGradient(colors: [DS.Palette.gold.opacity(glowing ? 0.34 : 0.18), .clear],
+                           center: .center, startRadius: 8, endRadius: glowing ? 380 : 300)
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
 
             VStack(spacing: DS.Spacing.md) {
                 Spacer()
 
-                Text("+1")
-                    .font(.system(size: 64, weight: .heavy, design: .rounded))
-                    .foregroundStyle(DS.Gradient.gold)
-                    .scaleEffect(showPlusOne ? 1 : 0.6)
-                    .opacity(showPlusOne ? 1 : 0)
+                // The +1 pops out of a blur on a bouncy spring, with a gold
+                // ripple and a ring of sparks thrown out behind it.
+                ZStack {
+                    GoldBurst(armed: burstArmed, fired: burstFired)
+                    Text("+1")
+                        .font(.system(size: 64, weight: .heavy, design: .rounded))
+                        .foregroundStyle(DS.Gradient.gold)
+                        .shadow(color: GuardStyle.gold.opacity(showPlusOne ? 0.55 : 0), radius: 22)
+                        .scaleEffect(showPlusOne || reduceMotion ? 1 : 0.4)
+                        .blur(radius: showPlusOne || reduceMotion ? 0 : 12)
+                        .opacity(showPlusOne ? 1 : 0)
+                }
 
                 VStack(spacing: 4) {
-                    Text("\(total)")
+                    Text("\(displayedTotal ?? max(total - 1, 0))")
                         .font(.system(size: 44, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
-                        .contentTransition(.numericText())
+                        .contentTransition(.numericText(countsDown: false))
                     Text(total == 1 ? "thought taken captive" : "thoughts taken captive")
                         .font(.system(size: 16, weight: .medium, design: .rounded))
-                        .foregroundColor(.white.opacity(0.7))
+                        .foregroundColor(GuardStyle.secondary)
                 }
-                .opacity(showCount ? 1 : 0)
-                .offset(y: showCount ? 0 : 10)
+                .guardReveal(showCount, distance: 12)
 
-                Text("That's ground you don't give back.")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(DS.Palette.gold.opacity(0.85))
-                    .opacity(showCount ? 1 : 0)
-                    .padding(.top, 6)
+                VStack(spacing: 12) {
+                    GuardRule(shown: showCount, delay: 0.15)
+                    Text("That's ground you don't give back.")
+                        .font(GuardStyle.scripture(18))
+                        .foregroundColor(GuardStyle.scriptureInk.opacity(0.9))
+                        .multilineTextAlignment(.center)
+                        .guardReveal(showCount, delay: 0.22)
+                }
+                .padding(.top, 10)
 
                 Spacer()
 
@@ -75,19 +95,40 @@ struct GroundTakenView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
                         .background(Capsule().fill(DS.Gradient.gold))
+                        .shadow(color: GuardStyle.gold.opacity(0.35), radius: 16, y: 6)
                 }
                 .buttonStyle(.dsPressable(feel: .tapSolid))
-                .opacity(showCount ? 1 : 0)
+                .guardReveal(showCount, delay: 0.4, distance: 20)
+                .padding(.top, 12)
             }
             .padding(.horizontal, 28)
             .padding(.vertical, 32)
         }
-        .onAppear {
-            PremiumHaptics.safeCelebrationBurst()
-            withAnimation(DS.Motion.bouncy) { showPlusOne = true }
-            withAnimation(DS.Motion.smooth.delay(0.35)) { showCount = true }
-        }
+        .onAppear(perform: celebrate)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Ground taken. \(total) thoughts taken captive.")
+    }
+
+    /// The whole beat, in order: pop and bloom, ripple and sparks, the count
+    /// arriving, then the number rolling over with a tick.
+    private func celebrate() {
+        GuardHaptics.shared.celebrate()
+        burstArmed = true
+        withAnimation(.spring(duration: 0.55, bounce: 0.5)) { showPlusOne = true }
+        withAnimation(.easeOut(duration: 0.45)) { glowing = true }
+        // The next frame, so the sparks start gathered and fly from there.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            burstFired = true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            withAnimation(.easeInOut(duration: 1.0)) { glowing = false }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+            showCount = true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.85) {
+            GuardHaptics.shared.tick()
+            withAnimation(.spring(duration: 0.5, bounce: 0.25)) { displayedTotal = total }
+        }
     }
 }

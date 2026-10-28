@@ -16,6 +16,7 @@
 		TIC00VW0000000000000004B /* GroundTakenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00VW0000000000000004A /* GroundTakenView.swift */; };
 		TIC00VW0000000000000005B /* EscapeHatchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00VW0000000000000005A /* EscapeHatchView.swift */; };
 		TIC00VW0000000000000006B /* TakenCaptiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00VW0000000000000006A /* TakenCaptiveView.swift */; };
+		TIC00VW0000000000000007B /* GuardMotion.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIC00VW0000000000000007A /* GuardMotion.swift */; };
 		FAA00VW0000000000000001B /* BurstFaithActionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAA00VW0000000000000001A /* BurstFaithActionView.swift */; };
 		FAA00VW0000000000000002B /* BurstDeclarationStage.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAA00VW0000000000000002A /* BurstDeclarationStage.swift */; };
 		TIC00RES000000000000001B /* thoughts.json in Resources */ = {isa = PBXBuildFile; fileRef = TIC00RES000000000000001A /* thoughts.json */; };
@@ -461,6 +462,7 @@
 		TIC00VW0000000000000004A /* GroundTakenView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GroundTakenView.swift; sourceTree = "<group>"; };
 		TIC00VW0000000000000005A /* EscapeHatchView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EscapeHatchView.swift; sourceTree = "<group>"; };
 		TIC00VW0000000000000006A /* TakenCaptiveView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TakenCaptiveView.swift; sourceTree = "<group>"; };
+		TIC00VW0000000000000007A /* GuardMotion.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GuardMotion.swift; sourceTree = "<group>"; };
 		FAA00VW0000000000000001A /* BurstFaithActionView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BurstFaithActionView.swift; sourceTree = "<group>"; };
 		FAA00VW0000000000000002A /* BurstDeclarationStage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BurstDeclarationStage.swift; sourceTree = "<group>"; };
 		TIC00TST000000000000001A /* TakeItCaptiveServiceTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TakeItCaptiveServiceTests.swift; sourceTree = "<group>"; };
@@ -942,6 +944,7 @@
 				TIC00VW0000000000000004A /* GroundTakenView.swift */,
 				TIC00VW0000000000000005A /* EscapeHatchView.swift */,
 				TIC00VW0000000000000006A /* TakenCaptiveView.swift */,
+				TIC00VW0000000000000007A /* GuardMotion.swift */,
 			);
 			name = Guard;
 			path = Guard;
@@ -2213,6 +2216,7 @@
 				TIC00VW0000000000000004B /* GroundTakenView.swift in Sources */,
 				TIC00VW0000000000000005B /* EscapeHatchView.swift in Sources */,
 				TIC00VW0000000000000006B /* TakenCaptiveView.swift in Sources */,
+				TIC00VW0000000000000007B /* GuardMotion.swift in Sources */,
 				45BC76442EFD2775003AC964 /* ModernCelebrationView.swift in Sources */,
 				45BCBA9A2C360245001F28C4 /* BibleStory.swift in Sources */,
 				7AA8706C28DACC4E00134ADB /* Theme.swift in Sources */,
