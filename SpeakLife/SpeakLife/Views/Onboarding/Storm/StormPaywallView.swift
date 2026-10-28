@@ -32,6 +32,9 @@ struct StormPaywallView: View {
     let storm: Storm
     /// "onboarding", "free_limit", "settings", "triggered", ...
     let placement: String
+    /// Lets someone who already has access straight through the onboarding
+    /// wall. Off for testers replaying onboarding, who need to see the wall.
+    var skipsForMembers: Bool = true
     let onFinish: (StormPaywallOutcome) -> Void
 
     private enum Phase: Hashable {
@@ -48,6 +51,7 @@ struct StormPaywallView: View {
     }
 
     @State private var phase: Phase = .paywall
+    @State private var purchaseHandled = false
     /// The objection screen is offered once per paywall run. A second cancel
     /// closes rather than looping the user through it again.
     @State private var objectionShown = false
@@ -78,6 +82,26 @@ struct StormPaywallView: View {
         .environment(\.colorScheme, .dark)
         .dynamicTypeSize(...DynamicTypeSize.accessibility2)
         .animation(.easeInOut(duration: 0.3), value: phase)
+        // Bought from the discount push while the onboarding wall sat
+        // underneath: run the normal post-purchase screens, which end in
+        // onFinish(.purchased). See PushOfferOnboardingHandoff.
+        .onReceive(NotificationCenter.default.publisher(for: PushOfferOnboardingHandoff.unlocked)) { _ in
+            guard isOnboardingWallUp else { return }
+            PushOfferOnboardingHandoff.claim()
+            handlePurchased(isTrial: subscriptionStore.isInTrial)
+        }
+        // Someone who already has access is let through without tapping
+        // anything: on arrival, or when access lands while the wall is up
+        // (Ask to Buy approved, a late subscription check). The delay lets a
+        // purchase made on this paywall move to its own success screen first,
+        // after which the phase check below does nothing.
+        .onAppear { skipIfAlreadyMember(trigger: "appear") }
+        .onChange(of: subscriptionStore.hasFullAccess) { _, hasAccess in
+            guard hasAccess else { return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                skipIfAlreadyMember(trigger: "access_changed")
+            }
+        }
         #if DEBUG
         .onAppear {
             // Design review: STORM_PHASE=objection|reassurance|success|second|morning|save
@@ -211,7 +235,29 @@ struct StormPaywallView: View {
         }
     }
 
+    /// The onboarding wall is still blocking: the paywall itself or one of
+    /// the decline screens, not the post-purchase screens.
+    private var isOnboardingWallUp: Bool {
+        guard placement == "onboarding" else { return false }
+        switch phase {
+        case .paywall, .objection, .priceOffer: return true
+        default: return false
+        }
+    }
+
+    private func skipIfAlreadyMember(trigger: String) {
+        guard skipsForMembers, isOnboardingWallUp, subscriptionStore.hasFullAccess else { return }
+        AnalyticsService.shared.track("paywall_skipped_member", parameters: [
+            "trigger": trigger, "paywall": paywallName, "storm": storm.rawValue
+        ])
+        handlePurchased(isTrial: subscriptionStore.isInTrial)
+    }
+
     private func handlePurchased(isTrial: Bool) {
+        // A purchase, a restore, the push offer handoff and the member skip
+        // can all land on one paywall. Only the first starts the plan.
+        guard !purchaseHandled else { return }
+        purchaseHandled = true
         purchasedWithTrial = isTrial
         StormPlan.start(storm: storm, isTrial: isTrial,
                         enforcementEnabled: subscriptionStore.enforcementEnabled,

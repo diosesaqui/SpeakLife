@@ -500,7 +500,10 @@ struct HomeView: View {
             // Driven by a `deepLink == "offer"` notification tap. Attached at
             // the same level as the message reader so it presents during the
             // launch window too.
-            .sheet(item: $appState.pushOffer) { route in
+            //
+            // On close, someone who now has access but never finished
+            // onboarding is moved on. See PushOfferOnboardingHandoff.
+            .sheet(item: $appState.pushOffer, onDismiss: pushOfferDismissed) { route in
                 PushOfferView(route: route)
                     .environmentObject(subscriptionStore)
             }
@@ -633,7 +636,26 @@ struct HomeView: View {
         showMonthlyAnnualOffer = true
     }
 
-    private func finishOnboarding() {
+    /// The offer sheet closed. If the user bought (or already had access) but
+    /// is still in onboarding, hand off to the onboarding paywall, or finish
+    /// onboarding here when no paywall is on screen to take it.
+    private func pushOfferDismissed() {
+        guard !appState.isOnboarded, subscriptionStore.isPremium else { return }
+        PushOfferOnboardingHandoff.post()
+        // Give the paywall a beat to claim it. It claims synchronously, so
+        // this is only a margin for SwiftUI's delivery.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            let claimed = PushOfferOnboardingHandoff.claimed
+            AnalyticsService.shared.track("offer_push_onboarding_exit", parameters: [
+                "handled_by": claimed ? "onboarding_paywall" : "home_view",
+                "variant": subscriptionStore.onboardingVariantName
+            ])
+            guard !claimed, !appState.isOnboarded else { return }
+            finishOnboarding(flow: "push_offer")
+        }
+    }
+
+    private func finishOnboarding(flow: String = "home_view") {
         // A debug replay is a tester walking an arm, not a real activation.
         // Clear the flag to fall back to the app and emit NOTHING: firing
         // onboarding_finished here would book a fake conversion against the
@@ -653,7 +675,7 @@ struct HomeView: View {
             "variant": subscriptionStore.onboardingVariantName,
             "converted": converted,
             "conversion_type": conversionType,
-            "flow": "home_view"
+            "flow": flow
         ])
         // The "write your own declaration" cover is for EXISTING users meeting
         // the feature on an update. Its guards only check "onboarded with no

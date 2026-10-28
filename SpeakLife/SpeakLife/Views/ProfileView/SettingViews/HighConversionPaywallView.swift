@@ -540,6 +540,10 @@ struct HighConversionPaywallView: View {
     @State private var showMissionScreen = false
     /// Exactly-once guard: the CTA tap and the 6-second auto-advance can race.
     @State private var missionContinued = false
+    /// Set the first time this paywall hands control back. Every exit goes
+    /// through `leave()`, so a purchase, a restore and the member auto-skip
+    /// can never advance onboarding twice.
+    @State private var hasLeft = false
     @State private var missionShownAt = Date()
     @State private var missionResolution: MissionResolution = .mainPurchase
 
@@ -930,12 +934,31 @@ struct HighConversionPaywallView: View {
         .onChange(of: offeredProductIDs) {
             Task { await refreshTrialEligibility() }
         }
+        // Bought from the discount push while this hard wall sat underneath.
+        // Run the same success path as a purchase made here, or the user is
+        // stuck behind a wall with no close button. See PushOfferOnboardingHandoff.
+        .onReceive(NotificationCenter.default.publisher(for: PushOfferOnboardingHandoff.unlocked)) { _ in
+            guard source == "onboarding", !hasLeft, !showMissionScreen, !missionContinued else { return }
+            PushOfferOnboardingHandoff.claim()
+            declarationStore.isPurchasing = false
+            presentMissionScreen(.mainPurchase)
+        }
+        // Access that arrives while the wall is up and was not bought here:
+        // Ask to Buy approved, a late subscription check, another device.
+        // Short delay so the push offer handoff above, which shows the thank-you
+        // screen, goes first when both apply.
+        .onChange(of: subscriptionStore.isPremium) { _, isPremium in
+            guard isPremium else { return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                skipIfAlreadyMember(trigger: "access_changed")
+            }
+        }
         .alert("", isPresented: $isShowingError) {
             Button("OK", role: .cancel) { }
         } message: { Text(errorMessage) }
         .sheet(isPresented: $showPrivacyPolicy) { PrivacyPolicyView() }
         .sheet(isPresented: $showPayWhatYouCan) {
-            PayWhatYouCanView(callback: callback)
+            PayWhatYouCanView(callback: { leave() })
                 .environmentObject(subscriptionStore)
                 .environmentObject(declarationStore)
         }
@@ -1672,7 +1695,7 @@ struct HighConversionPaywallView: View {
                     // Always the plain dismissal path now. The welcome offer
                     // that used to intercept this tap moved to the first Daily
                     // Burst (WelcomeOfferPresenter).
-                    callback?()
+                    leave()
                     dismiss()
                 }) {
                     Image(systemName: "xmark.circle.fill").font(.system(size: 28))
@@ -1976,13 +1999,45 @@ struct HighConversionPaywallView: View {
         ])
         switch missionResolution {
         case .mainPurchase:
-            callback?()
+            leave()
             dismiss()
         }
     }
 
+    /// Runs the caller's callback once, however many exits fire.
+    private func leave() {
+        guard !hasLeft else { return }
+        hasLeft = true
+        callback?()
+    }
+
+    /// The onboarding wall is for people without access. Someone who already
+    /// has it (bought from the discount push, subscribed on another device,
+    /// bought earlier and relaunched mid-onboarding) is let through without
+    /// tapping anything. Skipped while a purchase made HERE is in flight or
+    /// finishing, so this paywall's own success screen still shows.
+    @discardableResult
+    private func skipIfAlreadyMember(trigger: String) -> Bool {
+        guard source == "onboarding",
+              // Testers replaying onboarding need to see the wall.
+              !appState.debugReplayOnboarding,
+              subscriptionStore.hasFullAccess,
+              !hasLeft,
+              !declarationStore.isPurchasing,
+              !showPayWhatYouCan,
+              !showMissionScreen,
+              !missionContinued else { return false }
+        AnalyticsService.shared.track("paywall_skipped_member", parameters: [
+            "trigger": trigger, "variant": paywallVariant, "segment": segmentParam
+        ])
+        leave()
+        return true
+    }
+
     // MARK: - Lifecycle
     private func onAppear() {
+        // A member never saw this wall, so log no impression for them.
+        if skipIfAlreadyMember(trigger: "appear") { return }
         // Latch the layout variant and theme BEFORE the impression events
         // below fire, so every event this session reports the variant shown.
         if lockedCleanVariant == nil {
@@ -2098,7 +2153,7 @@ struct HighConversionPaywallView: View {
                         } else {
                             // Settings / feature-gate buyers are mid-task —
                             // keep the immediate dismiss.
-                            callback?(); dismiss()
+                            leave(); dismiss()
                         }
                     }
                 } else {
@@ -2121,8 +2176,19 @@ struct HighConversionPaywallView: View {
             let restored = await subscriptionStore.restore()
             await MainActor.run {
                 declarationStore.isPurchasing = false
-                errorMessage = restored ? "Purchases restored" : "No purchases found to restore."
-                isShowingError = true
+                AnalyticsService.shared.track("paywall_restore", parameters: [
+                    "restored": restored, "source": source, "variant": paywallVariant
+                ])
+                // A restored member moves on, the same as a buyer. Only showing
+                // an alert left them on the hard onboarding wall, which has no
+                // close button.
+                if restored {
+                    leave()
+                    dismiss()
+                } else {
+                    errorMessage = "No purchases found to restore."
+                    isShowingError = true
+                }
             }
         }
     }
@@ -2478,8 +2544,13 @@ struct WelcomeOfferView: View {
             let restored = await subscriptionStore.restore()
             await MainActor.run {
                 declarationStore.isPurchasing = false
-                errorMessage = restored ? "Purchases restored" : "No purchases found to restore."
-                isShowingError = true
+                // A restored member already has access: close the offer.
+                if restored {
+                    onPurchaseSuccess()
+                } else {
+                    errorMessage = "No purchases found to restore."
+                    isShowingError = true
+                }
             }
         }
     }

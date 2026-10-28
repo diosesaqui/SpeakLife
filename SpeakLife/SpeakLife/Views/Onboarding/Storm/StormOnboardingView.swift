@@ -237,7 +237,8 @@ struct StormOnboardingView: View {
         case .rating:
             RatingView(size: size) { advance(from: .rating) }
         case .paywall:
-            StormPaywallView(storm: resolvedStorm, placement: "onboarding") { _ in
+            StormPaywallView(storm: resolvedStorm, placement: "onboarding",
+                             skipsForMembers: !appState.debugReplayOnboarding && !StormDebugReview.isActive) { _ in
                 complete()
             }
         }
