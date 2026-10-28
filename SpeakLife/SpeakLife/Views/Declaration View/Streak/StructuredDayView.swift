@@ -163,98 +163,135 @@ struct WeekStreakStrip: View {
     }
 }
 
+// MARK: - Task art
+
+/// One look per kind of task, shared by the hero card and the rows under it so
+/// a task reads the same in both places.
+extension TaskNavigationDestination {
+    var cardColors: [Color] {
+        switch self {
+        case .burst:       return [Color(hex: "#7C3AED"), Color(hex: "#4F46E5")]
+        case .devotional:  return [Color(hex: "#0EA5E9"), Color(hex: "#0369A1")]
+        case .audioTab:    return [Color(hex: "#059669"), Color(hex: "#065F46")]
+        case .bibleChat:   return [Color(hex: "#0D9488"), Color(hex: "#115E59")]
+        case .journal:     return [Color(hex: "#D97706"), Color(hex: "#92400E")]
+        // Gold, because it is the only card made of the user's own words.
+        case .personalDeclaration: return [Color(hex: "#B7791F"), Color(hex: "#7B341E")]
+        // Steel, not brand warmth. Guarding is the pillar that holds ground,
+        // and the card should read as armor next to the others.
+        case .takeItCaptive: return [Color(hex: "#334155"), Color(hex: "#0F172A")]
+        case .none:        return [Color(hex: "#B45309"), Color(hex: "#78350F")]
+        }
+    }
+
+    var cardGradient: LinearGradient {
+        LinearGradient(gradient: Gradient(colors: cardColors), startPoint: .topLeading, endPoint: .bottomTrailing)
+    }
+
+    /// Painted backgrounds already shipped in Assets.xcassets/themes.
+    var cardImageName: String {
+        switch self {
+        case .burst:               return "paintDay"        // sun breaking over the mountains
+        case .devotional:          return "paintgarden"
+        case .audioTab:            return "paintpurple"
+        case .bibleChat:           return "paintforest"
+        case .journal:             return "paintpinktrees"
+        case .personalDeclaration: return "paintfields"
+        case .takeItCaptive:       return "paintNight"
+        case .none:                return "paintfields"
+        }
+    }
+}
+
 // MARK: - Hero Card
 
 struct NextUpTaskCard: View {
     let task: DailyTask
     let onNavigate: (DailyTask) -> Void
     let onToggle: (String) -> Void
-    @State private var isPressed = false
-
-    private var cardGradient: LinearGradient {
-        let colors: [Color]
-        switch task.navigationDestination {
-        case .burst:       colors = [Color(hex: "#7C3AED"), Color(hex: "#4F46E5")]
-        case .devotional:  colors = [Color(hex: "#0EA5E9"), Color(hex: "#0369A1")]
-        case .audioTab:    colors = [Color(hex: "#059669"), Color(hex: "#065F46")]
-        case .bibleChat:   colors = [Color(hex: "#0D9488"), Color(hex: "#115E59")]
-        case .journal:     colors = [Color(hex: "#D97706"), Color(hex: "#92400E")]
-        // Gold, because it is the only card made of the user's own words.
-        case .personalDeclaration: colors = [Color(hex: "#B7791F"), Color(hex: "#7B341E")]
-        // Steel, not brand warmth. Guarding is the pillar that holds ground,
-        // and the card should read as armor next to the others.
-        case .takeItCaptive: colors = [Color(hex: "#334155"), Color(hex: "#0F172A")]
-        case .none:        colors = [Color(hex: "#B45309"), Color(hex: "#78350F")]
-        }
-        return LinearGradient(gradient: Gradient(colors: colors), startPoint: .topLeading, endPoint: .bottomTrailing)
-    }
 
     private var ctaLabel: String {
         switch task.navigationDestination {
-        case .burst:      return "Start Burst →"
-        case .devotional: return "Open Devotional →"
-        case .audioTab:   return "Listen Now →"
-        case .bibleChat:  return "Ask the Bible →"
+        case .burst:      return "Start Burst"
+        case .devotional: return "Open Devotional"
+        case .audioTab:   return "Listen Now"
+        case .bibleChat:  return "Ask the Bible"
         case .journal:
-            return task.id == TaskLibrary.gratitudeTaskId ? "Write 3 Things →" : "Open Journal →"
-        case .personalDeclaration: return "Speak It →"
-        case .takeItCaptive: return "Take It Captive →"
-        case .none:       return "Complete →"
+            return task.id == TaskLibrary.gratitudeTaskId ? "Write 3 Things" : "Open Journal"
+        case .personalDeclaration: return "Speak It"
+        case .takeItCaptive: return "Take It Captive"
+        case .none:       return "Complete"
         }
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack {
+            HStack(spacing: 10) {
+                Button(action: { onToggle(task.id) }) {
+                    Image(systemName: "circle")
+                        .font(.system(size: 24, weight: .regular))
+                        .foregroundColor(.white.opacity(0.85))
+                }
+                .accessibilityLabel("Mark \(task.title) done")
                 Text("YOUR NEXT STEP")
                     .font(.system(size: 14, weight: .heavy)).tracking(1.6)
                     .foregroundColor(DS.Palette.gold)
                 if task.isCampaignRefreshed { CampaignBadge() }
                 Spacer()
                 Text("\(task.estimatedMinutes) min")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.white.opacity(0.7))
-                    .padding(.horizontal, 8).padding(.vertical, 3)
-                    .background(Capsule().fill(Color.white.opacity(0.12)))
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 10).padding(.vertical, 5)
+                    .background(Capsule().fill(Color.black.opacity(0.35)))
             }
-            .padding(.horizontal, 20).padding(.top, 18)
-
-            HStack(spacing: 14) {
-                ZStack {
-                    Circle().fill(Color.white.opacity(0.15)).frame(width: 52, height: 52)
-                    Image(systemName: task.icon).font(.system(size: 24)).foregroundColor(.white)
-                }
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(task.title)
-                        .font(.system(size: 19, weight: .bold)).foregroundColor(.white).lineLimit(2)
-                    Text(task.description)
-                        .font(.system(size: 13)).foregroundColor(.white.opacity(0.75)).lineLimit(2)
-                }
-            }
-            .padding(.horizontal, 20).padding(.top, 14)
 
             Spacer(minLength: 16)
 
-            HStack {
-                Button(action: { Juice.play(.tapSolid); onNavigate(task) }) {
-                    Text(ctaLabel)
-                        .font(.system(size: 15, weight: .semibold)).foregroundColor(.white)
-                        .padding(.horizontal, 20).padding(.vertical, 11)
-                        .background(Capsule().fill(Color.white.opacity(0.2)))
-                }
-                Spacer()
-                Button(action: { onToggle(task.id) }) {
-                    Image(systemName: "checkmark.circle")
-                        .font(.system(size: 26)).foregroundColor(.white.opacity(0.5))
-                }
+            Text(task.title)
+                .font(.system(size: 32, weight: .semibold, design: .serif))
+                .foregroundColor(.white)
+                .lineLimit(2)
+                .minimumScaleFactor(0.8)
+                .shadow(color: .black.opacity(0.35), radius: 6, y: 2)
+
+            Button(action: { Juice.play(.tapSolid); onNavigate(task) }) {
+                Text(ctaLabel)
+                    .font(.system(size: 17, weight: .semibold)).foregroundColor(.white)
+                    .frame(maxWidth: .infinity).frame(height: 52)
+                    .background(Capsule().fill(Color.white.opacity(0.22)))
+                    .overlay(Capsule().stroke(Color.white.opacity(0.25), lineWidth: 1))
+                    .contentShape(Capsule())
             }
-            .padding(.horizontal, 20).padding(.bottom, 18)
+            .padding(.top, 18)
+            .accessibilityHint(task.description)
         }
-        .frame(maxWidth: .infinity, minHeight: 160)
-        .background(cardGradient)
-        .clipShape(RoundedRectangle(cornerRadius: 20))
-        .scaleEffect(isPressed ? 0.97 : 1.0)
-        .animation(.easeOut(duration: 0.12), value: isPressed)
+        .padding(20)
+        .frame(maxWidth: .infinity)
+        .frame(height: 300)
+        .background(heroBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .shadow(color: .black.opacity(0.25), radius: 14, y: 6)
+    }
+
+    /// The painting, with the task's own color washed over the top so each kind
+    /// of task keeps its identity, and a dark fade at the bottom so the title
+    /// and button stay readable on any part of the image.
+    private var heroBackground: some View {
+        // Overlays, not a ZStack: a fill-scaled image would grow a ZStack past
+        // the card, and the fades would stretch with it out of view.
+        task.navigationDestination.cardGradient
+            .overlay(
+                Image(task.navigationDestination.cardImageName)
+                    .resizable()
+                    .scaledToFill()
+                    .accessibilityHidden(true)
+            )
+            .clipped()
+            .overlay(task.navigationDestination.cardGradient.opacity(0.25))
+            .overlay(
+                LinearGradient(colors: [.black.opacity(0.35), .clear, .black.opacity(0.65)],
+                               startPoint: .top, endPoint: .bottom)
+            )
     }
 }
 
@@ -347,17 +384,38 @@ struct UpcomingTaskRow: View {
     private var row: some View {
         HStack(spacing: 12) {
             ZStack {
-                RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.06)).frame(width: 36, height: 36)
-                Image(systemName: task.icon).font(.system(size: 14)).foregroundColor(.white.opacity(0.4))
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(task.navigationDestination.cardGradient)
+                    .frame(width: 44, height: 44)
+                Image(systemName: task.icon).font(.system(size: 18, weight: .semibold)).foregroundColor(.white)
             }
-            Text(task.title).font(.system(size: 14, weight: .medium)).foregroundColor(.white.opacity(0.4))
-            if task.isCampaignRefreshed { CampaignBadge(compact: true) }
-            Spacer()
-            Text("\(task.estimatedMinutes)m").font(.system(size: 11)).foregroundColor(.white.opacity(0.3))
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 6) {
+                    Text(task.title)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.95))
+                        .lineLimit(1)
+                    if task.isCampaignRefreshed { CampaignBadge(compact: true) }
+                }
+                if !task.description.isEmpty {
+                    Text(task.description)
+                        .font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.6))
+                        .lineLimit(1)
+                }
+            }
+            Spacer(minLength: 8)
+            Text("\(task.estimatedMinutes)m").font(.system(size: 12, weight: .medium)).foregroundColor(.white.opacity(0.6))
+            if onNavigate != nil {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.45))
+            }
         }
-        .padding(.horizontal, 16).padding(.vertical, 10)
-        .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.02)))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.06), lineWidth: 1))
+        .padding(.horizontal, 14).padding(.vertical, 12)
+        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color.white.opacity(0.06)))
+        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(Color.white.opacity(0.10), lineWidth: 1))
+        .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
 
@@ -478,7 +536,7 @@ struct StructuredDayView: View {
                 }
 
                 if !upcomingTasks.isEmpty {
-                    VStack(spacing: 6) {
+                    VStack(spacing: 8) {
                         HStack {
                             Text("LATER TODAY").font(.system(size: 14, weight: .heavy)).tracking(1.6)
                                 .foregroundColor(DS.Palette.gold)
