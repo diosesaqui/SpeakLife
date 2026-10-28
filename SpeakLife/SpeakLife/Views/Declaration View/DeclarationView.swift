@@ -277,7 +277,7 @@ struct DeclarationView: View {
                 checklistPulse = !isDone
             }
             .onDisappear { checklistPulse = false }
-            .onChange(of: isDone) { done in
+            .onChange(of: isDone) { _, done in
                 // Drive checklistPulse explicitly so the right animation modifier
                 // is active at the moment the value changes.
                 checklistPulse = !done
@@ -400,7 +400,7 @@ struct DeclarationView: View {
         .modifier(AdaptiveSheetModifier(item: $activeSheet, isIPad: isIPad) { sheet in
             AnyView(sheetContent(sheet))
         })
-        .onChange(of: presentDevotionalSubscriptionView, perform: handleDevotionalPresentation)
+        .onChange(of: presentDevotionalSubscriptionView) { _, newValue in handleDevotionalPresentation(newValue) }
         .alert(isPresented: $viewModel.showErrorMessage, content: errorAlert)
         .alert("Know someone who needs a word today?", isPresented: $share, actions: shareAlert)
         .sheet(isPresented: $isShowingMailView) {
@@ -425,7 +425,7 @@ struct DeclarationView: View {
         // inside `overlayContent`, which is not rendered while
         // `showScreenshotLabel` is set, so the observer could be absent from the
         // hierarchy exactly when a tap needed it.
-        .onChange(of: appState.scrollToPersonalDeclaration) { _ in
+        .onChange(of: appState.scrollToPersonalDeclaration) { _, _ in
             openPendingPersonalDeclaration()
         }
         .onAppear(perform: handleOnAppear)

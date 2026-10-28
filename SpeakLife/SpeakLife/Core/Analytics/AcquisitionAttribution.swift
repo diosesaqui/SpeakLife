@@ -359,9 +359,9 @@ final class AcquisitionAttribution {
                 }
                 guard let payload = await Self.fetchAppleAttribution(token: token) else { continue }
 
-                self.lock.lock()
-                self.defaults.set(true, forKey: Key.searchAdsChecked)
-                self.lock.unlock()
+                self.lock.withLock {
+                    self.defaults.set(true, forKey: Key.searchAdsChecked)
+                }
 
                 // `attribution == false` is a real answer: Apple is telling us
                 // this install did NOT come from a Search Ads click. Recording a

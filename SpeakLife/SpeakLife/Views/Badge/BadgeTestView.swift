@@ -80,7 +80,7 @@ struct BadgeTestView: View {
             let userStats = createTestUserStats()
             badgeManager.checkForNewBadges(streakStats: testStats, userStats: userStats)
             
-            if let newBadge = badgeManager.recentlyUnlocked {
+            if badgeManager.recentlyUnlocked != nil {
                 showBadgeUnlock = true
             }
         }

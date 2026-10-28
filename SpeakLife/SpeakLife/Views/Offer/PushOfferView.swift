@@ -100,7 +100,7 @@ struct PushOfferView: View {
         }
         .task(id: offerProduct?.id) { await resolveTrialEligibility() }
         .task { await loadProducts() }
-        .onChange(of: subscriptionStore.isPremium) { isPremium in
+        .onChange(of: subscriptionStore.isPremium) { _, isPremium in
             if isPremium { dismiss() }
         }
         .alert("Something went wrong", isPresented: Binding(

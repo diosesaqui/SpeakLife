@@ -75,7 +75,7 @@ struct VoiceMicrophoneButton: View {
             }
         }
         .buttonStyle(PlainButtonStyle())
-        .onChange(of: isListening) { listening in
+        .onChange(of: isListening) { _, listening in
             withAnimation(.easeInOut(duration: 0.3)) {
                 if listening {
                     startListeningAnimations()

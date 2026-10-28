@@ -135,7 +135,7 @@ struct PricingOptionViewV1: View {
                 }
             }
         }
-        .onChange(of: option.isSelected) { isSelected in
+        .onChange(of: option.isSelected) { _, isSelected in
             if isSelected {
                 withAnimation(Animation.easeInOut(duration: 2.5).repeatForever(autoreverses: true)) {
                     glowAnimation = true

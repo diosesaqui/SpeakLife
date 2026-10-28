@@ -599,9 +599,6 @@ final class DeclarationViewModel: ObservableObject {
         PremiumHaptics.categoryHaptic(for: category.rawValue)
         AudioDelightManager.shared.playForCategory(category.rawValue)
         
-        // Check if we're actually changing categories
-        let isChangingCategory = selectedCategory != category
-        
         // Update the selected category IMMEDIATELY
         self.selectedCategoryString = category.rawValue
         print("📱 Selecting category: \(category.rawValue), was: \(selectedCategory.rawValue)")

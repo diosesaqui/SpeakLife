@@ -470,7 +470,7 @@ struct CelebrationProgressRing: View {
             }
         }
         .frame(width: 120, height: 120)
-        .onChange(of: progress) { newProgress in
+        .onChange(of: progress) { _, newProgress in
             withAnimation(.easeInOut(duration: 0.5)) {
                 animatedProgress = newProgress
             }

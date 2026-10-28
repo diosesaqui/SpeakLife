@@ -8,6 +8,9 @@
 import Foundation
 import CoreData
 import Combine
+// `Declaration` (SpeakLifeCore) is a value type handed to the main queue below;
+// the module predates Sendable annotations.
+@preconcurrency import SpeakLifeCore
 
 final class CoreDataAPIService: APIService {
 

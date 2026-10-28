@@ -120,7 +120,7 @@ struct NetworkStatusBanner: View {
             }
         }
         .animation(.spring(), value: showBanner)
-        .onChange(of: monitor.isConnected) { newValue in
+        .onChange(of: monitor.isConnected) { _, newValue in
             withAnimation {
                 if !newValue {
                     showBanner = true

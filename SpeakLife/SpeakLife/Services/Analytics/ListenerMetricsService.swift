@@ -184,7 +184,7 @@ final class ListenerMetricsService: ObservableObject {
             }
             
             // Update cache with all fetched data
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 for (id, count) in bulkMetrics {
                     self.cachedMetrics[id] = count
                 }

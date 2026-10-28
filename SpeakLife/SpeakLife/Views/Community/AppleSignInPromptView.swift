@@ -100,7 +100,7 @@ struct AppleSignInPromptView: View {
                 .simultaneousGesture(TapGesture().onEnded {
                     appleSignIn.signIn()
                 })
-                .onChange(of: appleSignIn.isSignedIn) { signedIn in
+                .onChange(of: appleSignIn.isSignedIn) { _, signedIn in
                     if signedIn { dismiss() }
                 }
 

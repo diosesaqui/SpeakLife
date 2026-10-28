@@ -503,8 +503,6 @@ final class WldehBibleAPIService: BibleAPIServiceProtocol {
                 let result = try decoder.decode(T.self, from: data)
                 return result
             } catch {
-                if let responseString = String(data: data, encoding: .utf8) {
-                }
                 throw BibleAPIError.decodingError(error)
             }
         } catch let error as BibleAPIError {

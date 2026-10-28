@@ -284,18 +284,12 @@ final class EnhancedAnalyticsService: ObservableObject {
             return
         }
         
-        do {
-            // In a real implementation, this would send to ML pipeline
-            
-            // Only clear events after successful processing
-            // For now, we'll just clear them since this is a stub
-            trainingEvents.removeAll()
-            print("✅ Training events processed successfully")
-        } catch {
-            // Warning: 
-            print("⚠️ Failed to process training events: \(error)")
-            // Keep events for retry
-        }
+        // In a real implementation, this would send to ML pipeline
+        
+        // Only clear events after successful processing
+        // For now, we'll just clear them since this is a stub
+        trainingEvents.removeAll()
+        print("✅ Training events processed successfully")
     }
     
     // MARK: - Persistence

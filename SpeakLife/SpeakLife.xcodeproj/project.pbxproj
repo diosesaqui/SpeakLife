@@ -388,8 +388,6 @@
 		DECL0001VERIF00001BUILDF /* DeclarationVerificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DECL0001VERIF00001FILEREF /* DeclarationVerificationService.swift */; };
 		E0EA353D8043F358064AADB7 /* AppleSignInService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC27319C7422AFA8C439B08F /* AppleSignInService.swift */; };
 		E260535F74194D8CB0442F40 /* HookScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46F66FE59AA649BFB7D06B09 /* HookScene.swift */; };
-		F3F466B4CB267BFBE4FD8CC8 /* WldehBibleAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D920701A13775F49180D845 /* WldehBibleAPIService.swift */; };
-		FCB7A8468DAA92844336D893 /* CancelInterventionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA6F23A3327C444669DC03A5 /* CancelInterventionView.swift */; };
 		DBG00PANEL000000001BUILDFL /* DebugFlagPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBG00PANEL000000001FILEREF /* DebugFlagPanel.swift */; };
 		FUG0GATE00000000001BUILDF /* ForceUpdateGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FUG0GATE00000000001FILERF /* ForceUpdateGate.swift */; };
 		HIGH0001DECL000001BUILDF /* HighlightedDeclarationText.swift in Sources */ = {isa = PBXBuildFile; fileRef = HIGH0001DECL000001FILEREF /* HighlightedDeclarationText.swift */; };
@@ -675,7 +673,6 @@
 		4D5A9C3E1B7F42A08D6E2C10 /* SpeakLifeMessagesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeakLifeMessagesView.swift; sourceTree = "<group>"; };
 		59BFF68BFA515EAC0AC88C85 /* WidgetIntents.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetIntents.swift; sourceTree = "<group>"; };
 		6BA7EE898DF248C4EB6EDEB2 /* PrayerWallViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrayerWallViewModel.swift; sourceTree = "<group>"; };
-		6D920701A13775F49180D845 /* WldehBibleAPIService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WldehBibleAPIService.swift; sourceTree = "<group>"; };
 		74DAA35385DD02F8B0DCADE5 /* HowToUseSpeakLifeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HowToUseSpeakLifeView.swift; sourceTree = "<group>"; };
 		750128553E56408E9225277C /* AudioProgressStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioProgressStore.swift; sourceTree = "<group>"; };
 		7836884A0A04359824B84D23 /* enforcements.json */ = {isa = PBXFileReference; includeInIndex = 1; path = enforcements.json; sourceTree = "<group>"; };
@@ -822,7 +819,6 @@
 		F0B7425FCF684D05A10C4758 /* AudioRecommendationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecommendationEngine.swift; sourceTree = "<group>"; };
 		F54505A7F8204E659571CE73 /* StructuredDayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StructuredDayView.swift; sourceTree = "<group>"; };
 		F9A3081A52984B6AB0EECD7B /* StructuredDayLaunchTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StructuredDayLaunchTracker.swift; sourceTree = "<group>"; };
-		FA6F23A3327C444669DC03A5 /* CancelInterventionView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CancelInterventionView.swift; sourceTree = "<group>"; };
 		DBG00PANEL000000001FILEREF /* DebugFlagPanel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DebugFlagPanel.swift; sourceTree = "<group>"; };
 		FUG0GATE00000000001FILERF /* ForceUpdateGate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ForceUpdateGate.swift; sourceTree = "<group>"; };
 		HIGH0001DECL000001FILEREF /* HighlightedDeclarationText.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HighlightedDeclarationText.swift; sourceTree = "<group>"; };
@@ -1558,7 +1554,6 @@
 				45C15A8F2F357857006171F5 /* LazyJSONLoader.swift */,
 				7AA8707128DACC8300134ADB /* LocalAPIClient.swift */,
 				7ABA50CA29E63178002699F1 /* PrayerServiceClient.swift */,
-				6D920701A13775F49180D845 /* WldehBibleAPIService.swift */,
 			);
 			path = Networking;
 			sourceTree = "<group>";
@@ -1710,7 +1705,6 @@
 				7AA870A928DACCB700134ADB /* FavoritesView */,
 				7AA870AB28DACCB700134ADB /* MailView.swift */,
 				7AA870B328DACCB700134ADB /* CreateYourOwn */,
-				FA6F23A3327C444669DC03A5 /* CancelInterventionView.swift */,
 			);
 			path = ProfileView;
 			sourceTree = "<group>";
@@ -2501,8 +2495,6 @@
 				7AA870E328DACD1A00134ADB /* AppDelegate.swift in Sources */,
 				7AF18C8429FDCE0A005A6E31 /* ShimmerButton.swift in Sources */,
 				01ED29F757107A93D56507E0 /* WidgetIntents.swift in Sources */,
-				F3F466B4CB267BFBE4FD8CC8 /* WldehBibleAPIService.swift in Sources */,
-				FCB7A8468DAA92844336D893 /* CancelInterventionView.swift in Sources */,
 				8C81294FE8FD42174F375CFB /* LifecycleNotificationService.swift in Sources */,
 				20F4D11E6F9CB2FA07540EE7 /* TrialExperienceService.swift in Sources */,
 				B0002222222222222222BBBB /* DeclarationContent.swift in Sources */,

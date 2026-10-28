@@ -384,7 +384,7 @@ struct BibleAuthenticationView: View {
                 
                 // Try to sign in to Firebase as well
                 do {
-                    let firebaseUser = try await FirebaseAuthService.shared.signIn(
+                    _ = try await FirebaseAuthService.shared.signIn(
                         email: email,
                         password: password
                     )
@@ -433,7 +433,7 @@ struct BibleAuthenticationView: View {
             
             // If Bible API user creation succeeds, also create Firebase user
             do {
-                let firebaseUser = try await FirebaseAuthService.shared.createUser(
+                _ = try await FirebaseAuthService.shared.createUser(
                     email: email,
                     password: password,
                     name: name
@@ -460,7 +460,7 @@ struct BibleAuthenticationView: View {
                 
                 // Try to sign in to Firebase as well
                 do {
-                    let firebaseUser = try await FirebaseAuthService.shared.signIn(
+                    _ = try await FirebaseAuthService.shared.signIn(
                         email: email,
                         password: password
                     )

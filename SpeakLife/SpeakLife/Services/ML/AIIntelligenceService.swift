@@ -61,35 +61,27 @@ final class AIIntelligenceService: ObservableObject {
     private func initializeAIServices() async {
         currentlyProcessing = true
         
-        do {
-            // Initialize services in parallel
-            async let contentReady = contentCategorization.categorizeContent("sample")
-            async let analyticsReady = enhancedAnalytics.trackSpiritualJourney(
-                currentMood: "initialization",
-                prayerRequests: [],
-                journalSentiment: 0.0,
-                recommendationAccepted: false
-            )
-            
-            _ = await (contentReady, analyticsReady)
-            
-            // Start background AI tasks
-            await startBackgroundProcessing()
-            
-            DispatchQueue.main.async {
-                self.isAIReady = true
-                self.currentlyProcessing = false
-                self.lastUpdateDate = Date()
-            }
-            
-            print("✅ AI Intelligence Service initialized successfully")
-            
-        } catch {
-            print("❌ AI initialization failed: \(error)")
-            DispatchQueue.main.async {
-                self.currentlyProcessing = false
-            }
+        // Initialize services in parallel
+        async let contentReady = contentCategorization.categorizeContent("sample")
+        async let analyticsReady: Void = enhancedAnalytics.trackSpiritualJourney(
+            currentMood: "initialization",
+            prayerRequests: [],
+            journalSentiment: 0.0,
+            recommendationAccepted: false
+        )
+        
+        _ = await (contentReady, analyticsReady)
+        
+        // Start background AI tasks
+        await startBackgroundProcessing()
+        
+        DispatchQueue.main.async {
+            self.isAIReady = true
+            self.currentlyProcessing = false
+            self.lastUpdateDate = Date()
         }
+        
+        print("✅ AI Intelligence Service initialized successfully")
     }
     
     private func observeServiceReadiness() {
@@ -114,32 +106,23 @@ final class AIIntelligenceService: ObservableObject {
         
         currentlyProcessing = true
         
-        do {
-            // Update all personalized content in parallel
-            async let personalizedFeed = recommendationEngine.generatePersonalizedFeed()
-            async let personalizedCategories = generatePersonalCategories()
-            async let optimizedNotifications = optimizeNotificationTiming()
-            
-            let (feed, categories, notifications) = await (personalizedFeed, personalizedCategories, optimizedNotifications)
-            
-            // Cache results for quick access
-            await cachePersonalizedContent(feed: feed, categories: categories)
-            
-            DispatchQueue.main.async {
-                self.currentlyProcessing = false
-                self.lastUpdateDate = Date()
-                self.aiPerformanceMetrics.updateSuccess()
-            }
-            
-            print("✅ Personalized content updated successfully")
-            
-        } catch {
-            print("❌ Failed to update personalized content: \(error)")
-            DispatchQueue.main.async {
-                self.currentlyProcessing = false
-                self.aiPerformanceMetrics.updateFailure()
-            }
+        // Update all personalized content in parallel
+        async let personalizedFeed = recommendationEngine.generatePersonalizedFeed()
+        async let personalizedCategories = generatePersonalCategories()
+        async let optimizedNotifications = optimizeNotificationTiming()
+        
+        let (feed, categories, _) = await (personalizedFeed, personalizedCategories, optimizedNotifications)
+        
+        // Cache results for quick access
+        await cachePersonalizedContent(feed: feed, categories: categories)
+        
+        DispatchQueue.main.async {
+            self.currentlyProcessing = false
+            self.lastUpdateDate = Date()
+            self.aiPerformanceMetrics.updateSuccess()
         }
+        
+        print("✅ Personalized content updated successfully")
     }
     
     func generatePersonalCategories() async -> [PersonalizedCategory] {
@@ -195,7 +178,7 @@ final class AIIntelligenceService: ObservableObject {
         guard isAIReady else { return }
         
         
-        await mlTaskLibrary.scheduleModelRetraining()
+        mlTaskLibrary.scheduleModelRetraining()
         
         // Update performance metrics
         DispatchQueue.main.async {
@@ -208,7 +191,7 @@ final class AIIntelligenceService: ObservableObject {
         let userBehavior = enhancedAnalytics.userBehaviorProfile
         
         // Optimize notification timing
-        await optimizeNotificationTiming()
+        _ = await optimizeNotificationTiming()
         
         // Adapt content difficulty to spiritual maturity
         await adaptContentToMaturity(userBehavior.spiritualMaturityLevel)
@@ -341,24 +324,6 @@ final class AIIntelligenceService: ObservableObject {
     }
     
     private func generateCrisisSupport(for situation: String) async -> [Declaration] {
-        // Map crisis situations to appropriate spiritual categories
-        let crisisCategories: [SpiritualContentCategory]
-        let lowercasedSituation = situation.lowercased()
-        
-        if lowercasedSituation.contains("heal") || lowercasedSituation.contains("sick") || lowercasedSituation.contains("pain") {
-            crisisCategories = [.healing, .strength, .peace]
-        } else if lowercasedSituation.contains("anxi") || lowercasedSituation.contains("worry") || lowercasedSituation.contains("fear") {
-            crisisCategories = [.peace, .strength, .protection]
-        } else if lowercasedSituation.contains("depress") || lowercasedSituation.contains("sad") || lowercasedSituation.contains("lonely") {
-            crisisCategories = [.peace, .identity, .strength]
-        } else if lowercasedSituation.contains("relation") || lowercasedSituation.contains("marriage") || lowercasedSituation.contains("family") {
-            crisisCategories = [.relationships, .peace, .wisdom]
-        } else if lowercasedSituation.contains("money") || lowercasedSituation.contains("job") || lowercasedSituation.contains("financial") {
-            crisisCategories = [.prosperity, .strength, .faith]
-        } else {
-            crisisCategories = [.strength, .peace, .faith] // Default crisis support
-        }
-        
         // This would query your actual declaration database
         // For now, return sample crisis-appropriate declarations
         return [

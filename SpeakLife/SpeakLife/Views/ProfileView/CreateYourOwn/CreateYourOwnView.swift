@@ -86,7 +86,7 @@ struct CreateYourOwnView: View {
                 }
             }
         }
-        .onChange(of: declarationStore.createOwn) { _ in
+        .onChange(of: declarationStore.createOwn) {
             refreshLocalDeclarations()
         }
     }

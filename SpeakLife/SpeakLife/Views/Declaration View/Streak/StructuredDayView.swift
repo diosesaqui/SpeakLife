@@ -56,7 +56,7 @@ struct DayProgressRing: View {
             }
         }
         .onAppear { withAnimation(.easeOut(duration: 0.9)) { animatedProgress = progress } }
-        .onChange(of: completed) { _ in
+        .onChange(of: completed) { _, _ in
             withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) { animatedProgress = progress }
         }
     }

@@ -197,7 +197,6 @@ struct VoiceQuickCorrections: View {
         } else if correction.0 == "Capitalize" {
             // Capitalize last sentence
             if let lastSentenceRange = text.range(of: #"[.!?]\s*[a-z]"#, options: [.regularExpression, .backwards]) {
-                let charToCapitalize = text[lastSentenceRange].last!
                 text.replaceSubrange(lastSentenceRange, with: text[lastSentenceRange].uppercased())
             } else if let firstChar = text.first, firstChar.isLowercase {
                 text = text.prefix(1).uppercased() + text.dropFirst()

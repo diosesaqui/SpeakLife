@@ -97,8 +97,6 @@ final class BibleAPIService: BibleAPIServiceProtocol {
     func fetchVersions() async throws -> [BibleVersion] {
         let url = "\(baseURL)/versions"
         let versions: [BibleVersion] = try await performRequest(url: url)
-        for (index, version) in versions.enumerated() {
-        }
         return versions
     }
     
@@ -164,10 +162,6 @@ final class BibleAPIService: BibleAPIServiceProtocol {
             // Check HTTP response
             if let httpResponse = response as? HTTPURLResponse {
                 
-                // Print response body for debugging
-                if let responseString = String(data: data, encoding: .utf8) {
-                }
-                
                 switch httpResponse.statusCode {
                 case 200...299:
                     break // Success
@@ -190,8 +184,6 @@ final class BibleAPIService: BibleAPIServiceProtocol {
                 let result = try decoder.decode(T.self, from: data)
                 return result
             } catch {
-                if let responseString = String(data: data, encoding: .utf8) {
-                }
                 throw BibleAPIError.decodingError(error)
             }
         } catch let error as BibleAPIError {

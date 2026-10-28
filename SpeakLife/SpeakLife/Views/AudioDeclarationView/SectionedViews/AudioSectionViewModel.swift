@@ -99,17 +99,14 @@ extension AudioDeclarationViewModel {
         
         for item in audioItems {
             var seasonNumber: Int?
-            var episodeNumber: Int?
             
             // First try to use the new season/episode fields from JSON
             if let season = item.season {
                 seasonNumber = season
-                episodeNumber = item.episode
             } else {
                 // Fallback to existing parsing logic for backwards compatibility
                 if let episodeInfo = SpeakLifeEpisodeInfo.parse(from: item.subtitle, id: item.id) {
                     seasonNumber = episodeInfo.season
-                    episodeNumber = episodeInfo.episode
                 }
             }
             

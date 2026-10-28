@@ -132,7 +132,7 @@ struct PrayerWallView: View {
             .environmentObject(subscriptionStore)
             .presentationDetentsCompat()
         }
-        .onChange(of: viewModel.needsSignIn) { needed in
+        .onChange(of: viewModel.needsSignIn) { _, needed in
             guard needed else { return }
             viewModel.needsSignIn = false
             requireSignIn(then: nil)
@@ -861,7 +861,7 @@ private struct AgreementPromptSheet: View {
                     .scrollContentBackground(.hidden)
                     .background(Color.clear)
                     .frame(height: 90)
-                    .onChange(of: text) { newValue in
+                    .onChange(of: text) { _, newValue in
                         if newValue.count > Agreement.maxLength {
                             text = String(newValue.prefix(Agreement.maxLength))
                         }
@@ -1093,7 +1093,7 @@ struct PostPrayerView: View {
                             .scrollContentBackground(.hidden)
                             .background(Color.clear)
                             .frame(height: 150)
-                            .onChange(of: text) { newValue in
+                            .onChange(of: text) { _, newValue in
                                 if newValue.count > maxChars {
                                     text = String(newValue.prefix(maxChars))
                                 }

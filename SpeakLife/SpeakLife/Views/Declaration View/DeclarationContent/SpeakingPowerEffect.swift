@@ -81,7 +81,7 @@ private struct LightRays: View {
             }
         }
         .opacity(opacity)
-        .onChange(of: isActive) { active in
+        .onChange(of: isActive) { _, active in
             if active {
                 withAnimation(.easeIn(duration: 0.8)) { opacity = 1 }
                 withAnimation(.linear(duration: 18).repeatForever(autoreverses: false)) {
@@ -119,7 +119,7 @@ private struct SpiritRing: View {
             .stroke(gold.opacity(opacity), lineWidth: 1.5)
             .scaleEffect(scale)
             .frame(width: 320, height: 320)
-            .onChange(of: isActive) { active in
+            .onChange(of: isActive) { _, active in
                 active ? startAnimation() : stopAnimation()
             }
             .onAppear { if isActive { startAnimation() } }
@@ -186,7 +186,7 @@ private struct RadiantGlow: View {
                 .scaleEffect(pulse)
                 .opacity(glowOpacity)
         }
-        .onChange(of: isActive) { active in
+        .onChange(of: isActive) { _, active in
             if active {
                 withAnimation(.easeIn(duration: 0.4)) { glowOpacity = 1 }
                 withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) {
@@ -249,7 +249,7 @@ private struct RisingParticle: View {
             .scaleEffect(particleScale)
             .opacity(opacity)
             .offset(x: startX + xDrift, y: yOffset)
-            .onChange(of: isActive) { active in
+            .onChange(of: isActive) { _, active in
                 active ? startRising() : stopRising()
             }
             .onAppear { if isActive { startRising() } }
@@ -304,7 +304,7 @@ private struct PowerMessage: View {
             .tracking(1.5)          // subtle letter-spacing for elegance
             .opacity(textOpacity)
             .offset(y: textOffset)
-            .onChange(of: isActive) { active in
+            .onChange(of: isActive) { _, active in
                 if active {
                     withAnimation(.easeOut(duration: 0.8).delay(0.3)) {
                         textOpacity = 1

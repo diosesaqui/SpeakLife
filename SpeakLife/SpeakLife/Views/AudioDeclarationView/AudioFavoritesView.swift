@@ -281,7 +281,7 @@ struct AudioFavoritesView: View {
             // Analytics moved out of sortedAndFilteredFavorites: a computed
             // property runs on every body evaluation, so tracking there fired
             // events on every re-render, not just actual searches.
-            .onChange(of: searchText) { newValue in
+            .onChange(of: searchText) { _, newValue in
                 guard !newValue.isEmpty else { return }
                 AudioAnalytics.shared.trackFavoritesSearched(
                     searchTerm: newValue,

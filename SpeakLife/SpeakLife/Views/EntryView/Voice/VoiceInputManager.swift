@@ -68,7 +68,7 @@ class VoiceInputManager: NSObject, ObservableObject {
 
     private func checkInitialPermissions() {
         let speech = SFSpeechRecognizer.authorizationStatus()
-        let mic = AVAudioSession.sharedInstance().recordPermission
+        let mic = AVAudioApplication.shared.recordPermission
         hasPermissions = speech == .authorized && mic == .granted
     }
 

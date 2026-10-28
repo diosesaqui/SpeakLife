@@ -1040,7 +1040,7 @@ final class SubscriptionStore: ObservableObject {
     func redeemOfferCode() {
         RevenueCatManager.shared.presentOfferCodeRedemption()
         Task {
-            try? await Purchases.shared.syncPurchases()
+            _ = try? await Purchases.shared.syncPurchases()
             await updateEntitlementsFromRC()
         }
     }
@@ -1277,7 +1277,7 @@ final class SubscriptionStore: ObservableObject {
         // flag, and the D2/D3 trial-ending push scheduling.
         let willStartTrial = (hasFreeTrialIntroOffer && isEligibleForIntroOffer) || winBackTrialDays != nil
         let trialDays = winBackTrialDays ?? TrialExperienceService.introTrialDays(for: product)
-        let currency     = product.priceFormatStyle.currencyCode ?? "USD"
+        let currency     = product.priceFormatStyle.currencyCode
 
         let attempt: [String: Any] = [
             "product_id": product.id,
@@ -1568,7 +1568,6 @@ extension Product {
         } else if id == currentYearlyID {
            return "7 days free then \(displayPrice)/yr."
         } else if id == yearlyID {
-            let monthly = getMonthlyAmount(price: price)
             return "First 7 days free, then \(displayPrice)/yr."
         } else if id == weeklyProductID {
             return "\(displayPrice)/wk."

@@ -44,7 +44,7 @@ struct AIEnhancedDeclarationView: View {
         .onAppear {
             loadAIEnhancements()
         }
-        .onChange(of: declaration.id) { _ in
+        .onChange(of: declaration.id) {
             resetAndLoadAIEnhancements()
         }
     }

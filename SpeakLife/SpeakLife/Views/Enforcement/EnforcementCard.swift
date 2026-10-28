@@ -553,7 +553,7 @@ struct EnforcementCard: View {
                 .disabled(isMatching)
                 .submitLabel(.go)
                 .onSubmit(submitSituation)
-                .onChange(of: situation) { _ in
+                .onChange(of: situation) {
                     if inputError != nil { inputError = nil }
                     if matchFailed { matchFailed = false }
                     if redirect != nil { redirect = nil }

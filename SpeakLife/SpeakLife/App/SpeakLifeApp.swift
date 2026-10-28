@@ -329,10 +329,10 @@ struct SpeakLifeApp: App {
         // isPremium starts false and flips once RevenueCat answers, which is
         // after the first scenePhase .active has already queued the bedtime
         // push. Requeue it so a subscriber gets the premium episode.
-        .onChange(of: subscriptionStore.isPremium) { isPremium in
+        .onChange(of: subscriptionStore.isPremium) { _, isPremium in
             LifecycleNotificationService.shared.scheduleBedtimeAudio(isPremium: isPremium)
         }
-        .onChange(of: scenePhase) { (newScenePhase) in
+        .onChange(of: scenePhase) { _, newScenePhase in
             switch newScenePhase {
             case .active:
                 // App became active

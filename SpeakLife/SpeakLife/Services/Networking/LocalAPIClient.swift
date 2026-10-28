@@ -338,15 +338,13 @@ final class LocalAPIClient: APIService {
                 var failedCount = 0
                 
                 // Try to decode each declaration individually
-                for (index, declarationDict) in declarationsArray.enumerated() {
+                for declarationDict in declarationsArray {
                     do {
                         let declarationData = try JSONSerialization.data(withJSONObject: declarationDict)
                         let declaration = try JSONDecoder().decode(Declaration.self, from: declarationData)
                         successfulDeclarations.append(declaration)
                     } catch {
                         failedCount += 1
-                        // Log which declaration failed and why
-                        let category = declarationDict["category"] as? String ?? "unknown"
                     }
                 }
                 
@@ -368,7 +366,7 @@ final class LocalAPIClient: APIService {
         
         if shouldFetchRemote {
             downloadAudioDeclarations() { [weak self] data, error in
-                if let error = error {
+                if error != nil {
                     // Fall back to local audioDevotionals.json file
                     self?.loadLocalAudioDevotionals { localAudios in
                         if !localAudios.isEmpty {
@@ -408,7 +406,7 @@ final class LocalAPIClient: APIService {
             }
         } else {
             loadAudioFromDisk { audios, error in
-                if let error = error {
+                if error != nil {
                     completion(nil, speaklifeFiles)
                     return
                 }

@@ -204,7 +204,7 @@ struct DeclarationContentView: View {
             // .scaleEffect(viewModel.showVerse ? 1.05 : 1)  // REMOVED - causing opacity issue
             .opacity(1.0)
             // .animation(.spring(response: 0.4, dampingFraction: 0.7), value: viewModel.showVerse)  // REMOVED - causing opacity issue
-            .onChange(of: viewModel.showVerse) { _ in
+            .onChange(of: viewModel.showVerse) { _, _ in
                 // Clear animations immediately and trigger reset
                 completedAnimations.removeAll()
                 animationResetTrigger = UUID()
@@ -218,7 +218,7 @@ struct DeclarationContentView: View {
             }
 
             .tabViewStyle(.page(indexDisplayMode: .never))
-            .onChange(of: viewModel.selectedTab) { newIndex in
+            .onChange(of: viewModel.selectedTab) { _, newIndex in
                 if isRevertingFreeLimit {
                     isRevertingFreeLimit = false
                     return
@@ -625,7 +625,7 @@ struct DeclarationContentView: View {
                 VStack(spacing: 16) {
                     // Main declaration text
                     Text(viewModel.showVerse ? declaration.bibleVerseText ?? declaration.text : declaration.text)
-                        .font(themeViewModel.selectedFont ?? .largeTitle)
+                        .font(themeViewModel.selectedFont)
                         .foregroundColor(themeViewModel.selectedTheme.fontColor)
                         .multilineTextAlignment(.center)
                         .lineLimit(nil)

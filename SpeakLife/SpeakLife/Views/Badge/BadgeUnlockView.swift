@@ -321,7 +321,7 @@ struct LightRayEffect: View {
                     .blendMode(.screen)
             }
         }
-        .onChange(of: animate) { shouldAnimate in
+        .onChange(of: animate) { _, shouldAnimate in
             if shouldAnimate {
                 withAnimation(.easeInOut(duration: 0.5)) {
                     rayOpacity = 0.6

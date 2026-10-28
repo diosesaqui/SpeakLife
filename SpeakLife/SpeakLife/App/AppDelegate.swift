@@ -203,7 +203,8 @@ final class AppDelegate: NSObject, MessagingDelegate {
         // Installed rather than referenced directly for the same reason as the
         // hooks above: SpeakLifeServices has no Firebase dependency and must
         // not gain one.
-        StandMirror.shared = StandService.shared
+        // didFinishLaunching always runs on the main thread.
+        MainActor.assumeIsolated { StandMirror.shared = StandService.shared }
 
         // Start the room listener and the pass observer for anybody who ALREADY
         // has an account. Without this `rooms` stayed empty for the whole

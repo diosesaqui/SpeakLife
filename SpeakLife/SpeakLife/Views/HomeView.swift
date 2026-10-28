@@ -253,7 +253,7 @@ struct HomeView: View {
                             // RevenueCat answers after the first frame, so the
                             // renewal date is not known on appear. Re-check once
                             // it lands and whenever the app comes forward.
-                            .onChange(of: subscriptionStore.premiumPeriodEndsAt) { _ in
+                            .onChange(of: subscriptionStore.premiumPeriodEndsAt) { _, _ in
                                 checkMonthlyAnnualOffer()
                             }
                             .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
@@ -278,17 +278,17 @@ struct HomeView: View {
                             // fires too early, and updateConfigValues doesn't post the live notification
                             // so DeclarationViewModel never picks up the version. Observing the
                             // @Published property here catches the moment RC actually returns.
-                            .onChange(of: subscriptionStore.remoteVersion) { newVersion in
+                            .onChange(of: subscriptionStore.remoteVersion) { _, newVersion in
                                 guard newVersion > 0 else { return }
                                 declarationStore.setRemoteDeclarationVersion(version: newVersion)
                             }
                             // RC's premium entitlement (and its originalPurchaseDate) is fetched
                             // async on cold start; the .onAppear check above may run before the
                             // value lands. Re-run once RC populates it.
-                            .onChange(of: subscriptionStore.premiumOriginalPurchaseDate) { _ in
+                            .onChange(of: subscriptionStore.premiumOriginalPurchaseDate) { _, _ in
                                 checkForPremiumAnniversary()
                             }
-                            .onChange(of: paywallTrigger.shouldShowPaywall) { newValue in
+                            .onChange(of: paywallTrigger.shouldShowPaywall) { _, newValue in
                                 if newValue && !subscriptionStore.isPremium {
                                     // Not over the Year in Review (e.g. on the
                                     // way back from Instagram); raised when it
@@ -783,7 +783,7 @@ struct HomeView: View {
                 .accentColor(Constants.DAMidBlue)
                 // Keep feed routing (notifications, deep links, Daily Burst) pointed
                 // at the right tab as the Remote Config layout flag resolves.
-                .onChange(of: subscriptionStore.checklistHomeEnabled) { enabled in
+                .onChange(of: subscriptionStore.checklistHomeEnabled) { _, enabled in
                     tabViewModel.feedTabTag = enabled ? 2 : 0
                 }
                 // Siri / Shortcuts / the lock screen asked for the Guard drill

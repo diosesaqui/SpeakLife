@@ -200,7 +200,7 @@ struct ProfileView: View {
             .padding([.top, .bottom], 60)
         }
                         
-            .onChange(of: declarationStore.backgroundMusicEnabled) { newValue in
+            .onChange(of: declarationStore.backgroundMusicEnabled) { _, newValue in
                 if newValue {
                     AudioPlayerService.shared.playSound(files: resources)
                 } else {
@@ -357,7 +357,7 @@ struct ProfileView: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
-        .onChange(of: dailyTimeBudget) { _ in
+        .onChange(of: dailyTimeBudget) {
             // `@AppStorage` has already written the raw value that
             // `DailyTimeBudget.stored()` reads, so the rebuild below picks the
             // new cap straight up.

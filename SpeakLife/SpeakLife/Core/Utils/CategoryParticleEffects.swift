@@ -284,7 +284,7 @@ struct CategoryParticleSystem: View {
     }
     
     private func startAnimation() {
-        for (index, var particle) in particles.enumerated() {
+        for (index, particle) in particles.enumerated() {
             DispatchQueue.main.asyncAfter(deadline: .now() + particle.animationDelay) {
                 withAnimation(.easeOut(duration: category.animationStyle.duration)) {
                     if index < particles.count {
@@ -413,7 +413,7 @@ struct LoveHeartBurst: View {
             centralHeartScale = 1.0
         }
         
-        for (index, var heart) in hearts.enumerated() {
+        for (index, heart) in hearts.enumerated() {
             DispatchQueue.main.asyncAfter(deadline: .now() + heart.delay) {
                 withAnimation(.spring(response: 0.8, dampingFraction: 0.6)) {
                     hearts[index].scale = 1.0

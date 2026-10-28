@@ -28,7 +28,7 @@ func testHelloAOBibleAPI() async {
         print("RWRW ✅ Adapter successful: \(bibleChapter.verses.count) verses converted")
         
         // Print first few verses
-        for (index, verse) in bibleChapter.verses.prefix(3).enumerated() {
+        for verse in bibleChapter.verses.prefix(3) {
             print("  Verse \(verse.number): \(verse.text)")
         }
         
