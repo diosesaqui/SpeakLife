@@ -821,8 +821,9 @@ extension AppEvents.ParameterName {
     static let appVersion = AppEvents.ParameterName(AnalyticsContext.Key.appVersion)
 }
 
-/// Meta (Facebook) App Events: optimizes ad campaigns on subscription funnel
-/// events. Only the purchase / trial semantics map to native Meta events.
+/// Meta (Facebook) App Events. Trial and subscription events come from the
+/// SDK's automatic purchase logging, not from here; this provider only adds
+/// the Qualified Trial event, which the SDK cannot know about.
 final class MetaAnalyticsProvider: AnalyticsProvider {
     let id = "meta"
 
@@ -830,38 +831,11 @@ final class MetaAnalyticsProvider: AnalyticsProvider {
         guard let semantic = event.semantic else { return }
 
         switch semantic {
-        case .trialStarted(let productId, let currency):
-            // StartTrial is the primary optimization event for FB ad campaigns.
-            AppEvents.shared.logEvent(
-                AppEvents.Name("StartTrial"),
-                valueToSum: 0.00,
-                parameters: [
-                    AppEvents.ParameterName("product_id"): productId as NSString,
-                    AppEvents.ParameterName("currency"): currency as NSString,
-                    .appVersion: AnalyticsContext.shared.appVersion as NSString
-                ]
-            )
-
-        case .trialConverted(let productId, let price, let currency):
-            // Trial converted to a paid subscription.
-            guard let price = price else { return }
-            AppEvents.shared.logEvent(
-                AppEvents.Name("Subscribe"),
-                valueToSum: price,
-                parameters: [
-                    AppEvents.ParameterName("product_id"): productId as NSString,
-                    AppEvents.ParameterName("currency"): currency as NSString,
-                    AppEvents.ParameterName("conversion_type"): "trial_to_paid" as NSString,
-                    .appVersion: AnalyticsContext.shared.appVersion as NSString
-                ]
-            )
-            AppEvents.shared.logPurchase(amount: price, currency: currency,
-                                         parameters: [.appVersion: AnalyticsContext.shared.appVersion as NSString])
-
-        case .subscriptionRenewal(let price, let currency):
-            // Log renewals as purchases for LTV tracking.
-            AppEvents.shared.logPurchase(amount: price, currency: currency,
-                                         parameters: [.appVersion: AnalyticsContext.shared.appVersion as NSString])
+        case .trialStarted, .trialConverted, .subscriptionRenewal:
+            // The Facebook SDK logs StartTrial and Subscribe itself from the
+            // App Store transactions. Sending them here too made Meta count
+            // each one twice.
+            break
 
         case .qualifiedTrial(let productId):
             // A trial still set to renew 24h after it started. Sent as the
