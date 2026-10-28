@@ -60,7 +60,6 @@ struct PrayerWallView: View {
                     .ignoresSafeArea()
 
                 VStack(spacing: 0) {
-                    Spacer().frame(height: UIScreen.main.bounds.height * 0.1)
                     segmentedControl
                         .padding(.horizontal, 20)
                         .padding(.top, DS.Spacing.xs)
