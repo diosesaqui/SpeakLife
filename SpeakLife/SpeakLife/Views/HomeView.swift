@@ -8,7 +8,8 @@
 import SwiftUI
 import FacebookCore
 import UserNotifications
-let resources: [MusicResources] = [.rainstorm, .everpresent, .shoreline, .livingwater]
+// shoreline is pulled for now. To restore it, add it back here and to the Resources build phase.
+let resources: [MusicResources] = [.rainstorm, .everpresent, .livingwater]
 
 struct MusicResources {
     let name: String

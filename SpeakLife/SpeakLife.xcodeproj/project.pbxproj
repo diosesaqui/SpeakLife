@@ -170,7 +170,6 @@
 		4597E2AB2E4138A9009D6C66 /* VoiceDictationButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4597E2AA2E4138A9009D6C66 /* VoiceDictationButton.swift */; };
 		45A1B2C42F80000100D1C0DE /* AppIconPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45A1B2C32F80000100D1C0DE /* AppIconPickerView.swift */; };
 		45A4A3A52D7BF62600DFCEB7 /* declarationsv7.json in Resources */ = {isa = PBXBuildFile; fileRef = 45A4A3A32D7BD2A000DFCEB7 /* declarationsv7.json */; };
-		E96F0F345B56C19CCFBE7D4D /* shoreline.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = EB870EEB8A2702A36117A46B /* shoreline.mp3 */; };
 		45A4A3D32D86B8DB00DFCEB7 /* rainstorm.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 45A4A3D22D86B8DB00DFCEB7 /* rainstorm.mp3 */; };
 		45A4A3CF2D86B81900DFCEB7 /* everpresent.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 45A4A3CE2D86B81900DFCEB7 /* everpresent.mp3 */; };
 		E653694F4A622AA9635D1C2D /* livingwater.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 63D0DEB7079CAB793B1934BA /* livingwater.mp3 */; };
@@ -2134,7 +2133,6 @@
 				BCC8A7200000000000000006 /* bible_chat_topics.json in Resources */,
 				457CD3A72E8508F300F435EC /* README.md in Resources */,
 				456885282B395F66007B1EBB /* declarationsv3.json in Resources */,
-				E96F0F345B56C19CCFBE7D4D /* shoreline.mp3 in Resources */,
 				45A4A3D32D86B8DB00DFCEB7 /* rainstorm.mp3 in Resources */,
 				45A4A3CF2D86B81900DFCEB7 /* everpresent.mp3 in Resources */,
 				E653694F4A622AA9635D1C2D /* livingwater.mp3 in Resources */,
