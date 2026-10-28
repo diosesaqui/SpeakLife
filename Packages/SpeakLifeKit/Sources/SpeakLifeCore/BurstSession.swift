@@ -372,6 +372,18 @@ public struct BurstSessionBuilder {
         )
     }
 
+    /// Jesus-voice lines (`book == "Jesus"`) are Jesus speaking to the reader:
+    /// "You speak to the mountain without doubt." The burst is the speaker's
+    /// own mouth, seven lines in the first person, so those lines do not belong
+    /// in the category draw or a campaign's fill. They stay in the feed, where
+    /// the card labels them "Jesus says". A favorite is the user's own pick and
+    /// is left alone.
+    static func isJesusVoice(_ declaration: Declaration) -> Bool {
+        declaration.book?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .caseInsensitiveCompare("Jesus") == .orderedSame
+    }
+
     private func burstLine(_ declaration: Declaration) -> BurstDeclaration {
         BurstDeclaration(
             text: declaration.text,
@@ -538,6 +550,7 @@ public struct BurstSessionBuilder {
                 // declaration leaves a blank row. Same rule the assembler applies
                 // when it picks the anchors.
                 guard let book = declaration.book, !book.isEmpty else { continue }
+                guard !Self.isJesusVoice(declaration) else { continue }
                 matching.append(declaration)
             }
             matching.sort {
@@ -575,7 +588,7 @@ public struct BurstSessionBuilder {
         let categoryShare = declarationCount - (hasPersonal ? personalSlotCount : 0)
 
         var selectedDeclarations = BurstVariety.pick(
-            shuffle(categoryPool).map(burstLine),
+            shuffle(categoryPool.filter { !Self.isJesusVoice($0) }).map(burstLine),
             limit: categoryShare
         )
 

@@ -318,6 +318,32 @@ final class BurstSessionTests: XCTestCase {
         XCTAssertFalse(session.declarations.contains { $0.text.hasPrefix("Anchor") })
     }
 
+    func testJesusVoiceLinesNeverFillACampaignBurst() {
+        // A Jesus-voice line is Jesus speaking to the reader. The burst is spoken
+        // in the first person, so it is not filler.
+        var pool = [Declaration(text: "You speak to the mountain.", book: "Jesus", category: .anxiety)]
+        pool += deepPool(.anxiety, count: 6)
+
+        let session = builder().build(
+            enforcement: enforcement(theme: .anxiety), currentDay: 1,
+            favorites: [], custom: [], categoryPool: [], selected: nil, fullPool: pool
+        )
+        XCTAssertEqual(session.declarations.count, 7)
+        XCTAssertFalse(session.declarations.contains { $0.verse == "Jesus" })
+    }
+
+    func testJesusVoiceLinesNeverFillAPoolBurst() {
+        var pool = (1...7).map { declaration("pool \($0)", .joy) }
+        pool.insert(Declaration(text: "My joy is in you.", book: "Jesus", category: .joy), at: 0)
+
+        let session = builder().build(
+            enforcement: nil, currentDay: 1,
+            favorites: [], custom: [], categoryPool: pool, selected: .joy
+        )
+        XCTAssertEqual(session.declarations.count, 7)
+        XCTAssertFalse(session.declarations.contains { $0.verse == "Jesus" })
+    }
+
     func testNoCampaignDrawsFromThePool() {
         let session = builder().build(
             enforcement: nil, currentDay: 1,
