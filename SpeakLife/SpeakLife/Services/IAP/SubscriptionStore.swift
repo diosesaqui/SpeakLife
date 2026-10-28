@@ -10,7 +10,6 @@
 import StoreKit
 import Combine
 import FirebaseAnalytics
-import FacebookCore
 import SwiftUI
 import FirebaseRemoteConfig
 import RevenueCat
@@ -1336,17 +1335,9 @@ final class SubscriptionStore: ObservableObject {
 
         if willStartTrial {
             // ─── TRIAL START ─────────────────────────────────────────────
-            AppEvents.shared.logEvent(
-                AppEvents.Name("StartTrial"),
-                valueToSum: 0.00,
-                parameters: [
-                    AppEvents.ParameterName("product_id"): product.id as NSString,
-                    AppEvents.ParameterName("currency"): currency as NSString,
-                    AppEvents.ParameterName("paywall_name"): paywallName as NSString,
-                    AppEvents.ParameterName("predicted_value"): priceValue as NSNumber,
-                    .appVersion: AnalyticsContext.shared.appVersion as NSString
-                ]
-            )
+            // No Meta event here. The Facebook SDK's automatic purchase
+            // logging already sends StartTrial for this transaction, and a
+            // hand-sent copy was counted as a second trial.
             // Single source of truth for trial_started (paywalls must NOT fire
             // their own copy). segment/plan added so the event keeps the
             // properties the HighConversionPaywall version used to carry.
@@ -1366,18 +1357,7 @@ final class SubscriptionStore: ObservableObject {
             Event.trackTikTokEngagement(action: "trial_started", category: "subscription")
         } else {
             // ─── PAID SUBSCRIPTION ────────────────────────────────────────
-            AppEvents.shared.logEvent(
-                AppEvents.Name("Subscribe"),
-                valueToSum: priceValue,
-                parameters: [
-                    AppEvents.ParameterName("product_id"): product.id as NSString,
-                    AppEvents.ParameterName("currency"): currency as NSString,
-                    AppEvents.ParameterName("paywall_name"): paywallName as NSString,
-                    .appVersion: AnalyticsContext.shared.appVersion as NSString
-                ]
-            )
-            AppEvents.shared.logPurchase(amount: priceValue, currency: currency,
-                                         parameters: [.appVersion: AnalyticsContext.shared.appVersion as NSString])
+            // No Meta event here either: the SDK sends Subscribe on its own.
             Event.trackTikTokPremiumPurchase(value: priceValue, currency: currency)
         }
 
