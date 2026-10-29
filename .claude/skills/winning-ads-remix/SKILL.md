@@ -93,6 +93,7 @@ For each proven ad write down:
 | Scrolling credits + player card (Calm) | `render_credits.py` (add a new `--<name>` variant like `--promise`) |
 | Hook + review cards | `render_pain.py` (reviews must be real App Store reviews, verbatim) |
 | Talking head / FaceTime UGC | `speaklife-video-ads` (costs Higgsfield credits; say the cost first) |
+| Silent routine + floating app card (Bend) | `docs/creative/videos/2026-10-29-use-ad/render.py` (see `speaklife-video-ads` → "Silent routine ads") |
 | Static image | `speaklife-static-ads` |
 | Carousel / slideshow | `speaklife-cinematic-slideshows`, `speaklife-format-slideshows` |
 

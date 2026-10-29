@@ -1,6 +1,6 @@
 ---
 name: speaklife-video-ads
-description: Make a SpeakLife talking-head video ad end to end with an AI character (Sofia, Grace or Naomi) — script, start frame, lip-synced Higgsfield video, word-by-word captions with an Instagram-style hook, ad copy, upload to Meta and the ad itself. Use when asked for "a video ad", "a FaceTime video", "make a Sofia video", "a Grace/Naomi video", "a talking video about X", "another one like FT-04", "caption this video", "upload the video to the ad set", or any request to turn an angle, verse or story into a short vertical video ad for Meta/Instagram/TikTok.
+description: Make a SpeakLife talking-head video ad end to end with an AI character (Sofia, Grace or Naomi) — script, start frame, lip-synced Higgsfield video, word-by-word captions with an Instagram-style hook, ad copy, upload to Meta and the ad itself. Also covers the silent routine format (SL-USE-01, remixed from Bend): one woman's morning with no talking, the real app in close-ups and a floating card, captions only. Use when asked for "a routine ad", "a Bend-style ad", "a silent video with the app on screen", "another one like SL-USE-01", or when asked for "a video ad", "a FaceTime video", "make a Sofia video", "a Grace/Naomi video", "a talking video about X", "another one like FT-04", "caption this video", "upload the video to the ad set", or any request to turn an angle, verse or story into a short vertical video ad for Meta/Instagram/TikTok.
 ---
 
 # SpeakLife Video Ads (AI character, FaceTime style)
@@ -173,6 +173,46 @@ Then with the Meta Ads tools (account `253451158661796`):
 
 New ad sets need `campaign_attribution: AEM`, `promoted_object` {application_id 904572920975437,
 object_store_url http://itunes.apple.com/app/id1617492998, custom_event_type START_TRIAL}.
+
+## Silent routine ads (Bend format, SL-USE-01)
+
+A second format, no talking: one woman's ordinary morning filmed "on a tripod", with the real
+app shown in close-ups and as a floating card top-left, captions only, music bed, end card with
+"Download SpeakLife" and the App Store card. Remixed 2026-10-29 from Bend's UGC ad (running about
+a year). Built and live in `docs/creative/videos/2026-10-29-use-ad/` (`render.py`, `make_hand.py`,
+`COPY.md`). Under 20 seconds (owner's max).
+
+**Shot list (19.6s):** hook scene 3.2s (her, mouth closed, phone in hand) → app close-up 2.8s
+"Open SpeakLife" → app close-up 3.2s "Say each one out loud" → mid scene + floating card 3.2s
+"God's promises, every morning" → walk + floating card 3.2s "Over your body, mind and home" →
+closing scene 1.8s "Keep praying. Start speaking." → same scene 2.2s with the end card.
+
+**Rules learned the hard way:**
+- **She never speaks.** Generate with `generate_audio: false` and "She does not speak, mouth
+  closed" in the prompt. Captions carry everything (Fraunces bold, white, dark outline).
+- **One woman per ad, start to finish.** Cutting from Grace to Sofia mid-video reads as stitched
+  and costs trust. Each cut gets its own woman, outfit and rooms (4 scenes, about 4 × 35 credits).
+- **Different opening per cut.** Cuts that open on the same shot look like one ad to Meta. Change
+  the woman and the room in the first 3 seconds at least.
+- **Match the hook to the app content shown.** Each hook gets the feed whose declarations fit it
+  (Hard Times → "It's not a bad week", morning verse → "7 days", "out loud" → "before you check
+  your phone"). The verse in the primary text matches too.
+- **Open on declarations fast.** The close-ups start on a declaration already on screen, never on
+  the home screen.
+- **Hands must match her skin.** The owner's filmed close-ups only fit Sofia and Naomi. For anyone
+  else, ask the owner for a plain **screen recording** (Control Center, not filmed), generate her
+  hand holding a phone with a solid #00FF00 screen (`gpt_image_2_5`, her master + opening frame as
+  references), and run `make_hand.py` to key the recording in with a slow handheld drift. Use the
+  screen recording for her floating cards too.
+- **Phone screens in AI shots face away** from the camera, or the model invents fake UI.
+- **Look at every clip's motion strip** before using it: one walk clip had a stray tripod in the
+  first 2s, another walked into the lens. Trim with the per-scene start times in `CAST`.
+- **Captions sit on clouds, not on the phone edge**, in tight close-ups (y≈1300). Move the hook
+  off her face when she's lying down.
+- **Music:** the app's own `washed.mp3` from 0:30. The owner asked to drop `sethpiano.mp3`.
+
+**To make a new cut:** add a hook in `HOOKS`, its feed and times in `FEEDS`, its woman's clips in
+`CAST`, then `python3 render.py --still <name>` to check, `python3 render.py <name>` to render.
 
 ## 7 · Wrap up
 
