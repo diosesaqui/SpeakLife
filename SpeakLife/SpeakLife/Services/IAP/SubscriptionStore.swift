@@ -550,11 +550,13 @@ final class SubscriptionStore: ObservableObject {
     // charged ("$49.99/yr") and drops the per-month figure to the line under
     // it, which is how App Review wants the billed price shown. When false the
     // card leads with the per-month equivalent as before. Also turns on the
-    // per-day price lines on that paywall and hides the Book row in Profile
-    // (both used to ride `hardOnboardingPaywall`, which now controls only
-    // whether the paywall can be closed). Reads false if the key is missing
-    // from the console.
+    // per-day price lines on that paywall (which used to ride
+    // `hardOnboardingPaywall`, now only whether the paywall can be closed).
+    // Reads false if the key is missing from the console.
     @Published var billedAmountFirst = false
+    // Profile's Book row (RC key "profileBookRowEnabled"). Its own switch so a
+    // paywall price test no longer hides it. Defaults on in AppDelegate.
+    @Published var profileBookRowEnabled = true
     // Lapsed-user wall (RC key "hardLapsedPaywall"). When true, an onboarded
     // user whose premium trial or subscription has ended sees LapsedPaywallView
     // in place of the app until they resubscribe. Unset reads false, so it
@@ -932,6 +934,7 @@ final class SubscriptionStore: ObservableObject {
         useHighConversionPaywall = remoteConfig["useHighConversionPaywall"].boolValue
         hardOnboardingPaywall = remoteConfig["hardOnboardingPaywall"].boolValue
         billedAmountFirst = remoteConfig["billedAmountFirst"].boolValue
+        profileBookRowEnabled = remoteConfig["profileBookRowEnabled"].boolValue
         showPayWhatYouCanCTA = remoteConfig["showPayWhatYouCanCTA"].boolValue
         hardLapsedPaywall = remoteConfig["hardLapsedPaywall"].boolValue
         lapsedWallSince = Self.parseDay(remoteConfig["lapsedWallSince"].stringValue.trimmingCharacters(in: .whitespacesAndNewlines))
