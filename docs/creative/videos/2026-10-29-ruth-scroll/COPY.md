@@ -38,4 +38,7 @@ Download SpeakLife free and make His promises the first thing you say tomorrow.
 3. Less scrolling. More speaking life.
 4. Build a daily habit of speaking God's Word over your mind, your family, and your future.
 
-**Status:** not uploaded. Waiting on the owner's go-ahead and ad set choice.
+**Status:** uploaded 2026-10-29, **PAUSED**, in ad set "SL-USE-01 morning routine (Bend remix) |
+women 25-65 | Oct 29" `120247643548440227` (campaign "SL Scale | Mind winners | Oct 2026").
+Ad `120247653937860227`, creative `1104581592397283`, video `1135792302361901`, thumbnail hash
+`4b53ecbf6fc82debc14266d4497ab482`. AI disclosure left unset for the owner.
