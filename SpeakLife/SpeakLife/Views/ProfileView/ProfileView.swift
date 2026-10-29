@@ -133,8 +133,8 @@ struct ProfileView: View {
                         redeemCodeRow
                     }
 
-                    // Hidden while Remote Config `billedAmountFirst` is on.
-                    if !subscriptionStore.billedAmountFirst {
+                    // Remote Config `profileBookRowEnabled` (default on).
+                    if subscriptionStore.profileBookRowEnabled {
                         Section(header: Text("Book".uppercased()).font(.caption)) {
                             bookLink
                         }

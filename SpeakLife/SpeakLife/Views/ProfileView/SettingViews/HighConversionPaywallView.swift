@@ -586,6 +586,7 @@ struct HighConversionPaywallView: View {
     /// variant called `pain` sitting above an identity headline would quietly
     /// blend two different screens into one line on the chart.
     private var paywallVariant: String {
+        if isSimpleVariant { return "high_conversion_identity_simple_v1" }
         if isCleanVariant {
             return isCleanDarkTheme ? "high_conversion_identity_clean_dark_v1" : "high_conversion_identity_clean_v1"
         }
@@ -599,7 +600,16 @@ struct HighConversionPaywallView: View {
     /// impression vs conversion variant attribution in the A/B readout.
     @State private var lockedCleanVariant: Bool?
     private var isCleanVariant: Bool {
-        lockedCleanVariant ?? subscriptionStore.useCleanPaywallVariant
+        !isSimpleVariant && (lockedCleanVariant ?? subscriptionStore.useCleanPaywallVariant)
+    }
+
+    /// One-screen layout A/B (Remote Config: useSimplePaywallVariant), modeled
+    /// on the Abide and Calm onboarding paywalls. Onboarding only, so the test
+    /// reads against the onboarding control without settings traffic mixed in.
+    /// Latched on first appear, same reason as the clean layout.
+    @State private var lockedSimpleVariant: Bool?
+    private var isSimpleVariant: Bool {
+        source == "onboarding" && (lockedSimpleVariant ?? subscriptionStore.useSimplePaywallVariant)
     }
 
     /// Dark skin for the clean layout (Remote Config: useCleanPaywallDarkTheme,
@@ -898,7 +908,9 @@ struct HighConversionPaywallView: View {
                 PostPurchaseMissionView(onContinue: continueMission)
                     .transition(.opacity)
             } else {
-                if isCleanVariant {
+                if isSimpleVariant {
+                    simpleVariantLayout
+                } else if isCleanVariant {
                     cleanVariantLayout
                 } else {
                     VStack(spacing: 0) {
@@ -2069,6 +2081,238 @@ struct HighConversionPaywallView: View {
         .font(.system(size: 12)).foregroundColor(cleanSubInk)
     }
 
+    // MARK: - Simple Variant Layout (high_conversion_identity_simple_v1)
+    // One screen, modeled on the Abide and Calm onboarding paywalls: photo,
+    // rating, "start your free trial", three checks, two plan cards, one
+    // button, one disclosure line. No comparison grid, testimonial wall or
+    // timeline. Each plan card's right side is the amount Apple's sheet will
+    // show, so the sheet holds no surprise. Shares every handler with the
+    // classic layout, so only the presentation differs.
+
+    private var simpleInk: Color { .white }
+    private var simpleSubInk: Color { .white.opacity(0.68) }
+    private var simpleBackground: Color { Color(red: 0.04, green: 0.05, blue: 0.10) }
+
+    private var simpleVariantLayout: some View {
+        ZStack(alignment: .top) {
+            simpleBackground.ignoresSafeArea()
+            // Fill a fixed box so the photo's width can never widen the layout.
+            Color.clear
+                .frame(maxWidth: .infinity).frame(height: 300)
+                .overlay(Image("starrySunrise").resizable().aspectRatio(contentMode: .fill))
+                .clipped()
+                .overlay(LinearGradient(colors: [.clear, simpleBackground], startPoint: .center, endPoint: .bottom))
+                .ignoresSafeArea(edges: .top)
+                .accessibilityHidden(true)
+            VStack(spacing: 0) {
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 0) {
+                        simpleRatingBadge.padding(.top, 150)
+                        Text(simpleHeadline)
+                            .font(.system(size: 30, weight: .bold, design: .serif))
+                            .italic()
+                            .foregroundColor(simpleInk)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 24).padding(.top, 22)
+                        simpleChecks.padding(.top, 22)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                simpleBottomSection
+            }
+        }
+    }
+
+    /// "Start your free week" when the annual plan carries a 7-day trial for
+    /// this user, the real day count otherwise, and no "free" at all for an
+    /// account that is not eligible.
+    private var simpleHeadline: String {
+        guard let days = trialDays(for: subscriptionStore.currentOfferedPremium) else {
+            return "Unlock SpeakLife"
+        }
+        return days == 7 ? "Start your free week" : "Start your \(days)-day free trial"
+    }
+
+    private var simpleRatingBadge: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "laurel.leading").font(.system(size: 34)).foregroundColor(simpleInk)
+            VStack(spacing: 3) {
+                Text("4.9 stars").font(.system(size: 15, weight: .medium)).foregroundColor(simpleInk)
+                HStack(spacing: 2) {
+                    ForEach(0..<5) { _ in
+                        Image(systemName: "star.fill").font(.system(size: 13)).foregroundColor(.yellow)
+                    }
+                }
+                Text("on the App Store").font(.system(size: 13)).foregroundColor(simpleSubInk)
+            }
+            Image(systemName: "laurel.trailing").font(.system(size: 34)).foregroundColor(simpleInk)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Rated 4.9 stars on the App Store")
+    }
+
+    /// Three lines, aimed at the problem the user named in onboarding (same
+    /// source as the classic layout's rows), titles only.
+    private var simpleChecks: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            ForEach(Array(solutionRows.prefix(3).enumerated()), id: \.offset) { _, row in
+                HStack(alignment: .firstTextBaseline, spacing: 12) {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(simpleInk)
+                    Text(row.title)
+                        .font(.system(size: 16))
+                        .foregroundColor(simpleInk)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 0)
+                }
+            }
+        }
+        .padding(.horizontal, 28)
+    }
+
+    private var simpleBottomSection: some View {
+        VStack(spacing: 12) {
+            simplePlanCard(
+                plan: .annual,
+                title: "Annual",
+                subline: simpleSubline(product: subscriptionStore.currentOfferedPremium,
+                                       perCadence: annualComparablePrice + cadenceUnit,
+                                       fallback: "\(annualComparablePrice)\(cadenceUnit), billed yearly"),
+                price: "\(annualPrice)/yr",
+                badge: "Most Popular"
+            )
+            .padding(.top, 12) // room for the badge overhang
+            if !onlyShowYearly {
+                simplePlanCard(
+                    plan: nonAnnualPlan,
+                    title: nonAnnualTitle,
+                    subline: simpleSubline(product: nonAnnualProduct,
+                                           perCadence: nonAnnualPrice + cadenceUnit,
+                                           fallback: showWeeklyPlan ? "Billed weekly" : "Billed monthly"),
+                    price: nonAnnualPrice + cadenceUnit,
+                    badge: nil
+                )
+            }
+            simpleCTAButton.padding(.top, 6)
+            Text(simpleDisclosure)
+                .font(.system(size: 12))
+                .foregroundColor(simpleSubInk)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+            // Same Remote Config-gated link as the other layouts, so turning on
+            // showPayWhatYouCanCTA reaches every arm of the test.
+            payWhatYouCanCTA
+            HStack(spacing: DS.Spacing.lg) {
+                Button("Restore", action: restore)
+                Link("Terms", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
+                Button("Privacy") { showPrivacyPolicy = true }
+            }
+            .font(.system(size: 13)).foregroundColor(simpleSubInk)
+        }
+        .padding(.horizontal, 20)
+        // Outer view ignores the bottom safe area, so clear the home indicator.
+        .padding(.bottom, 34)
+    }
+
+    private var nonAnnualProduct: Product? {
+        showWeeklyPlan ? subscriptionStore.currentOfferedWeekly : subscriptionStore.currentOfferedPremiumMonthly
+    }
+
+    /// "7 days free, then $4.17/mo" when this user gets a trial on that plan,
+    /// otherwise the plain billing line. Never says "free" without a trial.
+    private func simpleSubline(product: Product?, perCadence: String, fallback: String) -> String {
+        guard let days = trialDays(for: product) else { return fallback }
+        return "\(days) days free, then \(perCadence)"
+    }
+
+    /// The one line under the button: what is charged, when, and that it can
+    /// be cancelled. Follows the selected plan.
+    private var simpleDisclosure: String {
+        let price: String
+        let cadence: String
+        switch selectedPlan {
+        case .annual:  price = annualPrice; cadence = "year"
+        case .monthly: price = monthlyPrice; cadence = "month"
+        case .weekly:  price = nonAnnualPrice; cadence = "week"
+        }
+        if let days = selectedPlanTrialDays {
+            return "Free for \(days) days, then \(price)/\(cadence). Cancel anytime in Settings."
+        }
+        return "\(price)/\(cadence). Renews automatically. Cancel anytime in Settings."
+    }
+
+    private var simpleCTAText: String {
+        selectedPlanTrialDays != nil ? "Start Free Trial" : "Continue"
+    }
+
+    private var simpleCTAButton: some View {
+        Button(action: makePurchase) {
+            Group {
+                if declarationStore.isPurchasing {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                } else {
+                    Text(simpleCTAText)
+                        .font(.system(size: 18, weight: .bold)).foregroundColor(.white)
+                }
+            }
+            .frame(maxWidth: .infinity).padding(.vertical, 18)
+            .background(Capsule().fill(Constants.DAMidBlue))
+        }
+        .disabled(declarationStore.isPurchasing)
+        .opacity(declarationStore.isPurchasing ? 0.7 : 1.0)
+        .buttonStyle(PlainButtonStyle())
+    }
+
+    private func simplePlanCard(plan: PlanType, title: String, subline: String, price: String, badge: String?) -> some View {
+        let isSelected = selectedPlan == plan
+        return Button(action: {
+            withAnimation(.easeInOut(duration: 0.15)) { selectedPlan = plan }
+            AnalyticsService.shared.track("paywall_plan_switched", parameters: ["plan": plan.rawValue, "variant": paywallVariant, "segment": segmentParam])
+        }) {
+            ZStack(alignment: .topTrailing) {
+                HStack(spacing: 12) {
+                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 22))
+                        .foregroundColor(isSelected ? .white : .white.opacity(0.4))
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(title)
+                            .font(.system(size: 17, weight: .bold))
+                            .foregroundColor(simpleInk)
+                        Text(subline)
+                            .font(.system(size: 14))
+                            .foregroundColor(simpleSubInk)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 8)
+                    Text(price)
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(simpleInk)
+                }
+                .padding(.horizontal, 16).padding(.vertical, 16)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(isSelected ? Color.white.opacity(0.08) : Color.clear)
+                        .overlay(RoundedRectangle(cornerRadius: 16)
+                            .stroke(isSelected ? Color.white : Color.white.opacity(0.25), lineWidth: isSelected ? 1.5 : 1))
+                )
+                if let badge {
+                    Text(badge)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(simpleBackground)
+                        .padding(.horizontal, 12).padding(.vertical, 5)
+                        .background(Capsule().fill(Color(red: 0.85, green: 0.95, blue: 0.93)))
+                        .offset(x: -16, y: -13)
+                }
+            }
+        }
+        .buttonStyle(PlainButtonStyle())
+        .accessibilityLabel(Text("\(title), \(subline), \(price)"))
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+
     // MARK: - Post-Purchase Mission Screen Routing
     /// Swaps in the mission screen after a successful purchase, remembering
     /// which success path to run when it continues. Callers clear the purchase
@@ -2142,6 +2386,9 @@ struct HighConversionPaywallView: View {
         }
         if lockedCleanDarkTheme == nil {
             lockedCleanDarkTheme = subscriptionStore.useCleanPaywallDarkTheme
+        }
+        if lockedSimpleVariant == nil {
+            lockedSimpleVariant = subscriptionStore.useSimplePaywallVariant
         }
         timeOnPaywall = Date()
         selectedPlan = .annual
