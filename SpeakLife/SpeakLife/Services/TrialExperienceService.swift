@@ -4,7 +4,7 @@
 //
 //  Manages the trial closing sequence, length-aware (3-day, 7-day, ... SKUs).
 //  Day 1: Burst fires immediately after onboarding (triggered via HomeView)
-//  Day n-1: Personalized category-matched "ends tomorrow" push + in-app stats card
+//  Day 5 of 7 (day n-1 under 5 days): personalized "ends in 2 days" push + in-app stats card
 //  Day n (last day): Loss-aversion push + ending banner with inline convert CTA
 //
 
@@ -24,6 +24,7 @@ final class TrialExperienceService: ObservableObject {
     private let kTrialDay               = "trial_current_day"
     private let kTrialActive            = "trial_experience_active"
     private let kTrialLengthDays        = "trial_experience_length_days"
+    private let kTrialCancelled         = "trial_experience_cancelled"
 
     // MARK: - Public State
 
@@ -91,6 +92,7 @@ final class TrialExperienceService: ObservableObject {
         UserDefaults.standard.set(true, forKey: kTrialActive)
         UserDefaults.standard.set(0, forKey: kTrialDeclarationCount)
         UserDefaults.standard.set(length, forKey: kTrialLengthDays)
+        UserDefaults.standard.set(false, forKey: kTrialCancelled)
 
         assignHabitGroup(trialLengthDays: length)
         scheduleTrialPushes(from: now, trialLengthDays: length)
@@ -169,6 +171,29 @@ final class TrialExperienceService: ObservableObject {
         ])
     }
 
+    /// The trial's auto-renew state, from RevenueCat on every foreground and
+    /// customer-info update (`QualifiedTrialTracker.evaluate`). A trial the
+    /// user cancelled in Settings gets no "your trial is ending" pushes: they
+    /// already decided, and the reminder exists for people who have not.
+    /// Turning auto-renew back on restores them. A local notification cannot
+    /// be withdrawn from a phone whose app is never opened again, so someone
+    /// who cancels and never comes back may still get one.
+    func onTrialRenewalStatus(willRenew: Bool) {
+        guard isTrialActive else { return }
+        let wasCancelled = UserDefaults.standard.bool(forKey: kTrialCancelled)
+        if !willRenew && !wasCancelled {
+            UserDefaults.standard.set(true, forKey: kTrialCancelled)
+            // Only the "trial is ending" warnings. The habit nudges stay: the
+            // trial still runs to its last day, and using it is the best case
+            // for turning auto-renew back on.
+            center.removePendingNotificationRequests(withIdentifiers: ["trial_d2", "trial_d3", StormTrialReminder.identifier])
+            AnalyticsService.shared.track("trial_reminders_cancelled", parameters: ["trial_day": trialDay])
+        } else if willRenew && wasCancelled {
+            UserDefaults.standard.set(false, forKey: kTrialCancelled)
+            reschedulePendingTrialPushesIfNeeded()
+        }
+    }
+
     /// Clear any pending D2/D3 trial-ending pushes without flipping any state.
     /// Used as a defensive cleanup after a non-trial purchase by a user who
     /// has stale pushes from the pre-fix isTrialProduct/willStartTrial bug.
@@ -186,7 +211,8 @@ final class TrialExperienceService: ObservableObject {
     /// path's past-date guards keep late re-scheduling from firing stale
     /// pushes. No-op when no trial is active or no start date was stored.
     func reschedulePendingTrialPushesIfNeeded() {
-        guard isTrialActive, let start = trialStartDate else { return }
+        guard isTrialActive, !UserDefaults.standard.bool(forKey: kTrialCancelled),
+              let start = trialStartDate else { return }
         scheduleTrialPushes(from: start, trialLengthDays: trialLengthDays)
     }
 
@@ -214,12 +240,25 @@ final class TrialExperienceService: ObservableObject {
         }
     }
 
-    /// "Ends tomorrow" reminder: day n-1 of an n-day trial, 9:00am local.
-    /// Day 1 is the purchase day, so day n-1 = startDate + (n-2) days. For the
-    /// historical 3-day trial this stays the Day 2 / +1 day / 9am push.
+    /// Days after the purchase day that the trial-ending reminder fires (9am).
+    /// Day 1 is the purchase day. From a 5-day trial up it lands two days
+    /// before the last day (day 5 of 7), so there is still time to decide;
+    /// shorter trials keep the day n-1 "ends tomorrow" slot. The paywall's
+    /// trial timelines read this too, so the date they show is the date sent.
+    static func reminderDayOffset(trialLengthDays n: Int) -> Int {
+        n >= 5 ? n - 3 : n - 2
+    }
+
+    /// Trial-ending reminder, 9:00am local on the day `reminderDayOffset`
+    /// picks: day 5 of a 7-day trial, day 2 of a 3-day trial.
     private func scheduleDay2Push(from startDate: Date, trialLengthDays: Int) {
         let category = UserPreferencesTracker.shared.primaryCategory
-        let (title, body) = day2Copy(for: category, onDay: trialLengthDays - 1)
+        let offset = Self.reminderDayOffset(trialLengthDays: trialLengthDays)
+        let daysLeft = trialLengthDays - (offset + 1)
+        let (title, rawBody) = day2Copy(for: category, onDay: offset + 1)
+        let body = daysLeft > 1
+            ? rawBody.replacingOccurrences(of: "Your trial ends tomorrow.", with: "Your trial ends in \(daysLeft) days.")
+            : rawBody
 
         let content = UNMutableNotificationContent()
         content.title = title
@@ -227,7 +266,7 @@ final class TrialExperienceService: ObservableObject {
         content.sound = .default
         content.userInfo = ["lifecycle_id": "trial_d2"]
 
-        guard let fireDate = Calendar.current.date(byAdding: .day, value: trialLengthDays - 2, to: startDate) else { return }
+        guard let fireDate = Calendar.current.date(byAdding: .day, value: offset, to: startDate) else { return }
         let adjusted = Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: fireDate) ?? fireDate
         // A 2-day trial purchased after 9am puts this slot in the past — skip
         // it (the trigger would never fire); the last-day push still covers.

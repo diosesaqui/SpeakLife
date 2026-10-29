@@ -1248,9 +1248,10 @@ struct HighConversionPaywallView: View {
         ]
         // The reminder row needs a day that is neither today nor the last day,
         // or it is describing a push that lands on a row already on screen.
-        // `scheduleDay2Push` fires at day n-1, so that holds from n = 3 up.
+        // `TrialExperienceService.reminderDayOffset` keeps it inside, from n = 3 up.
         if days >= 3 && reminderDeliverable {
-            steps.append(("bell.fill", "DAY \(days - 1)", "We remind you the trial is ending, before it ends."))
+            let reminderDay = TrialExperienceService.reminderDayOffset(trialLengthDays: days) + 1
+            steps.append(("bell.fill", "DAY \(reminderDay)", "We remind you the trial is ending, before it ends."))
         }
         let chargeDay = trialDateLabel(daysFromNow: days).map { "DAY \(days) · \($0.uppercased())" } ?? "DAY \(days)"
         let planLine = selectedPlanBilledLine.map { "Your \($0) plan starts." } ?? "Your trial ends."
@@ -1309,10 +1310,10 @@ struct HighConversionPaywallView: View {
         if subscriptionStore.paywallTimelineNearCTA,
            let days = selectedPlanTrialDays, days >= 1,
            let chargeDate = trialDateLabel(daysFromNow: days) {
-            // The reminder lands on day n-1 (`scheduleDay2Push`), which is
-            // only its own day from a 3-day trial up.
+            // Same day `scheduleDay2Push` fires (day 5 of a 7-day trial); a
+            // separate day only from a 3-day trial up.
             let reminder: (String, String)? = days >= 3 && reminderDeliverable
-                ? trialDateLabel(daysFromNow: days - 2).map { ($0, "Reminder") }
+                ? trialDateLabel(daysFromNow: TrialExperienceService.reminderDayOffset(trialLengthDays: days)).map { ($0, "Reminder") }
                 : nil
             let stops: [(String, String)] = [("Today", "Free access")]
                 + (reminder.map { [$0] } ?? [])

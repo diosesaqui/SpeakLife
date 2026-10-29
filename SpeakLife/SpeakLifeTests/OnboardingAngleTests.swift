@@ -545,4 +545,16 @@ final class OnboardingAngleTests: XCTestCase {
         XCTAssertTrue(names.contains("testimonials"),
                       "\(arm): the testimonial wall must be named 'testimonials'", file: file, line: line)
     }
+
+    // MARK: - Trial reminder day (shown on the paywall, sent by TrialExperienceService)
+
+    /// The paywall promises the reminder on a date; this pins the date the push
+    /// actually fires to the one the paywall shows. Day 1 is the purchase day.
+    func testTrialReminderLandsOnDayFiveOfASevenDayTrial() {
+        XCTAssertEqual(TrialExperienceService.reminderDayOffset(trialLengthDays: 7) + 1, 5)
+        XCTAssertEqual(TrialExperienceService.reminderDayOffset(trialLengthDays: 5) + 1, 3)
+        // Short trials keep the "ends tomorrow" slot, still after day 1.
+        XCTAssertEqual(TrialExperienceService.reminderDayOffset(trialLengthDays: 4) + 1, 3)
+        XCTAssertEqual(TrialExperienceService.reminderDayOffset(trialLengthDays: 3) + 1, 2)
+    }
 }
