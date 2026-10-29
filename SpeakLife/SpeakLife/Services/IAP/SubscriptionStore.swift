@@ -829,6 +829,8 @@ final class SubscriptionStore: ObservableObject {
         onboardingResumeEnabled = flagValue("onboardingResumeEnabled")
         paywallTimelineNearCTA = flagValue("paywallTimelineNearCTA")
         useSimplePaywallVariant = flagValue("useSimplePaywallVariant")
+        billedAmountFirst = flagValue("billedAmountFirst")
+        profileBookRowEnabled = flagValue("profileBookRowEnabled")
         promiseOpenerEnabled = flagValue("promiseOpenerEnabled")
         emailCaptureEnabled = flagValue("emailCaptureEnabled")
 
@@ -933,8 +935,6 @@ final class SubscriptionStore: ObservableObject {
         // High Conversion Paywall Flag
         useHighConversionPaywall = remoteConfig["useHighConversionPaywall"].boolValue
         hardOnboardingPaywall = remoteConfig["hardOnboardingPaywall"].boolValue
-        billedAmountFirst = remoteConfig["billedAmountFirst"].boolValue
-        profileBookRowEnabled = remoteConfig["profileBookRowEnabled"].boolValue
         showPayWhatYouCanCTA = remoteConfig["showPayWhatYouCanCTA"].boolValue
         hardLapsedPaywall = remoteConfig["hardLapsedPaywall"].boolValue
         lapsedWallSince = Self.parseDay(remoteConfig["lapsedWallSince"].stringValue.trimmingCharacters(in: .whitespacesAndNewlines))
