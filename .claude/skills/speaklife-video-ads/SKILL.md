@@ -25,8 +25,12 @@ Examples that shipped: FT-01 to FT-05, UV-01, UV-02 in
 | Sofia | Latina, golden bronze skin, long black hair | `53c3e5a8-4d89-4bde-8768-00006af94781` | `dda4be43-fe1f-4482-b610-0925260ce57c` | `715e401f-55af-4bb6-b6ef-2a991f5a1e38` |
 | Grace | White, blue eyes, long blonde hair, freckles | `10ef258a-0dcc-4ace-9d2d-3ecda957b8d3` | `2c8cc992-3181-440e-bb8d-49e926e41cf8` | `436f784c-765b-4a7f-9fd0-c83c7c1b1d0b` |
 | Naomi | Deep brown skin, long straight black hair | `6b3fa90f-bd40-4797-b7cb-2f123f997055` | `19564973-fad2-4d8a-a25a-96fc3cedbbaf` | `37822e0b-7d52-4e2d-a191-28c87d409d80` |
+| Ruth (55) | White, salt-and-pepper shoulder-length hair, hazel eyes, freckles, age lines | `88d0da3e-4926-4c2a-8cbf-f9b90b00c12b` | `634e7854-907f-4cbe-8b40-c6e8a146ec63` | `3471d9d2-6c28-4448-9a94-22da127ebc28` |
 
-Masters and training photos: `docs/creative/characters/`. Always start from the master job, never a
+Masters and training photos: `docs/creative/characters/`. **Ruth** is the 55-year-old: women 55–64
+were our cheapest trials in the Oct 15–29 audit ($14 vs $25–31), so use her for that audience. In
+her prompts swap "young woman" for "55-year-old woman" and the voice line for "a warm American
+woman in her mid fifties". Always start from the master job, never a
 text-only prompt, or the face drifts.
 
 ## 2 · Script rules
