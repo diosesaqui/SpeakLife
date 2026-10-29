@@ -64,22 +64,24 @@ final class OnboardingAngleTests: XCTestCase {
 
     // MARK: - Step numbering (analytics contract)
 
-    /// Raw values from `PromisesStep`, before the port.
+    /// Promises after the Oct 2026 trim (flowSchema 6): the lean quiz moved
+    /// everything from the picker on up by five. Funnels join on step names,
+    /// and flowSchema separates the before/after rows for `step_index`.
     func testPromisesStepIndicesAreUnchanged() {
         let steps = OnboardingAngles.promises.steps
-        XCTAssertEqual(steps.count, 24)
+        XCTAssertEqual(steps.count, 19)
         XCTAssertEqual(steps[0], .storm)
         XCTAssertEqual(steps[5], .scene(4))       // everyArea
         XCTAssertEqual(steps[6], .experience)
         XCTAssertEqual(steps[7], .picker)
-        XCTAssertEqual(steps[8], .battleDuration)
-        XCTAssertEqual(steps[13], .belief)
-        XCTAssertEqual(steps[14], .dailyMinutes)
-        XCTAssertEqual(steps[17], .rating)
-        XCTAssertEqual(steps[20], .notificationTime)
-        XCTAssertEqual(steps[21], .email)
-        XCTAssertEqual(steps[22], .testimonials)
-        XCTAssertEqual(steps[23], .paywall)
+        XCTAssertEqual(steps[8], .connectStyle)
+        XCTAssertEqual(steps[9], .dailyMinutes)
+        XCTAssertEqual(steps[10], .firstDeclaration)
+        XCTAssertEqual(steps[12], .rating)
+        XCTAssertEqual(steps[15], .notificationTime)
+        XCTAssertEqual(steps[16], .email)
+        XCTAssertEqual(steps[17], .testimonials)
+        XCTAssertEqual(steps[18], .paywall)
     }
 
     /// Raw values from `WarfareStep`, before the port. Warfare is the one PORTED
@@ -172,8 +174,10 @@ final class OnboardingAngleTests: XCTestCase {
 
     /// The default has to stay the full block, or trimming one arm silently
     /// shortens every arm that never asked to be trimmed.
-    func testOnlyTheCommandArmRunsShort() {
-        for id in ["promises", "warfare", "outcomes", "healing", "provision", "anxiety", "renewal"] {
+    func testOnlyTheCommandAndPromisesArmsRunShort() {
+        XCTAssertEqual(OnboardingAngles.promises.quizSteps, OnboardingAngle.leanQuiz)
+        XCTAssertTrue(OnboardingAngles.promises.showsPlanBuilding, "promises: lost the plan loader")
+        for id in ["warfare", "outcomes", "healing", "provision", "anxiety", "renewal"] {
             guard let angle = OnboardingAngles.angle(id: id) else {
                 return XCTFail("missing angle '\(id)'")
             }
@@ -187,8 +191,9 @@ final class OnboardingAngleTests: XCTestCase {
     /// `totalValueScreens` drove the progress bar in all three arms; quiz v1
     /// drops the belief question, so the denominator differs by one.
     func testValueScreenCountsAreUnchanged() {
-        XCTAssertEqual(OnboardingAngles.promises.valueScreens(quizV2: true).count, 15)
-        XCTAssertEqual(OnboardingAngles.promises.valueScreens(quizV2: false).count, 14)
+        // Promises runs the lean quiz, which has no belief question to drop.
+        XCTAssertEqual(OnboardingAngles.promises.valueScreens(quizV2: true).count, 10)
+        XCTAssertEqual(OnboardingAngles.promises.valueScreens(quizV2: false).count, 10)
         XCTAssertEqual(OnboardingAngles.warfare.valueScreens(quizV2: true).count, 14)
         XCTAssertEqual(OnboardingAngles.warfare.valueScreens(quizV2: false).count, 13)
         XCTAssertEqual(OnboardingAngles.outcomes.valueScreens(quizV2: true).count, 15)

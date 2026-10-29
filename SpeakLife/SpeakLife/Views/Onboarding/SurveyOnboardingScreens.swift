@@ -2159,6 +2159,114 @@ struct SurveyPlanRevealScreen: View {
     }
 }
 
+// MARK: - Promise Opener (screen one, ad-matched)
+
+/// Screen one when `promiseOpenerEnabled` is on. The Oct 2026 audit found the
+/// promises arm lost 29% of starters on the storm opener: three lines of
+/// headline, a paragraph and a full verse, none of it the thing the ads promise
+/// ("speak God's promises over your morning", "five minutes a day"). This
+/// screen opens on the ads' own words, says the cost in time, and puts one real
+/// declaration (from declarationsv10, grace) in front of them to say right
+/// away, so the first thing the app does is the thing it is for.
+///
+/// Same arms, same funnel step name ("storm") so the funnel stays joinable;
+/// `storm_opener_shown` carries `version: promise` to split the two.
+struct PromiseOpenerScreen: View {
+    let size: CGSize
+    let flow: String
+    let onContinue: () -> Void
+
+    @State private var v = false
+
+    private let declaration = "Fresh mercy meets me every morning, and God's faithfulness never fails me."
+    private let reference = "Lamentations 3:22-23"
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Spacer()
+
+            VStack(spacing: 26) {
+                VStack(spacing: 14) {
+                    Text("SPEAKLIFE")
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundColor(DS.Palette.gold.opacity(0.9))
+                        .kerning(1.6)
+                        .planRevealStagger(v)
+
+                    Text("God's promises.\nOut loud.\nEvery morning.")
+                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(3)
+                        .minimumScaleFactor(0.8)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .planRevealStagger(v, delay: 0.08)
+
+                    Text("Five minutes a day speaking what Scripture says over your mind, your body and your home.")
+                        .font(.system(size: 17, weight: .regular, design: .rounded))
+                        .foregroundColor(.white.opacity(0.78))
+                        .multilineTextAlignment(.center)
+                        .lineSpacing(4)
+                        .padding(.horizontal, 16)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .planRevealStagger(v, delay: 0.16)
+                }
+
+                // The product, not a description of it: one declaration to say
+                // now, in the card style the feed uses.
+                VStack(spacing: 10) {
+                    Text("SAY THIS ONE OUT LOUD")
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .foregroundColor(.white.opacity(0.55))
+                        .kerning(1.2)
+                    Text(declaration)
+                        .font(.system(size: 20, weight: .semibold, design: .serif))
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text(reference)
+                        .font(.system(size: 13, weight: .medium, design: .serif))
+                        .italic()
+                        .foregroundColor(DS.Palette.gold.opacity(0.85))
+                }
+                .padding(.vertical, 22)
+                .padding(.horizontal, 20)
+                .frame(maxWidth: .infinity)
+                .background(
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(Color.white.opacity(0.08))
+                        .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.white.opacity(0.18), lineWidth: 1))
+                )
+                .planRevealStagger(v, delay: 0.26)
+            }
+            .padding(.horizontal, 28)
+
+            Spacer()
+
+            Button(action: onContinue) {
+                Text("Show Me How →")
+                    .font(.system(size: 17, weight: .bold, design: .rounded))
+                    .foregroundColor(DS.Palette.deepBlue)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 56)
+                    .background(
+                        Capsule()
+                            .fill(DS.Gradient.gold)
+                            .shadow(color: DS.Palette.gold.opacity(0.45), radius: 14, x: 0, y: 6)
+                    )
+            }
+            .buttonStyle(.dsPressable(feel: .tapSolid))
+            .padding(.horizontal, 28)
+            .padding(.bottom, 36)
+            .planRevealStagger(v, delay: 0.36)
+        }
+        .onAppear {
+            AnalyticsService.shared.track("storm_opener_shown", parameters: ["flow": flow, "version": "promise"])
+            withAnimation { v = true }
+        }
+    }
+}
+
 // MARK: - Storm Opener (screen one — closes the store-listing gap)
 
 /// The first screen after install. The App Store listing now promises
@@ -2265,7 +2373,7 @@ struct StormOpenerScreen: View {
             .planRevealStagger(v, delay: 0.42)
         }
         .onAppear {
-            AnalyticsService.shared.track("storm_opener_shown", parameters: ["flow": flow])
+            AnalyticsService.shared.track("storm_opener_shown", parameters: ["flow": flow, "version": "storm"])
             withAnimation { v = true }
         }
     }

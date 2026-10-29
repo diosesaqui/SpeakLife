@@ -175,7 +175,11 @@ struct AngleOnboardingView: View {
     private var currentStepView: some View {
         switch currentStep {
         case .storm:
-            StormOpenerScreen(size: size, flow: angle.flow) { advance() }
+            if subscriptionStore.promiseOpenerEnabled {
+                PromiseOpenerScreen(size: size, flow: angle.flow) { advance() }
+            } else {
+                StormOpenerScreen(size: size, flow: angle.flow) { advance() }
+            }
         case .scene(let i):
             AngleSceneScreen(scene: angle.scenes[i], iconStyle: angle.iconStyle) { advance() }
         case .experience:

@@ -821,11 +821,12 @@ enum OnboardingAngles {
     static let promises = OnboardingAngle(
         id: "promises",
         flow: "promises",
-        // 5 = notification time moved ahead of the paywall, 4 = email step
-        // inserted before the wall (3 = storm opener prepended as step 0,
-        // 2 = testimonial wall inserted before paywall, 1 = original promises arc).
+        // 6 = quiz trimmed to the lean block (Oct 2026 audit), 5 = notification
+        // time moved ahead of the paywall, 4 = email step inserted before the
+        // wall (3 = storm opener prepended as step 0, 2 = testimonial wall
+        // inserted before paywall, 1 = original promises arc).
         // Bump when the step order changes.
-        flowSchema: 5,
+        flowSchema: 6,
         opensWithStormScreen: true,
         scenes: [
             AngleScene(
@@ -920,7 +921,13 @@ enum OnboardingAngles {
                                   subtitle: "His promise of unshakeable gladness",
                                   symbol: "sun.max.fill"),
             ]
-        )
+        ),
+        // Two questions, not six (Oct 2026 audit). "How long", "what have you
+        // tried", "when does it hit hardest" and the insight screen fed nothing
+        // but the completion event, and together cost ~26 of every 227 people
+        // between the picker and the paywall. The two kept are the answers the
+        // app reads after onboarding (`ConnectStyle`, `DailyTimeBudget`).
+        quizSteps: OnboardingAngle.leanQuiz
     )
 
     // MARK: - Warfare (ported)

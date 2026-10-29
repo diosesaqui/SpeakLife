@@ -774,7 +774,7 @@ struct QuizOnboardingView: View {
         // unreachable but kept so the step and its analytics are one edit from
         // coming back.
         guard subscriptionStore.onboardingRatingEnabled else {
-            transition(to: .commitmentHold)
+            finishQuiz()
             return
         }
         AnalyticsService.shared.track("onboarding_rating_step_shown", parameters: [
@@ -797,7 +797,7 @@ struct QuizOnboardingView: View {
         // Remote-gated (onboardingRatingEnabled); when off, continue straight
         // to the commitment hold.
         guard subscriptionStore.onboardingRatingEnabled else {
-            transition(to: .commitmentHold)
+            finishQuiz()
             return
         }
         AnalyticsService.shared.track("onboarding_rating_step_shown", parameters: [
@@ -805,6 +805,17 @@ struct QuizOnboardingView: View {
             "position": "post_personal_declaration"
         ])
         transition(to: .rating)
+    }
+
+    /// Where the quiz used to hand off to the press-and-hold commitment
+    /// screen. The Oct 2026 audit found that screen was the quiz arm's biggest
+    /// leak after question one: ~45 of every 226 people who reached it never
+    /// got to the paywall. It now goes straight through to what the hold
+    /// unlocked. The step, its view and `advanceFromCommitmentHold` are left in
+    /// place, so restoring it is changing this body back to
+    /// `transition(to: .commitmentHold)`.
+    private func finishQuiz() {
+        advanceFromCommitmentHold()
     }
 
     private func advanceFromCommitmentHold() {
@@ -902,8 +913,8 @@ struct QuizOnboardingView: View {
     private func advanceFromRating() {
         Juice.play(.tapLight)
         // Rating now lives right after personalDeclaration (the emotional peak),
-        // so advancing continues into the commitment hold and then the paywall.
-        transition(to: .commitmentHold)
+        // so advancing finishes the quiz and heads for the paywall.
+        finishQuiz()
     }
 
     private func transition(to step: Step) {
