@@ -599,6 +599,14 @@ final class SubscriptionStore: ObservableObject {
     //         preserving visual continuity with the dark onboarding flows.
     @Published var useCleanPaywallDarkTheme = false
 
+    // MARK: - Simple Paywall Layout A/B Test
+    // Onboarding paywall only. Takes precedence over the clean layout.
+    // false = current dark high-conversion layout (default)
+    // true  = one-screen layout (high_conversion_identity_simple_v1): rating,
+    //         "start your free trial", three checks, two plan cards whose
+    //         billed price matches Apple's sheet, one button, one disclosure.
+    @Published var useSimplePaywallVariant = false
+
     // MARK: - Weekly Plan A/B Test
     // false = show Monthly as the non-annual option (default)
     // true  = show Weekly ($SpeakLife1Wk5) instead of Monthly on the paywall
@@ -818,6 +826,7 @@ final class SubscriptionStore: ObservableObject {
         closerPledgeEnabled = flagValue("closerPledgeEnabled")
         onboardingResumeEnabled = flagValue("onboardingResumeEnabled")
         paywallTimelineNearCTA = flagValue("paywallTimelineNearCTA")
+        useSimplePaywallVariant = flagValue("useSimplePaywallVariant")
         promiseOpenerEnabled = flagValue("promiseOpenerEnabled")
         emailCaptureEnabled = flagValue("emailCaptureEnabled")
 
