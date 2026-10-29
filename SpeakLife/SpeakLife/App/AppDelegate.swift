@@ -316,6 +316,11 @@ final class AppDelegate: NSObject, MessagingDelegate {
             // instead of the storm screen. Flip to false in Remote Config to
             // send everyone back to screen one again.
             "onboardingResumeEnabled": true as NSNumber,
+            // Dated trial timeline right above the paywall button ships on.
+            "paywallTimelineNearCTA": true as NSNumber,
+            // Promise-led first onboarding screen ships on; false restores the
+            // storm opener.
+            "promiseOpenerEnabled": true as NSNumber,
             // Pre-paywall email ask ships on; flip to false in Remote Config to
             // skip the email step in every onboarding flow. It sits one screen
             // before a hard paywall, so this is the switch to reach for if trial

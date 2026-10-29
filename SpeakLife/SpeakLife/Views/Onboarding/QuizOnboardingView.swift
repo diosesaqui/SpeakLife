@@ -774,7 +774,7 @@ struct QuizOnboardingView: View {
         // unreachable but kept so the step and its analytics are one edit from
         // coming back.
         guard subscriptionStore.onboardingRatingEnabled else {
-            transition(to: .commitmentHold)
+            finishQuiz()
             return
         }
         AnalyticsService.shared.track("onboarding_rating_step_shown", parameters: [
@@ -797,7 +797,7 @@ struct QuizOnboardingView: View {
         // Remote-gated (onboardingRatingEnabled); when off, continue straight
         // to the commitment hold.
         guard subscriptionStore.onboardingRatingEnabled else {
-            transition(to: .commitmentHold)
+            finishQuiz()
             return
         }
         AnalyticsService.shared.track("onboarding_rating_step_shown", parameters: [
@@ -807,8 +807,14 @@ struct QuizOnboardingView: View {
         transition(to: .rating)
     }
 
-    private func advanceFromCommitmentHold() {
-        Juice.play(.tapLight)
+    /// Ends the quiz and heads for the email ask / review wall / paywall.
+    /// The press-and-hold commitment screen used to sit in front of this. The
+    /// Oct 2026 audit found it was the quiz arm's biggest leak after question
+    /// one (~45 of every 226 people who reached it never got to the paywall),
+    /// so the callers now come straight here. The step and its view are left
+    /// in place: restoring it is pointing those three callers back at
+    /// `transition(to: .commitmentHold)`.
+    private func finishQuiz() {
         // Apply segment defaults BEFORE the paywall renders so the paywall
         // (and the analytics events fired from it) see the chosen segment.
         applySegmentDefaults()
@@ -821,6 +827,11 @@ struct QuizOnboardingView: View {
         // keeps its adjacency to the paywall. Skipped when the ask is
         // remote-disabled or an address is already held.
         transition(to: subscriptionStore.shouldSkipEmailCapture ? .testimonials : .email)
+    }
+
+    private func advanceFromCommitmentHold() {
+        Juice.play(.tapLight)
+        finishQuiz()
     }
 
     private func advanceFromEmail() {
@@ -902,8 +913,8 @@ struct QuizOnboardingView: View {
     private func advanceFromRating() {
         Juice.play(.tapLight)
         // Rating now lives right after personalDeclaration (the emotional peak),
-        // so advancing continues into the commitment hold and then the paywall.
-        transition(to: .commitmentHold)
+        // so advancing finishes the quiz and heads for the paywall.
+        finishQuiz()
     }
 
     private func transition(to step: Step) {

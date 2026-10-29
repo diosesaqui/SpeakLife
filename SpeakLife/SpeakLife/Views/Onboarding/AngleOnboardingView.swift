@@ -175,7 +175,13 @@ struct AngleOnboardingView: View {
     private var currentStepView: some View {
         switch currentStep {
         case .storm:
-            StormOpenerScreen(size: size, flow: angle.flow) { advance() }
+            // Promises arm only: the ob= deep-link arms (grief, healing,
+            // addiction...) keep the storm opener their ads were built around.
+            if subscriptionStore.promiseOpenerEnabled && angle.id == "promises" {
+                PromiseOpenerScreen(size: size, flow: angle.flow) { advance() }
+            } else {
+                StormOpenerScreen(size: size, flow: angle.flow) { advance() }
+            }
         case .scene(let i):
             AngleSceneScreen(scene: angle.scenes[i], iconStyle: angle.iconStyle) { advance() }
         case .experience:

@@ -508,6 +508,20 @@ final class SubscriptionStore: ObservableObject {
     // true (registered in AppDelegate's Remote Config defaults).
     @Published var onboardingResumeEnabled = true
 
+    // MARK: - Trial Conversion Flags (Oct 2026 audit)
+    // 54% of trial-eligible users who reached Apple's purchase sheet cancelled
+    // it, and the only place the paywall said what happens on day 7 was the
+    // last card of a long scroll. On, the paywall shows a dated three-step
+    // trial timeline (today / reminder / first charge) right above the button.
+    // Remote Config: `paywallTimelineNearCTA`, ships on.
+    @Published var paywallTimelineNearCTA = true
+
+    // The promises arm lost 29% of starters on its first screen, a storm
+    // sermon that never says what the ads promise. On, screen one opens on the
+    // ads' own promise with a real declaration on it. Remote Config:
+    // `promiseOpenerEnabled`, ships on; off restores the storm opener.
+    @Published var promiseOpenerEnabled = true
+
     // MARK: - Forced Update Gate
     // Non-nil means this build is below the minimum version Remote Config
     // publishes, and `ForceUpdateGate` puts the blocking update screen up. nil —
@@ -803,6 +817,8 @@ final class SubscriptionStore: ObservableObject {
         onboardingRatingEnabled = flagValue("onboardingRatingEnabled")
         closerPledgeEnabled = flagValue("closerPledgeEnabled")
         onboardingResumeEnabled = flagValue("onboardingResumeEnabled")
+        paywallTimelineNearCTA = flagValue("paywallTimelineNearCTA")
+        promiseOpenerEnabled = flagValue("promiseOpenerEnabled")
         emailCaptureEnabled = flagValue("emailCaptureEnabled")
 
         evaluateForcedUpdate()

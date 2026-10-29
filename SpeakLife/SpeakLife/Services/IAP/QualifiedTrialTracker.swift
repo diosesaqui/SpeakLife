@@ -49,6 +49,11 @@ final class QualifiedTrialTracker {
             guard let info = try? await Purchases.shared.customerInfo() else { return }
             current = info
         }
+        // Trial-ending reminders follow the same auto-renew state: a trial
+        // cancelled in Settings stops getting "your trial is ending" pushes.
+        if let trial = snapshot(current), trial.isActive, trial.isTrial {
+            TrialExperienceService.shared.onTrialRenewalStatus(willRenew: trial.willRenew)
+        }
         guard qualifies(current) else { return }
 
         // The cache can predate a cancel made in Settings minutes ago, and a

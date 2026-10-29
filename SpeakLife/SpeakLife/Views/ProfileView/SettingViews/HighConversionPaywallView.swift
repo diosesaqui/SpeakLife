@@ -50,6 +50,7 @@
 //
 
 import SwiftUI
+import UserNotifications
 import StoreKit
 
 // MARK: - Pain Resolution
@@ -514,6 +515,11 @@ struct HighConversionPaywallView: View {
     /// of whichever plan is selected (annual / monthly / weekly), and a single
     /// global bit checked only against the annual product mislabels the others.
     @State private var trialEligibility: [String: Bool] = [:]
+    /// False when the day n-1 reminder will not be sent: notifications are
+    /// denied, or the storm arm's own reminder owns the warning (both make
+    /// `TrialExperienceService.scheduleTrialPushes` skip it). Neither timeline
+    /// promises a reminder then.
+    @State private var reminderDeliverable = true
 
     // MARK: - Welcome Offer
     //
@@ -928,6 +934,10 @@ struct HighConversionPaywallView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .ignoresSafeArea(edges: .bottom)
         .onAppear(perform: onAppear)
+        .task {
+            let status = await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
+            reminderDeliverable = status != .denied && !StormTrialReminder.ownsTrialWarning
+        }
         // Products can finish loading after onAppear (Remote Config + StoreKit
         // race the paywall presentation). Re-check eligibility whenever any of
         // the three offered product ids changes.
@@ -1238,11 +1248,14 @@ struct HighConversionPaywallView: View {
         ]
         // The reminder row needs a day that is neither today nor the last day,
         // or it is describing a push that lands on a row already on screen.
-        // `scheduleDay2Push` fires at day n-1, so that holds from n = 3 up.
-        if days >= 3 {
-            steps.append(("bell.fill", "DAY \(days - 1)", "We remind you the trial is ending, before it ends."))
+        // `TrialExperienceService.reminderDayOffset` keeps it inside, from n = 3 up.
+        if days >= 3 && reminderDeliverable {
+            let reminderDay = TrialExperienceService.reminderDayOffset(trialLengthDays: days) + 1
+            steps.append(("bell.fill", "DAY \(reminderDay)", "We remind you the trial is ending, before it ends."))
         }
-        steps.append(("star.fill", "DAY \(days)", "Your trial ends. Cancel any time before this and pay nothing."))
+        let chargeDay = trialDateLabel(daysFromNow: days).map { "DAY \(days) · \($0.uppercased())" } ?? "DAY \(days)"
+        let planLine = selectedPlanBilledLine.map { "Your \($0) plan starts." } ?? "Your trial ends."
+        steps.append(("star.fill", chargeDay, "\(planLine) Cancel any time before this and pay nothing."))
         return steps
     }
 
@@ -1256,6 +1269,89 @@ struct HighConversionPaywallView: View {
     private var surfaceMutedInk: Color { onLightSurface ? cleanSubInk.opacity(0.85) : .white.opacity(0.55) }
     private var surfaceCardFill: Color { onLightSurface ? .white : .white.opacity(0.06) }
     private var surfaceCardStroke: Color { onLightSurface ? cleanStroke : Constants.DAMidBlue.opacity(0.35) }
+
+    // MARK: - Compact Trial Timeline (by the button)
+    // The Oct 2026 audit: 54% of trial-eligible users who reached Apple's
+    // purchase sheet cancelled it. The sheet was the first place they saw the
+    // price and the day it is charged, because the paywall's own timeline was
+    // the last card of a long scroll and never named either. This strip says
+    // both, with real dates, right where the decision is made, so nothing on
+    // Apple's sheet is a surprise. Gated by `paywallTimelineNearCTA`.
+    //
+    // The billed amount stays largest in the plan card above (Apple 3.1.2);
+    // the strip repeats it small, as a date, not as a new price claim.
+
+    /// "Nov 5" for a day `daysFromNow` days after today, in the user's locale.
+    private func trialDateLabel(daysFromNow: Int) -> String? {
+        guard let date = Calendar.current.date(byAdding: .day, value: daysFromNow, to: Date()) else { return nil }
+        return Self.trialDateFormatter.string(from: date)
+    }
+
+    private static let trialDateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.setLocalizedDateFormatFromTemplate("MMMd")
+        return f
+    }()
+
+    /// "$49.99/year" for the selected plan, nil when its product hasn't loaded.
+    private var selectedPlanBilledLine: String? {
+        guard let product = selectedProduct else { return nil }
+        let unit: String
+        switch selectedPlan {
+        case .annual:  unit = "year"
+        case .monthly: unit = "month"
+        case .weekly:  unit = "week"
+        }
+        return "\(product.displayPrice)/\(unit)"
+    }
+
+    @ViewBuilder
+    private var compactTrialTimeline: some View {
+        if subscriptionStore.paywallTimelineNearCTA,
+           let days = selectedPlanTrialDays, days >= 1,
+           let chargeDate = trialDateLabel(daysFromNow: days) {
+            // Same day `scheduleDay2Push` fires (day 5 of a 7-day trial); a
+            // separate day only from a 3-day trial up.
+            let reminder: (String, String)? = days >= 3 && reminderDeliverable
+                ? trialDateLabel(daysFromNow: TrialExperienceService.reminderDayOffset(trialLengthDays: days)).map { ($0, "Reminder") }
+                : nil
+            let stops: [(String, String)] = [("Today", "Free access")]
+                + (reminder.map { [$0] } ?? [])
+                + [(chargeDate, selectedPlanBilledLine ?? "Plan starts")]
+
+            HStack(alignment: .top, spacing: 0) {
+                ForEach(Array(stops.enumerated()), id: \.offset) { index, stop in
+                    VStack(spacing: 5) {
+                        Circle()
+                            .fill(index == 0 ? Color.green : Constants.DAMidBlue)
+                            .frame(width: 10, height: 10)
+                        Text(stop.0)
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.white.opacity(0.95))
+                        Text(stop.1)
+                            .font(.system(size: 11.5, weight: .medium))
+                            .foregroundColor(.white.opacity(0.7))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+            }
+            // One connector behind the dots, from the first column's centre to
+            // the last one's.
+            .background(alignment: .top) {
+                GeometryReader { geo in
+                    let inset = geo.size.width / CGFloat(stops.count) / 2
+                    Rectangle()
+                        .fill(Color.white.opacity(0.22))
+                        .frame(width: max(geo.size.width - inset * 2, 0), height: 2)
+                        .offset(x: inset, y: 4)
+                }
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(Text(stops.map { "\($0.0): \($0.1)" }.joined(separator: ". ")))
+        }
+    }
 
     @ViewBuilder
     private var trialTimelineSection: some View {
@@ -1346,6 +1442,7 @@ struct HighConversionPaywallView: View {
                 .frame(height: 20)
             VStack(spacing: 18) {
                 planSelectorSection
+                compactTrialTimeline
                 trialCallout
                // closingLine
                 ctaButton
@@ -2062,6 +2159,7 @@ struct HighConversionPaywallView: View {
             "initial_plan": "annual",
             "only_yearly": onlyShowYearly,
             "billed_amount_first": billedAmountFirst,
+            "timeline_near_cta": subscriptionStore.paywallTimelineNearCTA,
             "segment": segmentParam,
             "pain": painParam
         ])
