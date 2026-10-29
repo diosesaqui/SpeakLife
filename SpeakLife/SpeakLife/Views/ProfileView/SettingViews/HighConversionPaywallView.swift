@@ -50,6 +50,7 @@
 //
 
 import SwiftUI
+import UserNotifications
 import StoreKit
 
 // MARK: - Pain Resolution
@@ -514,6 +515,11 @@ struct HighConversionPaywallView: View {
     /// of whichever plan is selected (annual / monthly / weekly), and a single
     /// global bit checked only against the annual product mislabels the others.
     @State private var trialEligibility: [String: Bool] = [:]
+    /// False when the day n-1 reminder will not be sent: notifications are
+    /// denied, or the storm arm's own reminder owns the warning (both make
+    /// `TrialExperienceService.scheduleTrialPushes` skip it). Neither timeline
+    /// promises a reminder then.
+    @State private var reminderDeliverable = true
 
     // MARK: - Welcome Offer
     //
@@ -928,6 +934,10 @@ struct HighConversionPaywallView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .ignoresSafeArea(edges: .bottom)
         .onAppear(perform: onAppear)
+        .task {
+            let status = await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
+            reminderDeliverable = status != .denied && !StormTrialReminder.ownsTrialWarning
+        }
         // Products can finish loading after onAppear (Remote Config + StoreKit
         // race the paywall presentation). Re-check eligibility whenever any of
         // the three offered product ids changes.
@@ -1239,7 +1249,7 @@ struct HighConversionPaywallView: View {
         // The reminder row needs a day that is neither today nor the last day,
         // or it is describing a push that lands on a row already on screen.
         // `scheduleDay2Push` fires at day n-1, so that holds from n = 3 up.
-        if days >= 3 {
+        if days >= 3 && reminderDeliverable {
             steps.append(("bell.fill", "DAY \(days - 1)", "We remind you the trial is ending, before it ends."))
         }
         let chargeDay = trialDateLabel(daysFromNow: days).map { "DAY \(days) · \($0.uppercased())" } ?? "DAY \(days)"
@@ -1273,10 +1283,14 @@ struct HighConversionPaywallView: View {
     /// "Nov 5" for a day `daysFromNow` days after today, in the user's locale.
     private func trialDateLabel(daysFromNow: Int) -> String? {
         guard let date = Calendar.current.date(byAdding: .day, value: daysFromNow, to: Date()) else { return nil }
+        return Self.trialDateFormatter.string(from: date)
+    }
+
+    private static let trialDateFormatter: DateFormatter = {
         let f = DateFormatter()
         f.setLocalizedDateFormatFromTemplate("MMMd")
-        return f.string(from: date)
-    }
+        return f
+    }()
 
     /// "$49.99/year" for the selected plan, nil when its product hasn't loaded.
     private var selectedPlanBilledLine: String? {
@@ -1297,7 +1311,7 @@ struct HighConversionPaywallView: View {
            let chargeDate = trialDateLabel(daysFromNow: days) {
             // The reminder lands on day n-1 (`scheduleDay2Push`), which is
             // only its own day from a 3-day trial up.
-            let reminder: (String, String)? = days >= 3
+            let reminder: (String, String)? = days >= 3 && reminderDeliverable
                 ? trialDateLabel(daysFromNow: days - 2).map { ($0, "Reminder") }
                 : nil
             let stops: [(String, String)] = [("Today", "Free access")]
