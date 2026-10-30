@@ -2107,13 +2107,21 @@ struct HighConversionPaywallView: View {
             VStack(spacing: 0) {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 0) {
-                        simpleRatingBadge.padding(.top, 150)
+                        simpleRatingBadge.padding(.top, 124)
                         Text(simpleHeadline)
                             .font(.system(size: 30, weight: .bold, design: .serif))
                             .italic()
                             .foregroundColor(simpleInk)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal, 24).padding(.top, 22)
+                        // The promises arm's own line (scene 3), so the paywall
+                        // finishes the thought the onboarding started.
+                        Text("Every promise God made has your name on it.")
+                            .font(.system(size: 16))
+                            .foregroundColor(simpleSubInk)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.horizontal, 32).padding(.top, 8)
                         simpleChecks.padding(.top, 22)
                     }
                     .frame(maxWidth: .infinity)
@@ -2151,16 +2159,25 @@ struct HighConversionPaywallView: View {
         .accessibilityLabel("Rated 4.9 stars on the App Store")
     }
 
-    /// Three lines, aimed at the problem the user named in onboarding (same
-    /// source as the classic layout's rows), titles only.
+    /// Three lines: who they become over the problem they named (the classic
+    /// layout's first row), then the two habits that put God's promises in
+    /// their mouth and ears.
+    private var simpleCheckLines: [String] {
+        [
+            solutionRows.first?.title ?? "You live from your new identity in Jesus",
+            "Speak God's promises out loud every morning",
+            "Hear His promises day and night on audio"
+        ]
+    }
+
     private var simpleChecks: some View {
         VStack(alignment: .leading, spacing: 14) {
-            ForEach(Array(solutionRows.prefix(3).enumerated()), id: \.offset) { _, row in
+            ForEach(Array(simpleCheckLines.enumerated()), id: \.offset) { _, line in
                 HStack(alignment: .firstTextBaseline, spacing: 12) {
                     Image(systemName: "checkmark")
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundColor(simpleInk)
-                    Text(row.title)
+                    Text(line)
                         .font(.system(size: 16))
                         .foregroundColor(simpleInk)
                         .fixedSize(horizontal: false, vertical: true)
