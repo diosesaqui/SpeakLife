@@ -38,12 +38,20 @@ final class DebugPanelPresenter {
 
     private var panelWindow: UIWindow?
     private weak var previousKeyWindow: UIWindow?
+    /// The paywall preview opened from the panel. Its own window for the same
+    /// reason as the panel's: a SwiftUI cover from the root is silently
+    /// dropped whenever HomeView already has a sheet or cover up.
+    private var paywallWindow: UIWindow?
+    private weak var paywallPreviousKeyWindow: UIWindow?
+    private weak var declarationStore: DeclarationViewModel?
 
     private init() {}
 
     var isPresented: Bool { panelWindow != nil }
 
-    func toggle(subscriptionStore: SubscriptionStore, appState: AppState) {
+    func toggle(subscriptionStore: SubscriptionStore, appState: AppState,
+                declarationStore: DeclarationViewModel) {
+        self.declarationStore = declarationStore
         if isPresented {
             dismiss()
         } else {
@@ -73,6 +81,49 @@ final class DebugPanelPresenter {
         panelWindow = window
     }
 
+    /// Closes the panel and shows the onboarding paywall in a window of its
+    /// own, above everything the app has on screen. Never a hard wall, and
+    /// shown to members too (`debugShowOnboardingPaywall` turns off the
+    /// member skip), so a tester can always see it and always close it.
+    func presentPaywall(subscriptionStore: SubscriptionStore, appState: AppState) {
+        dismiss()
+        guard DebugOverrides.isAvailable, paywallWindow == nil,
+              let declarationStore,
+              let scene = UIApplication.shared.connectedScenes
+                .compactMap({ $0 as? UIWindowScene })
+                .first(where: { $0.activationState == .foregroundActive })
+        else { return }
+
+        paywallPreviousKeyWindow = scene.keyWindow
+        appState.debugShowOnboardingPaywall = true
+
+        let paywall = HighConversionPaywallView(
+            callback: { [weak self, weak appState] in
+                appState?.debugShowOnboardingPaywall = false
+                self?.dismissPaywall()
+            },
+            source: "onboarding",
+            isHardPaywall: false
+        )
+        .environmentObject(appState)
+        .environmentObject(declarationStore)
+        .environmentObject(subscriptionStore)
+
+        let window = UIWindow(windowScene: scene)
+        window.windowLevel = UIWindow.Level(rawValue: UIWindow.Level.normal.rawValue + 1)
+        window.rootViewController = UIHostingController(rootView: paywall)
+        window.makeKeyAndVisible()
+        paywallWindow = window
+    }
+
+    func dismissPaywall() {
+        paywallWindow?.isHidden = true
+        paywallWindow?.rootViewController = nil
+        paywallWindow = nil
+        paywallPreviousKeyWindow?.makeKey()
+        paywallPreviousKeyWindow = nil
+    }
+
     func dismiss() {
         panelWindow?.isHidden = true
         panelWindow?.rootViewController = nil
@@ -94,6 +145,7 @@ final class DebugPanelPresenter {
 struct DebugFlagPanelModifier: ViewModifier {
     let subscriptionStore: SubscriptionStore
     let appState: AppState
+    let declarationStore: DeclarationViewModel
 
     func body(content: Content) -> some View {
         // `onShake` (GestureDelights) already owns the single UIWindow
@@ -102,7 +154,8 @@ struct DebugFlagPanelModifier: ViewModifier {
         content.onShake {
             DebugPanelPresenter.shared.toggle(
                 subscriptionStore: subscriptionStore,
-                appState: appState
+                appState: appState,
+                declarationStore: declarationStore
             )
         }
     }
@@ -112,9 +165,11 @@ extension View {
     /// Enables shake-to-open on the tester debug panel. Attach once, at the root.
     func debugFlagPanel(
         subscriptionStore: SubscriptionStore,
-        appState: AppState
+        appState: AppState,
+        declarationStore: DeclarationViewModel
     ) -> some View {
-        modifier(DebugFlagPanelModifier(subscriptionStore: subscriptionStore, appState: appState))
+        modifier(DebugFlagPanelModifier(subscriptionStore: subscriptionStore, appState: appState,
+                                        declarationStore: declarationStore))
     }
 }
 
@@ -308,8 +363,10 @@ struct DebugFlagPanelView: View {
             // current flag overrides, so flip a paywall flag above and tap
             // this again to compare layouts.
             Button("Show onboarding paywall") {
-                onClose()
-                appState.debugShowOnboardingPaywall = true
+                DebugPanelPresenter.shared.presentPaywall(
+                    subscriptionStore: subscriptionStore,
+                    appState: appState
+                )
             }
 
             Button(replayConfirmed ? "Tap again to confirm" : "Replay onboarding") {
