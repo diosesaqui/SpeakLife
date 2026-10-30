@@ -321,6 +321,9 @@ final class AppDelegate: NSObject, MessagingDelegate {
             // One-screen onboarding paywall A/B ships off; Remote Config turns
             // it on for the test arm.
             "useSimplePaywallVariant": false as NSNumber,
+            // Paywall leads with the billed yearly amount only when Remote
+            // Config says so.
+            "billedAmountFirst": false as NSNumber,
             // Profile's Book row shows unless Remote Config turns it off.
             "profileBookRowEnabled": true as NSNumber,
             // Promise-led first onboarding screen ships on; false restores the

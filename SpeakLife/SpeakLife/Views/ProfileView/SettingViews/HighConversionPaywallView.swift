@@ -2360,8 +2360,10 @@ struct HighConversionPaywallView: View {
     @discardableResult
     private func skipIfAlreadyMember(trigger: String) -> Bool {
         guard source == "onboarding",
-              // Testers replaying onboarding need to see the wall.
+              // Testers replaying onboarding, or opening the wall from the
+              // debug panel, need to see it.
               !appState.debugReplayOnboarding,
+              !appState.debugShowOnboardingPaywall,
               subscriptionStore.hasFullAccess,
               !hasLeft,
               !declarationStore.isPurchasing,

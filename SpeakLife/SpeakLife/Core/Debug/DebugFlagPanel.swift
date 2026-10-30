@@ -165,6 +165,12 @@ enum DebugFlagCatalog {
         Flag(key: "useSimplePaywallVariant",
              title: "Paywall: simple one-screen layout",
              blurb: "On shows the onboarding paywall as one screen: rating, three checks, two plans with the yearly price, one button."),
+        Flag(key: "billedAmountFirst",
+             title: "Paywall: billed amount first",
+             blurb: "On leads the Annual card with the yearly price charged and adds per-day prices."),
+        Flag(key: "profileBookRowEnabled",
+             title: "Profile: Book row",
+             blurb: "Off hides the Book section in Profile."),
         Flag(key: "promiseOpenerEnabled",
              title: "Onboarding: promise opener",
              blurb: "On opens the promises arm on God's promises spoken every morning instead of the storm screen. The ob= deep-link arms keep the storm opener."),
@@ -296,6 +302,14 @@ struct DebugFlagPanelView: View {
                     appState.debugReplayOnboarding = false
                     onClose()
                 }
+            }
+
+            // The paywall alone, without the flow in front of it. Uses the
+            // current flag overrides, so flip a paywall flag above and tap
+            // this again to compare layouts.
+            Button("Show onboarding paywall") {
+                onClose()
+                appState.debugShowOnboardingPaywall = true
             }
 
             Button(replayConfirmed ? "Tap again to confirm" : "Replay onboarding") {
