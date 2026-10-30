@@ -89,6 +89,15 @@ Serve example (caption for a 5-slide list deck):
 
 ## SpeakLife pass (non-negotiable)
 
+- **Match the first screen (owner rule, 2026-10-29).** Our ads link to the App Store with no `ob=`
+  code, so installs land on the Promises onboarding, whose first screen reads *"God's promises.
+  Out loud. Every morning."* and *"Five minutes a day speaking what Scripture says over your mind,
+  your body and your home."* Every new ad's headline or first line of primary text carries that
+  promise: speaking God's promises out loud, in the morning or the first minutes of the day. A
+  specific angle still fits when framed that way (*"Speak God's promises over your mind every
+  morning"*). If the opener's copy changes (`PromiseOpenerScreen`, Remote Config
+  `promiseOpenerEnabled`), update this rule with it. Ads running before 2026-10-29 are left as is.
+
 - **Speak, don't just pray.** The mechanism is speaking His Word over the storm the way Jesus did
   (Mark 4:39, Mark 11:23). Never sneer at prayer. Position speaking as what most were never taught.
 - **Scripture carries the promise; the app carries the method.** Quote verses accurately with the
@@ -125,6 +134,7 @@ winner, produce 5: (1) same formula new persona, (2) same persona new formula, (
 ## Checklist before handing over
 
 - Every ad has formula, persona, frame and `ob=` code?
+- Headline or first line says the first screen's promise (God's promises, out loud, mornings)?
 - Long and short version of each?
 - Hook passes the 8-year-old test and the "that's my house" test?
 - No personal-attribute phrasing, outcome claim, invented proof, fake deadline, or trial day count?
