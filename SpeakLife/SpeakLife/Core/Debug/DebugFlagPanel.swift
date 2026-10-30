@@ -304,6 +304,14 @@ struct DebugFlagPanelView: View {
                 }
             }
 
+            // The paywall alone, without the flow in front of it. Uses the
+            // current flag overrides, so flip a paywall flag above and tap
+            // this again to compare layouts.
+            Button("Show onboarding paywall") {
+                onClose()
+                appState.debugShowOnboardingPaywall = true
+            }
+
             Button(replayConfirmed ? "Tap again to confirm" : "Replay onboarding") {
                 guard replayConfirmed else {
                     replayConfirmed = true

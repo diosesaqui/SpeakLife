@@ -135,6 +135,20 @@ struct SpeakLifeApp: App {
                     // .environmentObject calls above inject into, so it sits
                     // above them and would never see them. Inert on the App Store.
                     .debugFlagPanel(subscriptionStore: subscriptionStore, appState: appState)
+                    // Debug panel "Show onboarding paywall". The cover sits
+                    // above the .environmentObject calls, so it injects the
+                    // three objects the paywall reads itself. Never a hard wall
+                    // here, so a tester can always close it.
+                    .fullScreenCover(isPresented: $appState.debugShowOnboardingPaywall) {
+                        HighConversionPaywallView(
+                            callback: { appState.debugShowOnboardingPaywall = false },
+                            source: "onboarding",
+                            isHardPaywall: false
+                        )
+                        .environmentObject(appState)
+                        .environmentObject(declarationStore)
+                        .environmentObject(subscriptionStore)
+                    }
                     // Blocking "update required" screen when Remote Config
                     // retires this build. Applied here rather than inside
                     // HomeView so it survives every route through the app, and
