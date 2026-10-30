@@ -175,9 +175,11 @@ struct AngleOnboardingView: View {
     private var currentStepView: some View {
         switch currentStep {
         case .storm:
-            // Promises arm only: the ob= deep-link arms (grief, healing,
+            // Promises arms only (and its short challenger, so the two differ
+            // only in the middle): the ob= deep-link arms (grief, healing,
             // addiction...) keep the storm opener their ads were built around.
-            if subscriptionStore.promiseOpenerEnabled && angle.id == "promises" {
+            if subscriptionStore.promiseOpenerEnabled
+                && (angle.id == "promises" || angle.id == "promises_short") {
                 PromiseOpenerScreen(size: size, flow: angle.flow) { advance() }
             } else {
                 StormOpenerScreen(size: size, flow: angle.flow) { advance() }

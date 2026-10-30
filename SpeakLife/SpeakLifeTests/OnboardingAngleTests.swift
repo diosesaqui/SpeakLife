@@ -84,6 +84,33 @@ final class OnboardingAngleTests: XCTestCase {
         XCTAssertEqual(steps[18], .paywall)
     }
 
+    /// The A/B challenger to promises. Same opener, picker and back half;
+    /// one scene instead of five, no product recap, no plan loader. If any of
+    /// those creep back in, the test stops measuring what it was built for.
+    func testPromisesShortStepIndices() {
+        let steps = OnboardingAngles.promisesShort.steps
+        XCTAssertEqual(steps, [
+            .storm, .scene(0), .picker, .connectStyle, .dailyMinutes,
+            .firstDeclaration, .personalDeclaration, .rating,
+            .planReveal, .notificationTime, .email, .testimonials, .paywall,
+        ])
+        XCTAssertEqual(SubscriptionStore.OnboardingVariant(code: "promises_short"), .promisesShort)
+        XCTAssertEqual(SubscriptionStore.OnboardingVariant.promisesShort.angle?.id, "promises_short")
+    }
+
+    /// The two arms must seed the feed the same way, or a difference in
+    /// conversion could be the feed and not the length.
+    func testPromisesShortSharesThePromisesPickerButNotItsEvents() {
+        let short = OnboardingAngles.promisesShort
+        let full = OnboardingAngles.promises
+        XCTAssertEqual(short.picker.choices.map(\.id), full.picker.choices.map(\.id))
+        XCTAssertEqual(short.picker.choices.map(\.burden), full.picker.choices.map(\.burden))
+        XCTAssertEqual(short.picker.headline, full.picker.headline)
+        XCTAssertNotEqual(short.flow, full.flow)
+        XCTAssertNotEqual(short.picker.analyticsEvent, full.picker.analyticsEvent)
+        XCTAssertNotEqual(short.scenes[0].analyticsEvent, full.scenes[0].analyticsEvent)
+    }
+
     /// Raw values from `WarfareStep`, before the port. Warfare is the one PORTED
     /// arm with no storm opener, and the first of the two that run a
     /// burden-matched payoff (`command` is the other), so its indices sit one
@@ -327,7 +354,7 @@ final class OnboardingAngleTests: XCTestCase {
 
     /// The broad arms let the user name their own area, so every burden needs a row.
     func testBroadAnglesCoverEveryBurden() {
-        for id in ["promises", "warfare", "outcomes", "command"] {
+        for id in ["promises", "promises_short", "warfare", "outcomes", "command"] {
             guard let angle = OnboardingAngles.angle(id: id) else {
                 return XCTFail("missing angle '\(id)'")
             }
