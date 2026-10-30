@@ -476,7 +476,7 @@ These route through `AnalyticsService` and reach every provider:
 | `paywall_impression` | `trackPaywallImpression` | `paywall_id`, `variant`, `segment`, `pain` |
 | `paywall_shown` | `track` (HighConversionPaywallView) | `variant`, `segment`, `source`, `pain` |
 
-> **Onboarding paywall layout A/B (`useSimplePaywallVariant`).** `variant` on every HighConversionPaywallView event is `high_conversion_identity_v1` for the control and `high_conversion_identity_simple_v1` for the one-screen layout. The simple layout only renders when `source = onboarding`, so read the test on `paywall_shown` filtered to that source, split by `variant`.
+> **Onboarding paywall layout A/B (`useSimplePaywallVariant`).** `variant` on every HighConversionPaywallView event is `high_conversion_identity_v1` for the control and `high_conversion_identity_simple_v2` for the one-screen layout (v1, with a generic "Start your free week" headline, only ever ran on test devices). The simple layout only renders when `source = onboarding`, so read the test on `paywall_shown` filtered to that source, split by `variant`.
 | `paywall_conversion` | `trackPaywallConversion` | `product_id`, `price` |
 | `trial_started` | `trackTrialStarted` / `track` (purchase) | `product_id`, `value`, `variant` |
 | `trial_activated` | `trackTrialActivated` | `product_id`, `price` |

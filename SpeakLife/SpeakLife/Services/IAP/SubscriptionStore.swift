@@ -604,9 +604,10 @@ final class SubscriptionStore: ObservableObject {
     // MARK: - Simple Paywall Layout A/B Test
     // Onboarding paywall only. Takes precedence over the clean layout.
     // false = current dark high-conversion layout (default)
-    // true  = one-screen layout (high_conversion_identity_simple_v1): rating,
-    //         "start your free trial", three checks, two plan cards whose
-    //         billed price matches Apple's sheet, one button, one disclosure.
+    // true  = one-screen layout (high_conversion_identity_simple_v2): rating,
+    //         "start your free week", the classic layout's personal
+    //         headline, three checks, two plan cards whose billed price
+    //         matches Apple's sheet, one button, one disclosure.
     @Published var useSimplePaywallVariant = false
 
     // MARK: - Weekly Plan A/B Test

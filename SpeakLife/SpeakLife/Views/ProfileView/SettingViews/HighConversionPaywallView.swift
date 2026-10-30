@@ -586,7 +586,7 @@ struct HighConversionPaywallView: View {
     /// variant called `pain` sitting above an identity headline would quietly
     /// blend two different screens into one line on the chart.
     private var paywallVariant: String {
-        if isSimpleVariant { return "high_conversion_identity_simple_v1" }
+        if isSimpleVariant { return "high_conversion_identity_simple_v2" }
         if isCleanVariant {
             return isCleanDarkTheme ? "high_conversion_identity_clean_dark_v1" : "high_conversion_identity_clean_v1"
         }
@@ -2081,7 +2081,7 @@ struct HighConversionPaywallView: View {
         .font(.system(size: 12)).foregroundColor(cleanSubInk)
     }
 
-    // MARK: - Simple Variant Layout (high_conversion_identity_simple_v1)
+    // MARK: - Simple Variant Layout (high_conversion_identity_simple_v2)
     // One screen, modeled on the Abide and Calm onboarding paywalls: photo,
     // rating, "start your free trial", three checks, two plan cards, one
     // button, one disclosure line. No comparison grid, testimonial wall or
@@ -2108,12 +2108,23 @@ struct HighConversionPaywallView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 0) {
                         simpleRatingBadge.padding(.top, 124)
-                        Text(simpleHeadline)
-                            .font(.system(size: 30, weight: .bold, design: .serif))
+                        if let eyebrow = simpleTrialEyebrow {
+                            Text(eyebrow)
+                                .font(.system(size: 13, weight: .bold))
+                                .tracking(1.2)
+                                .foregroundColor(Constants.DAMidBlue)
+                                .padding(.top, 20)
+                        }
+                        // The same personal headline as the classic layout,
+                        // which is what lifted it to its current rate: who the
+                        // user is in Jesus over the problem they named.
+                        Text(resolvedHeadline)
+                            .font(.system(size: 28, weight: .bold, design: .serif))
                             .italic()
                             .foregroundColor(simpleInk)
                             .multilineTextAlignment(.center)
-                            .padding(.horizontal, 24).padding(.top, 22)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.horizontal, 24).padding(.top, simpleTrialEyebrow == nil ? 22 : 8)
                         // The promises arm's own line (scene 3), so the paywall
                         // finishes the thought the onboarding started.
                         Text("Every promise God made has your name on it.")
@@ -2131,14 +2142,13 @@ struct HighConversionPaywallView: View {
         }
     }
 
-    /// "Start your free week" when the annual plan carries a 7-day trial for
-    /// this user, the real day count otherwise, and no "free" at all for an
-    /// account that is not eligible.
-    private var simpleHeadline: String {
-        guard let days = trialDays(for: subscriptionStore.currentOfferedPremium) else {
-            return "Unlock SpeakLife"
-        }
-        return days == 7 ? "Start your free week" : "Start your \(days)-day free trial"
+    /// "START YOUR FREE WEEK" over the headline when the annual plan carries
+    /// a 7-day trial for this user, the real day count otherwise, and nothing
+    /// for an account that is not eligible, so "free" never shows without a
+    /// trial behind it.
+    private var simpleTrialEyebrow: String? {
+        guard let days = trialDays(for: subscriptionStore.currentOfferedPremium) else { return nil }
+        return days == 7 ? "START YOUR FREE WEEK" : "START YOUR \(days)-DAY FREE TRIAL"
     }
 
     private var simpleRatingBadge: some View {
