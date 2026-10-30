@@ -124,7 +124,7 @@ final class SubscriptionStore: ObservableObject {
 
     // MARK: - Onboarding A/B variant (single switch for which flow shows)
     // Remote Config key `onboardingVariant`: "quiz" | "product" | "identity" | "outcomes"
-    // | "warfare" | "promises" | "command" | "closer" | "direct" | "healing" | "provision"
+    // | "warfare" | "promises" | "promises_short" | "command" | "closer" | "direct" | "healing" | "provision"
     // | "anxiety" | "renewal" | "grief" | "mortality" | "prodigal" | "purity"
     // | "depression" | "fear" | "parenting" | "addiction" | "marriage"
     // | "hardtimes".
@@ -150,6 +150,9 @@ final class SubscriptionStore: ObservableObject {
         // area); the last four are single-issue arms meant to be deep linked
         // from angle-matched creative, so the whole arc matches the ad.
         case outcomes, warfare, promises, command
+        // A/B challenger to promises: one scene instead of five. Remote
+        // Config only.
+        case promisesShort = "promises_short"
         case healing, provision, anxiety, renewal
         // Second wave of single-issue arms. These six name subjects
         // `HeaviestBurden` cannot, so their picker rows carry their own

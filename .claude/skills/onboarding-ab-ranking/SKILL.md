@@ -1,6 +1,6 @@
 ---
 name: onboarding-ab-ranking
-description: Query PostHog for the onboarding A/B funnel and rank the variants (product / identity / quiz / outcomes / warfare / promises / command / closer / direct, plus the deep-linked healing / provision / anxiety / renewal / grief / mortality / prodigal / purity / depression / fear / parenting / addiction / marriage / hardtimes arms) to pick a winner. Use when asked which onboarding is winning, onboarding A/B results, onboarding funnel rankings, or "which onboarding should we ship".
+description: Query PostHog for the onboarding A/B funnel and rank the variants (product / identity / quiz / outcomes / warfare / promises / promises_short / command / closer / direct, plus the deep-linked healing / provision / anxiety / renewal / grief / mortality / prodigal / purity / depression / fear / parenting / addiction / marriage / hardtimes arms) to pick a winner. Use when asked which onboarding is winning, onboarding A/B results, onboarding funnel rankings, or "which onboarding should we ship".
 ---
 
 # Onboarding A/B Ranking
@@ -12,7 +12,7 @@ variant is winning, with the numbers behind it.
 
 - The app shows one of several onboarding flows, chosen by Remote Config
   `onboardingVariant`: `product`, `identity`, `quiz`, `outcomes`, `warfare`,
-  `promises`, `command`, `closer`, `direct`. `warfare` is the default arm from app
+  `promises`, `promises_short`, `command`, `closer`, `direct`. `warfare` is the default arm from app
   **v4.28+**.
 - `healing`, `provision`, `anxiety`, `renewal`, `grief`, `mortality`, `prodigal`,
   `purity`, `depression`, `fear`, `parenting`, `addiction`, `marriage` and

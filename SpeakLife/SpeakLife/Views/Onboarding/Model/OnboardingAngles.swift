@@ -804,7 +804,7 @@ enum OnboardingAngles {
     )
 
     static let all: [String: OnboardingAngle] = Dictionary(
-        uniqueKeysWithValues: [promises, warfare, outcomes, command, healing, provision, anxiety, renewal,
+        uniqueKeysWithValues: [promises, promisesShort, warfare, outcomes, command, healing, provision, anxiety, renewal,
                                grief, mortality, prodigal, purity, depression, fear,
                                parenting, addiction, marriage, hardtimes]
             .map { ($0.id, $0) }
@@ -928,6 +928,50 @@ enum OnboardingAngles {
         // between the picker and the paywall. The two kept are the answers the
         // app reads after onboarding (`ConnectStyle`, `DailyTimeBudget`).
         quizSteps: OnboardingAngle.leanQuiz
+    )
+
+    // MARK: - Promises Short (A/B challenger to promises)
+
+    // Promises with the reading cut out, built to test one question: does the
+    // five-scene case for the promises earn its screens, or does it only delay
+    // the paywall? Modeled on Abide and Calm, which ask and tap rather than
+    // explain. Same opener, same picker, same lean quiz and same back half as
+    // `promises`, so the only difference between the arms is the middle:
+    // one scene instead of five, no product recap, no plan loader.
+    //
+    // Its own id and flow slug, so its funnel never mixes with promises.
+    // Reached only through Remote Config (`onboardingVariant` =
+    // "promises_short"); no ad deep links to it.
+    static let promisesShort = OnboardingAngle(
+        id: "promises_short",
+        flow: "promises_short",
+        flowSchema: 1,
+        opensWithStormScreen: true,
+        showsExperienceScreen: false,
+        scenes: [
+            AngleScene(
+                symbol: "checkmark.seal.fill",
+                eyebrow: "WHAT YOU'RE STANDING ON",
+                title: "Every promise\nhas your name on it.",
+                body: "Not one word God spoke has ever failed. He made every promise for you, over your body, your home and your future.",
+                verse: "Not one word has failed of all the good promises he gave.",
+                reference: "1 Kings 8:56",
+                buttonLabel: "I'm Ready to Trust Them →",
+                analyticsEvent: "promise_short_scene_shown",
+                analyticsParameters: ["scene": "yours"]
+            ),
+        ],
+        // Same copy and rows as promises, so the two arms seed the feed
+        // identically. Its own event name, because the picker event carries
+        // no flow and would otherwise count both arms as one.
+        picker: AnglePicker(
+            headline: OnboardingAngles.promises.picker.headline,
+            subtitle: OnboardingAngles.promises.picker.subtitle,
+            analyticsEvent: "promise_short_picker_shown",
+            choices: OnboardingAngles.promises.picker.choices
+        ),
+        quizSteps: OnboardingAngle.leanQuiz,
+        showsPlanBuilding: false
     )
 
     // MARK: - Warfare (ported)

@@ -552,7 +552,7 @@ struct HomeView: View {
         // Angle arms all render through one driver; the variant only picks which
         // OnboardingAngle it is handed. Adding an arm is adding an angle
         // constant and an enum case, not another view.
-        case .outcomes, .warfare, .promises, .command, .healing, .provision, .anxiety, .renewal,
+        case .outcomes, .warfare, .promises, .promisesShort, .command, .healing, .provision, .anxiety, .renewal,
              .grief, .mortality, .prodigal, .purity, .depression, .fear,
              .parenting, .addiction, .marriage, .hardtimes:
             if let angle = subscriptionStore.resolvedOnboardingVariant.angle {
