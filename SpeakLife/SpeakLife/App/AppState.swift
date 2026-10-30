@@ -121,9 +121,9 @@ final class AppState: ObservableObject {
     /// debug panel sets it, and the panel cannot open on an App Store build.
     @Published var debugReplayOnboarding = false
 
-    /// Debug panel "Show onboarding paywall": presents the onboarding paywall
-    /// on its own, over whatever is on screen, so a tester can look at it
-    /// without replaying the whole flow. In-memory, like the replay flag.
+    /// True while the debug panel's "Show onboarding paywall" preview is up,
+    /// so the paywall's member skip lets a subscribed tester see it.
+    /// In-memory, like the replay flag.
     @Published var debugShowOnboardingPaywall = false
 
     /// Focused first run (`FirstRunFocusRule`): when this install finished
