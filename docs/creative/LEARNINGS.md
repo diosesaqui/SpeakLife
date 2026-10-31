@@ -5,6 +5,24 @@ records **why** an ad won or lost at a level the next brief can build on. A bare
 
 ---
 
+## 2026-10-30 (daily autopilot): two pauses
+
+| Ad | Angle / formula / persona | Spend | Trials | CPT | Verdict |
+|---|---|---|---|---|---|
+| Do you need a promise from God? (credits, dawn) | promises question hook / F6 Moment / general believer | $62.55 | 0 | none (7 installs) | paused, kill bar |
+| authority video | Jesus's authority as fact / talking video / women 25-65 | $912.85 lifetime | 44 | $20.75 (last 7d $33.71, last 3d $72.65) | paused, kill bar + fatigue |
+
+Lessons:
+1. **A question hook that asks if you need something got installs but no trials.** "Do you need
+   a promise from God?" drew 7 installs and 0 trials, while "One less scroll" (a moment, not a
+   question) holds $10 per trial in the same ad set. Likely why: the question invites a curious
+   tap, not a decision; the moment frame shows the habit the trial sells. Prefer a concrete
+   morning moment over an open question.
+2. **The authority video is spent.** It carried the account in early October ($16.48 on Oct 15)
+   but cost doubled each week since. Restarting it on Oct 29 bought $72.65 for 1 trial in 3 days.
+   Its angle (Jesus's authority stated as fact) is still worth a fresh cut with a new first
+   3 seconds; the old file is not.
+
 ## 2026-10-15 — Two new leaders, and the copy DNA they share
 
 | Ad | Format | Spend | Trials | CPT |
