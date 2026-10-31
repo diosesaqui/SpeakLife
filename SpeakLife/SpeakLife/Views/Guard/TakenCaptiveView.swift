@@ -295,8 +295,8 @@ struct TakenCaptiveView: View {
     }
 
     /// What just happened, in the words the feature is built on. It lands on the
-    /// verse has room to be read for as long as they need.
-    /// three-second hold never reads as a stall.
+    /// empty field after the card has gone, so the screen is never blank, and
+    /// it stays until they tap Continue.
     ///
     /// The verse is quoted, not just cited. A bare "2 Corinthians 10:5" on
     /// every run read like a stray reference that never changed; the words say
