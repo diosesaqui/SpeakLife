@@ -343,8 +343,11 @@ final class AudioDeclarationViewModel: ObservableObject {
             return
         }
         
-        if version > lastCachedAudioVersion {
-            clearCache()
+        let catalogChanged = version > lastCachedAudioVersion
+        if catalogChanged {
+            // Only the catalog listing is dropped here. Downloaded episodes
+            // are pruned against the new catalog once it arrives, so a
+            // catalog update no longer throws away every saved episode.
             clearAudioDeclarationsCache()
         }
         service.audio(version: version) { [weak self] welcome, audios in
@@ -363,6 +366,12 @@ final class AudioDeclarationViewModel: ObservableObject {
                 }
                 self.saveAudioDataToCache()
                 self.lastCachedAudioVersion = version
+                // Only against a fresh catalog from the server. The fallback
+                // list can be older or empty, and pruning against it would
+                // read as "these episodes were removed" and delete them.
+                if catalogChanged, welcome != nil, !self.allAudioFiles.isEmpty {
+                    self.pruneDownloads(catalog: self.allAudioFiles)
+                }
             }
         }
     }
@@ -583,22 +592,82 @@ final class AudioDeclarationViewModel: ObservableObject {
         }
     }
     
+    // MARK: - Downloaded episodes
+
+    /// Where downloaded episodes live.
+    ///
+    /// Not the Caches folder: iOS empties Caches whenever storage runs low,
+    /// which silently lost episodes people had already downloaded and then
+    /// failed to play them offline. Application Support is kept, and the
+    /// folder is excluded from iCloud backup because every file in it can be
+    /// downloaded again.
+    private let audioDirectory: URL = AudioDeclarationViewModel.makeAudioDirectory()
+
     private func cachedFileURL(for filename: String) -> URL {
-        let cacheDirectory = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first!
-            return cacheDirectory.appendingPathComponent(filename)
-        }
-    
-    private func clearCache() {
+        audioDirectory.appendingPathComponent(filename)
+    }
+
+    private static func makeAudioDirectory() -> URL {
         let fileManager = FileManager.default
-        if let cacheDirectory = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first {
-            do {
-                let cacheContents = try fileManager.contentsOfDirectory(atPath: cacheDirectory.path)
-                for file in cacheContents {
-                    let fileURL = cacheDirectory.appendingPathComponent(file)
-                    try fileManager.removeItem(at: fileURL)
+        let base = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        var directory = base.appendingPathComponent("AudioDownloads", isDirectory: true)
+        try? fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
+        var values = URLResourceValues()
+        values.isExcludedFromBackup = true
+        try? directory.setResourceValues(values)
+        moveLegacyDownloads(into: directory)
+        return directory
+    }
+
+    private static let audioExtensions: Set<String> = ["mp3", "m4a", "wav", "aac", "caf"]
+
+    /// One-time move of episodes saved by older builds, which kept them loose
+    /// in Caches. Only audio files move; anything else there (the Bible
+    /// cache, for one) is left alone. A move keeps the file's date, which the
+    /// staleness check in `pruneDownloads` relies on.
+    private static func moveLegacyDownloads(into directory: URL) {
+        let fileManager = FileManager.default
+        let key = "audioDownloadsMovedFromCaches"
+        guard !UserDefaults.standard.bool(forKey: key) else { return }
+        defer { UserDefaults.standard.set(true, forKey: key) }
+        guard let caches = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first,
+              let names = try? fileManager.contentsOfDirectory(atPath: caches.path) else { return }
+        for name in names where audioExtensions.contains((name as NSString).pathExtension.lowercased()) {
+            let destination = directory.appendingPathComponent(name)
+            guard !fileManager.fileExists(atPath: destination.path) else { continue }
+            try? fileManager.moveItem(at: caches.appendingPathComponent(name), to: destination)
+        }
+    }
+
+    /// Runs when a new catalog version arrives. Replaces the old behaviour of
+    /// wiping the whole Caches folder, which deleted every downloaded episode
+    /// (and the Bible cache with it) on every catalog update.
+    ///
+    /// - An episode no longer in the catalog is deleted.
+    /// - An episode whose file in Storage changed after it was downloaded is
+    ///   deleted, so replaced audio is fetched fresh on the next play.
+    /// - Anything uncertain is kept. If the metadata check fails (offline,
+    ///   signed out), the saved copy stays: a slightly old episode beats one
+    ///   that cannot play at all.
+    private func pruneDownloads(catalog: [AudioDeclaration]) {
+        let directory = audioDirectory
+        let catalogIDs = Set(catalog.map(\.id))
+        let storage = self.storage
+        DispatchQueue.global(qos: .utility).async {
+            let fm = FileManager.default
+            guard let names = try? fm.contentsOfDirectory(atPath: directory.path) else { return }
+            for name in names {
+                let fileURL = directory.appendingPathComponent(name)
+                guard catalogIDs.contains(name) else {
+                    try? fm.removeItem(at: fileURL)
+                    continue
                 }
-            } catch {
-                // Failed to clear cache
+                guard let savedAt = (try? fm.attributesOfItem(atPath: fileURL.path))?[.modificationDate] as? Date
+                else { continue }
+                storage.reference().child(name).getMetadata { metadata, error in
+                    guard error == nil, let updated = metadata?.updated, updated > savedAt else { return }
+                    try? FileManager.default.removeItem(at: fileURL)
+                }
             }
         }
     }
