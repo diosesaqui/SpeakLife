@@ -73,6 +73,14 @@ struct ReplaceDeclarationView: View {
     @State private var holdProgress: CGFloat = 0
     @State private var holdTimer: Timer?
     @State private var settled = false
+    /// Continue shows once the confirm sweep has played. The screen then waits
+    /// on the tap: a timed hand-off took the line and its verse away while
+    /// people were still reading them.
+    @State private var showContinue = false
+    /// How long the speaking took, captured at the settle so the time spent
+    /// reading afterwards does not inflate the metric.
+    @State private var spokenDuration: TimeInterval = 0
+    @State private var spokenMethod = "mic"
     /// Shown before the system dialog so the ask has a reason attached.
     @State private var showMicRationale = false
     /// Drives the staged entrance. The screen used to appear fully formed in the
@@ -330,7 +338,9 @@ struct ReplaceDeclarationView: View {
             // there was no way to finish and no sign of how long the wait was.
             // A screen that asks someone to speak must always let them say when
             // they're done.
-            if !settled {
+            if settled {
+                continueButton
+            } else {
                 Button {
                     verifier.finishSpeaking()
                 } label: {
@@ -356,7 +366,8 @@ struct ReplaceDeclarationView: View {
             }
 
             // Always reachable. Someone in a quiet room, on a bus, or beside a
-            // sleeping child should never be stuck at this screen.
+            // sleeping child should never be stuck at this screen. Faded, not
+            // removed, once it is said, so Continue does not shift the layout.
             Button {
                 verifier.cancel()
                 usingHoldFallback = true
@@ -367,7 +378,30 @@ struct ReplaceDeclarationView: View {
                     .underline()
             }
             .buttonStyle(.plain)
+            .opacity(settled ? 0 : 1)
+            .allowsHitTesting(!settled)
         }
+    }
+
+    /// The hand-off to the ground screen, on their timing rather than a clock.
+    private var continueButton: some View {
+        Button {
+            guard showContinue else { return }
+            showContinue = false
+            onSpoken(true, spokenMethod, spokenDuration)
+        } label: {
+            Text("Continue")
+                .font(.system(size: 15, weight: .bold, design: .rounded))
+                .foregroundColor(field)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 13)
+                .background(Capsule().fill(DS.Gradient.gold))
+                .shadow(color: gold.opacity(0.35), radius: 16, y: 6)
+        }
+        .buttonStyle(.dsPressable(feel: .tapSolid))
+        .guardReveal(showContinue, distance: 8)
+        .allowsHitTesting(showContinue)
+        .accessibilityHidden(!showContinue)
     }
 
     /// Whether "Done" has anything to act on right now.
@@ -438,10 +472,16 @@ struct ReplaceDeclarationView: View {
             .accessibilityLabel("I spoke it")
             .accessibilityAction { confirmHold() }
 
-            Text("Speak it wherever you are. Out loud, or under your breath.")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(GuardStyle.tertiary)
-                .multilineTextAlignment(.center)
+            // The caption gives way to Continue in the same slot, which holds
+            // its height throughout so nothing jumps when it swaps.
+            ZStack {
+                Text("Speak it wherever you are. Out loud, or under your breath.")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(GuardStyle.tertiary)
+                    .multilineTextAlignment(.center)
+                    .opacity(settled ? 0 : 1)
+                continueButton
+            }
         }
     }
 
@@ -475,7 +515,7 @@ struct ReplaceDeclarationView: View {
     // MARK: - Settle
 
     /// The waveform fills, then settles. That settle IS the confirmation — there
-    /// is no checkmark, no score, and nothing to dismiss.
+    /// is no checkmark and no score. Continue then waits for them.
     private func settle(method: String) {
         guard !settled else { return }
         settled = true
@@ -488,12 +528,12 @@ struct ReplaceDeclarationView: View {
             withAnimation(GuardStyle.spring) { breathe = false }
         }
         verifier.cancel()
-        // 1.4s, not 0.7. The settle IS the confirmation, so it has to be on
-        // screen long enough to be read as one — otherwise the +1 arrives before
-        // the user has registered that anything acknowledged them.
-        let duration = Date().timeIntervalSince(startedAt)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) {
-            onSpoken(true, method, duration)
+        spokenDuration = Date().timeIntervalSince(startedAt)
+        spokenMethod = method
+        // Continue arrives as the sweep finishes, so it never steps on the
+        // confirmation. Nothing moves on until they tap it.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
+            showContinue = true
         }
     }
 }
