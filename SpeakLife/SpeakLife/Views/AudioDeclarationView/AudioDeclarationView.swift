@@ -338,7 +338,7 @@ struct AudioDeclarationView: View {
             // Error Alert
             .alert(item: $errorMessage) { error in
                 Alert(
-                    title: Text("Error"),
+                    title: Text("Couldn't play episode"),
                     message: Text(error.message),
                     dismissButton: .default(Text("OK"))
                 )
@@ -718,9 +718,22 @@ struct AudioDeclarationView: View {
             case .failure(let error):
                 // Superseded by a newer pick: nothing went wrong.
                 guard !(error is CancellationError) else { return }
-                errorMessage = ErrorWrapper(message: "Failed to download audio: \(error.localizedDescription)")
+                // Firebase's own text ("Unexpected -13020 code from backend")
+                // means nothing to anyone. Almost every failure here is the
+                // connection: the download needs a sign-in token first, and
+                // that refresh fails offline before any audio is requested.
+                errorMessage = ErrorWrapper(message: Self.downloadFailureMessage(for: error))
             }
         }
+    }
+
+    private static func downloadFailureMessage(for error: Error) -> String {
+        let ns = error as NSError
+        // FIRStorageErrorDomain -13010: the file is not in Storage.
+        if ns.domain == "FIRStorageErrorDomain", ns.code == -13010 {
+            return "This episode isn't available right now. Please try again later."
+        }
+        return "Couldn't download this episode. Check your internet connection and try again."
     }
 
     /// Gives the player what it needs to advance the queue on its own, with
