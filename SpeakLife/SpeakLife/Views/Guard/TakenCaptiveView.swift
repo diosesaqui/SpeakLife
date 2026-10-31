@@ -28,7 +28,10 @@
 //  2. **It hands over already warm.** The background finishes navy so REPLACE
 //     rises into a field that is already its own colour, and the two screens
 //     read as one motion rather than two loads.
-//  3. **It never waits on the user.** No tap, no gesture, no way to get stuck.
+//  3. **The taking never waits on the user, the verse does.** No tap or
+//     gesture starts the seize. But once the verse has landed the screen holds
+//     on it until they tap Continue: a timed hand-off pulled the scripture away
+//     while people were still reading it.
 //  4. **A served thought gets read time first.** Someone who typed the sentence
 //     wrote it seconds ago; someone handed one from the bank has never seen it,
 //     and seizing a line they have not finished reading is a flicker rather than
@@ -71,10 +74,13 @@ struct TakenCaptiveView: View {
     /// moment arrives in three steps rather than as one block of text.
     @State private var showVerse = false
     @State private var showReference = false
+    /// Continue appears once the verse is fully on screen. The screen waits
+    /// here for as long as they want to read.
+    @State private var showContinue = false
     /// Set the instant the screen stops being live — by finishing, by the user
     /// closing it, or by the escape hatch.
     ///
-    /// The schedule below is four `asyncAfter` calls and none of them can be
+    /// The schedule below is a run of `asyncAfter` calls and none of them can be
     /// cancelled. Without this, leaving the screen early still fires the heavy
     /// haptic on a dismissed view and still reports a thought taken at hand-off,
     /// right after `guard_task_abandoned` said the opposite. Every step checks
@@ -111,10 +117,10 @@ struct TakenCaptiveView: View {
     private var verseAt: Double { seizeAt + 0.95 }
     /// After the last word of the verse has come into focus.
     private var referenceAt: Double { seizeAt + 1.65 }
-    /// About 2.3s after the verse starts landing. The verdict used to hold for
-    /// 0.9s, which was fine for two words and a reference but too short to read
-    /// a line of scripture.
-    private var handOffAt: Double { seizeAt + 3.30 }
+    /// A beat after the reference, so the button never competes with the
+    /// verse for the eye. There is no timed hand-off: the screen waits on the
+    /// tap.
+    private var continueAt: Double { seizeAt + 2.05 }
 
     private static let verse = "\u{201C}We take captive every thought to make it obedient to Christ.\u{201D}"
 
@@ -144,7 +150,13 @@ struct TakenCaptiveView: View {
 
                 Spacer(minLength: 0)
 
-                escapeHatch
+                // One row, two occupants that never show together: the hatch
+                // before the seize, Continue after the verse. Both stay in the
+                // layout so the card never reflows when one swaps for the other.
+                ZStack {
+                    escapeHatch
+                    continueButton
+                }
             }
             .padding(.horizontal, 24)
             .padding(.vertical, 20)
@@ -265,8 +277,25 @@ struct TakenCaptiveView: View {
         .animation(DS.Motion.quick, value: seized)
     }
 
+    /// The hand-off to REPLACE, on their timing rather than a clock.
+    private var continueButton: some View {
+        Button(action: finish) {
+            Text("Continue")
+                .font(.system(size: 16, weight: .bold, design: .rounded))
+                .foregroundColor(navy)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .background(Capsule().fill(DS.Gradient.gold))
+                .shadow(color: gold.opacity(0.35), radius: 16, y: 6)
+        }
+        .buttonStyle(.dsPressable(feel: .tapSolid))
+        .guardReveal(showContinue, distance: 12)
+        .allowsHitTesting(showContinue)
+        .accessibilityHidden(!showContinue)
+    }
+
     /// What just happened, in the words the feature is built on. It lands on the
-    /// empty field after the card has gone, so the screen is never blank and the
+    /// verse has room to be read for as long as they need.
     /// three-second hold never reads as a stall.
     ///
     /// The verse is quoted, not just cited. A bare "2 Corinthians 10:5" on
@@ -331,10 +360,15 @@ struct TakenCaptiveView: View {
         step(at: referenceAt) {
             showReference = true
         }
-        step(at: handOffAt) {
-            ended = true
-            onFinished()
+        step(at: continueAt) {
+            showContinue = true
         }
+    }
+
+    private func finish() {
+        guard !ended else { return }
+        ended = true
+        onFinished()
     }
 
     /// One beat of the schedule, skipped if the screen is no longer live.
