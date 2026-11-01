@@ -146,21 +146,22 @@
   <!-- API KEY -->
   <h2 id="apikey"><span class="ic">⚠</span>The API key — read this</h2>
   <div class="callout warn">
-    <b>There are TWO separate Anthropic keys. Don't confuse them.</b>
-    The onboarding/declaration generator and the Bible Chat function read from <i>different</i> places.
+    <b>There is ONE Anthropic key, and it lives only in Secret Manager.</b>
+    Bible Chat (<code>bibleChat</code>) and the app's other Claude features (personal declarations, Guard, the campaign curator, via <code>claudeProxy</code>) both read the <code>ANTHROPIC_API_KEY</code> secret server-side.
+    It used to also sit in Remote Config as <code>anthropic_api_key</code>, where any install could read it. Never put it back there.
   </div>
   <table>
-    <tr><th></th><th>Onboarding / Declarations</th><th>Bible Chat</th></tr>
-    <tr><td><b>Key lives in</b></td><td>Firebase <b>Remote Config</b><br><code>anthropic_api_key</code></td><td>Firebase <b>Secret Manager</b><br><code>ANTHROPIC_API_KEY</code></td></tr>
-    <tr><td><b>Read by</b></td><td>The app, on the device</td><td>The Cloud Function, server-side</td></tr>
-    <tr><td><b>Set via</b></td><td>Firebase Console → Remote Config</td><td><code>firebase functions:secrets:set</code></td></tr>
+    <tr><th></th><th>Every Claude feature</th></tr>
+    <tr><td><b>Key lives in</b></td><td>Firebase <b>Secret Manager</b><br><code>ANTHROPIC_API_KEY</code></td></tr>
+    <tr><td><b>Read by</b></td><td>The <code>bibleChat</code> and <code>claudeProxy</code> Cloud Functions, server-side</td></tr>
+    <tr><td><b>Kill switch</b></td><td>Remote Config <code>claudeProxyEnabled</code> = false turns off the app's non-chat Claude features (they fall back to keyword answers)</td></tr>
   </table>
-  <p>If onboarding works but Bible Chat returns a 401 "invalid x-api-key," the <b>Secret Manager</b> value is wrong. Fix it by copying the working value from Remote Config into the secret:</p>
+  <p>If Claude features return 401 "invalid x-api-key," the secret is wrong. Set it and redeploy both functions so they rebind the new value:</p>
   <pre><code><span class="cmd">cd</span> functions
 <span class="cmd">firebase</span> functions:secrets:set ANTHROPIC_API_KEY    <span style="color:#6c7ba8"># paste key at the masked prompt</span>
-<span class="cmd">firebase</span> deploy --only functions:bibleChat       <span style="color:#6c7ba8"># required: rebinds the new value</span></code></pre>
+<span class="cmd">firebase</span> deploy --only functions:bibleChat,functions:claudeProxy   <span style="color:#6c7ba8"># required: rebinds the new value</span></code></pre>
   <div class="callout warn">
-    <b>If you ever rotate the key in the Anthropic console, update BOTH places</b> — Remote Config <i>and</i> the secret — or one of the two features will break.
+    <b>If you ever rotate the key in the Anthropic console,</b> set the secret and redeploy both functions (above). Nothing else holds the key.
   </div>
   <div class="callout note">
     <b>Setting a secret tip</b> — the label is <code>ANTHROPIC_API_KEY</code>; the key (<code>sk-ant-…</code>) goes in the masked <i>"Enter a value"</i> prompt that appears <i>after</i>. Never paste the key as the name.

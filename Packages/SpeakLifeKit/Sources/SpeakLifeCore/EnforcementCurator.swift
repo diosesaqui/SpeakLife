@@ -236,8 +236,7 @@ public enum EnforcementCurator {
                               candidates: [Declaration],
                               session: URLSession = .shared) async -> Outcome {
         guard candidates.count >= Enforcement.length else { return .unavailable }
-        let apiKey = AnthropicConfig.apiKey
-        guard !apiKey.isEmpty else { return .unavailable }
+        guard AnthropicConfig.isEnabled else { return .unavailable }
 
         let shortlist = Array(candidates.prefix(candidateLimit))
         let numbered = shortlist.enumerated()
@@ -266,12 +265,10 @@ public enum EnforcementCurator {
         var request = URLRequest(url: AnthropicConfig.apiURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
-        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+        await AnthropicConfig.authorize(&request)
         request.timeoutInterval = 15
 
         let body = ClaudeCurationRequest(
-            model: AnthropicConfig.model,
             maxTokens: 256,
             system: """
             You select scripture declarations for a seven-day campaign. You never \
@@ -360,7 +357,6 @@ public enum EnforcementCurator {
 // MARK: - Wire types
 
 private struct ClaudeCurationRequest: Encodable {
-    let model: String
     let maxTokens: Int
     let system: String
     let messages: [Message]
@@ -368,7 +364,7 @@ private struct ClaudeCurationRequest: Encodable {
     struct Message: Encodable { let role: String; let content: String }
 
     enum CodingKeys: String, CodingKey {
-        case model, system, messages
+        case system, messages
         case maxTokens = "max_tokens"
     }
 }
