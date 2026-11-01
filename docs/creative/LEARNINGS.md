@@ -5,6 +5,25 @@ records **why** an ad won or lost at a level the next brief can build on. A bare
 
 ---
 
+## 2026-11-01 (daily autopilot): three pauses
+
+| Ad | Angle / formula / persona | Spend | Trials | CPT | Verdict |
+|---|---|---|---|---|---|
+| F6-Moment-morningwoman-S-hardtimes-remix-bend-week (SL-USE-01) | silent morning routine, real app on screen / F6 Moment / woman who wakes up behind | $265.70 | 3 | $88.57 (38 installs) | paused, kill bar |
+| F3-StraightShot-mountain-L-promises-remix-wommack | text over nature video, promises opener / F3 Straight Shot / general believer | $258.47 | 3 | $86.16 (36 installs) | paused, kill bar |
+| F6-...-7days-grace-hand (SL-USE-01) | same routine, Grace cut | $34.60 | 0 | none (3 installs) | paused, $30 with 0 trials |
+
+Lessons:
+1. **Both new video formats bought cheap installs that did not start trials.** About $7 per
+   install, but only 3 of 38 and 3 of 36 installs became Meta trials (8%), against the app's
+   usual 33 to 35% install to trial. Likely why: a calm, pretty video earns a curious tap from
+   people who were never deciding to build a habit; the ads that win ("One less scroll", PAIN-06)
+   name a moment or a pain the viewer is in right now. Judge new video formats on install to
+   trial by day 2, not on CPI.
+2. Caveat: this week Meta counted fewer trials (45) than RevenueCat (47), the reverse of earlier
+   weeks, so some of these ads' trials may be missing from Meta. Even doubling their trials
+   leaves both above $40.
+
 ## 2026-10-30 (daily autopilot): two pauses
 
 | Ad | Angle / formula / persona | Spend | Trials | CPT | Verdict |
