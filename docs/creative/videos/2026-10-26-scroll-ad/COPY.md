@@ -92,3 +92,27 @@ Verses behind the lines: 2 Corinthians 1:20, Psalm 30:5, Philippians 4:19, Isaia
 **Headline (draft):** God has a promise for this.
 **Primary text (draft, short):** God's promises are yes in Christ. Speak them over your mind, your body and your home every morning with Scripture-rooted declarations and guided audio on the SpeakLife app.
 **CTA:** Download → http://itunes.apple.com/app/id1617492998
+
+---
+
+# SL-SCROLL-03 · "Before the news" first words (starrySunrise dawn)
+
+Ad name: `F6-Moment-mornings-S-none | scroll firstwords (starrySunrise)`. Daily autopilot, 2026-10-30. Variation of the winner "One less scroll" (120247604519430227, $10.02/trial over 9).
+Video: `SL-scroll-firstwords-ocean.mp4` (17.5s, ocean bed, `python3 render.py --firstwords`, then ocean.wav muxed in). Thumbnail: `SL-scroll-firstwords-thumbnail.png`.
+On-screen: "Before the news. / Before the group chat. / Before the to-do list." → "God's promises. / Out loud. Every morning." → "Five minutes speaking what Scripture says over your mind, your body and your home." → "One less scroll. / One more moment with God."
+Verse: Matthew 4:4.
+
+**Headline:** God's promises. Out loud. Every morning.
+**CTA:** Download → http://itunes.apple.com/app/id1617492998
+
+**Primary text:**
+
+Speak God's promises out loud in the first minutes of your day.
+
+Before the news, before the group chat, before the to-do list: five minutes speaking what Scripture says over your mind, your body and your home.
+
+Jesus lived "on every word that comes from the mouth of God." Matthew 4:4.
+
+SpeakLife gives you Scripture-rooted declarations to say out loud, guided audio and a daily devotional.
+
+One less scroll. One more moment with God.
