@@ -1,7 +1,10 @@
 """Text-over-nature video ad (Abide-style): paragraphs fade in over a slow
 zoom on an app theme background, then a crossfade to a logo + App Store card.
 
-Usage: python3 render.py [out.mp4] [--still SECONDS out.png]
+Usage: python3 render.py [out.mp4] [--firstwords] [--still SECONDS out.png]
+
+--firstwords: SL-SCROLL-03 (2026-10-30 autopilot), "Before the news..." hook,
+opener matches the Promises onboarding, starrySunrise background.
 """
 import subprocess, sys
 from pathlib import Path
@@ -21,6 +24,13 @@ BLOCKS = [
     (2.6, "With the SpeakLife app, trade the morning scroll for Scripture-rooted declarations, guided audio, and a daily devotional that set your heart and mind on Him."),
     (7.0, "Less scrolling. More speaking life."),
     (9.0, "Build a daily habit of speaking God's Word over your mind, your family, and your future."),
+]
+FIRSTWORDS_BG1 = THEMES / "starrySunrise.imageset"
+FIRSTWORDS_BLOCKS = [
+    (0.3, "Before the news.\nBefore the group chat.\nBefore the to-do list."),
+    (3.0, "God's promises.\nOut loud. Every morning."),
+    (5.6, "Five minutes speaking what Scripture says over your mind, your body and your home."),
+    (9.4, "One less scroll.\nOne more moment with God."),
 ]
 SCENE1_END = 13.5      # crossfade to end card starts
 XFADE = 0.8
@@ -60,6 +70,8 @@ def zoom_frame(big, t, dur, z0=1.0, z1=1.08, drift=(0, -30)):
 
 
 def wrap(draw, text, f, maxw):
+    if "\n" in text:  # explicit breaks: wrap each phrase on its own
+        return [ln for part in text.split("\n") for ln in wrap(draw, part, f, maxw)]
     lines, cur = [], ""
     for w in text.split():
         trial = (cur + " " + w).strip()
@@ -141,7 +153,13 @@ def main():
         i = args.index("--still")
         still = (float(args[i + 1]), args[i + 2])
         del args[i:i + 3]
-    out = args[0] if args else str(Path(__file__).with_name("SL-scroll-moment.mp4"))
+    global BLOCKS, BG1
+    default_out = "SL-scroll-moment.mp4"
+    if "--firstwords" in args:
+        args.remove("--firstwords")
+        BLOCKS, BG1 = FIRSTWORDS_BLOCKS, FIRSTWORDS_BG1
+        default_out = "SL-scroll-firstwords.mp4"
+    out = args[0] if args else str(Path(__file__).with_name(default_out))
 
     bg1, bg2 = load_bg(BG1), load_bg(BG2)
     probe = ImageDraw.Draw(Image.new("RGB", (1, 1)))

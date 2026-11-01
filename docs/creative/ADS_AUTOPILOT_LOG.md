@@ -2,6 +2,51 @@
 
 Daily `speaklife-ads-daily` run. Newest first. Meta cost per trial unless noted. Line: $14 ceiling, $12 target.
 
+## 2026-11-01 (08:20 PT)
+
+**No run logged Oct 31.** Owner changes since the Oct 30 run (activity log): Oct 30 11:36 PT turned "authority video" 120247342149650227 and "Do you need a promise" back ON after this job paused them; 15:06 PT paused the firstwords variation 120247665977740227; 19:45 PT created test campaign 120247673840650227 "SL Test | Steal what's yours (John 10:10)" (ad set 120247673841830227, $100/day, 4 ads); 19:52 PT paused ad set new pack 120247448738950227 (holds the winner and the owner-hold ad).
+**State:** live campaigns: test 120247236092730227 and Steal 120247673840650227. Active ad sets: women 25-65 Videos 120247342134890227 ($100), SL-USE-01 120247643548440227 ($100), Steal 120247673841830227 ($100). Total $300 of $600.
+**Yesterday (Oct 31):** $348.70 spend, 3 Meta trials ($116.23), 6 RevenueCat trials ($58.12).
+**7d (Oct 25-31):** $2,055.52 spend, Meta 45 trials ($45.68) vs RevenueCat 47 (104%). Above 60% floor.
+
+Actions:
+- PAUSED 120247658488890227 "F3 mountain (wommack remix)" lifetime $258.47 / 3 / $86.16, 59h old (rule: >= $45 and > $14). Verified PAUSED.
+- PAUSED 120247643633550227 "F6 hardtimes week" (SL-USE-01) lifetime $265.70 / 3 / $88.57, 81h old (same rule). Verified PAUSED.
+- PAUSED 120247644274890227 "F6 7days-grace-hand" (SL-USE-01) lifetime $34.60 / 0, 80h old (rule: >= $30 with 0 trials). Verified PAUSED.
+- NOT re-paused: "authority video" 120247342149650227, lifetime $1,024.58 / 44 / $23.29, last 3d $167.33 / 0. Past the kill bar, but the owner turned it back on after this job paused it Oct 30, so treated as an owner choice. Flagged. It is now the only active ad in its $100/day ad set.
+- WINNER still qualifies: 120247604519430227 "One less scroll" lifetime $98.72 / 9 / $10.97 (its ad set is owner-paused). Graduation FAILED a 4th time: created campaign 120247694493730227 with `is_skadnetwork_attribution: true` (no draft, went live as PAUSED); ad set create rejected twice (plain, and with `source_adset_id` 120247448738950227), subcode 3955009. Renamed "UNUSED - not iOS14 type - SL Winners attempt Nov 1", PAUSED, no ad sets, $0. Owner's Steal campaign did get an AEM ad set through the MCP on Oct 30, so it is iOS14+; how is unknown. Do not retry blind.
+- LAUNCHED: none. New pack (the only allowed home) is owner-paused, the owner paused the last scroll variation within 9h, the test campaign is at its 5-ad-set cap, and today's new campaign was spent on the Winners attempt.
+- SCALED: none. Last 3d: women 25-65 Videos $382.40 / 3; SL-USE-01 $297.53 / 3; Steal $115.76 / 0.
+
+Held:
+- 120247604792060227 "Fix your thoughts..." OWNER HOLD, ad set paused. API lifetime $70.16 / 2 / $35.08.
+- Steal ads (all 37h old): yours 120247673844900227 $88.94 / 0 / 4 installs (pause candidate after Nov 1 19:45 PT if still 0); provision $35.02 / 0; health $21.90 / 0; peace $11.71 / 0. Whole campaign shows no Meta trials on $115.76 and 9 installs.
+- SL-USE-01: phone-naomi-full 120247644098610227 $21.28 / 0; SL-SCROLL-02 Ruth 120247653937860227 $14.60 / 0. Under $30.
+
+## 2026-10-30 (06:04 PT)
+
+**State:** only live campaign is test 120247236092730227. Active ad sets: new pack 120247448738950227 ($120/day), SL-USE-01 120247643548440227 ($100/day, owner raised from $50), women 25-65 Videos 120247342134890227 ($100/day, owner turned back on Oct 29 ~19:46 PT and added F3 mountain ad 120247658488890227). Owner also changed age suggestion to 35-65 on new pack and SL-USE-01 (Oct 29 19:51). Active total $320 of $600 cap.
+**Yesterday (Oct 29):** $265.56 spend, 2 Meta trials ($132.78, AEM may still fill in), 4 RevenueCat trials ($66.39).
+**7d check (Oct 23-29):** Meta 49 trials / $1,796.43 ($36.66) vs RevenueCat 40 (82%). Above 60% floor.
+
+Actions:
+- PAUSED 120247621934830227 "Do you need a promise from God? (credits, dawn)" lifetime $62.55, 0 trials, 7 installs, 64h old (rule: >= $30 with 0 trials). Verified PAUSED.
+- PAUSED 120247342149650227 "authority video" lifetime $912.85 / 44 / $20.75; 7d $303.36 / 9 / $33.71; 3d $72.65 / 1 (rule: >= $45 and > $14; also fatigue rule). Owner had restarted its ad set the evening before; paused anyway because it was taking 10x the spend of the owner's new F3 ad in the same set. Ad set stays on with F3. Verified PAUSED.
+- WINNER still qualifies: 120247604519430227 "One less scroll" lifetime $90.14 / 9 / $10.02. Graduation FAILED a third time:
+  - Created campaign 120247665948860227 with `source_campaign_id: 120247236092730227` + `is_skadnetwork_attribution: true`. Ad set create rejected again (subcode 3955009, "must be an iOS14+ campaign"). Renamed "UNUSED - not iOS14 type - SL Winners attempt Oct 30 (source copy)", PAUSED, no ad sets, no spend.
+  - The API cannot make an iOS14+ campaign. **Owner needs to make "SL Winners | Oct 2026" by hand in Ads Manager** (duplicate the test campaign, delete its ad sets); then the next run adds the $50/day ad set + ad from creative 3691565081009188. Do not retry the API route.
+  - Test original left ON.
+- LAUNCHED 120247665977740227 "F6-Moment-mornings-S-none | scroll firstwords (starrySunrise)" in new pack. Creative 4577357865811821, video 2152512242017756, thumb hash e1e5e5602a6808ab2d483af7d8bcadc9. Headline "God's promises. Out loud. Every morning." IN_PROCESS. New pack back at 6 active (cap).
+- SCALED: none. Last 3d: new pack $339.14 / 10 = $33.91; SL-USE-01 $98.62 / 0 (Meta) ; women 25-65 Videos $89.25 / 3 = $29.75.
+
+Held:
+- 120247604792060227 "Fix your thoughts..." OWNER HOLD. API lifetime $66.21 / 2 / $33.11; 7d same. Ads Manager-style number not visible through the API.
+- 120247636375750227 "F6 scroll phone (cliff)" $115.74 / 3 / $38.58, 44.5h old at run time (created Oct 28 09:37 PT). Past the kill bar; pause next run.
+- 120247643633550227 "F6 hardtimes week" (SL-USE-01) $75.51 / 1 / $75.51, 31h old. Past the kill bar; pause after Oct 30 23:12 PT.
+- 120247636376850227 "F12 scroll fivemin (lake)" $21.12 / 0. Under $30.
+- 120247604791410227 "Let His Word speak louder." $9.62 / 0. Barely delivering.
+- SL-USE-01 7days-grace-hand $5.67, phone-naomi-full $14.92, SL-SCROLL-02 $9.95; F3 mountain $7.55. Too early.
+
 ## 2026-10-29 (06:00 PT)
 
 **State:** only live campaign is test 120247236092730227. Active ad sets: new pack 120247448738950227 ($120/day, raised from $100 on Oct 28 10:46 PT, not by this job), SL-USE-01 120247643548440227 ($100/day). Active total $220 of $600 cap.
